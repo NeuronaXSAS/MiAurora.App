@@ -1,0 +1,313 @@
+"use client";
+
+import { useState } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  AlertTriangle,
+  Plus,
+  Trash2,
+  Phone,
+  User,
+  Shield,
+  TestTube,
+} from "lucide-react";
+import { PanicButton } from "@/components/panic-button";
+import { Id } from "@/convex/_generated/dataModel";
+
+export default function EmergencyPage() {
+  const contacts = useQuery(api.emergency.getEmergencyContacts);
+  const alerts = useQuery(api.emergency.getMyEmergencyAlerts);
+  const saveContact = useMutation(api.emergency.saveEmergencyContact);
+  const deleteContact = useMutation(api.emergency.deleteEmergencyContact);
+
+  const [isAdding, setIsAdding] = useState(false);
+  const [testMode, setTestMode] = useState(false);
+  const [newContact, setNewContact] = useState({
+    name: "",
+    phoneNumber: "",
+    relationship: "",
+    priority: 1,
+  });
+
+  const handleSaveContact = async () => {
+    if (!newContact.name || !newContact.phoneNumber) {
+      alert("Please fill in name and phone number");
+      return;
+    }
+
+    try {
+      await saveContact(newContact);
+      setNewContact({ name: "", phoneNumber: "", relationship: "", priority: 1 });
+      setIsAdding(false);
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const handleDeleteContact = async (contactId: Id<"emergencyContacts">) => {
+    if (confirm("Are you sure you want to remove this emergency contact?")) {
+      await deleteContact({ contactId });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-24">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-red-600 to-pink-600 text-white">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex items-center gap-3">
+            <Shield className="w-8 h-8" />
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold">Aurora Guardian</h1>
+              <p className="text-sm sm:text-base text-red-100">
+                Emergency Safety System
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
+        {/* Test Mode Toggle */}
+        <Card className="mb-6 border-yellow-400 bg-yellow-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <TestTube className="w-5 h-5 text-yellow-600" />
+                <div>
+                  <p className="font-semibold text-yellow-900">Test Mode</p>
+                  <p className="text-sm text-yellow-700">
+                    Practice using the panic button without sending real alerts
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant={testMode ? "default" : "outline"}
+                onClick={() => setTestMode(!testMode)}
+                className={testMode ? "bg-yellow-600 hover:bg-yellow-700" : ""}
+              >
+                {testMode ? "ON" : "OFF"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Emergency Contacts */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Emergency Contacts</span>
+              {contacts && contacts.length < 5 && (
+                <Button
+                  size="sm"
+                  onClick={() => setIsAdding(true)}
+                  disabled={isAdding}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Contact
+                </Button>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-4">
+              Add up to 5 emergency contacts who will be notified when you trigger an alert.
+              They will receive WhatsApp messages with your location.
+            </p>
+
+            {isAdding && (
+              <div className="bg-gray-50 p-4 rounded-lg mb-4 space-y-4">
+                <div>
+                  <Label htmlFor="name">Name *</Label>
+                  <Input
+                    id="name"
+                    value={newContact.name}
+                    onChange={(e) =>
+                      setNewContact({ ...newContact, name: e.target.value })
+                    }
+                    placeholder="John Doe"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="phone">WhatsApp Number *</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={newContact.phoneNumber}
+                    onChange={(e) =>
+                      setNewContact({ ...newContact, phoneNumber: e.target.value })
+                    }
+                    placeholder="+1234567890"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="relationship">Relationship</Label>
+                  <Input
+                    id="relationship"
+                    value={newContact.relationship}
+                    onChange={(e) =>
+                      setNewContact({ ...newContact, relationship: e.target.value })
+                    }
+                    placeholder="Friend, Family, Partner, etc."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="priority">Priority (1-5)</Label>
+                  <Input
+                    id="priority"
+                    type="number"
+                    min="1"
+                    max="5"
+                    value={newContact.priority}
+                    onChange={(e) =>
+                      setNewContact({
+                        ...newContact,
+                        priority: parseInt(e.target.value) || 1,
+                      })
+                    }
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Lower numbers are notified first
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleSaveContact} className="flex-1">
+                    Save Contact
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsAdding(false);
+                      setNewContact({
+                        name: "",
+                        phoneNumber: "",
+                        relationship: "",
+                        priority: 1,
+                      });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {contacts && contacts.length === 0 && !isAdding && (
+              <div className="text-center py-8 text-gray-500">
+                <User className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>No emergency contacts added yet</p>
+                <p className="text-sm">Add contacts to enable emergency alerts</p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {contacts?.map((contact) => (
+                <div
+                  key={contact._id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">{contact.name}</p>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Phone className="w-3 h-3" />
+                        <span>{contact.phoneNumber}</span>
+                        {contact.relationship && (
+                          <>
+                            <span>•</span>
+                            <span>{contact.relationship}</span>
+                          </>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Priority: {contact.priority}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteContact(contact._id)}
+                  >
+                    <Trash2 className="w-4 h-4 text-red-600" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Alert History */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Alert History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {alerts && alerts.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>No emergency alerts triggered</p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {alerts?.map((alert) => (
+                <div
+                  key={alert._id}
+                  className="p-4 border rounded-lg"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <span
+                        className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                          alert.status === "active"
+                            ? "bg-red-100 text-red-700"
+                            : alert.status === "resolved"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {alert.status.toUpperCase()}
+                      </span>
+                      <span className="ml-2 text-sm text-gray-600">
+                        {alert.alertType}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {new Date(alert._creationTime).toLocaleString()}
+                    </span>
+                  </div>
+                  {alert.location.address && (
+                    <p className="text-sm text-gray-600 mb-1">
+                      📍 {alert.location.address}
+                    </p>
+                  )}
+                  <p className="text-sm text-gray-600">
+                    {alert.notifiedContacts.length} contacts notified •{" "}
+                    {alert.nearbyUsersNotified} nearby users alerted
+                  </p>
+                  {alert.notes && (
+                    <p className="text-sm text-gray-500 mt-2 italic">
+                      {alert.notes}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Panic Button */}
+      <PanicButton testMode={testMode} />
+    </div>
+  );
+}
