@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Sparkles, Briefcase, Shield, ArrowRight, ArrowLeft, Check } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
+import { AvatarCreator, AvatarConfig } from "@/components/avatar-creator";
 
 interface OnboardingWizardProps {
   open: boolean;
@@ -38,7 +39,7 @@ const INTERESTS = [
 ];
 
 export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardProps) {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // Start at 0 for avatar creation
   const [role, setRole] = useState("");
   const [bio, setBio] = useState("");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -46,6 +47,9 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workosId, setWorkosId] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [avatarConfig, setAvatarConfig] = useState<AvatarConfig | null>(null);
+  const [showAvatarCreator, setShowAvatarCreator] = useState(true);
+  const [location, setLocation] = useState("");
 
   const completeOnboarding = useMutation(api.users.completeOnboarding);
   const updatePrivacy = useMutation(api.privacy.updatePrivacySettings);
@@ -106,6 +110,7 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
       await completeOnboarding({
         workosId,
         bio: bio || undefined,
+        location: location || undefined,
         industry: role || undefined,
         careerGoals: selectedInterests.join(", ") || undefined,
         interests: selectedInterests.length > 0 ? selectedInterests : undefined,
@@ -137,6 +142,29 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
       setIsSubmitting(false);
     }
   };
+
+  // Handle avatar creation
+  const handleAvatarComplete = (config: AvatarConfig) => {
+    setAvatarConfig(config);
+    setShowAvatarCreator(false);
+    setStep(1);
+  };
+
+  const handleAvatarSkip = () => {
+    setShowAvatarCreator(false);
+    setStep(1);
+  };
+
+  // Show avatar creator first
+  if (showAvatarCreator) {
+    return (
+      <AvatarCreator
+        open={open}
+        onComplete={handleAvatarComplete}
+        onSkip={handleAvatarSkip}
+      />
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
@@ -195,6 +223,22 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
                 </div>
 
                 <div>
+                  <Label htmlFor="location" className="text-base font-semibold mb-3 block text-white">
+                    📍 Where are you located?
+                  </Label>
+                  <Input
+                    id="location"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="e.g., San Francisco, CA"
+                    className="bg-white/5 border-white/20 text-white placeholder:text-gray-500"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    This helps you connect with local Aurora communities
+                  </p>
+                </div>
+
+                <div>
                   <Label htmlFor="bio" className="text-base font-semibold mb-3 block text-white">
                     Tell us a bit about yourself (optional)
                   </Label>
@@ -203,7 +247,7 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     placeholder="I'm passionate about..."
-                    className="min-h-[100px] bg-white/5 border-white/20 text-white placeholder:text-gray-500"
+                    className="min-h-[80px] bg-white/5 border-white/20 text-white placeholder:text-gray-500"
                   />
                 </div>
               </div>
@@ -372,6 +416,15 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
             />
           ))}
         </div>
+
+        {/* Avatar Preview (if created) */}
+        {avatarConfig && (
+          <div className="text-center mt-4">
+            <p className="text-xs text-gray-400">
+              ✨ Your avatar has been created! You can change it later in your profile.
+            </p>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

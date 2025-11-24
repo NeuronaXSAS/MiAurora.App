@@ -15,6 +15,8 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
+    "@dicebear/collection": "^9.2.4",
+    "@dicebear/core": "^9.2.4",
     "@google/generative-ai": "^0.24.1",
     "@mapbox/polyline": "^1.2.1",
     "@radix-ui/react-avatar": "^1.1.11",
