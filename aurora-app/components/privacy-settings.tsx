@@ -123,6 +123,37 @@ export function PrivacySettings() {
 
   return (
     <div className="space-y-6">
+      {/* Privacy Impact Info */}
+      <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-purple-600" />
+            Privacy & Trust
+          </CardTitle>
+          <CardDescription>
+            Your privacy choices affect your Trust Score
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                <Shield className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-purple-900">Security Center</p>
+                <p className="text-sm text-gray-600">Manage your data and privacy</p>
+              </div>
+            </div>
+            <div className="bg-white/50 rounded-lg p-3 border border-purple-200">
+              <p className="text-xs text-gray-700 leading-relaxed">
+                💡 <strong>Tip:</strong> Sharing anonymous data helps the community stay safe and increases your Trust Score. You're always in control of what you share.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Data Sharing */}
       <Card>
         <CardHeader>
@@ -134,23 +165,27 @@ export function PrivacySettings() {
             Control how your data is used and shared
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Analytics Tracking</Label>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between py-2">
+            <div className="space-y-0.5 flex-1">
+              <Label className="text-base font-semibold">Analytics Tracking</Label>
               <p className="text-sm text-muted-foreground">
                 Help us improve Aurora by sharing anonymous usage data
               </p>
+              {privacySettings.analyticsTracking && (
+                <p className="text-xs text-green-600 font-medium mt-1">+5 credits earned</p>
+              )}
             </div>
             <Switch
               checked={privacySettings.analyticsTracking}
               onCheckedChange={(checked) => handleSettingChange('analyticsTracking', checked)}
+              className="data-[state=checked]:bg-green-500"
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Personalized Ads</Label>
+          <div className="flex items-center justify-between py-2 border-t">
+            <div className="space-y-0.5 flex-1">
+              <Label className="text-base font-semibold">Personalized Ads</Label>
               <p className="text-sm text-muted-foreground">
                 Show ads based on your interests (coming soon)
               </p>
@@ -158,19 +193,24 @@ export function PrivacySettings() {
             <Switch
               checked={privacySettings.personalizedAds}
               onCheckedChange={(checked) => handleSettingChange('personalizedAds', checked)}
+              className="data-[state=checked]:bg-green-500"
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Location Sharing</Label>
+          <div className="flex items-center justify-between py-2 border-t">
+            <div className="space-y-0.5 flex-1">
+              <Label className="text-base font-semibold">Location Sharing</Label>
               <p className="text-sm text-muted-foreground">
                 Share your location for safety features and route recommendations
               </p>
+              {privacySettings.locationSharing && (
+                <p className="text-xs text-green-600 font-medium mt-1">+10 credits earned</p>
+              )}
             </div>
             <Switch
               checked={privacySettings.locationSharing}
               onCheckedChange={(checked) => handleSettingChange('locationSharing', checked)}
+              className="data-[state=checked]:bg-green-500"
             />
           </div>
         </CardContent>
@@ -187,27 +227,51 @@ export function PrivacySettings() {
             Control who can see your profile and activity
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label>Profile Visibility</Label>
+            <Label className="text-base font-semibold">Profile Visibility</Label>
             <Select
               value={privacySettings.profileVisibility}
               onValueChange={(value) => handleSettingChange('profileVisibility', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-12">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="public">Public - Anyone can see</SelectItem>
-                <SelectItem value="friends">Friends Only</SelectItem>
-                <SelectItem value="private">Private - Only you</SelectItem>
+                <SelectItem value="public">
+                  <div className="flex items-center gap-2">
+                    <span>🌍</span>
+                    <div>
+                      <p className="font-medium">Public</p>
+                      <p className="text-xs text-gray-500">Anyone can see</p>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="anonymous">
+                  <div className="flex items-center gap-2">
+                    <span>🎭</span>
+                    <div>
+                      <p className="font-medium">Anonymous</p>
+                      <p className="text-xs text-gray-500">Hide your identity</p>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="private">
+                  <div className="flex items-center gap-2">
+                    <span>🔒</span>
+                    <div>
+                      <p className="font-medium">Private</p>
+                      <p className="text-xs text-gray-500">Only you</p>
+                    </div>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Activity Status</Label>
+          <div className="flex items-center justify-between py-2 border-t">
+            <div className="space-y-0.5 flex-1">
+              <Label className="text-base font-semibold">Activity Status</Label>
               <p className="text-sm text-muted-foreground">
                 Show when you're online
               </p>
@@ -215,6 +279,7 @@ export function PrivacySettings() {
             <Switch
               checked={privacySettings.activityStatus}
               onCheckedChange={(checked) => handleSettingChange('activityStatus', checked)}
+              className="data-[state=checked]:bg-green-500"
             />
           </div>
         </CardContent>
@@ -233,18 +298,33 @@ export function PrivacySettings() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <Label>Who can message you</Label>
+            <Label className="text-base font-semibold">Who can message you</Label>
             <Select
               value={privacySettings.messagePrivacy}
               onValueChange={(value) => handleSettingChange('messagePrivacy', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-12">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="everyone">Everyone</SelectItem>
-                <SelectItem value="friends">Friends Only</SelectItem>
-                <SelectItem value="none">No One</SelectItem>
+                <SelectItem value="everyone">
+                  <div className="flex items-center gap-2">
+                    <span>👥</span>
+                    <span>Everyone</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="friends">
+                  <div className="flex items-center gap-2">
+                    <span>👭</span>
+                    <span>Friends Only</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="none">
+                  <div className="flex items-center gap-2">
+                    <span>🚫</span>
+                    <span>No One</span>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -49,9 +49,12 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
+    // Use custom Aurora style
+    const MAP_STYLE = "mapbox://styles/malunao/cm84u5ecf000x01qled5j8bvl";
+    
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: process.env.NEXT_PUBLIC_MAPBOX_STYLE!,
+      style: MAP_STYLE,
       center: [-98.5795, 39.8283], // Center of USA
       zoom: 4,
     });

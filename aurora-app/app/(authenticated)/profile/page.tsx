@@ -74,6 +74,23 @@ export default function ProfilePage() {
     if (user && user.trustScore >= 100) badges.push({ name: "Trusted Member", icon: "🏆" });
   }
 
+  // Calculate profile completion percentage
+  const calculateProfileCompletion = () => {
+    if (!user) return 0;
+    let completed = 0;
+    const total = 7;
+    
+    if (user.name && user.name !== 'null') completed++;
+    if (user.bio) completed++;
+    if (user.location) completed++;
+    if (user.industry) completed++;
+    if (user.careerGoals) completed++;
+    if (user.profileImage) completed++;
+    if (user.interests && user.interests.length > 0) completed++;
+    
+    return Math.round((completed / total) * 100);
+  };
+
   // Calculate rank percentile (simplified)
   const getRankPercentile = (trustScore: number) => {
     if (trustScore >= 500) return "Top 1%";
@@ -82,6 +99,18 @@ export default function ProfilePage() {
     if (trustScore >= 50) return "Top 25%";
     return "Top 50%";
   };
+
+  // Calculate trust score stars (out of 5)
+  const getTrustStars = (trustScore: number) => {
+    if (trustScore >= 500) return 5;
+    if (trustScore >= 200) return 4;
+    if (trustScore >= 100) return 3;
+    if (trustScore >= 50) return 2;
+    return 1;
+  };
+
+  const profileCompletion = calculateProfileCompletion();
+  const trustStars = user ? getTrustStars(user.trustScore) : 0;
 
   if (!user || !stats) {
     return (
@@ -151,6 +180,27 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
+
+          {/* Profile Completion Bar */}
+          <div className="container mx-auto px-4 sm:px-6 -mt-4">
+            <div className="bg-white rounded-lg shadow-lg p-4 max-w-2xl">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">Profile Completion</span>
+                <span className="text-sm font-bold text-purple-600">{profileCompletion}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-purple-600 to-pink-600 rounded-full transition-all duration-500"
+                  style={{ width: `${profileCompletion}%` }}
+                />
+              </div>
+              {profileCompletion < 100 && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Complete your profile to increase your Trust Score and unlock more features
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -200,7 +250,7 @@ export default function ProfilePage() {
                   <CardTitle className="text-sm font-medium text-gray-600">Trust Score</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 mb-2">
                     <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                       <TrendingUp className="w-6 h-6 text-green-600" />
                     </div>
@@ -208,6 +258,18 @@ export default function ProfilePage() {
                       <p className="text-3xl font-bold">{user.trustScore}</p>
                       <p className="text-sm text-gray-600">{getRankPercentile(user.trustScore)}</p>
                     </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span
+                        key={star}
+                        className={`text-lg ${
+                          star <= trustStars ? 'text-yellow-400' : 'text-gray-300'
+                        }`}
+                      >
+                        ★
+                      </span>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
