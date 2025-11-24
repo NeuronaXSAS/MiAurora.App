@@ -48,6 +48,11 @@ export function VideoRecorder({
 
   const startCamera = async () => {
     try {
+      // Check if mediaDevices is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera not supported on this device');
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode,
@@ -61,12 +66,24 @@ export function VideoRecorder({
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        // Ensure video plays
+        videoRef.current.play().catch(e => console.warn('Video play failed:', e));
       }
 
       setError(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to access camera:', err);
-      setError('Failed to access camera. Please grant camera permissions.');
+      
+      // Provide specific error messages
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setError('Camera permission denied. Please enable camera access in your browser settings.');
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setError('No camera found on this device.');
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        setError('Camera is already in use by another application.');
+      } else {
+        setError(err.message || 'Failed to access camera. Please check permissions.');
+      }
     }
   };
 
@@ -151,8 +168,15 @@ export function VideoRecorder({
     }
   };
 
-  const flipCamera = () => {
-    setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
+  const flipCamera = async () => {
+    // Stop current camera
+    stopCamera();
+    
+    // Toggle facing mode
+    const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(newFacingMode);
+    
+    // Restart camera with new facing mode will happen via useEffect
   };
 
   const formatTime = (seconds: number) => {

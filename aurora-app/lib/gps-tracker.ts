@@ -158,7 +158,7 @@ async function deleteOfflineRoute(id: number): Promise<void> {
 }
 
 /**
- * GPS Tracker Class
+ * GPS Tracker Class with State Persistence
  */
 export class GPSTracker {
   private watchId: number | null = null;
@@ -179,6 +179,12 @@ export class GPSTracker {
   private lastSamplePosition: Coordinate | null = null;
   private onUpdate: ((state: TrackingState) => void) | null = null;
   private onError: ((error: GeolocationPositionError) => void) | null = null;
+  private stateKey: string = 'aurora-gps-tracker-state';
+
+  constructor() {
+    // Restore state from localStorage on initialization
+    this.restoreState();
+  }
 
   /**
    * Start tracking
@@ -363,8 +369,70 @@ export class GPSTracker {
   private async saveToOfflineStorage(): Promise<void> {
     try {
       await saveOfflineRoute('current', this.state.coordinates);
+      // Also save to localStorage for quick recovery
+      this.persistState();
     } catch (error) {
       console.error('Failed to save offline route:', error);
+    }
+  }
+
+  /**
+   * Persist state to localStorage
+   */
+  private persistState(): void {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(this.stateKey, JSON.stringify({
+          coordinates: this.state.coordinates,
+          stats: this.state.stats,
+          startTime: this.state.startTime,
+          pausedTime: this.state.pausedTime,
+          isTracking: this.state.isTracking,
+          isPaused: this.state.isPaused,
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to persist state:', error);
+    }
+  }
+
+  /**
+   * Restore state from localStorage
+   */
+  private restoreState(): void {
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem(this.stateKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          // Only restore if tracking was active
+          if (parsed.isTracking) {
+            this.state = {
+              ...this.state,
+              coordinates: parsed.coordinates || [],
+              stats: parsed.stats || this.state.stats,
+              startTime: parsed.startTime,
+              pausedTime: parsed.pausedTime,
+            };
+            console.log('Restored GPS state from localStorage:', this.state.coordinates.length, 'points');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to restore state:', error);
+    }
+  }
+
+  /**
+   * Clear persisted state
+   */
+  clearPersistedState(): void {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(this.stateKey);
+      }
+    } catch (error) {
+      console.error('Failed to clear persisted state:', error);
     }
   }
 }

@@ -88,9 +88,9 @@ export default function DiscoverRoutesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-[#1e1b4b] to-slate-900">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+      <div className="backdrop-blur-xl bg-gradient-to-r from-purple-600/90 to-pink-600/90 border-b border-white/10">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="flex items-center gap-3 mb-4">
             <Button
@@ -103,8 +103,10 @@ export default function DiscoverRoutesPage() {
               Back
             </Button>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Discover Routes</h1>
-          <p className="text-sm sm:text-base text-blue-100">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-purple-100">
+            Discover Routes
+          </h1>
+          <p className="text-sm sm:text-base text-purple-100">
             Find safe and inspiring routes shared by the community
           </p>
         </div>
@@ -116,32 +118,32 @@ export default function DiscoverRoutesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Filters Sidebar */}
             <div className="lg:col-span-1">
-              <Card className="sticky top-24">
+              <Card className="sticky top-24 backdrop-blur-xl bg-white/10 border-white/20">
                 <CardContent className="p-4 space-y-4">
                   <div>
-                    <h3 className="font-semibold mb-3 flex items-center gap-2">
-                      <Filter className="w-4 h-4" />
+                    <h3 className="font-semibold mb-3 flex items-center gap-2 text-white">
+                      <Filter className="w-4 h-4 text-purple-400" />
                       Filters
                     </h3>
                   </div>
 
                   {/* Search */}
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Search</label>
+                    <label className="text-sm font-medium mb-2 block text-gray-300">Search</label>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <Input
                         placeholder="Search routes..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9"
+                        className="pl-9 bg-white/5 border-white/20 text-white placeholder:text-gray-500"
                       />
                     </div>
                   </div>
 
                   {/* Route Type */}
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Activity Type</label>
+                    <label className="text-sm font-medium mb-2 block text-gray-300">Activity Type</label>
                     <div className="space-y-2">
                       {(["all", "walking", "running", "cycling", "commuting"] as const).map((type) => (
                         <button
@@ -149,8 +151,8 @@ export default function DiscoverRoutesPage() {
                           onClick={() => setFilterType(type)}
                           className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors capitalize ${
                             filterType === type
-                              ? "bg-purple-100 text-purple-700 font-medium"
-                              : "hover:bg-gray-100"
+                              ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium shadow-lg shadow-purple-500/30"
+                              : "text-gray-300 hover:bg-white/10"
                           }`}
                         >
                           {type}
@@ -224,7 +226,7 @@ export default function DiscoverRoutesPage() {
             {/* Routes Grid/List */}
             <div className="lg:col-span-3">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-300">
                   {filteredRoutes.length} {filteredRoutes.length === 1 ? "route" : "routes"} found
                 </p>
                 <div className="flex gap-2">
@@ -232,6 +234,7 @@ export default function DiscoverRoutesPage() {
                     variant={viewMode === "grid" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setViewMode("grid")}
+                    className={viewMode === "grid" ? "bg-gradient-to-r from-purple-600 to-pink-600" : "bg-white/10 border-white/20 text-white hover:bg-white/20"}
                   >
                     Grid
                   </Button>
@@ -239,6 +242,7 @@ export default function DiscoverRoutesPage() {
                     variant={viewMode === "list" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setViewMode("list")}
+                    className={viewMode === "list" ? "bg-gradient-to-r from-purple-600 to-pink-600" : "bg-white/10 border-white/20 text-white hover:bg-white/20"}
                   >
                     List
                   </Button>
@@ -247,17 +251,17 @@ export default function DiscoverRoutesPage() {
 
               {!routes && (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                  <p className="text-gray-600">Loading routes...</p>
+                  <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                  <p className="text-gray-300">Loading routes...</p>
                 </div>
               )}
 
               {filteredRoutes.length === 0 && routes && (
-                <Card>
+                <Card className="backdrop-blur-xl bg-white/10 border-white/20">
                   <CardContent className="py-12 text-center">
-                    <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No routes found</h3>
-                    <p className="text-gray-600 mb-4">
+                    <Search className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2 text-white">No routes found</h3>
+                    <p className="text-gray-300 mb-4">
                       Try adjusting your filters or search query
                     </p>
                   </CardContent>
@@ -269,29 +273,29 @@ export default function DiscoverRoutesPage() {
                   {filteredRoutes.map((route) => (
                     <Card 
                       key={route._id} 
-                      className="hover-lift cursor-pointer"
+                      className="backdrop-blur-xl bg-white/10 border-white/20 hover:bg-white/15 hover:shadow-2xl hover:shadow-purple-500/20 transition-all cursor-pointer"
                       onClick={() => router.push(`/routes/discover/${route._id}`)}
                     >
                       <CardContent className="p-4">
                         {/* Route Preview Map Placeholder */}
-                        <div className="w-full h-32 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg mb-3 flex items-center justify-center">
-                          <MapPin className="w-8 h-8 text-purple-600" />
+                        <div className="w-full h-32 bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-lg mb-3 flex items-center justify-center">
+                          <MapPin className="w-8 h-8 text-purple-400" />
                         </div>
 
-                        <h3 className="font-semibold text-lg mb-2">{route.title}</h3>
+                        <h3 className="font-semibold text-lg mb-2 text-white">{route.title}</h3>
 
                         {/* Tags */}
                         <div className="flex flex-wrap gap-1 mb-3">
                           {route.tags.slice(0, 3).map((tag, i) => (
                             <span
                               key={i}
-                              className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full"
+                              className="px-2 py-0.5 bg-purple-600/30 text-purple-200 text-xs rounded-full border border-purple-500/30"
                             >
                               {tag}
                             </span>
                           ))}
                           {route.tags.length > 3 && (
-                            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                            <span className="px-2 py-0.5 bg-white/10 text-gray-300 text-xs rounded-full border border-white/20">
                               +{route.tags.length - 3}
                             </span>
                           )}
@@ -300,17 +304,17 @@ export default function DiscoverRoutesPage() {
                         {/* Stats */}
                         <div className="grid grid-cols-2 gap-2 text-sm mb-3">
                           <div className="flex items-center gap-1">
-                            <TrendingUp className="w-4 h-4 text-gray-500" />
-                            <span className="font-medium">{formatDistance(route.distance)}</span>
+                            <TrendingUp className="w-4 h-4 text-purple-400" />
+                            <span className="font-medium text-white">{formatDistance(route.distance)}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-500" />
-                            <span className="font-medium">{route.rating}/5</span>
+                            <Star className="w-4 h-4 text-yellow-400" />
+                            <span className="font-medium text-white">{route.rating}/5</span>
                           </div>
                         </div>
 
                         {/* Creator and Completions */}
-                        <div className="flex items-center justify-between text-xs text-gray-600 pt-3 border-t">
+                        <div className="flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-white/10">
                           <span>by {route.creator.name}</span>
                           <div className="flex items-center gap-1">
                             <Users className="w-3 h-3" />

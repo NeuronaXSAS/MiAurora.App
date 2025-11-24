@@ -11,10 +11,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { VideoRecorder } from '@/components/reels/video-recorder';
 import { UploadForm } from '@/components/reels/upload-form';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 type FlowState = 'recording' | 'form' | 'success';
 
-export default function CreateReelPage() {
+function CreateReelContent() {
   const router = useRouter();
   const [flowState, setFlowState] = useState<FlowState>('recording');
   const [recordedVideo, setRecordedVideo] = useState<{
@@ -98,5 +99,13 @@ export default function CreateReelPage() {
         </div>
       )}
     </>
+  );
+}
+
+export default function CreateReelPage() {
+  return (
+    <ErrorBoundary>
+      <CreateReelContent />
+    </ErrorBoundary>
   );
 }

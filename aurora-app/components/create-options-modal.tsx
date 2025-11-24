@@ -15,7 +15,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { FileText, BarChart3, Video, Route, Briefcase } from "lucide-react";
+import { FileText, BarChart3, Video, Route, Briefcase, Radio } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 
@@ -85,6 +85,18 @@ export function CreateOptionsModal({
       },
     },
     {
+      icon: Radio,
+      emoji: "📡",
+      title: "Go Live",
+      description: "Start livestream",
+      color: "bg-red-500",
+      hoverColor: "hover:bg-red-50",
+      action: () => {
+        onOpenChange(false);
+        router.push("/live/broadcast");
+      },
+    },
+    {
       icon: Briefcase,
       emoji: "💼",
       title: "Post Opportunity",
@@ -99,7 +111,7 @@ export function CreateOptionsModal({
   ];
 
   const content = (
-    <div className="grid grid-cols-2 gap-4 p-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4">
       {options.map((option) => (
         <button
           key={option.title}

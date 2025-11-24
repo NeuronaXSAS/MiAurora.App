@@ -35,6 +35,13 @@ class RealtimeGPSTracker {
   private coordinateCallbacks: CoordinateCallback[] = [];
   private statsCallbacks: StatsCallback[] = [];
   private statsInterval: NodeJS.Timeout | null = null;
+  private stateKey: string = 'aurora-realtime-gps-state';
+  private persistInterval: NodeJS.Timeout | null = null;
+
+  constructor() {
+    // Restore state on initialization
+    this.restoreState();
+  }
 
   /**
    * Start real-time GPS tracking with wake lock
@@ -82,6 +89,11 @@ class RealtimeGPSTracker {
       }
     }, 1000);
 
+    // Start state persistence interval (every 5 seconds)
+    this.persistInterval = setInterval(() => {
+      this.persistState();
+    }, 5000);
+
     console.log("Real-time GPS tracking started");
     return true;
   }
@@ -107,10 +119,20 @@ class RealtimeGPSTracker {
       this.statsInterval = null;
     }
 
+    // Clear persist interval
+    if (this.persistInterval) {
+      clearInterval(this.persistInterval);
+      this.persistInterval = null;
+    }
+
     // Release wake lock
     await releaseWakeLock();
 
     this.state.isTracking = false;
+    
+    // Clear persisted state
+    this.clearPersistedState();
+    
     console.log("Real-time GPS tracking stopped");
 
     return { ...this.state };
@@ -245,6 +267,66 @@ class RealtimeGPSTracker {
    */
   isWakeLockActive(): boolean {
     return isWakeLockActive();
+  }
+
+  /**
+   * Persist state to localStorage
+   */
+  private persistState(): void {
+    try {
+      if (typeof window !== 'undefined' && this.state.isTracking) {
+        localStorage.setItem(this.stateKey, JSON.stringify({
+          coordinates: this.state.coordinates,
+          distance: this.state.distance,
+          duration: this.state.duration,
+          startTime: this.state.startTime,
+          isTracking: this.state.isTracking,
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to persist realtime state:', error);
+    }
+  }
+
+  /**
+   * Restore state from localStorage
+   */
+  private restoreState(): void {
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem(this.stateKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.isTracking && parsed.startTime) {
+            // Calculate elapsed time since last save
+            const elapsed = Date.now() - parsed.startTime;
+            this.state = {
+              coordinates: parsed.coordinates || [],
+              distance: parsed.distance || 0,
+              duration: Math.floor(elapsed / 1000),
+              startTime: parsed.startTime,
+              isTracking: false, // Don't auto-resume, let user restart
+            };
+            console.log('Restored realtime GPS state:', this.state.coordinates.length, 'points,', this.state.distance.toFixed(2), 'm');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to restore realtime state:', error);
+    }
+  }
+
+  /**
+   * Clear persisted state
+   */
+  private clearPersistedState(): void {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(this.stateKey);
+      }
+    } catch (error) {
+      console.error('Failed to clear persisted state:', error);
+    }
   }
 }
 
