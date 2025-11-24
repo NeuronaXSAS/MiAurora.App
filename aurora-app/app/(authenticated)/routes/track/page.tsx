@@ -175,26 +175,44 @@ export default function TrackRoutePage() {
           </div>
         )}
 
-        {/* Stats Overlay */}
+        {/* Stats Overlay - Strava Style */}
         {trackingState && !showTypeSelector && (
-          <div className="absolute top-4 left-4 right-4 backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-4">
-            <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="absolute top-4 left-4 right-4 backdrop-blur-xl bg-slate-900/90 border border-aurora-blue/30 rounded-2xl shadow-2xl p-6">
+            <div className="grid grid-cols-3 gap-6 text-center">
               <div>
-                <p className="text-xs text-gray-300 font-medium mb-1">Distance</p>
-                <p className="text-2xl font-bold text-white">{formatDistance(trackingState.stats.distance)}</p>
+                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">Distance</p>
+                <p className="text-4xl font-black text-aurora-blue drop-shadow-lg">{formatDistance(trackingState.stats.distance)}</p>
+                <p className="text-xs text-gray-500 mt-1">kilometers</p>
               </div>
               <div>
-                <p className="text-xs text-gray-300 font-medium mb-1">Duration</p>
-                <p className="text-2xl font-bold text-white">{formatDuration(trackingState.stats.duration)}</p>
+                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">Duration</p>
+                <p className="text-4xl font-black text-aurora-blue drop-shadow-lg">{formatDuration(trackingState.stats.duration)}</p>
+                <p className="text-xs text-gray-500 mt-1">time</p>
               </div>
               <div>
-                <p className="text-xs text-gray-300 font-medium mb-1">Pace</p>
-                <p className="text-2xl font-bold text-white">{formatPace(trackingState.stats.pace)}</p>
+                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">Pace</p>
+                <p className="text-4xl font-black text-aurora-blue drop-shadow-lg">{formatPace(trackingState.stats.pace)}</p>
+                <p className="text-xs text-gray-500 mt-1">min/km</p>
               </div>
             </div>
+            
+            {/* Additional Stats Row */}
+            <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-white/10">
+              <div className="text-center">
+                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Points</p>
+                <p className="text-xl font-bold text-white">{trackingState.coordinates.length}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Speed</p>
+                <p className="text-xl font-bold text-white">
+                  {trackingState.stats.pace > 0 ? (60 / trackingState.stats.pace).toFixed(1) : '0.0'} km/h
+                </p>
+              </div>
+            </div>
+            
             {trackingState.isPaused && (
-              <div className="mt-3 text-center">
-                <Badge className="bg-yellow-600 text-white">⏸️ Paused</Badge>
+              <div className="mt-4 text-center">
+                <Badge className="bg-yellow-600 text-white text-sm px-4 py-1">⏸️ Paused</Badge>
               </div>
             )}
           </div>

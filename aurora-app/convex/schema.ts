@@ -787,4 +787,67 @@ export default defineSchema({
     .index("by_grid", ["gridLat", "gridLng"])
     .index("by_score", ["overallScore"])
     .index("by_city", ["city"]),
+
+  // Comments - Reddit-style nested threading (Task 58.1)
+  comments: defineTable({
+    postId: v.id("posts"),
+    authorId: v.id("users"),
+    content: v.string(), // Comment text (max 2000 chars)
+    
+    // Nested threading support
+    parentId: v.optional(v.id("comments")), // null for top-level, ID for replies
+    depth: v.number(), // 0 for top-level, increments for each nesting level
+    
+    // Engagement
+    upvotes: v.number(), // Default: 0
+    downvotes: v.number(), // Default: 0
+    replyCount: v.number(), // Number of direct replies
+    
+    // Moderation
+    isDeleted: v.boolean(), // Soft delete
+    deletedAt: v.optional(v.number()),
+    moderationStatus: v.optional(v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("flagged")
+    )),
+  })
+    .index("by_post", ["postId"])
+    .index("by_author", ["authorId"])
+    .index("by_parent", ["parentId"]) // For fetching replies
+    .index("by_post_and_parent", ["postId", "parentId"]), // For efficient threading
+
+  // Health & Soul Sanctuary - Wellness Tracking (Task 56)
+  hydrationLogs: defineTable({
+    userId: v.id("users"),
+    date: v.string(), // YYYY-MM-DD format for daily tracking
+    glasses: v.number(), // Number of glasses consumed
+    goal: v.number(), // Daily goal (default: 8)
+    completed: v.boolean(), // Whether goal was reached
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_date", ["userId", "date"]),
+
+  emotionalCheckins: defineTable({
+    userId: v.id("users"),
+    date: v.string(), // YYYY-MM-DD format
+    mood: v.number(), // 1-5 scale (1=😢, 2=😐, 3=😊, 4=😄, 5=🤩)
+    journal: v.optional(v.string()), // Optional journal entry (max 500 chars)
+    tags: v.optional(v.array(v.string())), // Mood tags (e.g., "stressed", "happy", "anxious")
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_date", ["userId", "date"]),
+
+  meditationSessions: defineTable({
+    userId: v.id("users"),
+    duration: v.number(), // Duration in minutes (5, 10, 15)
+    type: v.union(
+      v.literal("breathing"),
+      v.literal("guided"),
+      v.literal("mindfulness")
+    ),
+    completed: v.boolean(),
+    creditsEarned: v.number(), // 5 credits per session
+  })
+    .index("by_user", ["userId"]),
 });

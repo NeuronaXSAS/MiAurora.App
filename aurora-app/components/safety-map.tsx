@@ -341,10 +341,11 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
   };
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full" style={{ minHeight: '100dvh' }}>
       <div 
         ref={mapContainer} 
-        className={`w-full h-full rounded-lg ${isSelectingLocation ? 'cursor-crosshair' : ''}`}
+        className={`w-full rounded-lg ${isSelectingLocation ? 'cursor-crosshair' : ''}`}
+        style={{ height: '100dvh' }}
       />
 
       {/* Search Bar */}

@@ -5,6 +5,17 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Aurora Brand Colors - Trinity Architecture */
+  --color-aurora-cream: #fffaf1;
+  --color-aurora-violet: #3d0d73;
+  --color-aurora-lavender: #c9cef4;
+  --color-aurora-blue: #2e2ad6;
+  --color-aurora-orange: #ec4c28;
+  --color-aurora-pink: #f29de5;
+  --color-aurora-mint: #d6f4ec;
+  --color-aurora-yellow: #e5e093;
+  
+  /* Existing theme colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);

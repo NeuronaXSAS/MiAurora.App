@@ -19,6 +19,227 @@ The application follows a component-based architecture with clear separation bet
 
 **Design Philosophy:** Purpose over popularity. Every feature must demonstrably help women be safer, more connected, or more successful.
 
+## Trinity Architecture - The Three Pillars
+
+Aurora App is organized around three foundational pillars that consolidate all features into a cohesive, purposeful experience. This architecture replaces scattered navigation with clear, mission-driven organization.
+
+### Pillar 1: HEALTH & SOUL (The Sanctuary) 🧘
+
+**Mission:** Mental balance, self-care, and emotional release.
+
+**Design Inspiration:** Flo (empathy) + Calm (serenity) + Pi.ai (support)
+
+**Primary Interface:** Profile page redesigned as Personal Dashboard
+
+**Color Palette:** Soft Pink (#f29de5), Mint Green (#d6f4ec), Lavender (#c9cef4)
+
+**Integrated Features:**
+- **Hydration Tracker:** Visual widget showing filling water bottle (Mint Green)
+- **Emotional Check-in:** Daily mood slider with emoji-based logging
+- **Aurora AI Chat:** Positioned as "Digital Therapist" with mental health metrics output
+- **Meditation/Growth:** Mindfulness and breathing exercises with CSS animations
+- **Privacy/Settings:** Account management, data controls, GDPR compliance tools
+- **Profile Stats:** Credits, trust score, badges, impact metrics
+
+**UX Principles:**
+- Warm, nurturing color scheme
+- Gentle animations and transitions
+- Private, safe space feeling
+- Minimal cognitive load
+- Focus on self-reflection and growth
+
+### Pillar 2: MOBILITY & SAFETY (The Guardian) 🗺️
+
+**Mission:** Safe movement, environmental dominance, and emergency response.
+
+**Design Inspiration:** Careem/Uber (UX patterns) + Strava (tracking) + Citymapper (clarity)
+
+**Primary Interface:** Safety Map as base layer with glassmorphism bottom sheets
+
+**Color Palette:** Electric Blue (#2e2ad6), Vibrant Orange (#ec4c28), Mint Green (#d6f4ec)
+
+**Integrated Features:**
+- **Active Tracking:** Strava-style route recording with large metrics display
+- **Route Discovery:** Community routes with safety ratings and static map previews
+- **Safety Map:** Heatmap, markers, real-time location, safe zones
+- **Sister Accompaniment:** Request virtual/physical company from trusted circle
+- **Panic Button:** Nuclear option floating above all UI in Vibrant Orange
+- **Navigation:** Turn-by-turn with safety-optimized routing
+
+**UX Principles:**
+- Map-first interface (always visible)
+- Glassmorphism for overlays (backdrop-blur)
+- High contrast for outdoor visibility
+- Large touch targets for mobile
+- Emergency features always accessible
+- Real-time GPS tracking with persistence
+
+**Critical Technical Requirements:**
+- Map container: `height: 100dvh` (dynamic viewport height)
+- LocalStorage persistence for route coordinates (save every 5s)
+- Mapbox Static Images API for feed previews (not interactive maps)
+- Interactive maps only in detail views
+- Wake Lock API for screen-dimmed tracking
+
+### Pillar 3: SOCIAL & OPPORTUNITY (The Village) 🤝
+
+**Mission:** Connection, financial independence, and entertainment.
+
+**Design Inspiration:** TikTok (discovery) + LinkedIn (growth) + Bumble BFF (connection) + Reddit (discourse)
+
+**Primary Interface:** Unified vertical scroll feed
+
+**Color Palette:** Electric Blue (#2e2ad6), Pale Yellow (#e5e093), Lavender (#c9cef4)
+
+**Integrated Features:**
+- **Unified Feed:** Posts, Reels, Opportunities, Polls, AI Chats in single stream
+- **Nested Comments:** Reddit-style threading with parentId support
+- **Opportunities:** Job/mentorship cards integrated into feed (LinkedIn-style)
+- **Skill Building:** Micro-learning cards for interviews, safety, coding
+- **Monetization:** Native AdSense every 5th item (free tier), Premium removes ads
+- **Reels:** TikTok-style vertical video with AI safety overlays
+- **Polls:** Community voting with real-time results
+- **Direct Messages:** Private conversations with trust scores
+
+**UX Principles:**
+- Infinite scroll with lazy loading
+- Content diversity (no more than 2 of same type in a row)
+- Native ad styling (matches Aurora design)
+- Engagement-optimized (likes, comments, shares)
+- Discovery algorithms (trending, personalized)
+- Mobile-first vertical layout
+
+**Monetization Integration:**
+- Free tier: AdSense every 5th item
+- Premium tier ($7/mo): Ad-free, unlimited AI, priority support
+- Marketplace: 15% commission on services
+- B2B Intelligence: Corporate & Urban Safety Index APIs
+
+### Navigation Architecture
+
+**Mobile (Bottom Navigation Bar):**
+```
+┌─────────────────────────────────────────┐
+│                                         │
+│         [Content Area]                  │
+│                                         │
+│                                         │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│  🧘 Health    🗺️ Mobility    🤝 Social  │
+│  Sanctuary     Guardian       Village   │
+└─────────────────────────────────────────┘
+Background: Deep Violet (#3d0d73)
+Active Tab: Electric Blue (#2e2ad6)
+```
+
+**Desktop (Sidebar Navigation):**
+```
+┌──────────┬──────────────────────────────┐
+│  AURORA  │                              │
+│          │                              │
+│ 🧘 Health│      [Content Area]          │
+│ 🗺️ Mobility│                            │
+│ 🤝 Social│                              │
+│          │                              │
+│ Settings │                              │
+│ Logout   │                              │
+└──────────┴──────────────────────────────┘
+```
+
+### Feature Consolidation Map
+
+**All existing features mapped to pillars:**
+
+| Feature | Pillar | Rationale |
+|---------|--------|-----------|
+| Profile, Credits, Trust Score | Health & Soul | Personal growth tracking |
+| AI Assistant | Health & Soul | Mental health support |
+| Hydration Tracker (NEW) | Health & Soul | Physical wellness |
+| Emotional Check-in (NEW) | Health & Soul | Mental wellness |
+| Privacy Settings | Health & Soul | Personal safety |
+| Safety Map | Mobility & Safety | Core navigation |
+| Route Tracking | Mobility & Safety | Movement intelligence |
+| Route Discovery | Mobility & Safety | Community routes |
+| Panic Button | Mobility & Safety | Emergency response |
+| Sister Accompaniment (NEW) | Mobility & Safety | Companion requests |
+| Feed (Posts) | Social & Opportunity | Community content |
+| Reels | Social & Opportunity | Video entertainment |
+| Livestreaming | Social & Opportunity | Real-time connection |
+| Opportunities | Social & Opportunity | Career advancement |
+| Comments, Votes | Social & Opportunity | Engagement |
+| Polls | Social & Opportunity | Community voice |
+| Direct Messages | Social & Opportunity | Private connection |
+| Skill Building (NEW) | Social & Opportunity | Micro-learning |
+
+### Design System Integration
+
+**Aurora Brand Palette (Strict Compliance):**
+
+```typescript
+// tailwind.config.ts - Aurora Brand Colors
+export default {
+  theme: {
+    extend: {
+      colors: {
+        aurora: {
+          // Atmosphere (Backgrounds)
+          cream: '#fffaf1',      // Light mode primary
+          violet: '#3d0d73',     // Dark mode primary, bottom nav
+          lavender: '#c9cef4',   // Cards, inputs, secondary
+          
+          // Energy (Interaction)
+          blue: '#2e2ad6',       // Primary buttons, routes, active tabs
+          orange: '#ec4c28',     // Panic, alerts, recording
+          
+          // Feeling (Status)
+          pink: '#f29de5',       // Health widgets, love, feminine
+          mint: '#d6f4ec',       // Safe zones, verified, success
+          yellow: '#e5e093',     // Gamification, credits, coins
+        },
+      },
+    },
+  },
+};
+```
+
+**Usage Rules:**
+- NEVER use generic Tailwind colors (bg-blue-500, text-red-600)
+- ALWAYS use Aurora palette (bg-aurora-blue, text-aurora-orange)
+- Panic Button MUST be aurora-orange
+- Primary CTAs MUST be aurora-blue
+- Safe zones MUST be aurora-mint
+- Credits/coins MUST be aurora-yellow
+
+**Component Styling Standards:**
+- Border radius: 8px (cards), 12px (buttons), 24px (modals)
+- Shadows: subtle elevation with blur
+- Glassmorphism: `backdrop-blur-md bg-white/80`
+- Animations: 200-400ms duration, ease-in-out
+- Typography: System fonts, clear hierarchy
+- Spacing: 4px grid system (4, 8, 12, 16, 24, 32, 48, 64)
+
+### Responsive Behavior
+
+**Mobile-First Approach:**
+- Bottom navigation always visible
+- Full-screen pillar experiences
+- Swipe gestures for navigation
+- Touch targets minimum 44px
+- Map uses 100dvh for proper mobile rendering
+
+**Desktop Enhancement:**
+- Sidebar navigation with labels
+- Multi-column layouts where appropriate
+- Hover states and tooltips
+- Keyboard shortcuts
+- Wider content areas (max-width: 1200px)
+
+**Breakpoints:**
+- Mobile: < 768px
+- Tablet: 768px - 1024px
+- Desktop: > 1024px
+
 ## Architecture
 
 ### High-Level Architecture

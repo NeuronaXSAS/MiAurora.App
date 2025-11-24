@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, Sparkles, Loader2, Share2, Mic, MessageSquare } from "lucide-react";
+import { Send, Sparkles, Loader2, Share2, Mic, MessageSquare, Heart, Brain } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 
 export default function AssistantPage() {
@@ -83,19 +83,19 @@ export default function AssistantPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-950 via-[#1e1b4b] to-slate-900">
-      {/* Header */}
-      <div className="backdrop-blur-xl bg-white/5 border-b border-white/10">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-950 via-purple-950/30 to-pink-950/20">
+      {/* Sanctuary Header */}
+      <div className="backdrop-blur-xl bg-gradient-to-r from-aurora-lavender/20 to-aurora-pink/20 border-b border-aurora-lavender/20">
         <div className="px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/50">
-                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-aurora-lavender to-aurora-pink rounded-full flex items-center justify-center flex-shrink-0 shadow-lg shadow-aurora-lavender/50">
+                <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">AI Companion</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-aurora-lavender to-aurora-pink">Your Digital Therapist</h1>
                 <p className="text-xs sm:text-sm text-gray-300 truncate">
-                  Chat or talk with Aurora
+                  A safe space for your thoughts and feelings
                 </p>
               </div>
             </div>
@@ -114,12 +114,12 @@ export default function AssistantPage() {
           
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-            <TabsList className="bg-white/10 border border-white/20">
-              <TabsTrigger value="chat" className="data-[state=active]:bg-purple-600">
+            <TabsList className="bg-aurora-lavender/10 border border-aurora-lavender/30">
+              <TabsTrigger value="chat" className="data-[state=active]:bg-aurora-lavender data-[state=active]:text-slate-900">
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Text Chat
               </TabsTrigger>
-              <TabsTrigger value="voice" className="data-[state=active]:bg-purple-600">
+              <TabsTrigger value="voice" className="data-[state=active]:bg-aurora-lavender data-[state=active]:text-slate-900">
                 <Mic className="w-4 h-4 mr-2" />
                 Voice Companion
               </TabsTrigger>
@@ -141,27 +141,33 @@ export default function AssistantPage() {
           <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
           {/* Welcome Message */}
           {(!messages || messages.length === 0) && (
-            <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg p-6 shadow-2xl">
+            <div className="backdrop-blur-xl bg-aurora-lavender/10 border border-aurora-lavender/30 rounded-lg p-6 shadow-2xl">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/50">
-                  <Sparkles className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 bg-gradient-to-br from-aurora-lavender to-aurora-pink rounded-full flex items-center justify-center flex-shrink-0 shadow-lg shadow-aurora-lavender/50">
+                  <Heart className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2 text-white">
-                    Hi {user?.name && user.name !== 'null' ? user.name.split(" ")[0] : "there"}! 👋
+                    Welcome to your safe space, {user?.name && user.name !== 'null' ? user.name.split(" ")[0] : "friend"} 💜
                   </h3>
                   <p className="text-gray-300 mb-4">
-                    I'm Aurora, your AI assistant. I'm here to help you with:
+                    I'm here to support your mental and emotional wellbeing. This is a judgment-free zone where you can:
                   </p>
                   <ul className="space-y-2 text-sm text-gray-300">
-                    <li>• Career advice and job search strategies</li>
-                    <li>• Safety recommendations for workplaces and locations</li>
-                    <li>• Navigating opportunities on the platform</li>
-                    <li>• Tips on earning more credits</li>
-                    <li>• Any questions about your career journey</li>
+                    <li>• Share your thoughts and feelings openly</li>
+                    <li>• Get career guidance and professional advice</li>
+                    <li>• Discuss workplace challenges and safety concerns</li>
+                    <li>• Explore opportunities for growth and development</li>
+                    <li>• Receive emotional support and encouragement</li>
+                    <li>• Practice self-reflection and mindfulness</li>
                   </ul>
+                  <div className="mt-4 p-3 bg-aurora-pink/10 border border-aurora-pink/20 rounded-lg">
+                    <p className="text-sm text-gray-200 italic">
+                      💡 Remember: While I'm here to support you, I'm an AI assistant. For serious mental health concerns, please reach out to a licensed professional.
+                    </p>
+                  </div>
                   <p className="text-gray-300 mt-4">
-                    What would you like to know?
+                    What's on your mind today?
                   </p>
                 </div>
               </div>
@@ -177,8 +183,8 @@ export default function AssistantPage() {
               }`}
             >
               {msg.role === "assistant" ? (
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-aurora-lavender to-aurora-pink rounded-full flex items-center justify-center flex-shrink-0 shadow-lg shadow-aurora-lavender/30">
+                  <Heart className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                 </div>
               ) : (
                 <Avatar className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10">
@@ -188,27 +194,27 @@ export default function AssistantPage() {
                 </Avatar>
               )}
               <div
-                className={`rounded-lg p-3 sm:p-4 max-w-[85%] sm:max-w-[80%] ${
+                className={`rounded-lg p-3 sm:p-4 max-w-[85%] sm:max-w-[80%] transition-all duration-300 ${
                   msg.role === "user"
-                    ? "bg-gradient-to-br from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/30"
-                    : "backdrop-blur-xl bg-white/10 border border-white/20 text-white shadow-lg"
+                    ? "bg-gradient-to-br from-aurora-pink/80 to-aurora-pink text-white shadow-lg shadow-aurora-pink/30"
+                    : "backdrop-blur-xl bg-aurora-lavender/10 border border-aurora-lavender/30 text-white shadow-lg"
                 }`}
               >
-                <p className="whitespace-pre-wrap text-sm sm:text-base">{msg.content}</p>
+                <p className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed">{msg.content}</p>
               </div>
             </div>
           ))}
 
           {/* Loading Indicator */}
           {isLoading && (
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/50">
-                <Sparkles className="w-6 h-6 text-white" />
+            <div className="flex items-start gap-4 animate-in fade-in duration-300">
+              <div className="w-10 h-10 bg-gradient-to-br from-aurora-lavender to-aurora-pink rounded-full flex items-center justify-center flex-shrink-0 shadow-lg shadow-aurora-lavender/50">
+                <Heart className="w-6 h-6 text-white animate-pulse" />
               </div>
-              <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg p-4 shadow-lg">
+              <div className="backdrop-blur-xl bg-aurora-lavender/10 border border-aurora-lavender/30 rounded-lg p-4 shadow-lg">
                 <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
-                  <span className="text-gray-300">Aurora is thinking...</span>
+                  <Loader2 className="w-4 h-4 animate-spin text-aurora-lavender" />
+                  <span className="text-gray-300">Listening and reflecting...</span>
                 </div>
               </div>
             </div>
@@ -228,15 +234,15 @@ export default function AssistantPage() {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask me anything about your career, safety, or opportunities..."
-                className="flex-1 min-h-[60px] max-h-[200px] bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                placeholder="Share what's on your mind... I'm here to listen 💜"
+                className="flex-1 min-h-[60px] max-h-[200px] bg-aurora-lavender/5 border-aurora-lavender/30 text-white placeholder:text-gray-400 focus:border-aurora-lavender/50 transition-colors"
                 disabled={isLoading}
               />
               <Button
                 onClick={handleSend}
                 disabled={!message.trim() || isLoading}
                 size="lg"
-                className="px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                className="px-6 bg-gradient-to-r from-aurora-lavender to-aurora-pink hover:from-aurora-lavender/90 hover:to-aurora-pink/90 text-white shadow-lg shadow-aurora-lavender/30"
               >
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -245,8 +251,9 @@ export default function AssistantPage() {
                 )}
               </Button>
             </div>
-            <p className="text-xs text-gray-400 mt-2">
-              Press Enter to send, Shift+Enter for new line
+            <p className="text-xs text-gray-400 mt-2 flex items-center gap-2">
+              <Brain className="w-3 h-3" />
+              This is a safe, confidential space • Press Enter to send, Shift+Enter for new line
             </p>
           </div>
         </div>

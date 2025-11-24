@@ -169,14 +169,21 @@ export function VideoRecorder({
   };
 
   const flipCamera = async () => {
-    // Stop current camera
-    stopCamera();
-    
-    // Toggle facing mode
-    const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
-    setFacingMode(newFacingMode);
-    
-    // Restart camera with new facing mode will happen via useEffect
+    try {
+      // Stop current camera
+      stopCamera();
+      
+      // Toggle facing mode
+      const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
+      setFacingMode(newFacingMode);
+      
+      // Restart camera with new facing mode will happen via useEffect
+      // Show a brief loading state
+      setError(null);
+    } catch (err) {
+      console.error('Failed to flip camera:', err);
+      setError('Failed to switch camera');
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -240,14 +247,23 @@ export function VideoRecorder({
           )}
 
           {state === 'idle' && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={flipCamera}
-              className="text-white hover:bg-white/20"
-            >
-              <RotateCw className="h-6 w-6" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Camera Mode Indicator */}
+              <div className="px-3 py-1 bg-black/50 rounded-full text-white text-xs font-medium">
+                {facingMode === 'user' ? '🤳 Front' : '📷 Back'}
+              </div>
+              
+              {/* Flip Camera Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={flipCamera}
+                className="text-white hover:bg-white/20 transition-transform hover:rotate-180 duration-300"
+                title="Flip Camera"
+              >
+                <RotateCw className="h-6 w-6" />
+              </Button>
+            </div>
           )}
         </div>
       </div>

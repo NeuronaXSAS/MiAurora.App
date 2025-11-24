@@ -29,11 +29,12 @@ export const generateAgoraToken = action({
   },
   handler: async (ctx, args) => {
     // Get Agora credentials from environment
-    const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
+    // Note: In Convex actions, use process.env (not NEXT_PUBLIC_)
+    const appId = process.env.AGORA_APP_ID || process.env.NEXT_PUBLIC_AGORA_APP_ID;
     const appCertificate = process.env.AGORA_APP_CERTIFICATE;
     
     if (!appId) {
-      throw new Error('AGORA_APP_ID not configured. Check docs/ENV_MASTER_GUIDE.md');
+      throw new Error('AGORA_APP_ID not configured in Convex environment variables. Add it in Convex dashboard.');
     }
 
     // Check if we're in secure mode (with certificate) or test mode
@@ -112,7 +113,7 @@ export const generateAgoraToken = action({
 export const validateAgoraConfig = action({
   args: {},
   handler: async (ctx, args) => {
-    const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
+    const appId = process.env.AGORA_APP_ID || process.env.NEXT_PUBLIC_AGORA_APP_ID;
     const appCertificate = process.env.AGORA_APP_CERTIFICATE;
 
     return {

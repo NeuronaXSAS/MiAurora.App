@@ -6,6 +6,18 @@ Aurora App is a Global Safety Intelligence Platform designed to be "the front pa
 
 By combining Reddit-style community engagement with a credit-based incentive system, AI-powered personalization, and systematic data collection, Aurora App creates a flywheel where participation directly benefits each woman's life trajectory while building collective safety and opportunity intelligence. The platform's backend systematically collects, structures, and analyzes mobility patterns, workplace safety scores, and urban risk data to create sustainable business models through B2B/B2G data intelligence and direct monetization.
 
+### Trinity Architecture
+
+Aurora App is organized around three foundational pillars that guide all feature development and user experience:
+
+1. **HEALTH & SOUL (The Sanctuary)** 🧘 - Mental balance, self-care, and emotional release. Inspired by Flo, Calm, and Pi.ai, this pillar transforms the Profile into a Personal Dashboard with hydration tracking, emotional check-ins, AI therapy, meditation, and privacy controls.
+
+2. **MOBILITY & SAFETY (The Guardian)** 🗺️ - Safe movement, environmental dominance, and emergency response. Drawing from Careem/Uber UX, Strava tracking, and Citymapper clarity, this pillar centers on the Safety Map with active tracking, route discovery, sister accompaniment, and the panic button.
+
+3. **SOCIAL & OPPORTUNITY (The Village)** 🤝 - Connection, financial independence, and entertainment. Combining TikTok discovery, LinkedIn growth, Bumble BFF connection, and Reddit discourse, this pillar delivers a unified vertical scroll feed with reels, posts, opportunities, nested comments, and skill-building content.
+
+All existing features are consolidated into these three pillars, with navigation redesigned around this Trinity structure for clarity and purpose.
+
 ## Glossary
 
 - **Aurora App**: The complete platform system including web application, database, AI services, and data intelligence infrastructure
@@ -500,3 +512,122 @@ By combining Reddit-style community engagement with a credit-based incentive sys
 13. THE Aurora App SHALL implement rate limiting on all API endpoints to prevent abuse (1000 requests per hour per User)
 14. THE Aurora App SHALL monitor Core Web Vitals (LCP, FID, CLS) and alert when metrics degrade below thresholds
 15. THE Aurora App SHALL implement automated performance testing in CI/CD pipeline failing builds that regress performance by more than 10%
+
+### Requirement 34: Trinity Architecture - Navigation & Information Architecture
+
+**User Story:** As a user, I want clear, purposeful navigation organized around the three pillars of Aurora, so that I can quickly access the features that matter most to my current needs.
+
+#### Acceptance Criteria
+
+1. WHEN a User accesses Aurora App on mobile, THE Aurora App SHALL display a bottom navigation bar with three primary tabs representing Health & Soul, Mobility & Safety, and Social & Opportunity
+2. THE Aurora App SHALL use Deep Violet (#3d0d73) as the background color for the mobile bottom navigation bar
+3. WHEN a User taps the Health & Soul tab, THE Aurora App SHALL navigate to the Personal Dashboard (Profile page redesigned as Sanctuary)
+4. WHEN a User taps the Mobility & Safety tab, THE Aurora App SHALL navigate to the Safety Map with Guardian features
+5. WHEN a User taps the Social & Opportunity tab, THE Aurora App SHALL navigate to the unified vertical scroll feed
+6. WHEN a User accesses Aurora App on desktop, THE Aurora App SHALL display a sidebar navigation with the three pillars clearly labeled and iconified
+7. THE Aurora App SHALL use consistent iconography for each pillar (Health: lotus/heart, Mobility: shield/map, Social: people/network)
+8. WHEN a User is on any page, THE Aurora App SHALL highlight the active pillar in the navigation to provide clear wayfinding
+9. THE Aurora App SHALL consolidate all existing features into one of the three pillars without orphaning any functionality
+10. THE Aurora App SHALL provide contextual sub-navigation within each pillar for accessing related features
+
+### Requirement 35: Aurora Brand System - Visual Identity & Design Language
+
+**User Story:** As a user, I want Aurora App to have a distinctive, cohesive visual identity that feels warm, safe, and empowering, so that the platform feels trustworthy and purpose-built for women.
+
+#### Acceptance Criteria
+
+1. THE Aurora App SHALL use Cream White (#fffaf1) as the primary background color in Light Mode
+2. THE Aurora App SHALL use Deep Violet (#3d0d73) as the primary background color in Dark Mode and for the bottom navigation bar
+3. THE Aurora App SHALL use Lavender (#c9cef4) for card backgrounds, input fields, and secondary containers
+4. THE Aurora App SHALL use Electric Blue (#2e2ad6) for primary buttons, route lines on maps, active tabs, and primary call-to-action elements
+5. THE Aurora App SHALL use Vibrant Orange (#ec4c28) exclusively for the Panic Button, critical alerts, and recording indicators
+6. THE Aurora App SHALL use Soft Pink (#f29de5) for Health & Soul widgets, "love" interactions, and feminine accent elements
+7. THE Aurora App SHALL use Mint Green (#d6f4ec) for safe zones on maps, verified badges, and success toast notifications
+8. THE Aurora App SHALL use Pale Yellow (#e5e093) for gamification elements, credit displays, and coin animations
+9. THE Aurora App SHALL NOT use generic Tailwind color classes (e.g., bg-blue-500) and SHALL instead use the Aurora Brand palette exclusively
+10. THE Aurora App SHALL maintain consistent typography with clear hierarchy using system fonts optimized for readability
+11. THE Aurora App SHALL use glassmorphism effects (backdrop-blur with semi-transparent backgrounds) for bottom sheets and overlays on the Safety Map
+12. THE Aurora App SHALL implement smooth, purposeful animations with durations between 200-400ms for micro-interactions
+13. THE Aurora App SHALL ensure all color combinations meet WCAG AA accessibility standards for contrast ratios
+14. THE Aurora App SHALL use rounded corners consistently (8px for cards, 12px for buttons, 24px for modals)
+15. THE Aurora App SHALL implement a cohesive icon system with consistent stroke weights and visual style
+
+### Requirement 36: Trinity Architecture - Pillar-Specific Features & Integration
+
+**User Story:** As a user, I want each pillar to deliver a focused, cohesive experience with all related features integrated seamlessly, so that I can accomplish my goals without navigating through unrelated content.
+
+#### Acceptance Criteria
+
+1. WHEN a User accesses Health & Soul (Sanctuary), THE Aurora App SHALL display a Personal Dashboard with hydration tracker, emotional check-in, AI chat, meditation section, and privacy settings
+2. THE Aurora App SHALL implement a hydration tracker widget displaying a visual filling water bottle using Mint Green (#d6f4ec)
+3. THE Aurora App SHALL implement a daily emotional check-in with emoji-based mood slider that logs mood data to the database
+4. WHEN a User accesses Mobility & Safety (Guardian), THE Aurora App SHALL display the Safety Map as the base layer with all mobility features accessible via bottom sheets
+5. THE Aurora App SHALL implement "Active Tracking" mode displaying large metrics (Distance, Time, Pace) in Electric Blue (#2e2ad6) with Strava-style visual design
+6. THE Aurora App SHALL fix the "Ghost Map" bug where route lines draw on blank backgrounds by enforcing height: 100dvh on map containers and implementing LocalStorage persistence for route coordinates
+7. WHEN a User views saved routes in the feed, THE Aurora App SHALL use Mapbox Static Images API to generate thumbnail previews instead of rendering interactive maps
+8. WHEN a User views route details, THE Aurora App SHALL render a fully interactive Mapbox map with the complete route path
+9. THE Aurora App SHALL implement "Sister Accompaniment" feature allowing Users to post requests for virtual or physical company to trusted circles or nearby verified Users
+10. WHEN a User accesses Social & Opportunity (Village), THE Aurora App SHALL display a unified vertical scroll feed containing posts, reels, opportunities, polls, and AI chat shares
+11. THE Aurora App SHALL implement Reddit-style nested comments with proper parentId support in the database schema allowing replies to replies
+12. THE Aurora App SHALL inject native AdSense components every 5th item (index % 5 === 0) in the feed for free-tier users
+13. THE Aurora App SHALL style AdSense components to match Aurora design language with Cream background and "Sponsored" tag
+14. THE Aurora App SHALL implement a Premium tier ($7/month) that removes all advertisements and provides unlimited AI assistant queries
+15. THE Aurora App SHALL integrate skill-building micro-learning cards directly into the Social feed with tips for interviews, safety, and career development
+
+### Requirement 37: Critical Bug Fixes & Technical Debt Resolution
+
+**User Story:** As a user, I want Aurora App to work reliably without critical bugs, so that I can trust the platform for safety-critical features like route tracking and emergency alerts.
+
+#### Acceptance Criteria
+
+1. WHEN a User tracks a route on mobile, THE Aurora App SHALL maintain map rendering at 100dvh height without collapsing to 0 height or showing blank tiles
+2. THE Aurora App SHALL implement LocalStorage persistence for route coordinates, saving the array every 5 seconds during active tracking
+3. WHEN the Aurora App reloads during route tracking, THE Aurora App SHALL restore the route line immediately from LocalStorage without data loss
+4. WHEN a User's phone screen locks during route tracking, THE Aurora App SHALL prevent state loss by maintaining the tracking session in memory
+5. THE Aurora App SHALL implement nested comment functionality with parentId field in the comments schema allowing Users to reply to specific comments
+6. THE Aurora App SHALL render nested comments with visual indentation (Reddit-style threading) up to 5 levels deep
+7. WHEN a User accesses the Reels camera on /reels/create, THE Aurora App SHALL wrap navigator.mediaDevices.getUserMedia in try-catch error boundary to prevent client-side exceptions
+8. THE Aurora App SHALL implement a "Flip Camera" button on the Reels recorder that toggles between facingMode: 'user' and facingMode: 'environment'
+9. THE Aurora App SHALL ensure the Livestreaming feature is visible and accessible from the main navigation without being hidden
+10. THE Aurora App SHALL connect Agora SDK logic to the Livestreaming UI components ensuring proper initialization and cleanup
+11. WHEN a User creates a route share in the feed, THE Aurora App SHALL generate a Mapbox Static Image thumbnail using the Static Images API with the route polyline overlay
+12. THE Aurora App SHALL limit interactive Mapbox map rendering to detail views only, using static images for all feed previews to prevent mobile browser crashes
+13. THE Aurora App SHALL implement proper error boundaries around all map components to gracefully handle rendering failures
+14. THE Aurora App SHALL fix any TypeScript compilation errors preventing production builds
+15. THE Aurora App SHALL resolve all critical console errors and warnings visible in browser developer tools
+
+### Requirement 38: Panic Button 2.0 - Smart Emergency Response System
+
+**User Story:** As a user in a dangerous situation, I want the Panic Button to trigger multiple emergency responses simultaneously, so that I can get help as quickly as possible through multiple channels.
+
+#### Acceptance Criteria
+
+1. WHEN a User long-presses the Panic Button for 3 seconds, THE Aurora App SHALL trigger all emergency response actions simultaneously
+2. THE Aurora App SHALL auto-publish a "CRITICAL HELP" post to the Global Feed with the User's current GPS location displayed as a pulsing red map pin
+3. THE Aurora App SHALL generate a WhatsApp deep link with pre-filled message "I need help! My location: [Google Maps Link]" and open WhatsApp automatically
+4. THE Aurora App SHALL send push notifications to all Users within a 5km radius with the message "Emergency Alert Nearby - User Needs Help"
+5. THE Aurora App SHALL display the emergency post at the top of all feeds with highest priority, styled in Vibrant Orange (#ec4c28) with pulsing animation
+6. THE Aurora App SHALL include a "Respond" button on emergency posts allowing nearby Users to indicate they are on their way to help
+7. THE Aurora App SHALL track emergency response metrics including time to first response, number of responders, and resolution time
+8. THE Aurora App SHALL allow the User to mark the emergency as "Resolved" which removes the post from priority display
+9. THE Aurora App SHALL store emergency activation history in the User's profile for safety analytics
+10. THE Aurora App SHALL implement a "Test Mode" for the Panic Button that simulates the flow without sending real alerts
+
+### Requirement 39: Monetization Strategy - AdSense Integration & Premium Tier
+
+**User Story:** As a platform operator, I want to generate revenue through non-intrusive advertising and premium subscriptions, so that Aurora App can achieve financial sustainability while maintaining a positive user experience.
+
+#### Acceptance Criteria
+
+1. THE Aurora App SHALL integrate Google AdSense for native advertising in the Social & Opportunity feed
+2. THE Aurora App SHALL create a NativeAdSlot component styled to match Aurora design language with Cream White (#fffaf1) background and "Sponsored" label
+3. THE Aurora App SHALL inject NativeAdSlot components into the feed at every 5th position (index % 5 === 0) for free-tier Users
+4. THE Aurora App SHALL NOT display advertisements to Users with active Premium subscriptions
+5. THE Aurora App SHALL offer Aurora Premium subscription at $7/month providing ad-free experience, unlimited AI assistant queries, priority support, and exclusive badges
+6. WHEN a User subscribes to Premium, THE Aurora App SHALL process payment through Stripe and activate premium features immediately
+7. THE Aurora App SHALL display a subtle "Upgrade to Premium" prompt after the 6th AI assistant message for free-tier Users
+8. THE Aurora App SHALL implement a glassmorphism Upgrade Card with benefits list and pricing when AI message limit is reached
+9. THE Aurora App SHALL track advertising revenue metrics including impressions, click-through rate, and eCPM
+10. THE Aurora App SHALL ensure AdSense implementation complies with Google's ad placement policies and does not negatively impact user experience
+11. THE Aurora App SHALL A/B test ad frequency (every 5th vs every 7th item) to optimize revenue without degrading engagement
+12. THE Aurora App SHALL provide Users with clear information about how advertising revenue supports platform safety features

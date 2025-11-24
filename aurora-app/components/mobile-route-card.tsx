@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, TrendingUp, MapPin, Shield, Users, Sun } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { generateRouteStaticImage, calculateOptimalZoom } from "@/lib/mapbox-static-images";
 
 interface MobileRouteCardProps {
   route: {
@@ -40,34 +41,24 @@ export function MobileRouteCard({ route, safetyInsight }: MobileRouteCardProps) 
   const durationMin = Math.round(route.duration / 60);
   const safetyScore = Math.round(route.rating * 20); // Convert 1-5 to 0-100
 
-  // Generate Mapbox Static Image URL with route polyline
-  const generateMapboxStaticUrl = () => {
-    const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-    const width = 600;
-    const height = 300;
-    
-    // Create simplified polyline (take every 10th point for performance)
-    const simplifiedCoords = route.coordinates
-      .filter((_, idx) => idx % 10 === 0)
-      .map(coord => `${coord.lng},${coord.lat}`)
-      .join(';');
-    
-    // Mapbox Static API with path overlay
-    const pathColor = safetyScore >= 70 ? '00ff00' : safetyScore >= 40 ? 'ffaa00' : 'ff0000';
-    const pathWidth = 4;
-    
-    return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/path-${pathWidth}+${pathColor}(${simplifiedCoords})/auto/${width}x${height}@2x?access_token=${mapboxToken}`;
-  };
+  // Generate optimized static map image using utility library
+  const staticMapUrl = generateRouteStaticImage(route.coordinates, {
+    width: 600,
+    height: 300,
+    zoom: calculateOptimalZoom(route.coordinates, 600, 300),
+    retina: true,
+  });
 
   return (
     <Link href={`/routes/discover/${route._id}`}>
       <Card className="overflow-hidden mb-4 shadow-lg hover:shadow-xl transition-shadow">
-        {/* Map Image */}
+        {/* Map Image - Static for Performance */}
         <div className="relative h-48 bg-gray-200">
           <img
-            src={generateMapboxStaticUrl()}
+            src={staticMapUrl}
             alt={route.title}
             className="w-full h-full object-cover"
+            loading="lazy"
           />
           {/* Safety Score Overlay */}
           <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg">

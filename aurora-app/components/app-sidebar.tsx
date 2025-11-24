@@ -24,6 +24,11 @@ import {
   FileText,
   Shield,
   Database,
+  Heart,
+  Users,
+  ChevronDown,
+  ChevronRight,
+  Video,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
@@ -41,6 +46,11 @@ export function AppSidebar() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPostDialog, setShowPostDialog] = useState(false);
   const [showPollDialog, setShowPollDialog] = useState(false);
+  const [expandedPillars, setExpandedPillars] = useState<Record<string, boolean>>({
+    health: true,
+    mobility: true,
+    social: true,
+  });
 
   // Get user ID
   useEffect(() => {
@@ -96,17 +106,72 @@ export function AppSidebar() {
     window.location.href = "/";
   };
 
-  const navItems = [
-    { href: "/feed", icon: Home, label: "Feed", description: "Your personalized feed" },
-    { href: "/reels", icon: Play, label: "Reels", description: "Safety videos" },
-    { href: "/routes", icon: Route, label: "Routes", description: "Track your movement" },
-    { href: "/map", icon: MapPin, label: "Safety Map", description: "Navigate safely" },
-    { href: "/opportunities", icon: Briefcase, label: "Opportunities", description: "Jobs & resources" },
-    { href: "/intelligence", icon: Database, label: "Intelligence", description: "B2B data platform" },
-    { href: "/messages", icon: Mail, label: "Messages", description: "Direct messages" },
-    { href: "/assistant", icon: MessageSquare, label: "AI Assistant", description: "Get personalized advice" },
-    { href: "/profile", icon: User, label: "Profile", description: "Your stats & credits" },
+  // Trinity Architecture Navigation Structure
+  const trinityPillars = [
+    {
+      id: "health",
+      name: "HEALTH & SOUL",
+      subtitle: "The Sanctuary",
+      icon: Heart,
+      color: "text-aurora-pink",
+      bgColor: "bg-aurora-pink/10",
+      borderColor: "border-aurora-pink/30",
+      items: [
+        { href: "/profile", icon: User, label: "Personal Dashboard", description: "Your wellness hub" },
+        { href: "/assistant", icon: MessageSquare, label: "AI Therapist", description: "Digital companion" },
+        { href: "/settings", icon: Settings, label: "Privacy & Settings", description: "Control your data" },
+      ],
+    },
+    {
+      id: "mobility",
+      name: "MOBILITY & SAFETY",
+      subtitle: "The Guardian",
+      icon: Shield,
+      color: "text-aurora-blue",
+      bgColor: "bg-aurora-blue/10",
+      borderColor: "border-aurora-blue/30",
+      items: [
+        { href: "/map", icon: MapPin, label: "Safety Map", description: "Navigate safely" },
+        { href: "/routes", icon: Route, label: "Aurora Routes", description: "Track & share routes" },
+      ],
+    },
+    {
+      id: "social",
+      name: "SOCIAL & OPPORTUNITY",
+      subtitle: "The Village",
+      icon: Users,
+      color: "text-aurora-lavender",
+      bgColor: "bg-aurora-lavender/10",
+      borderColor: "border-aurora-lavender/30",
+      items: [
+        { href: "/feed", icon: Home, label: "Community Feed", description: "Your personalized feed" },
+        { href: "/reels", icon: Play, label: "Aurora Reels", description: "Safety videos" },
+        { href: "/live", icon: Video, label: "Aurora Live", description: "Livestreaming" },
+        { href: "/opportunities", icon: Briefcase, label: "Opportunities", description: "Jobs & resources" },
+        { href: "/messages", icon: Mail, label: "Messages", description: "Direct messages" },
+      ],
+    },
   ];
+
+  const togglePillar = (pillarId: string) => {
+    setExpandedPillars((prev) => ({
+      ...prev,
+      [pillarId]: !prev[pillarId],
+    }));
+  };
+
+  const getActivePillar = () => {
+    for (const pillar of trinityPillars) {
+      for (const item of pillar.items) {
+        if (pathname === item.href || pathname.startsWith(item.href + "/")) {
+          return pillar.id;
+        }
+      }
+    }
+    return null;
+  };
+
+  const activePillar = getActivePillar();
 
   return (
     <>
@@ -213,32 +278,93 @@ export function AppSidebar() {
           </div>
         )}
 
-        {/* Navigation */}
-        <div className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
+        {/* Navigation - Trinity Architecture */}
+        <div className="flex-1 p-4 space-y-3 overflow-y-auto">
+          {trinityPillars.map((pillar) => {
+            const isPillarActive = activePillar === pillar.id;
+            const isExpanded = expandedPillars[pillar.id];
+            const PillarIcon = pillar.icon;
+
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <div
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
-                    isActive
-                      ? "bg-white/10 text-white shadow-lg shadow-purple-500/20"
-                      : "text-slate-400 hover:bg-white/5 hover:text-white"
+              <div key={pillar.id} className="space-y-1">
+                {/* Pillar Header */}
+                <button
+                  onClick={() => togglePillar(pillar.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
+                    isPillarActive
+                      ? `${pillar.bgColor} ${pillar.borderColor} border shadow-lg`
+                      : "hover:bg-white/5"
                   }`}
                 >
-                  <item.icon className="w-5 h-5" />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{item.label}</p>
-                    <p className={`text-xs ${isActive ? 'text-gray-300' : 'text-gray-500'}`}>{item.description}</p>
+                  <PillarIcon className={`w-5 h-5 ${isPillarActive ? pillar.color : "text-slate-400"}`} />
+                  <div className="flex-1 text-left">
+                    <p className={`font-bold text-xs tracking-wide ${isPillarActive ? "text-white" : "text-slate-400"}`}>
+                      {pillar.name}
+                    </p>
+                    <p className={`text-[10px] ${isPillarActive ? pillar.color : "text-slate-500"}`}>
+                      {pillar.subtitle}
+                    </p>
                   </div>
-                </div>
-              </Link>
+                  {isExpanded ? (
+                    <ChevronDown className={`w-4 h-4 ${isPillarActive ? pillar.color : "text-slate-400"}`} />
+                  ) : (
+                    <ChevronRight className={`w-4 h-4 ${isPillarActive ? pillar.color : "text-slate-400"}`} />
+                  )}
+                </button>
+
+                {/* Pillar Items */}
+                {isExpanded && (
+                  <div className="ml-4 space-y-1 border-l-2 border-white/5 pl-2">
+                    {pillar.items.map((item) => {
+                      const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <div
+                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+                              isActive
+                                ? `${pillar.bgColor} ${pillar.color} shadow-md`
+                                : "text-slate-400 hover:bg-white/5 hover:text-white"
+                            }`}
+                          >
+                            <item.icon className="w-4 h-4" />
+                            <div className="flex-1">
+                              <p className="font-medium text-sm">{item.label}</p>
+                              <p className={`text-xs ${isActive ? "text-slate-300" : "text-slate-500"}`}>
+                                {item.description}
+                              </p>
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
+
+          {/* Additional Links (not in pillars) */}
+          <div className="pt-3 border-t border-white/10">
+            <Link href="/intelligence" onClick={() => setIsMobileMenuOpen(false)}>
+              <div
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+                  pathname === "/intelligence"
+                    ? "bg-white/10 text-white shadow-lg shadow-purple-500/20"
+                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <Database className="w-5 h-5" />
+                <div className="flex-1">
+                  <p className="font-medium text-sm">Intelligence</p>
+                  <p className="text-xs text-slate-500">B2B data platform</p>
+                </div>
+              </div>
+            </Link>
+          </div>
         </div>
 
         {/* Settings & Logout */}

@@ -30,9 +30,13 @@ import {
   MapPin,
   Target,
   Edit,
+  Heart,
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
+import { HydrationTracker } from "@/components/health/hydration-tracker";
+import { EmotionalCheckin } from "@/components/health/emotional-checkin";
+import { MeditationSection } from "@/components/health/meditation-section";
 
 export default function ProfilePage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
@@ -186,9 +190,22 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-[#1e1b4b] to-slate-900">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600/90 to-pink-600/90 backdrop-blur-xl text-white border-b border-white/10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/30 to-pink-950/20">
+      {/* Sanctuary Header */}
+      <div className="bg-gradient-to-r from-aurora-pink/40 to-aurora-lavender/40 backdrop-blur-xl text-white border-b border-aurora-pink/20">
+        <div className="container mx-auto px-4 sm:px-6 py-4">
+          <div className="flex items-center gap-3 mb-2">
+            <Heart className="w-6 h-6 text-aurora-pink" />
+            <div>
+              <h1 className="text-2xl font-bold text-white">The Sanctuary</h1>
+              <p className="text-sm text-gray-200">Your Health & Soul Dashboard</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile Header */}
+      <div className="bg-gradient-to-r from-aurora-pink/20 to-aurora-lavender/20 backdrop-blur-xl text-white border-b border-white/10">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
           <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
             <Avatar className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 border-4 border-white">
@@ -280,10 +297,35 @@ export default function ProfilePage() {
       {/* Content */}
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Left Column - Stats */}
+          {/* Left Column - Wellness Widgets */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+            {/* Wellness Section */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-aurora-pink" />
+                Daily Wellness
+              </h2>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Hydration Tracker */}
+                {userId && <HydrationTracker userId={userId} />}
+                
+                {/* Emotional Check-in */}
+                {userId && <EmotionalCheckin userId={userId} />}
+              </div>
+
+              {/* Meditation Section - Full Width */}
+              {userId && <MeditationSection userId={userId} />}
+            </div>
+
+            {/* Stats Section */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-aurora-blue" />
+                Your Progress
+              </h2>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               <Card className="backdrop-blur-xl bg-white/10 border-white/20">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-gray-300">Credits</CardTitle>
@@ -380,10 +422,10 @@ export default function ProfilePage() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
+              </div>
 
-            {/* Impact */}
-            <Card className="backdrop-blur-xl bg-white/10 border-white/20">
+              {/* Impact */}
+              <Card className="backdrop-blur-xl bg-white/10 border-white/20">
               <CardHeader>
                 <CardTitle className="text-white">Your Impact</CardTitle>
               </CardHeader>
@@ -398,10 +440,10 @@ export default function ProfilePage() {
                   </p>
                 </div>
               </CardContent>
-            </Card>
+              </Card>
 
-            {/* Recent Activity */}
-            <Card className="backdrop-blur-xl bg-white/10 border-white/20">
+              {/* Recent Activity */}
+              <Card className="backdrop-blur-xl bg-white/10 border-white/20">
               <CardHeader>
                 <CardTitle className="text-white">Recent Activity</CardTitle>
               </CardHeader>
@@ -440,7 +482,8 @@ export default function ProfilePage() {
                   )}
                 </div>
               </CardContent>
-            </Card>
+              </Card>
+            </div>
           </div>
 
           {/* Right Column - Badges & Recent Posts */}
