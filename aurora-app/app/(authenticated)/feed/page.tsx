@@ -33,6 +33,7 @@ export default function FeedPage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [showQuests, setShowQuests] = useState(true);
   const router = useRouter();
 
   // Prevent hydration mismatch
@@ -186,19 +187,25 @@ export default function FeedPage() {
             </>
           )}
 
-          {/* Gamified Empty State */}
-          {feedItems && feedItems.length === 0 && (
+          {/* Gamified Empty State - Only when feed is empty AND quests are visible */}
+          {feedItems && feedItems.length === 0 && showQuests && (
             <div className="space-y-6">
-              <div className="text-center mb-8">
-                <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-purple-500/50 animate-pulse">
-                  <Sparkles className="w-10 h-10 text-white" />
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-2xl shadow-purple-500/50">
+                  <Sparkles className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                <h3 className="text-2xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
                   Welcome to Your Feed!
                 </h3>
-                <p className="text-gray-300">
+                <p className="text-gray-300 text-sm mb-3">
                   Complete these steps to get started and earn credits
                 </p>
+                <button
+                  onClick={() => setShowQuests(false)}
+                  className="text-xs text-gray-400 hover:text-white transition-colors underline"
+                >
+                  Hide quests
+                </button>
               </div>
 
               <div className="grid gap-4">
@@ -262,15 +269,22 @@ export default function FeedPage() {
                   </Link>
                 </motion.div>
 
-                {/* Share Experience */}
+                {/* Share Experience - Opens Create Modal */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <Link href="/feed">
-                    <div className="group relative backdrop-blur-xl bg-white/10 border-2 border-green-500/30 rounded-2xl p-6 hover:border-green-400 hover:bg-white/15 transition-all cursor-pointer overflow-hidden shadow-2xl hover:shadow-green-500/30"
-                    >
+                  <div
+                    onClick={() => {
+                      // Trigger the Create button in the sidebar
+                      const createButton = document.querySelector('[data-create-button]') as HTMLButtonElement;
+                      if (createButton) {
+                        createButton.click();
+                      }
+                    }}
+                    className="group relative backdrop-blur-xl bg-white/10 border-2 border-green-500/30 rounded-2xl p-6 hover:border-green-400 hover:bg-white/15 transition-all cursor-pointer overflow-hidden shadow-2xl hover:shadow-green-500/30"
+                  >
                     <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex items-start gap-4">
                       <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-green-500/50">
@@ -289,8 +303,7 @@ export default function FeedPage() {
                       </div>
                       <CheckCircle2 className="w-6 h-6 text-gray-600 group-hover:text-green-400 transition-colors" />
                     </div>
-                    </div>
-                  </Link>
+                  </div>
                 </motion.div>
 
                 {/* Invite Friend */}
@@ -327,6 +340,32 @@ export default function FeedPage() {
                   </div>
                 </motion.div>
               </div>
+            </div>
+          )}
+
+          {/* Show quests button when hidden */}
+          {feedItems && feedItems.length === 0 && !showQuests && (
+            <div className="text-center py-8">
+              <button
+                onClick={() => setShowQuests(true)}
+                className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl px-6 py-3 text-white hover:bg-white/20 transition-all"
+              >
+                <Sparkles className="w-4 h-4 inline mr-2" />
+                Show earning opportunities
+              </button>
+            </div>
+          )}
+
+          {/* Empty state message when quests are hidden */}
+          {feedItems && feedItems.length === 0 && !showQuests && (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-8 h-8 text-gray-500" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">No posts yet</h3>
+              <p className="text-gray-400 text-sm mb-4">
+                Be the first to share something with the community!
+              </p>
             </div>
           )}
 

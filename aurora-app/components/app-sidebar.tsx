@@ -205,6 +205,7 @@ export function AppSidebar() {
             <Button
               onClick={() => setShowCreateModal(true)}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/50 text-white font-semibold"
+              data-create-button
             >
               <Plus className="w-4 h-4 mr-2" />
               Create
