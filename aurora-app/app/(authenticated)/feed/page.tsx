@@ -138,31 +138,33 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-[#1e1b4b] to-slate-900">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-40 shadow-sm">
+      <div className="backdrop-blur-xl bg-white/5 border-b border-white/10 sticky top-0 z-40 shadow-2xl">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold">Your Feed</h1>
-              <p className="text-sm text-gray-600">
+              <h1 className="text-xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 animate-pulse">
+                Your Feed
+              </h1>
+              <p className="text-sm text-gray-300">
                 Discover and share community intelligence
               </p>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/50 border-0">
                   <Plus className="w-4 h-4 mr-2" />
                   <span className="hidden sm:inline">Create</span>
                   <span className="sm:hidden">New</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setShowCreateDialog(true)}>
+              <DropdownMenuContent align="end" className="bg-slate-900/95 backdrop-blur-xl border-white/20 text-white">
+                <DropdownMenuItem onClick={() => setShowCreateDialog(true)} className="hover:bg-white/10 focus:bg-white/10">
                   <FileText className="w-4 h-4 mr-2" />
                   Create Post
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShowPollDialog(true)}>
+                <DropdownMenuItem onClick={() => setShowPollDialog(true)} className="hover:bg-white/10 focus:bg-white/10">
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Create Poll
                 </DropdownMenuItem>
@@ -176,15 +178,15 @@ export default function FeedPage() {
               value={contentType}
               onValueChange={setContentType}
             >
-              <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px] bg-white/5 border-white/20 text-white backdrop-blur-xl">
                 <SelectValue placeholder="All Content" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Content</SelectItem>
-                <SelectItem value="post">Posts Only</SelectItem>
-                <SelectItem value="poll">Polls Only</SelectItem>
-                <SelectItem value="route">Routes Only</SelectItem>
-                <SelectItem value="opportunity">Opportunities Only</SelectItem>
+              <SelectContent className="bg-slate-900/95 backdrop-blur-xl border-white/20 text-white">
+                <SelectItem value="all" className="hover:bg-white/10 focus:bg-white/10">All Content</SelectItem>
+                <SelectItem value="post" className="hover:bg-white/10 focus:bg-white/10">Posts Only</SelectItem>
+                <SelectItem value="poll" className="hover:bg-white/10 focus:bg-white/10">Polls Only</SelectItem>
+                <SelectItem value="route" className="hover:bg-white/10 focus:bg-white/10">Routes Only</SelectItem>
+                <SelectItem value="opportunity" className="hover:bg-white/10 focus:bg-white/10">Opportunities Only</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -207,11 +209,13 @@ export default function FeedPage() {
           {feedItems && feedItems.length === 0 && (
             <div className="space-y-6">
               <div className="text-center mb-8">
-                <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-purple-500/50 animate-pulse">
                   <Sparkles className="w-10 h-10 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold mb-2">Welcome to Your Feed!</h3>
-                <p className="text-gray-600">
+                <h3 className="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                  Welcome to Your Feed!
+                </h3>
+                <p className="text-gray-300">
                   Complete these steps to get started and earn credits
                 </p>
               </div>
@@ -224,24 +228,24 @@ export default function FeedPage() {
                   transition={{ delay: 0.1 }}
                 >
                   <Link href="/settings">
-                    <div className="group relative backdrop-blur-xl bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl p-6 hover:border-purple-400 transition-all cursor-pointer overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="group relative backdrop-blur-xl bg-white/10 border-2 border-purple-500/30 rounded-2xl p-6 hover:border-purple-400 hover:bg-white/15 transition-all cursor-pointer overflow-hidden shadow-2xl hover:shadow-purple-500/30">
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="relative flex items-start gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/50">
                           <Target className="w-6 h-6 text-white" />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-bold text-lg">Complete Your Profile</h4>
-                            <span className="text-sm font-semibold text-purple-600 bg-purple-100 px-3 py-1 rounded-full">
+                            <h4 className="font-bold text-lg text-white">Complete Your Profile</h4>
+                            <span className="text-sm font-semibold text-purple-200 bg-purple-600/30 px-3 py-1 rounded-full border border-purple-400/50">
                               +10 credits
                             </span>
                           </div>
-                          <p className="text-gray-600 text-sm">
+                          <p className="text-gray-300 text-sm">
                             Add your bio, location, and career goals to help others connect with you
                           </p>
                         </div>
-                        <CheckCircle2 className="w-6 h-6 text-gray-300 group-hover:text-purple-600 transition-colors" />
+                        <CheckCircle2 className="w-6 h-6 text-gray-600 group-hover:text-purple-400 transition-colors" />
                       </div>
                     </div>
                   </Link>
@@ -254,24 +258,24 @@ export default function FeedPage() {
                   transition={{ delay: 0.2 }}
                 >
                   <Link href="/map">
-                    <div className="group relative backdrop-blur-xl bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 rounded-2xl p-6 hover:border-cyan-400 transition-all cursor-pointer overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="group relative backdrop-blur-xl bg-white/10 border-2 border-cyan-500/30 rounded-2xl p-6 hover:border-cyan-400 hover:bg-white/15 transition-all cursor-pointer overflow-hidden shadow-2xl hover:shadow-cyan-500/30">
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="relative flex items-start gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-cyan-600 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <div className="w-12 h-12 bg-gradient-to-br from-cyan-600 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/50">
                           <MapPin className="w-6 h-6 text-white" />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-bold text-lg">Share Your First Location</h4>
-                            <span className="text-sm font-semibold text-cyan-600 bg-cyan-100 px-3 py-1 rounded-full">
+                            <h4 className="font-bold text-lg text-white">Share Your First Location</h4>
+                            <span className="text-sm font-semibold text-cyan-200 bg-cyan-600/30 px-3 py-1 rounded-full border border-cyan-400/50">
                               +50 credits
                             </span>
                           </div>
-                          <p className="text-gray-600 text-sm">
+                          <p className="text-gray-300 text-sm">
                             Rate a workplace, venue, or neighborhood to help other women stay safe
                           </p>
                         </div>
-                        <CheckCircle2 className="w-6 h-6 text-gray-300 group-hover:text-cyan-600 transition-colors" />
+                        <CheckCircle2 className="w-6 h-6 text-gray-600 group-hover:text-cyan-400 transition-colors" />
                       </div>
                     </div>
                   </Link>
@@ -285,25 +289,25 @@ export default function FeedPage() {
                 >
                   <div
                     onClick={() => setShowCreateDialog(true)}
-                    className="group relative backdrop-blur-xl bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-6 hover:border-green-400 transition-all cursor-pointer overflow-hidden"
+                    className="group relative backdrop-blur-xl bg-white/10 border-2 border-green-500/30 rounded-2xl p-6 hover:border-green-400 hover:bg-white/15 transition-all cursor-pointer overflow-hidden shadow-2xl hover:shadow-green-500/30"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex items-start gap-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-green-500/50">
                         <Sparkles className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-bold text-lg">Share Your First Experience</h4>
-                          <span className="text-sm font-semibold text-green-600 bg-green-100 px-3 py-1 rounded-full">
+                          <h4 className="font-bold text-lg text-white">Share Your First Experience</h4>
+                          <span className="text-sm font-semibold text-green-200 bg-green-600/30 px-3 py-1 rounded-full border border-green-400/50">
                             +25 credits
                           </span>
                         </div>
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-gray-300 text-sm">
                           Create your first post to contribute to the community
                         </p>
                       </div>
-                      <CheckCircle2 className="w-6 h-6 text-gray-300 group-hover:text-green-600 transition-colors" />
+                      <CheckCircle2 className="w-6 h-6 text-gray-600 group-hover:text-green-400 transition-colors" />
                     </div>
                   </div>
                 </motion.div>
@@ -319,25 +323,25 @@ export default function FeedPage() {
                       navigator.clipboard.writeText(window.location.origin);
                       alert("Link copied! Share with friends to earn credits.");
                     }}
-                    className="group relative backdrop-blur-xl bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200 rounded-2xl p-6 hover:border-orange-400 transition-all cursor-pointer overflow-hidden"
+                    className="group relative backdrop-blur-xl bg-white/10 border-2 border-orange-500/30 rounded-2xl p-6 hover:border-orange-400 hover:bg-white/15 transition-all cursor-pointer overflow-hidden shadow-2xl hover:shadow-orange-500/30"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex items-start gap-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-orange-600 to-amber-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 bg-gradient-to-br from-orange-600 to-amber-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-orange-500/50">
                         <Users className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-bold text-lg">Invite a Friend</h4>
-                          <span className="text-sm font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full">
+                          <h4 className="font-bold text-lg text-white">Invite a Friend</h4>
+                          <span className="text-sm font-semibold text-orange-200 bg-orange-600/30 px-3 py-1 rounded-full border border-orange-400/50">
                             +15 credits
                           </span>
                         </div>
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-gray-300 text-sm">
                           Share Aurora with friends and earn credits when they join
                         </p>
                       </div>
-                      <CheckCircle2 className="w-6 h-6 text-gray-300 group-hover:text-orange-600 transition-colors" />
+                      <CheckCircle2 className="w-6 h-6 text-gray-600 group-hover:text-orange-400 transition-colors" />
                     </div>
                   </div>
                 </motion.div>

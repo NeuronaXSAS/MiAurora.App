@@ -45,6 +45,7 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
   const [visibility, setVisibility] = useState<"public" | "anonymous" | "private">("public");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workosId, setWorkosId] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
   const completeOnboarding = useMutation(api.users.completeOnboarding);
   const updatePrivacy = useMutation(api.privacy.updatePrivacySettings);
@@ -75,11 +76,13 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
 
   const handleComplete = async () => {
     if (!workosId) {
-      alert("Unable to save preferences. Please try again.");
+      setError("Unable to save preferences. Please refresh and try again.");
       return;
     }
 
     setIsSubmitting(true);
+    setError("");
+    
     try {
       // Complete onboarding with profile data
       await completeOnboarding({
@@ -90,15 +93,19 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
         interests: selectedInterests.length > 0 ? selectedInterests : undefined,
       });
 
-      // Update privacy settings (map anonymous to private)
-      await updatePrivacy({
-        profileVisibility: visibility === 'anonymous' ? 'private' : visibility,
-      });
+      // Try to update privacy settings (non-blocking)
+      try {
+        await updatePrivacy({
+          profileVisibility: visibility === 'anonymous' ? 'private' : visibility,
+        });
+      } catch (privacyError) {
+        console.warn("Privacy settings update failed (non-critical):", privacyError);
+      }
 
       onComplete();
     } catch (error) {
       console.error("Onboarding error:", error);
-      alert("Failed to save your preferences. Please try again.");
+      setError("Failed to save your preferences. Please try again or contact support.");
     } finally {
       setIsSubmitting(false);
     }
@@ -106,19 +113,24 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-2xl backdrop-blur-xl bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
+      <DialogContent className="sm:max-w-2xl backdrop-blur-xl bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 border-purple-500/30 shadow-2xl">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/50">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
-              <DialogTitle className="text-2xl">Welcome to Aurora!</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-2xl text-white">Welcome to Aurora!</DialogTitle>
+              <DialogDescription className="text-gray-300">
                 Let's personalize your experience (Step {step} of 3)
               </DialogDescription>
             </div>
           </div>
+          {error && (
+            <div className="mt-3 p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
+              <p className="text-sm text-red-200">{error}</p>
+            </div>
+          )}
         </DialogHeader>
 
         <AnimatePresence mode="wait">
@@ -133,8 +145,8 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
             >
               <div className="space-y-4">
                 <div>
-                  <Label className="text-base font-semibold flex items-center gap-2 mb-3">
-                    <Briefcase className="w-5 h-5 text-purple-600" />
+                  <Label className="text-base font-semibold flex items-center gap-2 mb-3 text-white">
+                    <Briefcase className="w-5 h-5 text-purple-400" />
                     What's your current role?
                   </Label>
                   <div className="flex flex-wrap gap-2">
@@ -142,10 +154,10 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
                       <Badge
                         key={r}
                         variant={role === r ? "default" : "outline"}
-                        className={`cursor-pointer px-4 py-2 text-sm ${
+                        className={`cursor-pointer px-4 py-2 text-sm transition-all ${
                           role === r
-                            ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                            : "hover:bg-purple-50"
+                            ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg shadow-purple-500/50"
+                            : "bg-white/5 border-white/20 text-gray-300 hover:bg-white/10 hover:border-purple-400"
                         }`}
                         onClick={() => setRole(r)}
                       >
@@ -156,7 +168,7 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
                 </div>
 
                 <div>
-                  <Label htmlFor="bio" className="text-base font-semibold mb-3 block">
+                  <Label htmlFor="bio" className="text-base font-semibold mb-3 block text-white">
                     Tell us a bit about yourself (optional)
                   </Label>
                   <Textarea
@@ -164,7 +176,7 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     placeholder="I'm passionate about..."
-                    className="min-h-[100px]"
+                    className="min-h-[100px] bg-white/5 border-white/20 text-white placeholder:text-gray-500"
                   />
                 </div>
               </div>
@@ -173,7 +185,7 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
                 <Button
                   onClick={() => setStep(2)}
                   disabled={!role}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/50"
                 >
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -192,11 +204,11 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
               className="space-y-6 py-4"
             >
               <div>
-                <Label className="text-base font-semibold flex items-center gap-2 mb-3">
-                  <Sparkles className="w-5 h-5 text-purple-600" />
+                <Label className="text-base font-semibold flex items-center gap-2 mb-3 text-white">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
                   What are you interested in?
                 </Label>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-gray-300 mb-4">
                   Select all that apply to personalize your feed
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -204,10 +216,10 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
                     <Badge
                       key={interest}
                       variant={selectedInterests.includes(interest) ? "default" : "outline"}
-                      className={`cursor-pointer px-4 py-2 text-sm ${
+                      className={`cursor-pointer px-4 py-2 text-sm transition-all ${
                         selectedInterests.includes(interest)
-                          ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                          : "hover:bg-purple-50"
+                          ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg shadow-purple-500/50"
+                          : "bg-white/5 border-white/20 text-gray-300 hover:bg-white/10 hover:border-purple-400"
                       }`}
                       onClick={() => handleInterestToggle(interest)}
                     >
@@ -221,14 +233,14 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
               </div>
 
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(1)}>
+                <Button variant="outline" onClick={() => setStep(1)} className="bg-white/5 border-white/20 text-white hover:bg-white/10">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </Button>
                 <Button
                   onClick={() => setStep(3)}
                   disabled={selectedInterests.length === 0}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/50"
                 >
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -247,8 +259,8 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
               className="space-y-6 py-4"
             >
               <div>
-                <Label className="text-base font-semibold flex items-center gap-2 mb-3">
-                  <Shield className="w-5 h-5 text-purple-600" />
+                <Label className="text-base font-semibold flex items-center gap-2 mb-3 text-white">
+                  <Shield className="w-5 h-5 text-purple-400" />
                   How visible do you want to be?
                 </Label>
                 <div className="space-y-3">
@@ -274,16 +286,16 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
                       onClick={() => setVisibility(option.value)}
                       className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
                         visibility === option.value
-                          ? "border-purple-600 bg-purple-50"
-                          : "border-gray-200 hover:border-purple-300"
+                          ? "border-purple-500 bg-purple-500/20 shadow-lg shadow-purple-500/30"
+                          : "border-white/20 bg-white/5 hover:border-purple-400 hover:bg-white/10"
                       }`}
                     >
                       <div className="flex items-start gap-3">
                         <div
                           className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
                             visibility === option.value
-                              ? "border-purple-600 bg-purple-600"
-                              : "border-gray-300"
+                              ? "border-purple-400 bg-purple-600"
+                              : "border-gray-500"
                           }`}
                         >
                           {visibility === option.value && (
@@ -291,8 +303,8 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold">{option.title}</p>
-                          <p className="text-sm text-gray-600">{option.desc}</p>
+                          <p className="font-semibold text-white">{option.title}</p>
+                          <p className="text-sm text-gray-300">{option.desc}</p>
                         </div>
                       </div>
                     </div>
@@ -301,14 +313,14 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
               </div>
 
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(2)}>
+                <Button variant="outline" onClick={() => setStep(2)} className="bg-white/5 border-white/20 text-white hover:bg-white/10">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </Button>
                 <Button
                   onClick={handleComplete}
                   disabled={isSubmitting}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/50 disabled:opacity-50"
                 >
                   {isSubmitting ? "Saving..." : "Complete Setup"}
                   <Check className="w-4 h-4 ml-2" />
