@@ -8,8 +8,7 @@ import { PollCard } from "@/components/poll-card";
 import { AIChatCard } from "@/components/ai-chat-card";
 import { RouteFeedCard } from "@/components/route-feed-card";
 import { OpportunityFeedCard } from "@/components/opportunity-feed-card";
-import { PostCreateDialog } from "@/components/post-create-dialog";
-import { PollCreateDialog } from "@/components/poll-create-dialog";
+
 import { PostCardSkeleton } from "@/components/loading-skeleton";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { MobileFeed } from "./mobile-feed";
@@ -22,13 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Plus, Sparkles, BarChart3, FileText, CheckCircle2, MapPin, Users, Target } from "lucide-react";
+import { Sparkles, CheckCircle2, MapPin, Users, Target } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -37,8 +30,6 @@ import { motion } from "framer-motion";
 export default function FeedPage() {
   const isMobile = useIsMobile();
   const [contentType, setContentType] = useState<string>("all");
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showPollDialog, setShowPollDialog] = useState(false);
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const router = useRouter();
@@ -151,25 +142,7 @@ export default function FeedPage() {
                 Discover and share community intelligence
               </p>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/50 border-0">
-                  <Plus className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">Create</span>
-                  <span className="sm:hidden">New</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-slate-900/95 backdrop-blur-xl border-white/20 text-white">
-                <DropdownMenuItem onClick={() => setShowCreateDialog(true)} className="hover:bg-white/10 focus:bg-white/10">
-                  <FileText className="w-4 h-4 mr-2" />
-                  Create Post
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShowPollDialog(true)} className="hover:bg-white/10 focus:bg-white/10">
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  Create Poll
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
           </div>
 
           {/* Filter */}
@@ -287,10 +260,9 @@ export default function FeedPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <div
-                    onClick={() => setShowCreateDialog(true)}
-                    className="group relative backdrop-blur-xl bg-white/10 border-2 border-green-500/30 rounded-2xl p-6 hover:border-green-400 hover:bg-white/15 transition-all cursor-pointer overflow-hidden shadow-2xl hover:shadow-green-500/30"
-                  >
+                  <Link href="/feed">
+                    <div className="group relative backdrop-blur-xl bg-white/10 border-2 border-green-500/30 rounded-2xl p-6 hover:border-green-400 hover:bg-white/15 transition-all cursor-pointer overflow-hidden shadow-2xl hover:shadow-green-500/30"
+                    >
                     <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex items-start gap-4">
                       <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-green-500/50">
@@ -309,7 +281,8 @@ export default function FeedPage() {
                       </div>
                       <CheckCircle2 className="w-6 h-6 text-gray-600 group-hover:text-green-400 transition-colors" />
                     </div>
-                  </div>
+                    </div>
+                  </Link>
                 </motion.div>
 
                 {/* Invite Friend */}
@@ -432,22 +405,6 @@ export default function FeedPage() {
           onComplete={() => setShowOnboarding(false)}
           userId={userId}
         />
-      )}
-
-      {/* Create Post Dialog */}
-      {userId && (
-        <>
-          <PostCreateDialog
-            open={showCreateDialog}
-            onOpenChange={setShowCreateDialog}
-            userId={userId}
-          />
-          <PollCreateDialog
-            open={showPollDialog}
-            onOpenChange={setShowPollDialog}
-            userId={userId}
-          />
-        </>
       )}
     </div>
   );

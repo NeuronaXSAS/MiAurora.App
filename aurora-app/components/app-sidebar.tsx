@@ -84,13 +84,13 @@ export function AppSidebar() {
   return (
     <>
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-slate-950/90 border-b border-white/10">
         <div className="flex items-center justify-between p-4">
           <Link href="/feed" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/50">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <h1 className="font-bold text-lg">Aurora</h1>
+            <h1 className="font-bold text-lg text-white">Aurora</h1>
           </Link>
           <div className="flex items-center gap-2">
             <NotificationsDropdown />
@@ -99,6 +99,7 @@ export function AppSidebar() {
               size="icon"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+              className="text-white hover:bg-white/10"
             >
               {isMobileMenuOpen ? (
                 <X className="w-6 h-6" />
@@ -130,22 +131,22 @@ export function AppSidebar() {
       <nav
         className={`
           fixed lg:static inset-y-0 left-0 z-40
-          flex flex-col h-screen w-64 bg-white border-r
+          flex flex-col h-screen w-64 backdrop-blur-xl bg-slate-950/90 border-r border-white/10
           transform transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
         aria-label="Main navigation"
       >
         {/* Logo - Desktop Only */}
-        <div className="hidden lg:block p-6 border-b">
+        <div className="hidden lg:block p-6 border-b border-white/10">
           <div className="flex items-center justify-between mb-4">
             <Link href="/feed" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/50">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="font-bold text-lg">Aurora App</h1>
-                <p className="text-xs text-gray-500">For women to thrive</p>
+                <h1 className="font-bold text-lg text-white">Aurora App</h1>
+                <p className="text-xs text-gray-400">For women to thrive</p>
               </div>
             </Link>
             <NotificationsDropdown />
@@ -154,29 +155,29 @@ export function AppSidebar() {
 
         {/* User Info */}
         {user && (
-          <div className="p-4 border-b">
+          <div className="p-4 border-b border-white/10">
             <div className="flex items-center gap-3 mb-3">
-              <Avatar>
+              <Avatar className="border-2 border-purple-500/50">
                 <AvatarImage src={user.profileImage} />
-                <AvatarFallback>
+                <AvatarFallback className="bg-gradient-to-br from-purple-600 to-pink-600 text-white">
                   {(user.name && user.name !== 'null' ? user.name : 'U').charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate">
+                <p className="font-semibold text-sm truncate text-white">
                   {user.name && user.name !== 'null' ? user.name : 'User'}
                 </p>
-                <p className="text-xs text-gray-500">Trust: {user.trustScore}</p>
+                <p className="text-xs text-gray-400">Trust: {user.trustScore}</p>
               </div>
             </div>
-            <div className="flex items-center justify-between bg-purple-50 rounded-lg px-3 py-2 mb-3">
-              <span className="text-sm font-medium text-purple-900">Credits</span>
-              <Badge className="bg-purple-600">{user.credits}</Badge>
+            <div className="flex items-center justify-between bg-purple-600/20 border border-purple-500/30 rounded-lg px-3 py-2 mb-3">
+              <span className="text-sm font-medium text-purple-200">Credits</span>
+              <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 border-0 shadow-lg shadow-purple-500/50">{user.credits}</Badge>
             </div>
-            {/* Create Button */}
+            {/* HERO Create Button */}
             <Button
               onClick={() => setShowCreateModal(true)}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/50 text-white font-semibold"
             >
               <Plus className="w-4 h-4 mr-2" />
               Create
@@ -195,16 +196,16 @@ export function AppSidebar() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <div
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
                     isActive
-                      ? "bg-purple-100 text-purple-900"
-                      : "hover:bg-gray-100 text-gray-700"
+                      ? "bg-white/10 text-white shadow-lg shadow-purple-500/20"
+                      : "text-slate-400 hover:bg-white/5 hover:text-white"
                   }`}
                 >
                   <item.icon className="w-5 h-5" />
                   <div className="flex-1">
                     <p className="font-medium text-sm">{item.label}</p>
-                    <p className="text-xs text-gray-500">{item.description}</p>
+                    <p className={`text-xs ${isActive ? 'text-gray-300' : 'text-gray-500'}`}>{item.description}</p>
                   </div>
                 </div>
               </Link>
@@ -213,11 +214,11 @@ export function AppSidebar() {
         </div>
 
         {/* Settings & Logout */}
-        <div className="p-4 border-t space-y-1">
+        <div className="p-4 border-t border-white/10 space-y-1">
           <Link href="/credits" onClick={() => setIsMobileMenuOpen(false)}>
             <Button
               variant="ghost"
-              className="w-full justify-start text-gray-600"
+              className="w-full justify-start text-slate-400 hover:text-white hover:bg-white/5"
             >
               <Coins className="w-5 h-5 mr-3" />
               Credit Center
@@ -226,7 +227,7 @@ export function AppSidebar() {
           <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)}>
             <Button
               variant="ghost"
-              className="w-full justify-start text-gray-600"
+              className="w-full justify-start text-slate-400 hover:text-white hover:bg-white/5"
             >
               <Settings className="w-5 h-5 mr-3" />
               Settings
@@ -234,11 +235,11 @@ export function AppSidebar() {
           </Link>
           
           {/* Legal Links */}
-          <div className="pt-2 border-t">
+          <div className="pt-2 border-t border-white/10">
             <Link href="/legal/terms" onClick={() => setIsMobileMenuOpen(false)}>
               <Button
                 variant="ghost"
-                className="w-full justify-start text-gray-500 text-xs"
+                className="w-full justify-start text-gray-500 hover:text-gray-300 hover:bg-white/5 text-xs"
               >
                 <FileText className="w-4 h-4 mr-3" />
                 Terms of Service
@@ -247,7 +248,7 @@ export function AppSidebar() {
             <Link href="/legal/privacy" onClick={() => setIsMobileMenuOpen(false)}>
               <Button
                 variant="ghost"
-                className="w-full justify-start text-gray-500 text-xs"
+                className="w-full justify-start text-gray-500 hover:text-gray-300 hover:bg-white/5 text-xs"
               >
                 <Shield className="w-4 h-4 mr-3" />
                 Privacy Policy
@@ -257,7 +258,7 @@ export function AppSidebar() {
           
           <Button
             variant="ghost"
-            className="w-full justify-start"
+            className="w-full justify-start text-slate-400 hover:text-white hover:bg-white/5"
             onClick={handleLogout}
             aria-label="Logout from your account"
           >
