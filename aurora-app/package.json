@@ -34,6 +34,7 @@
     "clsx": "^2.1.1",
     "convex": "^1.29.1",
     "date-fns": "^4.1.0",
+    "framer-motion": "^12.23.24",
     "lucide-react": "^0.553.0",
     "mapbox-gl": "^3.16.0",
     "markdown-to-jsx": "^9.1.1",
