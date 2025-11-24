@@ -32,7 +32,13 @@ export default function FeedPage() {
   const [contentType, setContentType] = useState<string>("all");
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Get user ID and check onboarding status
   useEffect(() => {
@@ -146,23 +152,25 @@ export default function FeedPage() {
           </div>
 
           {/* Filter */}
-          <div className="mt-4">
-            <Select
-              value={contentType}
-              onValueChange={setContentType}
-            >
-              <SelectTrigger className="w-full sm:w-[200px] bg-white/5 border-white/20 text-white backdrop-blur-xl">
-                <SelectValue placeholder="All Content" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-900/95 backdrop-blur-xl border-white/20 text-white">
-                <SelectItem value="all" className="hover:bg-white/10 focus:bg-white/10">All Content</SelectItem>
-                <SelectItem value="post" className="hover:bg-white/10 focus:bg-white/10">Posts Only</SelectItem>
-                <SelectItem value="poll" className="hover:bg-white/10 focus:bg-white/10">Polls Only</SelectItem>
-                <SelectItem value="route" className="hover:bg-white/10 focus:bg-white/10">Routes Only</SelectItem>
-                <SelectItem value="opportunity" className="hover:bg-white/10 focus:bg-white/10">Opportunities Only</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {isMounted && (
+            <div className="mt-4">
+              <Select
+                value={contentType}
+                onValueChange={setContentType}
+              >
+                <SelectTrigger className="w-full sm:w-[200px] bg-white/5 border-white/20 text-white backdrop-blur-xl" suppressHydrationWarning>
+                  <SelectValue placeholder="All Content" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900/95 backdrop-blur-xl border-white/20 text-white">
+                  <SelectItem value="all" className="hover:bg-white/10 focus:bg-white/10">All Content</SelectItem>
+                  <SelectItem value="post" className="hover:bg-white/10 focus:bg-white/10">Posts Only</SelectItem>
+                  <SelectItem value="poll" className="hover:bg-white/10 focus:bg-white/10">Polls Only</SelectItem>
+                  <SelectItem value="route" className="hover:bg-white/10 focus:bg-white/10">Routes Only</SelectItem>
+                  <SelectItem value="opportunity" className="hover:bg-white/10 focus:bg-white/10">Opportunities Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
 

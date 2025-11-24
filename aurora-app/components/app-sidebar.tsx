@@ -46,23 +46,50 @@ export function AppSidebar() {
   useEffect(() => {
     const getUserId = async () => {
       try {
+        console.log("🔍 AppSidebar: Fetching user ID...");
         const response = await fetch("/api/auth/me");
+        
+        if (!response.ok) {
+          console.error("❌ AppSidebar: Auth API failed with status:", response.status);
+          return;
+        }
+        
         const data = await response.json();
+        console.log("📦 AppSidebar: Auth API response:", data);
+        
         if (data.userId) {
+          console.log("✅ AppSidebar: User ID found:", data.userId);
           setUserId(data.userId as Id<"users">);
+        } else {
+          console.warn("⚠️ AppSidebar: No userId in response, user may not be authenticated");
         }
       } catch (error) {
-        console.error("Error getting user:", error);
+        console.error("❌ AppSidebar: Error getting user:", error);
       }
     };
     getUserId();
   }, []);
 
-  // Fetch user data
+  // Fetch user data - only if we have a valid userId
   const user = useQuery(
     api.users.getUser,
     userId ? { userId } : "skip"
   );
+
+  // Handle query errors - if user doesn't exist, force re-authentication
+  useEffect(() => {
+    if (userId && user === null) {
+      console.error("❌ AppSidebar: User not found in Convex database");
+      console.error("User ID:", userId);
+      console.error("Solution: Logging out and re-authenticating...");
+      
+      // Force logout and redirect to login
+      setTimeout(async () => {
+        await fetch("/api/auth/logout", { method: "POST" });
+        window.location.href = "/?error=user_not_found";
+      }, 2000);
+    }
+  }, [userId, user]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });

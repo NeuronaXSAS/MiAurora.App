@@ -14,8 +14,27 @@ export default function LandingPage() {
   // Fetch public activity (no auth required)
   const activities = useQuery(api.feed.getPublicActivity, { limit: 5 });
 
+  // Check for error in URL
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const error = searchParams?.get('error');
+
   return (
     <div className="relative min-h-screen bg-[#0a0118] overflow-hidden">
+      {/* Error Message */}
+      {error === 'user_not_found' && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 max-w-md">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="backdrop-blur-xl bg-red-500/90 border border-red-400 rounded-xl p-4 shadow-2xl"
+          >
+            <p className="text-white font-semibold mb-1">⚠️ Session Expired</p>
+            <p className="text-white/90 text-sm">
+              Please sign in again to continue. Your data is safe.
+            </p>
+          </motion.div>
+        </div>
+      )}
       {/* Animated Aurora Background */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div

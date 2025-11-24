@@ -54,13 +54,23 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
   useEffect(() => {
     const getWorkosId = async () => {
       try {
+        console.log("🔍 Fetching user authentication data...");
         const response = await fetch("/api/auth/me");
         const data = await response.json();
-        if (data.workosId) {
+        console.log("📦 Auth API response:", data);
+        
+        // The API returns workosUserId, not workosId
+        if (data.workosUserId) {
+          console.log("✅ WorkOS ID found:", data.workosUserId);
+          setWorkosId(data.workosUserId);
+        } else if (data.workosId) {
+          console.log("✅ WorkOS ID found (legacy):", data.workosId);
           setWorkosId(data.workosId);
+        } else {
+          console.error("❌ No workosId or workosUserId in response");
         }
       } catch (error) {
-        console.error("Error getting workosId:", error);
+        console.error("❌ Error getting workosId:", error);
       }
     };
     getWorkosId();
@@ -84,6 +94,14 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
     setError("");
     
     try {
+      console.log("🚀 Starting onboarding with data:", {
+        workosId,
+        bio: bio || undefined,
+        industry: role || undefined,
+        careerGoals: selectedInterests.join(", ") || undefined,
+        interests: selectedInterests.length > 0 ? selectedInterests : undefined,
+      });
+
       // Complete onboarding with profile data
       await completeOnboarding({
         workosId,
@@ -93,19 +111,28 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
         interests: selectedInterests.length > 0 ? selectedInterests : undefined,
       });
 
+      console.log("✅ Onboarding mutation completed successfully");
+
       // Try to update privacy settings (non-blocking)
       try {
+        console.log("🔒 Updating privacy settings:", {
+          profileVisibility: visibility === 'anonymous' ? 'private' : visibility,
+        });
         await updatePrivacy({
           profileVisibility: visibility === 'anonymous' ? 'private' : visibility,
         });
+        console.log("✅ Privacy settings updated successfully");
       } catch (privacyError) {
-        console.warn("Privacy settings update failed (non-critical):", privacyError);
+        console.warn("⚠️ Privacy settings update failed (non-critical):", privacyError);
       }
 
+      console.log("🎉 Onboarding complete! Calling onComplete()");
       onComplete();
     } catch (error) {
-      console.error("Onboarding error:", error);
-      setError("Failed to save your preferences. Please try again or contact support.");
+      console.error("❌ Onboarding error:", error);
+      // Show the actual error message from the backend
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      setError(`Failed to save: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }

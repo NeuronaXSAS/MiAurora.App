@@ -20,6 +20,11 @@ export function NotificationsDropdown() {
   const router = useRouter();
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const getUserId = async () => {
@@ -90,10 +95,19 @@ export function NotificationsDropdown() {
     }
   };
 
+  // Prevent hydration mismatch by only rendering on client
+  if (!isMounted) {
+    return (
+      <Button variant="ghost" size="icon" className="relative" suppressHydrationWarning>
+        <Bell className="w-5 h-5" />
+      </Button>
+    );
+  }
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative" suppressHydrationWarning>
           <Bell className="w-5 h-5" />
           {unreadCount && unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
