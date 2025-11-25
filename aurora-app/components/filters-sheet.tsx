@@ -4,8 +4,8 @@ import { useState } from "react";
 import { BottomSheet } from "./ui/bottom-sheet";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
-import { Slider } from "./ui/slider";
 import { Switch } from "./ui/switch";
+import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { X } from "lucide-react";
 
@@ -74,42 +74,31 @@ export function FiltersSheet({
     >
       <div className="space-y-6">
         {/* Minimum Rating */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label>Minimum Rating</Label>
-            <span className="text-sm font-semibold text-aurora-violet">
-              {filters.minRating} stars
-            </span>
-          </div>
-          <Slider
-            value={[filters.minRating]}
-            onValueChange={([value]: number[]) =>
-              setFilters((prev) => ({ ...prev, minRating: value }))
+        <div className="space-y-2">
+          <Label>Minimum Rating (stars)</Label>
+          <Input
+            type="number"
+            value={filters.minRating}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, minRating: parseFloat(e.target.value) || 0 }))
             }
             min={0}
             max={5}
             step={0.5}
-            className="w-full"
           />
         </div>
 
         {/* Max Distance */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label>Maximum Distance</Label>
-            <span className="text-sm font-semibold text-aurora-violet">
-              {filters.maxDistance} km
-            </span>
-          </div>
-          <Slider
-            value={[filters.maxDistance]}
-            onValueChange={([value]: number[]) =>
-              setFilters((prev) => ({ ...prev, maxDistance: value }))
+        <div className="space-y-2">
+          <Label>Maximum Distance (km)</Label>
+          <Input
+            type="number"
+            value={filters.maxDistance}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, maxDistance: parseInt(e.target.value) || 50 }))
             }
             min={1}
             max={100}
-            step={1}
-            className="w-full"
           />
         </div>
 
