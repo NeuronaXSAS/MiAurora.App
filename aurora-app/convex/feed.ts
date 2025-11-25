@@ -235,3 +235,57 @@ export const getPublicActivity = query({
     return activities.slice(0, limit);
   },
 });
+
+
+/**
+ * Get public feed for landing page (no auth required)
+ * Returns posts that are suitable for public viewing
+ */
+export const getPublicFeed = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 20;
+
+    // Get recent posts - prioritize those with good engagement
+    const posts = await ctx.db
+      .query("posts")
+      .order("desc")
+      .take(limit * 2); // Get more to filter
+
+    const publicPosts = await Promise.all(
+      posts.map(async (post) => {
+        const author = await ctx.db.get(post.authorId);
+        
+        // Get comment count
+        const comments = await ctx.db
+          .query("comments")
+          .withIndex("by_post", (q) => q.eq("postId", post._id))
+          .collect();
+
+        return {
+          _id: post._id,
+          _creationTime: post._creationTime,
+          title: post.title,
+          content: post.description,
+          category: post.lifeDimension || post.postType,
+          location: post.location?.name || null,
+          rating: post.rating,
+          upvotes: post.upvotes || 0,
+          commentCount: comments.length,
+          isAnonymous: post.isAnonymous,
+          authorName: post.isAnonymous ? null : (author?.name || null),
+          type: "post" as const,
+        };
+      })
+    );
+
+    // Filter out posts with very little content
+    const filteredPosts = publicPosts.filter(
+      (post) => post.content && post.content.length > 20
+    );
+
+    return filteredPosts.slice(0, limit);
+  },
+});

@@ -15,6 +15,7 @@ import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { MobileFeed } from "./mobile-feed";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -145,48 +146,42 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-[#1e1b4b] to-slate-900">
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Header */}
-      <div className="backdrop-blur-xl bg-white/5 border-b border-white/10 sticky top-0 z-40 shadow-2xl">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-40">
+        <div className="max-w-3xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 animate-pulse">
+              <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">
                 Your Feed
               </h1>
-              <p className="text-sm text-gray-300">
+              <p className="text-sm text-[var(--muted-foreground)]">
                 Discover and share community intelligence
               </p>
             </div>
 
-          </div>
-
-          {/* Filter */}
-          {isMounted && (
-            <div className="mt-4">
-              <Select
-                value={contentType}
-                onValueChange={setContentType}
-              >
-                <SelectTrigger className="w-full sm:w-[200px] bg-white/5 border-white/20 text-white backdrop-blur-xl" suppressHydrationWarning>
+            {/* Filter */}
+            {isMounted && (
+              <Select value={contentType} onValueChange={setContentType}>
+                <SelectTrigger className="w-[140px] sm:w-[180px] bg-[var(--background)] border-[var(--border)]" suppressHydrationWarning>
                   <SelectValue placeholder="All Content" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900/95 backdrop-blur-xl border-white/20 text-white">
-                  <SelectItem value="all" className="hover:bg-white/10 focus:bg-white/10">All Content</SelectItem>
-                  <SelectItem value="post" className="hover:bg-white/10 focus:bg-white/10">Posts Only</SelectItem>
-                  <SelectItem value="poll" className="hover:bg-white/10 focus:bg-white/10">Polls Only</SelectItem>
-                  <SelectItem value="route" className="hover:bg-white/10 focus:bg-white/10">Routes Only</SelectItem>
-                  <SelectItem value="opportunity" className="hover:bg-white/10 focus:bg-white/10">Opportunities Only</SelectItem>
+                <SelectContent>
+                  <SelectItem value="all">All Content</SelectItem>
+                  <SelectItem value="post">Posts</SelectItem>
+                  <SelectItem value="poll">Polls</SelectItem>
+                  <SelectItem value="route">Routes</SelectItem>
+                  <SelectItem value="opportunity">Opportunities</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
       {/* Feed Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto px-4 py-6">
+        <div className="space-y-4">
           {/* Loading State */}
           {feedItems === undefined && (
             <>
@@ -198,150 +193,99 @@ export default function FeedPage() {
 
           {/* Gamified Empty State - Only when feed is empty AND quests are visible */}
           {feedItems && feedItems.length === 0 && showQuests && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-2xl shadow-purple-500/50">
-                  <Sparkles className="w-8 h-8 text-white" />
+            <div className="space-y-4">
+              <div className="text-center mb-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <Sparkles className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                <h3 className="text-xl font-bold mb-1 text-[var(--foreground)]">
                   Welcome to Your Feed!
                 </h3>
-                <p className="text-gray-300 text-sm mb-3">
+                <p className="text-[var(--muted-foreground)] text-sm mb-2">
                   Complete these steps to get started and earn credits
                 </p>
                 <button
                   onClick={() => setShowQuests(false)}
-                  className="text-xs text-gray-400 hover:text-white transition-colors underline"
+                  className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors underline"
                 >
                   Hide quests
                 </button>
               </div>
 
-              <div className="grid gap-4">
+              <div className="grid gap-3">
                 {/* Complete Profile */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                   <Link href="/settings">
-                    <div className="group relative backdrop-blur-xl bg-white/10 border-2 border-purple-500/30 rounded-2xl p-6 hover:border-purple-400 hover:bg-white/15 transition-all cursor-pointer overflow-hidden shadow-2xl hover:shadow-purple-500/30">
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="relative flex items-start gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/50">
-                          <Target className="w-6 h-6 text-white" />
+                    <div className="group bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--color-aurora-purple)]/50 hover:shadow-lg transition-all cursor-pointer">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-[var(--color-aurora-purple)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Target className="w-5 h-5 text-[var(--color-aurora-purple)]" />
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-bold text-lg text-white">Complete Your Profile</h4>
-                            <span className="text-sm font-semibold text-purple-200 bg-purple-600/30 px-3 py-1 rounded-full border border-purple-400/50">
-                              +10 credits
-                            </span>
-                          </div>
-                          <p className="text-gray-300 text-sm">
-                            Add your bio, location, and career goals to help others connect with you
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-[var(--foreground)]">Complete Your Profile</h4>
+                          <p className="text-[var(--muted-foreground)] text-sm truncate">Add bio, location, and goals</p>
                         </div>
-                        <CheckCircle2 className="w-6 h-6 text-gray-600 group-hover:text-purple-400 transition-colors" />
+                        <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">+10</Badge>
                       </div>
                     </div>
                   </Link>
                 </motion.div>
 
-                {/* Verify Location */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
+                {/* Share Location */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
                   <Link href="/map">
-                    <div className="group relative backdrop-blur-xl bg-white/10 border-2 border-cyan-500/30 rounded-2xl p-6 hover:border-cyan-400 hover:bg-white/15 transition-all cursor-pointer overflow-hidden shadow-2xl hover:shadow-cyan-500/30">
-                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="relative flex items-start gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-cyan-600 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/50">
-                          <MapPin className="w-6 h-6 text-white" />
+                    <div className="group bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--color-aurora-blue)]/50 hover:shadow-lg transition-all cursor-pointer">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-[var(--color-aurora-blue)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <MapPin className="w-5 h-5 text-[var(--color-aurora-blue)]" />
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-bold text-lg text-white">Share Your First Location</h4>
-                            <span className="text-sm font-semibold text-cyan-200 bg-cyan-600/30 px-3 py-1 rounded-full border border-cyan-400/50">
-                              +50 credits
-                            </span>
-                          </div>
-                          <p className="text-gray-300 text-sm">
-                            Rate a workplace, venue, or neighborhood to help other women stay safe
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-[var(--foreground)]">Share Your First Location</h4>
+                          <p className="text-[var(--muted-foreground)] text-sm truncate">Rate a place to help others</p>
                         </div>
-                        <CheckCircle2 className="w-6 h-6 text-gray-600 group-hover:text-cyan-400 transition-colors" />
+                        <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">+50</Badge>
                       </div>
                     </div>
                   </Link>
                 </motion.div>
 
-                {/* Share Experience - Opens Create Modal */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
+                {/* Create Post */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                   <div
                     onClick={() => {
-                      // Trigger the Create button in the sidebar
                       const createButton = document.querySelector('[data-create-button]') as HTMLButtonElement;
-                      if (createButton) {
-                        createButton.click();
-                      }
+                      if (createButton) createButton.click();
                     }}
-                    className="group relative backdrop-blur-xl bg-white/10 border-2 border-green-500/30 rounded-2xl p-6 hover:border-green-400 hover:bg-white/15 transition-all cursor-pointer overflow-hidden shadow-2xl hover:shadow-green-500/30"
+                    className="group bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--color-aurora-mint)]/50 hover:shadow-lg transition-all cursor-pointer"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative flex items-start gap-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-green-500/50">
-                        <Sparkles className="w-6 h-6 text-white" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-[var(--color-aurora-mint)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Sparkles className="w-5 h-5 text-[var(--color-aurora-mint)]" />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-bold text-lg text-white">Share Your First Experience</h4>
-                          <span className="text-sm font-semibold text-green-200 bg-green-600/30 px-3 py-1 rounded-full border border-green-400/50">
-                            +25 credits
-                          </span>
-                        </div>
-                        <p className="text-gray-300 text-sm">
-                          Create your first post to contribute to the community
-                        </p>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-[var(--foreground)]">Share Your First Experience</h4>
+                        <p className="text-[var(--muted-foreground)] text-sm truncate">Create a post for the community</p>
                       </div>
-                      <CheckCircle2 className="w-6 h-6 text-gray-600 group-hover:text-green-400 transition-colors" />
+                      <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">+25</Badge>
                     </div>
                   </div>
                 </motion.div>
 
                 {/* Invite Friend */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                   <div
                     onClick={() => setShowShareDialog(true)}
-                    className="group relative backdrop-blur-xl bg-white/10 border-2 border-orange-500/30 rounded-2xl p-6 hover:border-orange-400 hover:bg-white/15 transition-all cursor-pointer overflow-hidden shadow-2xl hover:shadow-orange-500/30"
+                    className="group bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--color-aurora-pink)]/50 hover:shadow-lg transition-all cursor-pointer"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative flex items-start gap-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-orange-600 to-amber-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-orange-500/50">
-                        <Users className="w-6 h-6 text-white" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-[var(--color-aurora-pink)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Users className="w-5 h-5 text-[var(--color-aurora-pink)]" />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-bold text-lg text-white">Invite a Friend</h4>
-                          <span className="text-sm font-semibold text-orange-200 bg-orange-600/30 px-3 py-1 rounded-full border border-orange-400/50">
-                            +15 credits
-                          </span>
-                        </div>
-                        <p className="text-gray-300 text-sm">
-                          Share Aurora with friends and earn credits when they join
-                        </p>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-[var(--foreground)]">Invite a Friend</h4>
+                        <p className="text-[var(--muted-foreground)] text-sm truncate">Earn credits when they join</p>
                       </div>
-                      <CheckCircle2 className="w-6 h-6 text-gray-600 group-hover:text-orange-400 transition-colors" />
+                      <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">+15</Badge>
                     </div>
                   </div>
                 </motion.div>
@@ -354,7 +298,7 @@ export default function FeedPage() {
             <div className="text-center py-8">
               <button
                 onClick={() => setShowQuests(true)}
-                className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl px-6 py-3 text-white hover:bg-white/20 transition-all"
+                className="bg-[var(--card)] border border-[var(--border)] rounded-xl px-6 py-3 text-[var(--foreground)] hover:bg-[var(--accent)] transition-all"
               >
                 <Sparkles className="w-4 h-4 inline mr-2" />
                 Show earning opportunities
@@ -365,11 +309,11 @@ export default function FeedPage() {
           {/* Empty state message when quests are hidden */}
           {feedItems && feedItems.length === 0 && !showQuests && (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-8 h-8 text-gray-500" />
+              <div className="w-16 h-16 bg-[var(--accent)] rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-8 h-8 text-[var(--muted-foreground)]" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">No posts yet</h3>
-              <p className="text-gray-400 text-sm mb-4">
+              <h3 className="text-xl font-bold text-[var(--foreground)] mb-2">No posts yet</h3>
+              <p className="text-[var(--muted-foreground)] text-sm mb-4">
                 Be the first to share something with the community!
               </p>
             </div>

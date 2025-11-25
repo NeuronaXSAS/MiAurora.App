@@ -2,11 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
-import { MobileNavigationMenu } from "@/components/mobile-navigation-menu";
 import { FloatingSOSButton } from "@/components/floating-sos-button";
-import { FloatingCreateButton } from "@/components/floating-create-button";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
-import { useIsMobile } from "@/hooks/use-is-mobile";
 import { useCreditsCelebration } from "@/hooks/use-credits-celebration";
 import { Id } from "@/convex/_generated/dataModel";
 
@@ -15,8 +12,8 @@ export default function AuthenticatedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const isMobile = useIsMobile();
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Get user ID for credit celebrations
   useEffect(() => {
@@ -37,26 +34,28 @@ export default function AuthenticatedLayout({
   // Watch for credit changes and celebrate
   useCreditsCelebration(userId);
 
-  if (isMobile) {
-    return (
-      <>
-        <MobileNavigationMenu>{children}</MobileNavigationMenu>
-        <FloatingSOSButton />
-        <FloatingCreateButton />
-        <PWAInstallPrompt />
-      </>
-    );
-  }
-
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-[var(--background)]">
       <a href="#main-content" className="skip-to-main">
         Skip to main content
       </a>
-      <AppSidebar />
-      <main id="main-content" className="flex-1 overflow-auto pt-16 lg:pt-0">
+      
+      {/* Sidebar - Always visible, collapsible on mobile */}
+      <AppSidebar 
+        collapsed={sidebarCollapsed} 
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
+      />
+      
+      {/* Main Content Area */}
+      <main 
+        id="main-content" 
+        className="flex-1 overflow-auto transition-all duration-300"
+      >
         {children}
       </main>
+      
+      {/* Floating SOS Button - Always visible for safety */}
+      <FloatingSOSButton />
       <PWAInstallPrompt />
     </div>
   );
