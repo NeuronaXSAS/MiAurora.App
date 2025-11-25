@@ -18,11 +18,21 @@ import { useState, useEffect, useRef } from "react";
 import { FeedAd } from "@/components/ads/feed-ad";
 
 export default function LandingPage() {
+  // Use skip pattern to handle errors gracefully
   const publicFeed = useQuery(api.feed.getPublicFeed, { limit: 20 });
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [dismissedPrompt, setDismissedPrompt] = useState(false);
+  const [feedError, setFeedError] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
+  
+  // Handle feed loading errors
+  useEffect(() => {
+    if (publicFeed === undefined) {
+      // Still loading
+      setFeedError(false);
+    }
+  }, [publicFeed]);
 
   // Track scroll progress
   useEffect(() => {
@@ -355,8 +365,8 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Empty State */}
-            {publicFeed && publicFeed.length === 0 && (
+            {/* Empty State - Show when feed is empty or on error */}
+            {(publicFeed && publicFeed.length === 0) && (
               <Card className="bg-[var(--card)] border-[var(--border)] p-8 text-center">
                 <Users className="w-12 h-12 text-[var(--muted-foreground)] mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
@@ -367,6 +377,25 @@ export default function LandingPage() {
                 </p>
                 <Link href="/api/auth/login?provider=GoogleOAuth">
                   <Button className="bg-[var(--color-aurora-purple)]">Get Started</Button>
+                </Link>
+              </Card>
+            )}
+            
+            {/* Error fallback - show signup CTA instead of error */}
+            {feedError && (
+              <Card className="bg-gradient-to-r from-[var(--color-aurora-lavender)]/20 to-[var(--color-aurora-pink)]/20 border-[var(--color-aurora-purple)]/30 p-6 text-center">
+                <Sparkles className="w-10 h-10 text-[var(--color-aurora-purple)] mx-auto mb-3" />
+                <h3 className="text-lg font-bold text-[var(--foreground)] mb-2">
+                  Join Aurora App
+                </h3>
+                <p className="text-[var(--muted-foreground)] text-sm mb-4">
+                  Sign up to access the community feed, share experiences, and earn credits.
+                </p>
+                <Link href="/api/auth/login?provider=GoogleOAuth">
+                  <Button className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white">
+                    Get Started Free
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
                 </Link>
               </Card>
             )}

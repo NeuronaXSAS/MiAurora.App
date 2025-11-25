@@ -248,44 +248,57 @@ export const getPublicFeed = query({
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
 
-    // Get recent posts - prioritize those with good engagement
-    const posts = await ctx.db
-      .query("posts")
-      .order("desc")
-      .take(limit * 2); // Get more to filter
+    try {
+      // Get recent posts - prioritize those with good engagement
+      const posts = await ctx.db
+        .query("posts")
+        .order("desc")
+        .take(limit * 2); // Get more to filter
 
-    const publicPosts = await Promise.all(
-      posts.map(async (post) => {
-        const author = await ctx.db.get(post.authorId);
-        
-        // Get comment count
-        const comments = await ctx.db
-          .query("comments")
-          .withIndex("by_post", (q) => q.eq("postId", post._id))
-          .collect();
+      // If no posts, return empty array
+      if (!posts || posts.length === 0) {
+        return [];
+      }
 
-        return {
-          _id: post._id,
-          _creationTime: post._creationTime,
-          title: post.title,
-          content: post.description,
-          category: post.lifeDimension || post.postType,
-          location: post.location?.name || null,
-          rating: post.rating,
-          upvotes: post.upvotes || 0,
-          commentCount: comments.length,
-          isAnonymous: post.isAnonymous,
-          authorName: post.isAnonymous ? null : (author?.name || null),
-          type: "post" as const,
-        };
-      })
-    );
+      const publicPosts = await Promise.all(
+        posts.map(async (post) => {
+          try {
+            const author = post.authorId ? await ctx.db.get(post.authorId) : null;
+            
+            // Use stored commentCount instead of querying comments table
+            const commentCount = post.commentCount ?? 0;
 
-    // Filter out posts with very little content
-    const filteredPosts = publicPosts.filter(
-      (post) => post.content && post.content.length > 20
-    );
+            return {
+              _id: post._id,
+              _creationTime: post._creationTime,
+              title: post.title || "",
+              content: post.description || "",
+              category: post.lifeDimension || post.postType || "general",
+              location: post.location?.name || null,
+              rating: post.rating || 0,
+              upvotes: post.upvotes || 0,
+              commentCount: commentCount,
+              isAnonymous: post.isAnonymous ?? false,
+              authorName: post.isAnonymous ? null : (author?.name || null),
+              type: "post" as const,
+            };
+          } catch {
+            // Skip posts that fail to process
+            return null;
+          }
+        })
+      );
 
-    return filteredPosts.slice(0, limit);
+      // Filter out null entries and posts with very little content
+      const filteredPosts = publicPosts.filter(
+        (post): post is NonNullable<typeof post> => 
+          post !== null && typeof post.content === 'string' && post.content.length > 20
+      );
+
+      return filteredPosts.slice(0, limit);
+    } catch {
+      // Return empty array on any error to prevent page crash
+      return [];
+    }
   },
 });
