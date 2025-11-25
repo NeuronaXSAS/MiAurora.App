@@ -70,7 +70,7 @@ export function useVideoUpload(): UseVideoUploadReturn {
 
       // Step 1: Get Cloudinary configuration
       if (!generateCredentials || !generateCredentials.success) {
-        throw new Error('Cloudinary not configured');
+        throw new Error('Video upload is coming soon! We\'re working on bringing you this feature. 🚀');
       }
 
       const { credentials } = generateCredentials;

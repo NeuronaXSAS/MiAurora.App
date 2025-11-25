@@ -57,71 +57,88 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Aurora Cream (#fffaf1) as light mode background */
+  --background: #fffaf1;
+  /* Aurora Violet (#3d0d73) as text color for contrast */
+  --foreground: #3d0d73;
+  --card: #ffffff;
+  --card-foreground: #3d0d73;
+  --popover: #ffffff;
+  --popover-foreground: #3d0d73;
+  /* Aurora Blue (#2e2ad6) as primary action color */
+  --primary: #2e2ad6;
+  --primary-foreground: #ffffff;
+  /* Aurora Lavender (#c9cef4) as secondary */
+  --secondary: #c9cef4;
+  --secondary-foreground: #3d0d73;
+  --muted: #f5f0e8;
+  --muted-foreground: #5537a7;
+  /* Aurora Lavender for accents */
+  --accent: #c9cef4;
+  --accent-foreground: #3d0d73;
+  /* Aurora Salmon (#f05a6b) for destructive */
+  --destructive: #f05a6b;
+  --border: #e8e0d5;
+  --input: #f5f0e8;
+  /* Aurora Purple for ring */
+  --ring: #5537a7;
+  /* Chart colors using Aurora palette */
+  --chart-1: #f29de5;
+  --chart-2: #2e2ad6;
+  --chart-3: #d6f4ec;
+  --chart-4: #e5e093;
+  --chart-5: #c9cef4;
+  /* Sidebar with Aurora Cream */
+  --sidebar: #fffaf1;
+  --sidebar-foreground: #3d0d73;
+  --sidebar-primary: #2e2ad6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #c9cef4;
+  --sidebar-accent-foreground: #3d0d73;
+  --sidebar-border: #e8e0d5;
+  --sidebar-ring: #5537a7;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Aurora Violet (#3d0d73) as dark mode background */
+  --background: #3d0d73;
+  /* Aurora Cream (#fffaf1) as text color for contrast */
+  --foreground: #fffaf1;
+  --card: #4a1a80;
+  --card-foreground: #fffaf1;
+  --popover: #4a1a80;
+  --popover-foreground: #fffaf1;
+  /* Aurora Blue stays as primary */
+  --primary: #2e2ad6;
+  --primary-foreground: #ffffff;
+  /* Aurora Lavender for secondary in dark mode */
+  --secondary: #5537a7;
+  --secondary-foreground: #fffaf1;
+  --muted: #4a1a80;
+  --muted-foreground: #c9cef4;
+  /* Aurora Lavender for accents */
+  --accent: #5537a7;
+  --accent-foreground: #fffaf1;
+  /* Aurora Salmon for destructive */
+  --destructive: #f05a6b;
+  --border: rgba(255, 250, 241, 0.15);
+  --input: rgba(255, 250, 241, 0.1);
+  --ring: #c9cef4;
+  /* Chart colors - brighter for dark mode */
+  --chart-1: #f29de5;
+  --chart-2: #4a4aff;
+  --chart-3: #d6f4ec;
+  --chart-4: #e5e093;
+  --chart-5: #c9cef4;
+  /* Sidebar with Aurora Violet */
+  --sidebar: #3d0d73;
+  --sidebar-foreground: #fffaf1;
+  --sidebar-primary: #2e2ad6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #5537a7;
+  --sidebar-accent-foreground: #fffaf1;
+  --sidebar-border: rgba(255, 250, 241, 0.15);
+  --sidebar-ring: #c9cef4;
 }
 
 @layer base {

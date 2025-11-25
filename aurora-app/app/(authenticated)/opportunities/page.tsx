@@ -77,16 +77,16 @@ export default function OpportunitiesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-[var(--card)] border-b border-[var(--border)]">
         <div className="px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="flex items-start gap-3">
-              <Briefcase className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 flex-shrink-0 mt-1" />
+              <Briefcase className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--color-aurora-purple)] flex-shrink-0 mt-1" />
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold">Opportunities</h1>
-                <p className="text-xs sm:text-sm text-gray-600">
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">Opportunities</h1>
+                <p className="text-xs sm:text-sm text-[var(--muted-foreground)]">
                   Unlock jobs, mentorship, and resources
                 </p>
               </div>
@@ -94,13 +94,13 @@ export default function OpportunitiesPage() {
 
             {/* User Credits */}
             {user && (
-              <div className="flex items-center gap-3 sm:gap-4 bg-purple-50 sm:bg-transparent rounded-lg p-3 sm:p-0">
+              <div className="flex items-center gap-3 sm:gap-4 bg-[var(--color-aurora-yellow)]/10 sm:bg-transparent rounded-lg p-3 sm:p-0">
                 <div className="flex-1 sm:text-right">
-                  <p className="text-xs sm:text-sm text-gray-600">Your Credits</p>
-                  <p className="text-xl sm:text-2xl font-bold text-purple-600">{user.credits}</p>
+                  <p className="text-xs sm:text-sm text-[var(--muted-foreground)]">Your Credits</p>
+                  <p className="text-xl sm:text-2xl font-bold text-[var(--color-aurora-yellow)]">{user.credits}</p>
                 </div>
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-aurora-yellow)]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--color-aurora-yellow)]" />
                 </div>
               </div>
             )}
@@ -114,7 +114,7 @@ export default function OpportunitiesPage() {
                 setCategory(value === "all" ? undefined : value)
               }
             >
-              <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px] bg-[var(--background)] border-[var(--border)]">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
@@ -129,7 +129,7 @@ export default function OpportunitiesPage() {
 
             <div className="flex gap-2">
               <Link href="/opportunities/my-opportunities">
-                <Button variant="outline">
+                <Button variant="outline" className="border-[var(--border)]">
                   <Settings className="w-4 h-4 mr-2" />
                   My Opportunities
                 </Button>
@@ -137,7 +137,7 @@ export default function OpportunitiesPage() {
 
               <Button
                 onClick={() => setCreateDialogOpen(true)}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Opportunity
@@ -163,11 +163,11 @@ export default function OpportunitiesPage() {
           {/* Empty State */}
           {opportunities && opportunities.length === 0 && (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Briefcase className="w-8 h-8 text-purple-600" />
+              <div className="w-16 h-16 bg-[var(--color-aurora-purple)]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Briefcase className="w-8 h-8 text-[var(--color-aurora-purple)]" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No opportunities yet</h3>
-              <p className="text-gray-600">
+              <h3 className="text-lg font-semibold mb-2 text-[var(--foreground)]">No opportunities yet</h3>
+              <p className="text-[var(--muted-foreground)]">
                 Check back soon for new opportunities!
               </p>
             </div>
@@ -191,17 +191,17 @@ export default function OpportunitiesPage() {
 
           {/* Earn More Credits CTA */}
           {user && user.credits < 50 && (
-            <div className="mt-8 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-6">
+            <div className="mt-8 bg-gradient-to-r from-[var(--color-aurora-lavender)]/30 to-[var(--color-aurora-pink)]/20 border border-[var(--color-aurora-purple)]/20 rounded-xl p-6">
               <div className="flex items-start gap-4">
-                <Sparkles className="w-6 h-6 text-purple-600 mt-1" />
+                <Sparkles className="w-6 h-6 text-[var(--color-aurora-yellow)] mt-1" />
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">Need More Credits?</h3>
-                  <p className="text-gray-700 mb-4">
+                  <h3 className="font-semibold text-lg mb-2 text-[var(--foreground)]">Need More Credits?</h3>
+                  <p className="text-[var(--foreground)] mb-4">
                     Earn credits by contributing to the community:
                   </p>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li>• Create a post: <span className="font-semibold text-purple-600">+10 credits</span></li>
-                    <li>• Verify a post: <span className="font-semibold text-purple-600">+5 credits</span></li>
+                  <ul className="space-y-2 text-sm text-[var(--muted-foreground)]">
+                    <li>• Create a post: <span className="font-semibold text-[var(--color-aurora-yellow)]">+10 credits</span></li>
+                    <li>• Verify a post: <span className="font-semibold text-[var(--color-aurora-yellow)]">+5 credits</span></li>
                     <li>• Help other women navigate safely and earn rewards!</li>
                   </ul>
                 </div>

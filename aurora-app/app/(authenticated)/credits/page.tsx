@@ -79,15 +79,17 @@ export default function CreditsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+    <div className="min-h-screen bg-[var(--background)]">
+      {/* Header - Aurora Gradient */}
+      <div className="bg-gradient-to-r from-[var(--color-aurora-violet)] to-[var(--color-aurora-purple)] text-white">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="flex items-center gap-3 mb-4">
-            <Coins className="w-8 h-8" />
+            <div className="w-12 h-12 bg-[var(--color-aurora-yellow)] rounded-full flex items-center justify-center">
+              <Coins className="w-6 h-6 text-[var(--color-aurora-violet)]" />
+            </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold">Credit Center</h1>
-              <p className="text-sm sm:text-base text-purple-100">
+              <p className="text-sm sm:text-base text-white/80">
                 Track your earnings and spending
               </p>
             </div>
@@ -96,32 +98,32 @@ export default function CreditsPage() {
           {/* Stats Cards */}
           {stats && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <div className="bg-white/10 backdrop-blur rounded-lg p-3 sm:p-4">
-                <p className="text-xs sm:text-sm text-purple-100">
+              <div className="bg-white/10 backdrop-blur rounded-xl p-3 sm:p-4 border border-white/20">
+                <p className="text-xs sm:text-sm text-white/80">
                   Current Balance
                 </p>
-                <p className="text-xl sm:text-2xl font-bold">
+                <p className="text-xl sm:text-2xl font-bold text-[var(--color-aurora-yellow)]">
                   {stats.currentBalance}
                 </p>
               </div>
-              <div className="bg-white/10 backdrop-blur rounded-lg p-3 sm:p-4">
-                <p className="text-xs sm:text-sm text-purple-100">
+              <div className="bg-white/10 backdrop-blur rounded-xl p-3 sm:p-4 border border-white/20">
+                <p className="text-xs sm:text-sm text-white/80">
                   Total Earned
                 </p>
-                <p className="text-xl sm:text-2xl font-bold text-green-300">
+                <p className="text-xl sm:text-2xl font-bold text-[var(--color-aurora-mint)]">
                   +{stats.totalEarned}
                 </p>
               </div>
-              <div className="bg-white/10 backdrop-blur rounded-lg p-3 sm:p-4">
-                <p className="text-xs sm:text-sm text-purple-100">
+              <div className="bg-white/10 backdrop-blur rounded-xl p-3 sm:p-4 border border-white/20">
+                <p className="text-xs sm:text-sm text-white/80">
                   Total Spent
                 </p>
-                <p className="text-xl sm:text-2xl font-bold text-red-300">
+                <p className="text-xl sm:text-2xl font-bold text-[var(--color-aurora-pink)]">
                   -{stats.totalSpent}
                 </p>
               </div>
-              <div className="bg-white/10 backdrop-blur rounded-lg p-3 sm:p-4">
-                <p className="text-xs sm:text-sm text-purple-100">
+              <div className="bg-white/10 backdrop-blur rounded-xl p-3 sm:p-4 border border-white/20">
+                <p className="text-xs sm:text-sm text-white/80">
                   This Month
                 </p>
                 <p className="text-xl sm:text-2xl font-bold">
@@ -138,30 +140,30 @@ export default function CreditsPage() {
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Monthly Limit Info */}
           {stats && (
-            <Card>
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Info className="w-6 h-6 text-purple-600" />
+                  <div className="w-12 h-12 bg-[var(--color-aurora-yellow)]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Info className="w-6 h-6 text-[var(--color-aurora-purple)]" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold mb-2">Monthly Credit Limit</h3>
-                    <p className="text-sm text-gray-600 mb-3">
+                    <h3 className="font-semibold mb-2 text-[var(--foreground)]">Monthly Credit Limit</h3>
+                    <p className="text-sm text-[var(--muted-foreground)] mb-3">
                       You can earn up to {stats.monthlyLimit} credits per month.
                       You have {stats.monthlyRemaining} credits remaining this
                       month.
                     </p>
                     <div className="flex items-center gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-500" />
+                      <div className="flex items-center gap-2 text-[var(--muted-foreground)]">
+                        <Calendar className="w-4 h-4" />
                         <span>
                           Resets in {stats.daysUntilReset} day
                           {stats.daysUntilReset !== 1 ? "s" : ""}
                         </span>
                       </div>
-                      <div className="flex-1 bg-gray-200 rounded-full h-2">
+                      <div className="flex-1 bg-[var(--accent)] rounded-full h-2">
                         <div
-                          className="bg-purple-600 h-2 rounded-full transition-all"
+                          className="bg-[var(--color-aurora-yellow)] h-2 rounded-full transition-all"
                           style={{
                             width: `${
                               (stats.monthlyEarned / stats.monthlyLimit) * 100
@@ -178,10 +180,10 @@ export default function CreditsPage() {
 
           {/* Earning Breakdown */}
           {stats && (
-            <Card>
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="w-5 h-5" />
+                <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+                  <Award className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
                   How You Earn Credits
                 </CardTitle>
               </CardHeader>
@@ -190,13 +192,13 @@ export default function CreditsPage() {
                   {Object.entries(stats.earnedByType).map(([type, amount]) => (
                     <div
                       key={type}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-[var(--accent)] rounded-xl"
                     >
-                      <span className="text-sm font-medium capitalize">
+                      <span className="text-sm font-medium capitalize text-[var(--foreground)]">
                         {type.replace(/_/g, " ")}
                       </span>
-                      <Badge className="bg-green-100 text-green-700">
-                        +{amount}
+                      <Badge className="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] border-[var(--color-aurora-mint)]/30">
+                        +{amount as number}
                       </Badge>
                     </div>
                   ))}
@@ -206,15 +208,16 @@ export default function CreditsPage() {
           )}
 
           {/* Transaction History */}
-          <Card>
+          <Card className="bg-[var(--card)] border-[var(--border)]">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Transaction History</CardTitle>
+                <CardTitle className="text-[var(--foreground)]">Transaction History</CardTitle>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleExport}
                   disabled={!exportData}
+                  className="border-[var(--border)]"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Export CSV
@@ -228,6 +231,7 @@ export default function CreditsPage() {
                   variant={filterType === undefined ? "default" : "outline"}
                   size="sm"
                   onClick={() => setFilterType(undefined)}
+                  className={filterType === undefined ? "bg-[var(--color-aurora-purple)]" : ""}
                 >
                   All
                 </Button>
@@ -235,6 +239,7 @@ export default function CreditsPage() {
                   variant={filterType === "earned" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setFilterType("earned")}
+                  className={filterType === "earned" ? "bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)]" : ""}
                 >
                   Earned
                 </Button>
@@ -242,6 +247,7 @@ export default function CreditsPage() {
                   variant={filterType === "spent" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setFilterType("spent")}
+                  className={filterType === "spent" ? "bg-[var(--color-aurora-pink)] text-[var(--color-aurora-violet)]" : ""}
                 >
                   Spent
                 </Button>
@@ -250,15 +256,15 @@ export default function CreditsPage() {
               {/* Transactions List */}
               {!transactions && (
                 <div className="text-center py-8">
-                  <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                  <p className="text-gray-600">Loading transactions...</p>
+                  <div className="w-12 h-12 border-4 border-[var(--color-aurora-purple)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                  <p className="text-[var(--muted-foreground)]">Loading transactions...</p>
                 </div>
               )}
 
               {transactions && transactions.length === 0 && (
                 <div className="text-center py-8">
-                  <Coins className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-600">No transactions yet</p>
+                  <Coins className="w-16 h-16 text-[var(--color-aurora-yellow)]/30 mx-auto mb-4" />
+                  <p className="text-[var(--muted-foreground)]">No transactions yet</p>
                 </div>
               )}
 
@@ -267,27 +273,27 @@ export default function CreditsPage() {
                   {transactions.map((transaction: any) => (
                     <div
                       key={transaction._id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex items-center justify-between p-3 border border-[var(--border)] rounded-xl hover:bg-[var(--accent)] transition-colors"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div
                           className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                             transaction.amount > 0
-                              ? "bg-green-100"
-                              : "bg-red-100"
+                              ? "bg-[var(--color-aurora-mint)]/20"
+                              : "bg-[var(--color-aurora-pink)]/20"
                           }`}
                         >
                           {transaction.amount > 0 ? (
-                            <TrendingUp className="w-5 h-5 text-green-600" />
+                            <TrendingUp className="w-5 h-5 text-[var(--color-aurora-mint)]" />
                           ) : (
-                            <TrendingDown className="w-5 h-5 text-red-600" />
+                            <TrendingDown className="w-5 h-5 text-[var(--color-aurora-pink)]" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">
+                          <p className="font-medium truncate text-[var(--foreground)]">
                             {transaction.formattedType}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-[var(--muted-foreground)]">
                             {formatDistanceToNow(transaction._creationTime, {
                               addSuffix: true,
                             })}
@@ -298,8 +304,8 @@ export default function CreditsPage() {
                         <p
                           className={`font-bold ${
                             transaction.amount > 0
-                              ? "text-green-600"
-                              : "text-red-600"
+                              ? "text-[var(--color-aurora-mint)]"
+                              : "text-[var(--color-aurora-pink)]"
                           }`}
                         >
                           {transaction.amount > 0 ? "+" : ""}

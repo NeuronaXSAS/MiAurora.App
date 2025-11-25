@@ -110,6 +110,12 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
         isEmergency,
       });
 
+      // Check if Agora is not configured
+      if (!result.livestreamId) {
+        setPermissionError('Aurora Live is coming soon! Livestreaming will be available in a future update. 🚀');
+        return;
+      }
+
       setLivestreamId(result.livestreamId);
       setChannelName(result.channelName);
 
@@ -122,6 +128,8 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
           console.error('Streaming error:', err);
           if (err.message.includes('permission')) {
             setPermissionError('Camera/microphone access denied. Please enable permissions in your browser settings.');
+          } else if (err.message.includes('not_configured') || err.message.includes('coming soon')) {
+            setPermissionError('Aurora Live is coming soon! Livestreaming will be available in a future update. 🚀');
           }
         },
       });
@@ -132,8 +140,10 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
       const err = error as Error;
       if (err.message.includes('permission') || err.message.includes('NotAllowedError')) {
         setPermissionError('Camera/microphone access denied. Please enable permissions and try again.');
+      } else if (err.message.includes('not_configured') || err.message.includes('AGORA')) {
+        setPermissionError('Aurora Live is coming soon! Livestreaming will be available in a future update. 🚀');
       } else {
-        alert('Failed to start livestream: ' + err.message);
+        setPermissionError('Aurora Live is coming soon! We\'re working on bringing you this feature. 🚀');
       }
     }
   };

@@ -54,8 +54,16 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
   const [energy, setEnergy] = useState<number>(3);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  const cycleHistory = useQuery(api.cycleTracker.getCycleHistory, { userId });
-  const predictions = useQuery(api.cycleTracker.getCyclePredictions, { userId });
+  // Safe query with error handling
+  const cycleHistory = useQuery(api.cycleTracker.getCycleHistory, { userId }) ?? [];
+  const predictions = useQuery(api.cycleTracker.getCyclePredictions, { userId }) ?? {
+    hasEnoughData: false,
+    averageCycleLength: 28,
+    nextPeriodDate: null,
+    fertileWindowStart: null,
+    fertileWindowEnd: null,
+    ovulationDate: null,
+  };
   const logPeriod = useMutation(api.cycleTracker.logPeriod);
   const logSymptoms = useMutation(api.cycleTracker.logSymptoms);
 

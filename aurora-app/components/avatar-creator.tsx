@@ -127,15 +127,15 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-3xl bg-gradient-to-br from-[#150F22] via-[#231E35] to-[#352D4D] border-[#FF6B7A]/30 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-3xl bg-gradient-to-br from-[var(--color-aurora-violet)] via-[#231E35] to-[var(--color-aurora-purple)] border-[var(--color-aurora-pink)]/30 shadow-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-[#FF6B7A] to-[#E84D5F] rounded-2xl flex items-center justify-center shadow-lg shadow-[#FF6B7A]/30">
+            <div className="w-12 h-12 bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] rounded-2xl flex items-center justify-center shadow-lg shadow-[var(--color-aurora-pink)]/30">
               <Heart className="w-6 h-6 text-white" />
             </div>
             <div>
-              <DialogTitle className="text-2xl text-white">Create Your Aurora</DialogTitle>
-              <DialogDescription className="text-[#FFE8E8]">
+              <DialogTitle className="text-2xl text-white">Create Your Aurora App Avatar</DialogTitle>
+              <DialogDescription className="text-[var(--color-aurora-cream)]">
                 Design your unique digital identity ✨
               </DialogDescription>
             </div>
@@ -312,10 +312,10 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
           </Button>
           <Button
             onClick={() => onComplete(config)}
-            className="bg-gradient-to-r from-[#FF6B7A] to-[#E84D5F] hover:from-[#E84D5F] hover:to-[#C73A4D] shadow-lg shadow-[#FF6B7A]/30"
+            className="bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-pink)]/30"
           >
             <Heart className="w-4 h-4 mr-2" />
-            Create My Aurora
+            Create My Aurora App Avatar
           </Button>
         </div>
       </DialogContent>

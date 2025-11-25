@@ -105,25 +105,25 @@ export default function IntelligenceDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+      <div className="bg-gradient-to-r from-[var(--color-aurora-violet)] to-[var(--color-aurora-purple)] text-white">
         <div className="container mx-auto px-4 sm:px-6 py-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                 <Database className="w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Aurora Intelligence</h1>
-                <p className="text-blue-100">
+                <h1 className="text-3xl font-bold">Aurora App Intelligence</h1>
+                <p className="text-white/80">
                   B2B Safety Data Platform • Enterprise Analytics
                 </p>
               </div>
             </div>
             <Button
               onClick={handleExportData}
-              className="bg-white text-blue-600 hover:bg-blue-50"
+              className="bg-white text-[var(--color-aurora-violet)] hover:bg-white/90"
             >
               <Download className="w-4 h-4 mr-2" />
               Export Data
@@ -135,81 +135,81 @@ export default function IntelligenceDashboard() {
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-7xl">
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="border-l-4 border-l-blue-500">
+          <Card className="border-l-4 border-l-[var(--color-aurora-blue)] bg-[var(--card)] border-[var(--border)]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Safety Reports</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-sm text-[var(--muted-foreground)] mb-1">Total Safety Reports</p>
+                  <p className="text-3xl font-bold text-[var(--foreground)]">
                     {((stats?.corporate.totalCompanies || 0) * 15).toLocaleString()}
                   </p>
-                  <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-[var(--color-aurora-mint)] mt-1 flex items-center gap-1">
                     <TrendingUp className="w-3 h-3" />
                     +12% this month
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-[var(--color-aurora-blue)]/10 rounded-lg flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-[var(--color-aurora-blue)]" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-green-500">
+          <Card className="border-l-4 border-l-[var(--color-aurora-mint)] bg-[var(--card)] border-[var(--border)]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Verified Incidents</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-sm text-[var(--muted-foreground)] mb-1">Verified Incidents</p>
+                  <p className="text-3xl font-bold text-[var(--foreground)]">
                     {((stats?.urban.totalGridCells || 0) * 3).toLocaleString()}
                   </p>
-                  <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-[var(--color-aurora-mint)] mt-1 flex items-center gap-1">
                     <CheckCircle className="w-3 h-3" />
                     98% accuracy
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-green-600" />
+                <div className="w-12 h-12 bg-[var(--color-aurora-mint)]/20 rounded-lg flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-[var(--color-aurora-mint)]" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-purple-500">
+          <Card className="border-l-4 border-l-[var(--color-aurora-purple)] bg-[var(--card)] border-[var(--border)]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Corporate Partners</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-sm text-[var(--muted-foreground)] mb-1">Corporate Partners</p>
+                  <p className="text-3xl font-bold text-[var(--foreground)]">
                     {stats?.corporate.totalCompanies || 0}
                   </p>
-                  <p className="text-xs text-purple-600 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-[var(--color-aurora-purple)] mt-1 flex items-center gap-1">
                     <Building2 className="w-3 h-3" />
                     Across 12 industries
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-purple-600" />
+                <div className="w-12 h-12 bg-[var(--color-aurora-purple)]/10 rounded-lg flex items-center justify-center">
+                  <Building2 className="w-6 h-6 text-[var(--color-aurora-purple)]" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-orange-500">
+          <Card className="border-l-4 border-l-[var(--color-aurora-pink)] bg-[var(--card)] border-[var(--border)]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Active Users</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-sm text-[var(--muted-foreground)] mb-1">Active Users</p>
+                  <p className="text-3xl font-bold text-[var(--foreground)]">
                     {((stats?.urban.totalGridCells || 0) * 50).toLocaleString()}
                   </p>
-                  <p className="text-xs text-orange-600 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-[var(--color-aurora-pink)] mt-1 flex items-center gap-1">
                     <Users className="w-3 h-3" />
                     Contributing data
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Users className="w-6 h-6 text-orange-600" />
+                <div className="w-12 h-12 bg-[var(--color-aurora-pink)]/20 rounded-lg flex items-center justify-center">
+                  <Users className="w-6 h-6 text-[var(--color-aurora-pink)]" />
                 </div>
               </div>
             </CardContent>

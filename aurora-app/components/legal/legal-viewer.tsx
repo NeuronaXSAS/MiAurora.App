@@ -107,23 +107,23 @@ export function LegalViewer({ content, title, lastUpdated }: LegalViewerProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
+      <div className="bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 text-[var(--foreground)]">
               {getIcon(title)}
               <div>
-                <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
+                <h1 className="text-xl font-semibold text-[var(--foreground)]">{title}</h1>
                 {lastUpdated && (
-                  <p className="text-sm text-slate-500">Last updated: {lastUpdated}</p>
+                  <p className="text-sm text-[var(--muted-foreground)]">Last updated: {lastUpdated}</p>
                 )}
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-slate-600">Legal Document</span>
+              <div className="w-2 h-2 bg-[var(--color-aurora-mint)] rounded-full"></div>
+              <span className="text-sm text-[var(--muted-foreground)]">Legal Document</span>
             </div>
           </div>
         </div>
@@ -134,8 +134,8 @@ export function LegalViewer({ content, title, lastUpdated }: LegalViewerProps) {
           {/* Table of Contents - Sticky Sidebar */}
           <div className="hidden lg:block w-64 flex-shrink-0">
             <div className="sticky top-24">
-              <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
-                <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center">
+              <div className="bg-[var(--card)] rounded-lg border border-[var(--border)] p-6 shadow-sm">
+                <h3 className="text-sm font-semibold text-[var(--foreground)] mb-4 flex items-center">
                   <FileText className="w-4 h-4 mr-2" />
                   Table of Contents
                 </h3>
@@ -146,10 +146,10 @@ export function LegalViewer({ content, title, lastUpdated }: LegalViewerProps) {
                       onClick={() => scrollToSection(item.id)}
                       className={cn(
                         "block w-full text-left px-3 py-2 text-sm rounded-md transition-colors",
-                        "hover:bg-slate-100",
+                        "hover:bg-[var(--accent)]",
                         activeSection === item.id
-                          ? "bg-purple-50 text-purple-700 border-l-2 border-purple-500"
-                          : "text-slate-600 hover:text-slate-900",
+                          ? "bg-[var(--color-aurora-lavender)]/30 text-[var(--color-aurora-purple)] border-l-2 border-[var(--color-aurora-purple)]"
+                          : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
                         item.level === 1 && "font-medium",
                         item.level === 2 && "ml-3",
                         item.level === 3 && "ml-6 text-xs"
@@ -170,25 +170,31 @@ export function LegalViewer({ content, title, lastUpdated }: LegalViewerProps) {
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
+            <div className="bg-[var(--card)] rounded-lg border border-[var(--border)] shadow-sm">
               <div className="p-8 lg:p-12">
-                <article className="prose prose-slate lg:prose-xl max-w-none">
+                <article className="prose prose-slate dark:prose-invert lg:prose-xl max-w-none 
+                  prose-headings:text-[var(--foreground)] 
+                  prose-p:text-[var(--foreground)] 
+                  prose-li:text-[var(--foreground)]
+                  prose-strong:text-[var(--foreground)]
+                  prose-a:text-[var(--color-aurora-blue)]
+                  prose-a:hover:text-[var(--color-aurora-purple)]">
                   <Markdown options={markdownOptions}>{content}</Markdown>
                 </article>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="mt-8 p-6 bg-slate-50 rounded-lg border border-slate-200">
-              <div className="flex items-center justify-between">
+            <div className="mt-8 p-6 bg-[var(--accent)] rounded-lg border border-[var(--border)]">
+              <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center space-x-2">
-                  <Scale className="w-5 h-5 text-slate-500" />
-                  <span className="text-sm text-slate-600">
+                  <Scale className="w-5 h-5 text-[var(--muted-foreground)]" />
+                  <span className="text-sm text-[var(--muted-foreground)]">
                     This document is legally binding and enforceable.
                   </span>
                 </div>
-                <div className="text-sm text-slate-500">
-                  © 2024 Aurora. All rights reserved.
+                <div className="text-sm text-[var(--muted-foreground)]">
+                  © 2024 Aurora App. All rights reserved.
                 </div>
               </div>
             </div>

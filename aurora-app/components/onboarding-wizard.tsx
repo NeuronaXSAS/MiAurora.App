@@ -168,22 +168,27 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-2xl backdrop-blur-xl bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 border-purple-500/30 shadow-2xl">
+      <DialogContent className="sm:max-w-2xl backdrop-blur-xl bg-gradient-to-br from-[var(--color-aurora-violet)] via-[#231E35] to-[var(--color-aurora-purple)] border-[var(--color-aurora-pink)]/30 shadow-2xl">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/50">
-              <Sparkles className="w-6 h-6 text-white" />
+            {/* Aurora App Logo */}
+            <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg shadow-[var(--color-aurora-purple)]/50">
+              <img 
+                src="/Au_Logo_1.png" 
+                alt="Aurora App Logo" 
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
-              <DialogTitle className="text-2xl text-white">Welcome to Aurora!</DialogTitle>
-              <DialogDescription className="text-gray-300">
+              <DialogTitle className="text-2xl text-white">Welcome to Aurora App!</DialogTitle>
+              <DialogDescription className="text-[var(--color-aurora-cream)]">
                 Let's personalize your experience (Step {step} of 3)
               </DialogDescription>
             </div>
           </div>
           {error && (
-            <div className="mt-3 p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
-              <p className="text-sm text-red-200">{error}</p>
+            <div className="mt-3 p-3 bg-[var(--color-aurora-salmon)]/20 border border-[var(--color-aurora-salmon)]/50 rounded-lg">
+              <p className="text-sm text-[var(--color-aurora-cream)]">{error}</p>
             </div>
           )}
         </DialogHeader>
@@ -256,7 +261,7 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
                 <Button
                   onClick={() => setStep(2)}
                   disabled={!role}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/50"
+                  className="bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50"
                 >
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -311,7 +316,7 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
                 <Button
                   onClick={() => setStep(3)}
                   disabled={selectedInterests.length === 0}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/50"
+                  className="bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50"
                 >
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -391,7 +396,7 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
                 <Button
                   onClick={handleComplete}
                   disabled={isSubmitting}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/50 disabled:opacity-50"
+                  className="bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50 disabled:opacity-50"
                 >
                   {isSubmitting ? "Saving..." : "Complete Setup"}
                   <Check className="w-4 h-4 ml-2" />
@@ -408,10 +413,10 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
               key={s}
               className={`h-2 rounded-full transition-all ${
                 s === step
-                  ? "w-8 bg-gradient-to-r from-purple-600 to-pink-600"
+                  ? "w-8 bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)]"
                   : s < step
-                  ? "w-2 bg-purple-600"
-                  : "w-2 bg-gray-300"
+                  ? "w-2 bg-[var(--color-aurora-purple)]"
+                  : "w-2 bg-gray-500"
               }`}
             />
           ))}

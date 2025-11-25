@@ -29,31 +29,31 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="min-h-screen p-4 sm:p-6">
+    <div className="min-h-screen p-4 sm:p-6 bg-[var(--background)]">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF6B7A] to-[#8B5CF6] flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] flex items-center justify-center">
               <Settings className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Settings</h1>
-              <p className="text-white/60">Customize your Aurora experience</p>
+              <h1 className="text-2xl font-bold text-[var(--foreground)]">Settings</h1>
+              <p className="text-[var(--muted-foreground)]">Customize your Aurora App experience</p>
             </div>
           </div>
         </div>
 
         {/* Connection Status */}
-        <Card className="p-4 mb-6 bg-white/5 border-white/10">
+        <Card className="p-4 mb-6 bg-[var(--card)] border-[var(--border)]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {isOnline ? (
-                <Wifi className="w-5 h-5 text-green-400" />
+                <Wifi className="w-5 h-5 text-[var(--color-aurora-mint)]" />
               ) : (
-                <WifiOff className="w-5 h-5 text-orange-400" />
+                <WifiOff className="w-5 h-5 text-[var(--color-aurora-orange)]" />
               )}
-              <span className="text-white">
+              <span className="text-[var(--foreground)]">
                 {isOnline ? "Connected" : "Offline Mode"}
               </span>
             </div>
@@ -61,7 +61,7 @@ export default function SettingsPage() {
               <Button
                 size="sm"
                 onClick={skipWaiting}
-                className="bg-[#FF6B7A] hover:bg-[#E84D5F]"
+                className="bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-purple)]"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Update Available
@@ -80,8 +80,8 @@ export default function SettingsPage() {
                 variant={activeSection === section.id ? "default" : "ghost"}
                 onClick={() => setActiveSection(section.id)}
                 className={activeSection === section.id 
-                  ? "bg-[#FF6B7A] text-white" 
-                  : "text-white/60 hover:text-white hover:bg-white/10"
+                  ? "bg-[var(--color-aurora-purple)] text-white" 
+                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
                 }
               >
                 <Icon className="w-4 h-4 mr-2" />
@@ -98,15 +98,15 @@ export default function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            <Card className="p-6 bg-white/5 border-white/10">
-              <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                <Palette className="w-5 h-5 text-[#FF6B7A]" />
+            <Card className="p-6 bg-[var(--card)] border-[var(--border)]">
+              <h3 className="text-[var(--foreground)] font-semibold mb-4 flex items-center gap-2">
+                <Palette className="w-5 h-5 text-[var(--color-aurora-pink)]" />
                 Theme
               </h3>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white">Color Mode</p>
-                  <p className="text-white/50 text-sm">
+                  <p className="text-[var(--foreground)]">Color Mode</p>
+                  <p className="text-[var(--muted-foreground)] text-sm">
                     Current: {theme === 'system' ? 'System' : theme === 'dark' ? 'Dark' : 'Light'}
                   </p>
                 </div>
@@ -133,49 +133,49 @@ export default function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            <Card className="p-6 bg-white/5 border-white/10">
-              <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                <Lock className="w-5 h-5 text-[#8B5CF6]" />
+            <Card className="p-6 bg-[var(--card)] border-[var(--border)]">
+              <h3 className="text-[var(--foreground)] font-semibold mb-4 flex items-center gap-2">
+                <Lock className="w-5 h-5 text-[var(--color-aurora-purple)]" />
                 Privacy Settings
               </h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)]">
                   <div>
-                    <p className="text-white">Anonymous Posting</p>
-                    <p className="text-white/50 text-sm">Hide your identity in community posts</p>
+                    <p className="text-[var(--foreground)]">Anonymous Posting</p>
+                    <p className="text-[var(--muted-foreground)] text-sm">Hide your identity in community posts</p>
                   </div>
                   <Switch defaultChecked />
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)]">
                   <div>
-                    <p className="text-white">Location Sharing</p>
-                    <p className="text-white/50 text-sm">Share location with emergency contacts</p>
+                    <p className="text-[var(--foreground)]">Location Sharing</p>
+                    <p className="text-[var(--muted-foreground)] text-sm">Share location with emergency contacts</p>
                   </div>
                   <Switch defaultChecked />
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)]">
                   <div>
-                    <p className="text-white">Profile Visibility</p>
-                    <p className="text-white/50 text-sm">Who can see your profile</p>
+                    <p className="text-[var(--foreground)]">Profile Visibility</p>
+                    <p className="text-[var(--muted-foreground)] text-sm">Who can see your profile</p>
                   </div>
-                  <Badge variant="outline" className="border-white/20 text-white">
+                  <Badge variant="outline" className="border-[var(--border)] text-[var(--foreground)]">
                     Circles Only
                   </Badge>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-6 bg-red-500/10 border-red-500/20">
-              <h3 className="text-red-400 font-semibold mb-4 flex items-center gap-2">
+            <Card className="p-6 bg-[var(--color-aurora-salmon)]/10 border-[var(--color-aurora-salmon)]/20">
+              <h3 className="text-[var(--color-aurora-salmon)] font-semibold mb-4 flex items-center gap-2">
                 <Trash2 className="w-5 h-5" />
                 Danger Zone
               </h3>
               <div className="space-y-3">
-                <Button variant="outline" className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10">
+                <Button variant="outline" className="w-full border-[var(--color-aurora-salmon)]/30 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10">
                   <Download className="w-4 h-4 mr-2" />
                   Export My Data
                 </Button>
-                <Button variant="outline" className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10">
+                <Button variant="outline" className="w-full border-[var(--color-aurora-salmon)]/30 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10">
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete Account
                 </Button>
@@ -191,27 +191,27 @@ export default function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            <Card className="p-6 bg-white/5 border-white/10">
-              <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-[#FFC285]" />
+            <Card className="p-6 bg-[var(--card)] border-[var(--border)]">
+              <h3 className="text-[var(--foreground)] font-semibold mb-4 flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
                 Offline Capabilities
               </h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)]">
                   <div>
-                    <p className="text-white">Service Worker</p>
-                    <p className="text-white/50 text-sm">Enables offline functionality</p>
+                    <p className="text-[var(--foreground)]">Service Worker</p>
+                    <p className="text-[var(--muted-foreground)] text-sm">Enables offline functionality</p>
                   </div>
-                  <Badge className={isRegistered ? "bg-green-500/20 text-green-400" : "bg-orange-500/20 text-orange-400"}>
+                  <Badge className={isRegistered ? "bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)]" : "bg-[var(--color-aurora-orange)]/20 text-[var(--color-aurora-orange)]"}>
                     {isRegistered ? "Active" : "Inactive"}
                   </Badge>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)]">
                   <div>
-                    <p className="text-white">Emergency Features Offline</p>
-                    <p className="text-white/50 text-sm">Panic button works without internet</p>
+                    <p className="text-[var(--foreground)]">Emergency Features Offline</p>
+                    <p className="text-[var(--muted-foreground)] text-sm">Panic button works without internet</p>
                   </div>
-                  <Badge className="bg-green-500/20 text-green-400">Enabled</Badge>
+                  <Badge className="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)]">Enabled</Badge>
                 </div>
               </div>
             </Card>
@@ -220,10 +220,10 @@ export default function SettingsPage() {
 
         {/* Footer */}
         <div className="mt-8 text-center">
-          <p className="text-white/40 text-sm flex items-center justify-center gap-2">
-            Made with <Heart className="w-4 h-4 text-[#FF6B7A]" /> for women everywhere
+          <p className="text-[var(--muted-foreground)] text-sm flex items-center justify-center gap-2">
+            Made with <Heart className="w-4 h-4 text-[var(--color-aurora-pink)]" /> for women everywhere
           </p>
-          <p className="text-white/30 text-xs mt-1">Aurora v1.0.0</p>
+          <p className="text-[var(--muted-foreground)] opacity-60 text-xs mt-1">Aurora App v1.0.0</p>
         </div>
       </div>
     </div>

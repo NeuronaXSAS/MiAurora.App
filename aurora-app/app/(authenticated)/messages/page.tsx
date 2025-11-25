@@ -47,23 +47,23 @@ export default function MessagesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-[var(--card)] border-b border-[var(--border)]">
         <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <MessageSquare className="w-6 h-6 text-purple-600" />
+              <MessageSquare className="w-6 h-6 text-[var(--color-aurora-purple)]" />
               <div>
-                <h1 className="text-2xl font-bold">Messages</h1>
-                <p className="text-sm text-gray-600">
+                <h1 className="text-2xl font-bold text-[var(--foreground)]">Messages</h1>
+                <p className="text-sm text-[var(--muted-foreground)]">
                   Connect with the community
                 </p>
               </div>
             </div>
             <Button
               onClick={() => setShowSearch(!showSearch)}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
             >
               <Plus className="w-4 h-4 mr-2" />
               New Message
@@ -74,18 +74,18 @@ export default function MessagesPage() {
           {showSearch && (
             <div className="mt-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
                 <Input
                   placeholder="Search users to message..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 bg-[var(--background)] border-[var(--border)]"
                 />
               </div>
 
               {/* Search Results */}
               {searchResults && searchResults.length > 0 && (
-                <Card className="mt-2">
+                <Card className="mt-2 bg-[var(--card)] border-[var(--border)]">
                   <CardContent className="p-2">
                     {searchResults.map((user: any) => (
                       <button
@@ -95,21 +95,21 @@ export default function MessagesPage() {
                           setShowSearch(false);
                           setSearchQuery("");
                         }}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                        className="w-full flex items-center gap-3 p-3 hover:bg-[var(--accent)] rounded-lg transition-colors"
                       >
                         <Avatar>
                           <AvatarImage src={user.profileImage} />
-                          <AvatarFallback>
+                          <AvatarFallback className="bg-[var(--color-aurora-lavender)] text-[var(--color-aurora-violet)]">
                             {user.name.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 text-left">
-                          <p className="font-semibold">{user.name}</p>
-                          <p className="text-sm text-gray-500">
-                            {user.location || "Aurora Community"}
+                          <p className="font-semibold text-[var(--foreground)]">{user.name}</p>
+                          <p className="text-sm text-[var(--muted-foreground)]">
+                            {user.location || "Aurora App Community"}
                           </p>
                         </div>
-                        <Badge variant="secondary">
+                        <Badge variant="secondary" className="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)]">
                           Trust: {user.trustScore}
                         </Badge>
                       </button>
@@ -127,20 +127,20 @@ export default function MessagesPage() {
         <div className="max-w-4xl mx-auto">
           {!conversations && (
             <div className="text-center py-12">
-              <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-gray-600">Loading conversations...</p>
+              <div className="w-16 h-16 border-4 border-[var(--color-aurora-purple)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-[var(--muted-foreground)]">Loading conversations...</p>
             </div>
           )}
 
           {conversations && conversations.length === 0 && (
-            <Card>
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardContent className="py-12 text-center">
-                <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No messages yet</h3>
-                <p className="text-gray-600 mb-4">
+                <MessageSquare className="w-16 h-16 text-[var(--color-aurora-lavender)] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2 text-[var(--foreground)]">No messages yet</h3>
+                <p className="text-[var(--muted-foreground)] mb-4">
                   Start a conversation with someone from the community
                 </p>
-                <Button onClick={() => setShowSearch(true)}>
+                <Button onClick={() => setShowSearch(true)} className="bg-[var(--color-aurora-purple)]">
                   <Plus className="w-4 h-4 mr-2" />
                   Start Messaging
                 </Button>
@@ -153,35 +153,35 @@ export default function MessagesPage() {
               {conversations.map((conv: any) => (
                 <Card
                   key={conv.partnerId}
-                  className="hover-lift cursor-pointer"
+                  className="hover:shadow-lg cursor-pointer bg-[var(--card)] border-[var(--border)] transition-shadow"
                   onClick={() => router.push(`/messages/${conv.partnerId}`)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
                       <Avatar className="w-12 h-12">
                         <AvatarImage src={conv.partner?.profileImage} />
-                        <AvatarFallback>
+                        <AvatarFallback className="bg-[var(--color-aurora-lavender)] text-[var(--color-aurora-violet)]">
                           {conv.partner?.name?.charAt(0).toUpperCase() || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <p className="font-semibold truncate">
+                          <p className="font-semibold truncate text-[var(--foreground)]">
                             {conv.partner?.name || "Unknown User"}
                           </p>
-                          <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
+                          <span className="text-xs text-[var(--muted-foreground)] flex-shrink-0 ml-2">
                             {formatDistanceToNow(conv.lastMessage.timestamp, {
                               addSuffix: true,
                             })}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-600 truncate">
+                          <p className="text-sm text-[var(--muted-foreground)] truncate">
                             {conv.lastMessage.isFromMe && "You: "}
                             {conv.lastMessage.content}
                           </p>
                           {conv.unreadCount > 0 && (
-                            <Badge className="bg-purple-600 ml-2 flex-shrink-0">
+                            <Badge className="bg-[var(--color-aurora-purple)] ml-2 flex-shrink-0">
                               {conv.unreadCount}
                             </Badge>
                           )}

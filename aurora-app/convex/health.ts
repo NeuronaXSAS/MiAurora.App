@@ -55,10 +55,11 @@ export const getTodayHydration = query({
         )
         .first();
 
-      return log || { glasses: 0, goal: 8, completed: false };
+      return log || { glasses: 0, goal: 8, completed: false, date: today };
     } catch (error) {
       // Return default values if query fails
-      return { glasses: 0, goal: 8, completed: false };
+      console.error("Error fetching hydration:", error);
+      return { glasses: 0, goal: 8, completed: false, date: new Date().toISOString().split('T')[0] };
     }
   },
 });

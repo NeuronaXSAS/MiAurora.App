@@ -34,7 +34,16 @@ export const generateAgoraToken = action({
     const appCertificate = process.env.AGORA_APP_CERTIFICATE;
     
     if (!appId) {
-      throw new Error('AGORA_APP_ID not configured in Convex environment variables. Add it in Convex dashboard.');
+      // Return a graceful "not configured" response instead of throwing
+      return {
+        success: false,
+        error: 'not_configured',
+        message: 'Aurora Live is coming soon! Livestreaming will be available in a future update.',
+        appId: null,
+        token: null,
+        channelName: args.channelName,
+        uid: args.userId,
+      };
     }
 
     // Check if we're in secure mode (with certificate) or test mode

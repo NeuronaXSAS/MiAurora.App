@@ -14,7 +14,31 @@ export const chat = action({
     try {
       // Check if API key is configured
       if (!process.env.GOOGLE_AI_API_KEY) {
-        throw new Error("Google AI API key is not configured. Please add GOOGLE_AI_API_KEY to your environment variables.");
+        // Return a helpful fallback response when API is not configured
+        const fallbackResponse = `¡Hola! 💜 Soy Aurora, tu asistente de bienestar. 
+
+Actualmente estoy en modo de demostración porque la API de IA no está configurada. Sin embargo, puedo compartir algunos consejos generales:
+
+**Para tu bienestar:**
+• Tómate un momento para respirar profundamente
+• Recuerda que tus sentimientos son válidos
+• Conecta con tu comunidad de Aurora App
+
+**Recursos disponibles:**
+• Explora los círculos de apoyo en la app
+• Revisa los recursos de seguridad
+• Comparte tus experiencias con la comunidad
+
+Pronto tendré capacidades completas de IA para darte apoyo personalizado. ¡Gracias por tu paciencia! 🌟`;
+
+        // Save the fallback message
+        await ctx.runMutation(api.ai.saveMessage, {
+          userId: args.userId,
+          userMessage: args.message,
+          aiResponse: fallbackResponse,
+        });
+
+        return { response: fallbackResponse };
       }
 
       // Fetch user context
