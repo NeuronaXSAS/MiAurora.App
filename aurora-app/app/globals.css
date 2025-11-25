@@ -312,3 +312,8 @@
     position: sticky;
   }
 }
+
+/* Glow effect for active navigation items */
+.drop-shadow-glow {
+  filter: drop-shadow(0 0 8px currentColor);
+}

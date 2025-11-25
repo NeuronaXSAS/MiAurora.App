@@ -1,7 +1,9 @@
 "use client";
 
 import { AppSidebar } from "@/components/app-sidebar";
-import { MobileAppShell } from "@/components/mobile-app-shell";
+import { MobileNavigationMenu } from "@/components/mobile-navigation-menu";
+import { FloatingSOSButton } from "@/components/floating-sos-button";
+import { FloatingCreateButton } from "@/components/floating-create-button";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 
@@ -15,7 +17,9 @@ export default function AuthenticatedLayout({
   if (isMobile) {
     return (
       <>
-        <MobileAppShell>{children}</MobileAppShell>
+        <MobileNavigationMenu>{children}</MobileNavigationMenu>
+        <FloatingSOSButton />
+        <FloatingCreateButton />
         <PWAInstallPrompt />
       </>
     );

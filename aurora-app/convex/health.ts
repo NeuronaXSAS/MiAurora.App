@@ -45,16 +45,21 @@ export const logWater = mutation({
 export const getTodayHydration = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    const today = new Date().toISOString().split('T')[0];
-    
-    const log = await ctx.db
-      .query("hydrationLogs")
-      .withIndex("by_user_and_date", (q) => 
-        q.eq("userId", args.userId).eq("date", today)
-      )
-      .first();
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const log = await ctx.db
+        .query("hydrationLogs")
+        .withIndex("by_user_and_date", (q) => 
+          q.eq("userId", args.userId).eq("date", today)
+        )
+        .first();
 
-    return log || { glasses: 0, goal: 8, completed: false };
+      return log || { glasses: 0, goal: 8, completed: false };
+    } catch (error) {
+      // Return default values if query fails
+      return { glasses: 0, goal: 8, completed: false };
+    }
   },
 });
 
