@@ -12,17 +12,27 @@ export const create = mutation({
     parentCommentId: v.optional(v.id("comments")),
   },
   handler: async (ctx, args) => {
-    // Create comment (visible by default, may be hidden by moderation)
+    // Calculate depth
+    let depth = 0;
+    if (args.parentCommentId) {
+      const parent = await ctx.db.get(args.parentCommentId);
+      if (parent) {
+        depth = (parent.depth || 0) + 1;
+      }
+    }
+    
+    // Create comment
     const commentId = await ctx.db.insert("comments", {
       postId: args.postId,
       authorId: args.authorId,
       content: args.content,
-      parentCommentId: args.parentCommentId,
+      parentId: args.parentCommentId,
+      depth,
       upvotes: 0,
       downvotes: 0,
+      replyCount: 0,
       isDeleted: false,
-      moderationStatus: 'approved', // Default to approved
-      isHidden: false,
+      moderationStatus: 'approved',
     });
 
     // TODO: Re-enable moderation when system is fully integrated
@@ -62,7 +72,7 @@ export const create = mutation({
 });
 
 /**
- * Get comments for a post
+ * Get comments for a post with nested threading
  */
 export const getByPost = query({
   args: { postId: v.id("posts") },
@@ -70,12 +80,7 @@ export const getByPost = query({
     const comments = await ctx.db
       .query("comments")
       .withIndex("by_post", (q) => q.eq("postId", args.postId))
-      .filter((q) => 
-        q.and(
-          q.eq(q.field("isDeleted"), false),
-          q.eq(q.field("isHidden"), false) // Hide toxic comments
-        )
-      )
+      .filter((q) => q.eq(q.field("isDeleted"), false))
       .collect();
 
     // Fetch author info for each comment
@@ -93,7 +98,43 @@ export const getByPost = query({
       })
     );
 
-    return commentsWithAuthors;
+    // Build nested structure
+    const commentMap = new Map();
+    const rootComments: any[] = [];
+
+    // First pass: create map of all comments
+    commentsWithAuthors.forEach(comment => {
+      commentMap.set(comment._id, { ...comment, replies: [] });
+    });
+
+    // Second pass: build tree structure
+    commentsWithAuthors.forEach(comment => {
+      const commentWithReplies = commentMap.get(comment._id);
+      if (comment.parentId) {
+        const parent = commentMap.get(comment.parentId);
+        if (parent) {
+          parent.replies.push(commentWithReplies);
+        } else {
+          // Parent was deleted or hidden, treat as root
+          rootComments.push(commentWithReplies);
+        }
+      } else {
+        rootComments.push(commentWithReplies);
+      }
+    });
+
+    // Sort by creation time (newest first) at each level
+    const sortComments = (comments: any[]) => {
+      comments.sort((a, b) => b._creationTime - a._creationTime);
+      comments.forEach(comment => {
+        if (comment.replies.length > 0) {
+          sortComments(comment.replies);
+        }
+      });
+    };
+    sortComments(rootComments);
+
+    return rootComments;
   },
 });
 
@@ -305,19 +346,15 @@ export const getUserVote = query({
 export const updateCommentModeration = mutation({
   args: {
     commentId: v.id("comments"),
-    moderationScore: v.number(),
     moderationStatus: v.union(
       v.literal('pending'),
       v.literal('approved'),
       v.literal('flagged')
     ),
-    isHidden: v.boolean(),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.commentId, {
-      moderationScore: args.moderationScore,
       moderationStatus: args.moderationStatus,
-      isHidden: args.isHidden,
     });
   },
 });

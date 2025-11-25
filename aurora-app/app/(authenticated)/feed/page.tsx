@@ -8,6 +8,7 @@ import { PollCard } from "@/components/poll-card";
 import { AIChatCard } from "@/components/ai-chat-card";
 import { RouteFeedCard } from "@/components/route-feed-card";
 import { OpportunityFeedCard } from "@/components/opportunity-feed-card";
+import { FeedAd } from "@/components/ads/feed-ad";
 
 import { PostCardSkeleton } from "@/components/loading-skeleton";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
@@ -383,69 +384,58 @@ export default function FeedPage() {
                 if (contentType === "post") return item.type === "post" && item.postType !== "poll";
                 return item.type === contentType;
               })
-              .map((item: any) => {
-                if (item.type === "post") {
-                  // Check if it's a poll
-                  if (item.postType === "poll") {
-                    return (
+              .map((item: any, index: number) => {
+                // Inject ad every 5th item
+                const showAd = index > 0 && index % 5 === 0;
+                
+                return (
+                  <div key={item._id}>
+                    {showAd && <FeedAd />}
+                    
+                    {item.type === "post" && item.postType === "poll" && (
                       <PollCard
-                        key={item._id}
                         post={item}
                         currentUserId={userId || undefined}
                         onDelete={() => handleDelete(item._id as Id<"posts">)}
                       />
-                    );
-                  }
-                  
-                  // Check if it's an AI chat
-                  if (item.postType === "ai_chat") {
-                    return (
+                    )}
+                    
+                    {item.type === "post" && item.postType === "ai_chat" && (
                       <AIChatCard
-                        key={item._id}
                         post={item}
                         currentUserId={userId || undefined}
                         onDelete={() => handleDelete(item._id as Id<"posts">)}
                       />
-                    );
-                  }
-                  
-                  // Regular post
-                  return (
-                    <PostCard
-                      key={item._id}
-                      post={item}
-                      currentUserId={userId || undefined}
-                      onVerify={() => handleVerify(item._id as Id<"posts">)}
-                      onDelete={() => handleDelete(item._id as Id<"posts">)}
-                      hasVerified={false}
-                      showActions={true}
-                    />
-                  );
-                }
-                
-                if (item.type === "route") {
-                  return (
-                    <RouteFeedCard
-                      key={item._id}
-                      route={item as any}
-                      currentUserId={userId || undefined}
-                      onDelete={() => handleRouteDelete(item._id as Id<"routes">)}
-                    />
-                  );
-                }
-                
-                if (item.type === "opportunity") {
-                  return (
-                    <OpportunityFeedCard
-                      key={item._id}
-                      opportunity={item as any}
-                      currentUserId={userId || undefined}
-                      onDelete={() => handleOpportunityDelete(item._id as Id<"opportunities">)}
-                    />
-                  );
-                }
-                
-                return null;
+                    )}
+                    
+                    {item.type === "post" && item.postType !== "poll" && item.postType !== "ai_chat" && (
+                      <PostCard
+                        post={item}
+                        currentUserId={userId || undefined}
+                        onVerify={() => handleVerify(item._id as Id<"posts">)}
+                        onDelete={() => handleDelete(item._id as Id<"posts">)}
+                        hasVerified={false}
+                        showActions={true}
+                      />
+                    )}
+                    
+                    {item.type === "route" && (
+                      <RouteFeedCard
+                        route={item as any}
+                        currentUserId={userId || undefined}
+                        onDelete={() => handleRouteDelete(item._id as Id<"routes">)}
+                      />
+                    )}
+                    
+                    {item.type === "opportunity" && (
+                      <OpportunityFeedCard
+                        opportunity={item as any}
+                        currentUserId={userId || undefined}
+                        onDelete={() => handleOpportunityDelete(item._id as Id<"opportunities">)}
+                      />
+                    )}
+                  </div>
+                );
               })}
         </div>
       </div>

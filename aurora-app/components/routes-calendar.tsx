@@ -151,15 +151,15 @@ export function RoutesCalendar({ routes }: RoutesCalendarProps) {
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="text-center">
               <p className="text-sm text-gray-500">Routes</p>
-              <p className="text-2xl font-bold text-purple-600">{monthRoutes.length}</p>
+              <p className="text-2xl font-bold text-aurora-violet">{monthRoutes.length}</p>
             </div>
             <div className="text-center">
               <p className="text-sm text-gray-500">Distance</p>
-              <p className="text-2xl font-bold text-purple-600">{formatDistance(monthlyDistance)}</p>
+              <p className="text-2xl font-bold text-aurora-violet">{formatDistance(monthlyDistance)}</p>
             </div>
             <div className="text-center">
               <p className="text-sm text-gray-500">Credits</p>
-              <p className="text-2xl font-bold text-purple-600">{monthlyCredits}</p>
+              <p className="text-2xl font-bold text-aurora-violet">{monthlyCredits}</p>
             </div>
           </div>
 
@@ -206,17 +206,17 @@ export function RoutesCalendar({ routes }: RoutesCalendarProps) {
                   onClick={() => setSelectedDay(isSelected ? null : day)}
                   className={`
                     aspect-square rounded-lg border-2 transition-all
-                    ${isSelected ? "border-purple-600 bg-purple-50" : "border-gray-200 hover:border-purple-300"}
-                    ${isToday ? "bg-blue-50" : ""}
+                    ${isSelected ? "border-aurora-violet bg-aurora-lavender/20" : "border-gray-200 hover:border-aurora-lavender"}
+                    ${isToday ? "bg-aurora-blue/10" : ""}
                     ${dayHasRoutes ? "font-bold" : ""}
                   `}
                 >
                   <div className="flex flex-col items-center justify-center h-full">
-                    <span className={`text-sm ${isToday ? "text-blue-600" : ""}`}>{day}</span>
+                    <span className={`text-sm ${isToday ? "text-aurora-blue" : ""}`}>{day}</span>
                     {dayHasRoutes && (
                       <div className="flex gap-0.5 mt-1">
                         {getRoutesForDay(day).slice(0, 3).map((_, i) => (
-                          <div key={i} className="w-1.5 h-1.5 bg-purple-600 rounded-full" />
+                          <div key={i} className="w-1.5 h-1.5 bg-aurora-violet rounded-full" />
                         ))}
                       </div>
                     )}
@@ -250,7 +250,7 @@ export function RoutesCalendar({ routes }: RoutesCalendarProps) {
                         {route.tags.slice(0, 3).map((tag, i) => (
                           <span
                             key={i}
-                            className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full"
+                            className="px-2 py-0.5 bg-aurora-lavender/30 text-aurora-violet text-xs rounded-full"
                           >
                             {tag}
                           </span>
@@ -278,7 +278,7 @@ export function RoutesCalendar({ routes }: RoutesCalendarProps) {
                     </div>
 
                     {route.creditsEarned > 0 && (
-                      <div className="flex items-center gap-1 bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-sm">
+                      <div className="flex items-center gap-1 bg-aurora-lavender/30 text-aurora-violet px-2 py-1 rounded-full text-sm">
                         <span className="font-semibold">+{route.creditsEarned}</span>
                       </div>
                     )}

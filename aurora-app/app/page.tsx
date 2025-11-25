@@ -38,7 +38,7 @@ export default function LandingPage() {
       {/* Animated Aurora Background */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
-          className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl"
+          className="absolute top-0 left-1/4 w-96 h-96 bg-aurora-violet/30 rounded-full blur-3xl"
           animate={{
             x: [0, 100, 0],
             y: [0, -50, 0],
@@ -51,7 +51,7 @@ export default function LandingPage() {
           }}
         />
         <motion.div
-          className="absolute top-1/4 right-1/4 w-96 h-96 bg-pink-500/30 rounded-full blur-3xl"
+          className="absolute top-1/4 right-1/4 w-96 h-96 bg-aurora-pink/30 rounded-full blur-3xl"
           animate={{
             x: [0, -100, 0],
             y: [0, 100, 0],
@@ -105,7 +105,7 @@ export default function LandingPage() {
         <div className="text-center max-w-5xl mx-auto">
           {/* Floating Glass Elements */}
           <motion.div
-            className="absolute top-20 left-10 w-32 h-32 backdrop-blur-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl border border-white/10"
+            className="absolute top-20 left-10 w-32 h-32 backdrop-blur-xl bg-gradient-to-br from-aurora-violet/20 to-aurora-pink/20 rounded-2xl border border-white/10"
             animate={{
               y: [0, -20, 0],
               rotate: [0, 5, 0],
@@ -117,7 +117,7 @@ export default function LandingPage() {
             }}
           />
           <motion.div
-            className="absolute top-40 right-10 w-24 h-24 backdrop-blur-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-2xl border border-white/10"
+            className="absolute top-40 right-10 w-24 h-24 backdrop-blur-xl bg-gradient-to-br from-aurora-blue/20 to-aurora-lavender/20 rounded-2xl border border-white/10"
             animate={{
               y: [0, 20, 0],
               rotate: [0, -5, 0],
@@ -141,7 +141,7 @@ export default function LandingPage() {
           </motion.div>
           
           <motion.h1 
-            className="text-6xl md:text-8xl font-black mb-8 bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent leading-tight"
+            className="text-6xl md:text-8xl font-black mb-8 bg-gradient-to-r from-aurora-violet via-aurora-pink to-aurora-blue bg-clip-text text-transparent leading-tight"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -179,7 +179,7 @@ export default function LandingPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-r from-aurora-violet/20 to-aurora-pink/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative flex items-center justify-center gap-3 text-white font-semibold text-lg">
                   <svg className="w-6 h-6" viewBox="0 0 24 24">
                     <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -198,7 +198,7 @@ export default function LandingPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-r from-aurora-blue/20 to-aurora-lavender/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="relative flex items-center justify-center gap-3 text-white font-semibold text-lg">
                   <svg className="w-6 h-6" viewBox="0 0 24 24">
                     <path fill="#f25022" d="M1 1h10v10H1z" />
@@ -243,7 +243,7 @@ export default function LandingPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.1 }}
                   >
-                    <div className="w-3 h-3 bg-purple-500/50 rounded-full" />
+                    <div className="w-3 h-3 bg-aurora-violet/50 rounded-full" />
                     <div className="h-4 bg-white/10 rounded flex-1" />
                   </motion.div>
                 ))}
@@ -268,17 +268,17 @@ export default function LandingPage() {
                   >
                     <div className="relative flex-shrink-0">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                        activity.color === "green" ? "bg-green-500/20" :
-                        activity.color === "blue" ? "bg-blue-500/20" : "bg-purple-500/20"
+                        activity.color === "green" ? "bg-aurora-mint/50" :
+                        activity.color === "blue" ? "bg-aurora-blue/20" : "bg-aurora-violet/20"
                       }`}>
                         {activity.type === "post" && <Shield className="w-5 h-5 text-green-400" />}
-                        {activity.type === "route" && <MapPin className="w-5 h-5 text-blue-400" />}
-                        {activity.type === "opportunity" && <Briefcase className="w-5 h-5 text-purple-400" />}
+                        {activity.type === "route" && <MapPin className="w-5 h-5 text-aurora-blue" />}
+                        {activity.type === "opportunity" && <Briefcase className="w-5 h-5 text-aurora-violet" />}
                       </div>
                       <motion.div
                         className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
                           activity.color === "green" ? "bg-green-500" :
-                          activity.color === "blue" ? "bg-blue-500" : "bg-purple-500"
+                          activity.color === "blue" ? "bg-aurora-blue" : "bg-aurora-violet"
                         }`}
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ duration: 2, repeat: Infinity }}
@@ -334,7 +334,7 @@ export default function LandingPage() {
         {/* How It Works - Interactive Path */}
         <div className="mt-32 max-w-5xl mx-auto relative">
           <motion.h2 
-            className="text-5xl font-black text-center mb-20 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent"
+            className="text-5xl font-black text-center mb-20 bg-gradient-to-r from-aurora-violet to-aurora-pink bg-clip-text text-transparent"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -407,10 +407,10 @@ export default function LandingPage() {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-cyan-500/20 blur-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-r from-aurora-violet/20 via-aurora-pink/20 to-aurora-blue/20 blur-3xl" />
           <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-[3rem] p-16 max-w-4xl mx-auto">
             <motion.h2 
-              className="text-6xl md:text-7xl font-black mb-6 bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent"
+              className="text-6xl md:text-7xl font-black mb-6 bg-gradient-to-r from-aurora-violet via-aurora-pink to-aurora-blue bg-clip-text text-transparent"
               animate={{
                 backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
               }}
@@ -438,8 +438,8 @@ export default function LandingPage() {
                   }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-aurora-violet via-aurora-pink to-aurora-blue" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-aurora-violet via-aurora-pink to-aurora-blue opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-300" />
                   <span className="relative flex items-center gap-3">
                     Sign Up Now - Get 25 Free Credits
                     <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />

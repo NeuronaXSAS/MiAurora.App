@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as accompaniment from "../accompaniment.js";
 import type * as actions_agora from "../actions/agora.js";
 import type * as actions_analyzeReel from "../actions/analyzeReel.js";
 import type * as actions_twilio from "../actions/twilio.js";
@@ -21,6 +22,7 @@ import type * as directMessages from "../directMessages.js";
 import type * as emergency from "../emergency.js";
 import type * as feed from "../feed.js";
 import type * as files from "../files.js";
+import type * as health from "../health.js";
 import type * as intelligence from "../intelligence.js";
 import type * as livestreams from "../livestreams.js";
 import type * as moderation from "../moderation.js";
@@ -44,6 +46,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  accompaniment: typeof accompaniment;
   "actions/agora": typeof actions_agora;
   "actions/analyzeReel": typeof actions_analyzeReel;
   "actions/twilio": typeof actions_twilio;
@@ -57,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   emergency: typeof emergency;
   feed: typeof feed;
   files: typeof files;
+  health: typeof health;
   intelligence: typeof intelligence;
   livestreams: typeof livestreams;
   moderation: typeof moderation;

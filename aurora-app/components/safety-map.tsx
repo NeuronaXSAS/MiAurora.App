@@ -407,7 +407,7 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
             onClick={() => setIsSelectingLocation(!isSelectingLocation)}
             className={`shadow-lg ${
               isSelectingLocation
-                ? "bg-purple-600 text-white hover:bg-purple-700"
+                ? "bg-aurora-violet text-white hover:bg-aurora-violet/90"
                 : "bg-white text-gray-700 hover:bg-gray-100"
             }`}
             size="icon"
@@ -420,7 +420,7 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
 
       {/* Selection Mode Indicator */}
       {isSelectingLocation && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white px-4 py-2 rounded-lg shadow-lg z-10">
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-aurora-violet text-white px-4 py-2 rounded-lg shadow-lg z-10">
           <p className="text-sm font-medium">Click anywhere on the map to select a location</p>
         </div>
       )}

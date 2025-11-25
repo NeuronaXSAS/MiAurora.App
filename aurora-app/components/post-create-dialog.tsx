@@ -393,14 +393,14 @@ export function PostCreateDialog({
           )}
 
           {/* Reward Info */}
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="bg-aurora-lavender/20 border border-aurora-lavender rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-purple-600 mt-0.5" />
+              <Sparkles className="w-5 h-5 text-aurora-violet mt-0.5" />
               <div>
-                <p className="font-medium text-sm text-purple-900">
+                <p className="font-medium text-sm text-aurora-violet">
                   Earn 10 credits for posting!
                 </p>
-                <p className="text-xs text-purple-700 mt-1">
+                <p className="text-xs text-aurora-violet/80 mt-1">
                   Help other women and unlock opportunities
                 </p>
               </div>

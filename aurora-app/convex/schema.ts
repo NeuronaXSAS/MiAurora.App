@@ -267,33 +267,6 @@ export default defineSchema({
     .index("by_route_and_user", ["routeId", "userId"])
     .index("by_status", ["status"]),
 
-  comments: defineTable({
-    postId: v.id("posts"),
-    authorId: v.id("users"),
-    content: v.string(),
-    parentCommentId: v.optional(v.id("comments")), // For nested replies
-    upvotes: v.number(),
-    downvotes: v.number(),
-    isDeleted: v.boolean(),
-    media: v.optional(v.array(v.object({
-      type: v.union(v.literal("image"), v.literal("video")),
-      storageId: v.id("_storage"),
-      url: v.string(),
-    }))),
-    
-    // Moderation
-    moderationStatus: v.optional(v.union(
-      v.literal("pending"),
-      v.literal("approved"),
-      v.literal("flagged")
-    )),
-    moderationScore: v.optional(v.number()),
-    isHidden: v.optional(v.boolean()), // Auto-hide toxic comments
-  })
-    .index("by_post", ["postId"])
-    .index("by_author", ["authorId"])
-    .index("by_parent", ["parentCommentId"]),
-
   votes: defineTable({
     userId: v.id("users"),
     targetId: v.string(), // Can be postId or commentId
@@ -338,7 +311,10 @@ export default defineSchema({
       v.literal("route_completion"),
       v.literal("opportunity_unlock"),
       v.literal("mention"),
-      v.literal("tip")
+      v.literal("tip"),
+      v.literal("accompaniment_request"),
+      v.literal("accompaniment_update"),
+      v.literal("emergency")
     ),
     title: v.string(),
     message: v.string(),
@@ -796,12 +772,12 @@ export default defineSchema({
     
     // Nested threading support
     parentId: v.optional(v.id("comments")), // null for top-level, ID for replies
-    depth: v.number(), // 0 for top-level, increments for each nesting level
+    depth: v.optional(v.number()), // 0 for top-level, increments for each nesting level
     
     // Engagement
     upvotes: v.number(), // Default: 0
     downvotes: v.number(), // Default: 0
-    replyCount: v.number(), // Number of direct replies
+    replyCount: v.optional(v.number()), // Number of direct replies
     
     // Moderation
     isDeleted: v.boolean(), // Soft delete
@@ -850,4 +826,29 @@ export default defineSchema({
     creditsEarned: v.number(), // 5 credits per session
   })
     .index("by_user", ["userId"]),
+
+  // Sister Accompaniment - Real-time location sharing for safety (Task 57.5)
+  accompanimentSessions: defineTable({
+    userId: v.id("users"), // Person being tracked
+    routeId: v.optional(v.id("routes")), // Optional linked route
+    destination: v.string(), // Where they're going
+    estimatedArrival: v.number(), // Timestamp
+    companions: v.array(v.id("users")), // People tracking them
+    status: v.union(
+      v.literal("active"),
+      v.literal("completed"),
+      v.literal("cancelled"),
+      v.literal("emergency")
+    ),
+    startTime: v.number(),
+    endTime: v.optional(v.number()),
+    lastUpdate: v.number(),
+    currentLocation: v.optional(v.object({
+      latitude: v.number(),
+      longitude: v.number(),
+      accuracy: v.optional(v.number()),
+    })),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"]),
 });

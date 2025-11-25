@@ -225,8 +225,10 @@ export const seedComprehensiveData = mutation({
           "Can you share more details?",
           "This matches what I've heard from others.",
         ]),
+        depth: 0,
         upvotes: randomInt(0, 20),
         downvotes: randomInt(0, 3),
+        replyCount: 0,
         isDeleted: false,
       });
     }

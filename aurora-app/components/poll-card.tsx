@@ -113,10 +113,10 @@ export function PollCard({ post, currentUserId, onDelete, isMobile = false }: Po
   };
 
   const lifeDimensionColors: Record<string, string> = {
-    professional: "bg-blue-100 text-blue-800",
-    social: "bg-green-100 text-green-800",
-    daily: "bg-yellow-100 text-yellow-800",
-    travel: "bg-purple-100 text-purple-800",
+    professional: "bg-aurora-blue/20 text-aurora-blue",
+    social: "bg-aurora-mint/50 text-green-800",
+    daily: "bg-aurora-yellow/50 text-yellow-800",
+    travel: "bg-aurora-lavender/30 text-aurora-violet",
     financial: "bg-red-100 text-red-800",
   };
 

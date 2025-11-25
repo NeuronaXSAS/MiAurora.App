@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { NestedComment } from "@/components/nested-comment";
 import { Id } from "@/convex/_generated/dataModel";
 
 interface PostCardProps {
@@ -59,7 +60,7 @@ interface PostCardProps {
       profileImage?: string;
     };
   };
-  currentUserId?: string;
+  currentUserId?: Id<"users">;
   onVerify?: () => void;
   onDelete?: () => void;
   hasVerified?: boolean;
@@ -67,11 +68,11 @@ interface PostCardProps {
 }
 
 const lifeDimensionColors = {
-  professional: "bg-blue-100 text-blue-800",
-  social: "bg-purple-100 text-purple-800",
-  daily: "bg-green-100 text-green-800",
-  travel: "bg-orange-100 text-orange-800",
-  financial: "bg-pink-100 text-pink-800",
+  professional: "bg-aurora-blue/20 text-aurora-blue",
+  social: "bg-aurora-lavender/30 text-aurora-violet",
+  daily: "bg-aurora-mint/50 text-green-800",
+  travel: "bg-aurora-orange/20 text-aurora-orange",
+  financial: "bg-aurora-pink/30 text-aurora-pink",
 };
 
 const lifeDimensionLabels = {
@@ -346,7 +347,7 @@ export function PostCard({
               </Badge>
             )}
             {!displayPost.isVerified && displayPost.verificationCount > 0 && (
-              <Badge variant="outline" className="text-blue-600 border-blue-600 justify-center py-1.5 whitespace-nowrap">
+              <Badge variant="outline" className="text-aurora-blue border-aurora-blue justify-center py-1.5 whitespace-nowrap">
                 {displayPost.verificationCount}/5 verifications
               </Badge>
             )}
@@ -399,53 +400,14 @@ export function PostCard({
             {comments && comments.length > 0 ? (
               <div className="space-y-3">
                 {comments.map((comment: any) => (
-                  <div key={comment._id} className="flex gap-2 text-sm">
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage src={comment.author?.profileImage} />
-                      <AvatarFallback>
-                        {comment.author?.name?.charAt(0).toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 bg-gray-50 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold">{comment.author?.name || "Anonymous"}</span>
-                        <span className="text-xs text-gray-500">
-                          {formatDistanceToNow(comment._creationTime, { addSuffix: true })}
-                        </span>
-                      </div>
-                      <p className="text-gray-700">{comment.content}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 text-xs"
-                          onClick={() => currentUserId && vote({
-                            userId: currentUserId as Id<"users">,
-                            targetId: comment._id,
-                            targetType: "comment",
-                            voteType: "upvote",
-                          })}
-                        >
-                          <ThumbsUp className="w-3 h-3 mr-1" />
-                          {comment.upvotes}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 text-xs"
-                          onClick={() => currentUserId && vote({
-                            userId: currentUserId as Id<"users">,
-                            targetId: comment._id,
-                            targetType: "comment",
-                            voteType: "downvote",
-                          })}
-                        >
-                          <ThumbsDown className="w-3 h-3 mr-1" />
-                          {comment.downvotes}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                  <NestedComment
+                    key={comment._id}
+                    comment={comment}
+                    currentUserId={currentUserId}
+                    postId={post._id as Id<"posts">}
+                    depth={0}
+                    maxDepth={5}
+                  />
                 ))}
               </div>
             ) : (

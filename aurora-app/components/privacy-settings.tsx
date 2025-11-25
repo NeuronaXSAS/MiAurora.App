@@ -124,10 +124,10 @@ export function PrivacySettings() {
   return (
     <div className="space-y-6">
       {/* Privacy Impact Info */}
-      <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
+      <Card className="bg-gradient-to-br from-aurora-lavender/20 to-aurora-pink/20 border-aurora-lavender">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-purple-600" />
+            <Shield className="h-5 w-5 text-aurora-violet" />
             Privacy & Trust
           </CardTitle>
           <CardDescription>
@@ -137,15 +137,15 @@ export function PrivacySettings() {
         <CardContent>
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <Shield className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-aurora-lavender/30 rounded-full flex items-center justify-center">
+                <Shield className="w-6 h-6 text-aurora-violet" />
               </div>
               <div>
-                <p className="font-semibold text-purple-900">Security Center</p>
+                <p className="font-semibold text-aurora-violet">Security Center</p>
                 <p className="text-sm text-gray-600">Manage your data and privacy</p>
               </div>
             </div>
-            <div className="bg-white/50 rounded-lg p-3 border border-purple-200">
+            <div className="bg-white/50 rounded-lg p-3 border border-aurora-lavender">
               <p className="text-xs text-gray-700 leading-relaxed">
                 💡 <strong>Tip:</strong> Sharing anonymous data helps the community stay safe and increases your Trust Score. You're always in control of what you share.
               </p>

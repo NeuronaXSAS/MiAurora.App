@@ -24,7 +24,7 @@ export function RouteTrackingFAB() {
       aria-label="Start tracking route"
     >
       {/* Subtle pulse animation ring */}
-      <div className="absolute inset-0 rounded-full bg-purple-400/30 animate-ping" />
+      <div className="absolute inset-0 rounded-full bg-aurora-violet/30 animate-ping" />
       
       {/* Logo Container - REPLACE THIS SECTION WITH YOUR LOGO */}
       <div className="relative z-10">

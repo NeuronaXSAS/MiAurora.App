@@ -223,10 +223,10 @@ export function VoiceRecorder({
       )}
 
       {audioUrl && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <div className="bg-aurora-lavender/20 border border-aurora-lavender rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="font-medium text-purple-900">Voice Note</span>
-            <span className="text-sm font-mono text-purple-700">
+            <span className="font-medium text-aurora-violet">Voice Note</span>
+            <span className="text-sm font-mono text-aurora-violet/80">
               {formatTime(recordingTime)}
             </span>
           </div>

@@ -136,7 +136,6 @@ export const approveContent = mutation({
       const commentId = queueItem.contentId as Id<"comments">;
       await ctx.db.patch(commentId, {
         moderationStatus: "approved",
-        isHidden: false,
       });
     }
 
@@ -179,7 +178,6 @@ export const rejectContent = mutation({
         const commentId = queueItem.contentId as Id<"comments">;
         await ctx.db.patch(commentId, {
           isDeleted: true,
-          isHidden: true,
         });
       }
     } else {
@@ -198,7 +196,6 @@ export const rejectContent = mutation({
         const commentId = queueItem.contentId as Id<"comments">;
         await ctx.db.patch(commentId, {
           moderationStatus: "flagged",
-          isHidden: true,
         });
       }
     }
