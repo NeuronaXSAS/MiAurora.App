@@ -57,6 +57,11 @@ export function useLivestream(options?: UseLivestreamOptions) {
         role: opts.role,
       });
 
+      // Validate token data
+      if (!tokenData.appId) {
+        throw new Error('Agora App ID not configured. Livestreaming is not available.');
+      }
+
       // Create provider instance
       const newProvider = new AgoraProvider();
 
@@ -104,7 +109,7 @@ export function useLivestream(options?: UseLivestreamOptions) {
       await newProvider.initialize({
         channelName: opts.channelName,
         token: tokenData.token,
-        appId: tokenData.appId,
+        appId: tokenData.appId!, // Already validated above
         uid: opts.userId,
       });
 
