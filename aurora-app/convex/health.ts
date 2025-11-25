@@ -45,22 +45,22 @@ export const logWater = mutation({
 export const getTodayHydration = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      
-      const log = await ctx.db
-        .query("hydrationLogs")
-        .withIndex("by_user_and_date", (q) => 
-          q.eq("userId", args.userId).eq("date", today)
-        )
-        .first();
-
-      return log || { glasses: 0, goal: 8, completed: false, date: today };
-    } catch (error) {
-      // Return default values if query fails
-      console.error("Error fetching hydration:", error);
-      return { glasses: 0, goal: 8, completed: false, date: new Date().toISOString().split('T')[0] };
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Verify user exists first
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      return { glasses: 0, goal: 8, completed: false, date: today };
     }
+    
+    const log = await ctx.db
+      .query("hydrationLogs")
+      .withIndex("by_user_and_date", (q) => 
+        q.eq("userId", args.userId).eq("date", today)
+      )
+      .first();
+
+    return log || { glasses: 0, goal: 8, completed: false, date: today };
   },
 });
 
@@ -70,6 +70,12 @@ export const getHydrationHistory = query({
     days: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    // Verify user exists
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      return [];
+    }
+    
     const days = args.days || 7;
     const logs = await ctx.db
       .query("hydrationLogs")
@@ -125,6 +131,12 @@ export const logMood = mutation({
 export const getTodayMood = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    // Verify user exists
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      return null;
+    }
+    
     const today = new Date().toISOString().split('T')[0];
     
     return await ctx.db
@@ -142,6 +154,12 @@ export const getMoodHistory = query({
     days: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    // Verify user exists
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      return [];
+    }
+    
     const days = args.days || 7;
     const logs = await ctx.db
       .query("emotionalCheckins")
@@ -189,6 +207,17 @@ export const logMeditation = mutation({
 export const getMeditationStats = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    // Verify user exists
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      return {
+        totalSessions: 0,
+        totalMinutes: 0,
+        totalCredits: 0,
+        sessions: [],
+      };
+    }
+    
     const sessions = await ctx.db
       .query("meditationSessions")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))

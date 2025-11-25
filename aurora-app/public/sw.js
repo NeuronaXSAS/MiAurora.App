@@ -60,6 +60,26 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Domains and paths to skip (let browser handle directly)
+const SKIP_DOMAINS = [
+  'workos.com',
+  'api.workos.com',
+  'convex.cloud',
+  'convex.dev',
+  'posthog.com',
+  'i.posthog.com',
+  'googlesyndication.com',
+  'googleads.g.doubleclick.net',
+  'mapbox.com',
+  'events.mapbox.com',
+  'api.mapbox.com',
+];
+
+const SKIP_PATHS = [
+  '/api/auth/',
+  '/_rsc',
+];
+
 // Fetch event - handle requests
 self.addEventListener('fetch', (event) => {
   const { request } = event;
@@ -72,6 +92,21 @@ self.addEventListener('fetch', (event) => {
 
   // Skip chrome-extension and other non-http(s) requests
   if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
+  // Skip external domains that should not be cached/intercepted
+  if (SKIP_DOMAINS.some(domain => url.hostname.includes(domain))) {
+    return;
+  }
+
+  // Skip auth and RSC paths - let browser handle directly
+  if (SKIP_PATHS.some(path => url.pathname.startsWith(path))) {
+    return;
+  }
+
+  // Skip requests with _rsc query param (React Server Components)
+  if (url.searchParams.has('_rsc')) {
     return;
   }
 
