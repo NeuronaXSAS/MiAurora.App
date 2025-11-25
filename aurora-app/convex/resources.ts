@@ -28,8 +28,9 @@ export const getResources = query({
     }
 
     if (args.city) {
+      const cityLower = args.city.toLowerCase();
       resources = resources.filter(r => 
-        r.isGlobal || !r.city || r.city.toLowerCase() === args.city.toLowerCase()
+        r.isGlobal || !r.city || r.city.toLowerCase() === cityLower
       );
     }
 

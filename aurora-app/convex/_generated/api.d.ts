@@ -15,9 +15,11 @@ import type * as actions_twilio from "../actions/twilio.js";
 import type * as ai from "../ai.js";
 import type * as aiSharing from "../aiSharing.js";
 import type * as analytics from "../analytics.js";
+import type * as circles from "../circles.js";
 import type * as comments from "../comments.js";
 import type * as creator from "../creator.js";
 import type * as credits from "../credits.js";
+import type * as cycleTracker from "../cycleTracker.js";
 import type * as directMessages from "../directMessages.js";
 import type * as emergency from "../emergency.js";
 import type * as feed from "../feed.js";
@@ -33,11 +35,15 @@ import type * as polls from "../polls.js";
 import type * as posts from "../posts.js";
 import type * as privacy from "../privacy.js";
 import type * as reels from "../reels.js";
+import type * as resources from "../resources.js";
 import type * as routes from "../routes.js";
+import type * as safetyCheckins from "../safetyCheckins.js";
 import type * as scheduled_aggregateIntelligence from "../scheduled/aggregateIntelligence.js";
 import type * as seedData from "../seedData.js";
 import type * as seedDataEnhanced from "../seedDataEnhanced.js";
+import type * as seedResources from "../seedResources.js";
 import type * as users from "../users.js";
+import type * as workplaceReports from "../workplaceReports.js";
 
 import type {
   ApiFromModules,
@@ -53,9 +59,11 @@ declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   aiSharing: typeof aiSharing;
   analytics: typeof analytics;
+  circles: typeof circles;
   comments: typeof comments;
   creator: typeof creator;
   credits: typeof credits;
+  cycleTracker: typeof cycleTracker;
   directMessages: typeof directMessages;
   emergency: typeof emergency;
   feed: typeof feed;
@@ -71,11 +79,15 @@ declare const fullApi: ApiFromModules<{
   posts: typeof posts;
   privacy: typeof privacy;
   reels: typeof reels;
+  resources: typeof resources;
   routes: typeof routes;
+  safetyCheckins: typeof safetyCheckins;
   "scheduled/aggregateIntelligence": typeof scheduled_aggregateIntelligence;
   seedData: typeof seedData;
   seedDataEnhanced: typeof seedDataEnhanced;
+  seedResources: typeof seedResources;
   users: typeof users;
+  workplaceReports: typeof workplaceReports;
 }>;
 
 /**

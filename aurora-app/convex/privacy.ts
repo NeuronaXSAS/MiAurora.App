@@ -143,26 +143,41 @@ export const requestDataExport = mutation({
       .withIndex('by_user', (q) => q.eq('userId', userId))
       .collect();
 
-    // Type guard to ensure we have a user
-    if (!('name' in user) || !('email' in user)) {
+    // Type guard to ensure we have a user (not safetyResources)
+    if (!('name' in user) || !('email' in user) || !('credits' in user)) {
       throw new Error('Invalid user data');
     }
+
+    // Cast to user type after type guard
+    const userData = user as {
+      _id: typeof user._id;
+      _creationTime: number;
+      name: string;
+      email: string;
+      location?: string;
+      industry?: string;
+      bio?: string;
+      interests?: string[];
+      careerGoals?: string;
+      credits: number;
+      trustScore: number;
+    };
 
     // Compile data export
     const dataExport = {
       exportDate: new Date().toISOString(),
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        location: user.location,
-        industry: user.industry,
-        bio: user.bio,
-        interests: user.interests,
-        careerGoals: user.careerGoals,
-        credits: user.credits,
-        trustScore: user.trustScore,
-        createdAt: user._creationTime,
+        id: userData._id,
+        name: userData.name,
+        email: userData.email,
+        location: userData.location,
+        industry: userData.industry,
+        bio: userData.bio,
+        interests: userData.interests,
+        careerGoals: userData.careerGoals,
+        credits: userData.credits,
+        trustScore: userData.trustScore,
+        createdAt: userData._creationTime,
       },
       posts: posts.map(p => ({
         id: p._id,
