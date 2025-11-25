@@ -17,12 +17,9 @@ export function NativeAdBanner({
   className = "" 
 }: NativeAdBannerProps) {
   const adRef = useRef<HTMLDivElement>(null);
-  const currentUser = useQuery(api.users.getCurrentUser, {});
   
-  // Don't show ads to premium users
-  if (currentUser?.isPremium) {
-    return null;
-  }
+  // Note: Premium user check should be done at parent component level
+  // This component just renders the ad slot
 
   useEffect(() => {
     try {
