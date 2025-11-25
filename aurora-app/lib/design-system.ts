@@ -138,7 +138,7 @@ export function getSpacing(size: keyof typeof spacing): string {
 /**
  * Utility function to get consistent shadow
  */
-export function getShadow(size: keyof typeof shadows): string {
+export function getShadow(size: Exclude<keyof typeof shadows, 'aurora'>): string {
   return shadows[size];
 }
 
