@@ -17,7 +17,7 @@ export function NativeAdBanner({
   className = "" 
 }: NativeAdBannerProps) {
   const adRef = useRef<HTMLDivElement>(null);
-  const currentUser = useQuery(api.users.getCurrentUser);
+  const currentUser = useQuery(api.users.getCurrentUser, {});
   
   // Don't show ads to premium users
   if (currentUser?.isPremium) {
