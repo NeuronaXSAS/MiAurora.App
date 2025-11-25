@@ -15,10 +15,12 @@ interface HydrationTrackerProps {
 export function HydrationTracker({ userId }: HydrationTrackerProps) {
   const [showCelebration, setShowCelebration] = useState(false);
   
-  const todayHydration = useQuery(
+  // Safe query with null coalescing for error handling
+  const todayHydrationRaw = useQuery(
     api.health.getTodayHydration,
     userId ? { userId } : "skip"
   );
+  const todayHydration = todayHydrationRaw ?? { glasses: 0, goal: 8, completed: false };
   const logWater = useMutation(api.health.logWater);
 
   const glasses = todayHydration?.glasses || 0;

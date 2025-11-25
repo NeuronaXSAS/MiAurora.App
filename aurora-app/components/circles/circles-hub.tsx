@@ -83,13 +83,14 @@ export function CirclesHub({ userId }: CirclesHubProps) {
     isPrivate: false,
   });
 
-  const categories = useQuery(api.circles.getCircleCategories);
-  const myCircles = useQuery(api.circles.getMyCircles, { userId });
+  // Safe queries with null coalescing for error handling
+  const categories = useQuery(api.circles.getCircleCategories, {}) ?? [];
+  const myCircles = useQuery(api.circles.getMyCircles, { userId }) ?? [];
   const discoverCircles = useQuery(api.circles.getCircles, {
     category: selectedCategory || undefined,
     search: searchQuery || undefined,
     limit: 20,
-  });
+  }) ?? [];
 
   const createCircle = useMutation(api.circles.createCircle);
   const joinCircle = useMutation(api.circles.joinCircle);

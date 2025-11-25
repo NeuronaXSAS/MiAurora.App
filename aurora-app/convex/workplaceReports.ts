@@ -79,36 +79,39 @@ export const getPublicReports = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    let reports = await ctx.db
-      .query("workplaceReports")
-      .filter((q) => q.eq(q.field("isPublic"), true))
-      .order("desc")
-      .take(args.limit || 50);
+    try {
+      let reports = await ctx.db
+        .query("workplaceReports")
+        .filter((q) => q.eq(q.field("isPublic"), true))
+        .order("desc")
+        .take(args.limit || 50);
 
-    if (args.companyName) {
-      const searchTerm = args.companyName.toLowerCase();
-      reports = reports.filter(r => 
-        r.companyName.toLowerCase().includes(searchTerm)
-      );
+      if (args.companyName) {
+        const searchTerm = args.companyName.toLowerCase();
+        reports = reports.filter(r => 
+          r.companyName.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      if (args.incidentType) {
+        reports = reports.filter(r => r.incidentType === args.incidentType);
+      }
+
+      // Return anonymized data
+      return reports.map(report => ({
+        _id: report._id,
+        _creationTime: report._creationTime,
+        companyName: report.companyName,
+        incidentType: report.incidentType,
+        description: report.description,
+        date: report.date,
+        status: report.status,
+        verificationCount: report.verificationCount || 0,
+        isAnonymous: report.isAnonymous,
+      }));
+    } catch {
+      return [];
     }
-
-    if (args.incidentType) {
-      reports = reports.filter(r => r.incidentType === args.incidentType);
-    }
-
-    // Return anonymized data
-    return reports.map(report => ({
-      _id: report._id,
-      _creationTime: report._creationTime,
-      companyName: report.companyName,
-      incidentType: report.incidentType,
-      description: report.isAnonymous ? report.description : report.description,
-      date: report.date,
-      status: report.status,
-      verificationCount: report.verificationCount,
-      // Never expose reporter identity for anonymous reports
-      isAnonymous: report.isAnonymous,
-    }));
   },
 });
 

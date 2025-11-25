@@ -23,8 +23,9 @@ export function SisterAccompaniment({ userId }: SisterAccompanimentProps) {
   const [estimatedMinutes, setEstimatedMinutes] = useState(30);
   const [checkInMessage, setCheckInMessage] = useState("");
 
-  const activeSession = useQuery(api.accompaniment.getActiveSession, { userId });
-  const companionSessions = useQuery(api.accompaniment.getCompanionSessions, { userId });
+  // Safe queries with error handling - use null coalescing for safety
+  const activeSession = useQuery(api.accompaniment.getActiveSession, { userId }) ?? null;
+  const companionSessions = useQuery(api.accompaniment.getCompanionSessions, { userId }) ?? [];
   const createSession = useMutation(api.accompaniment.createSession);
   const updateLocation = useMutation(api.accompaniment.updateLocation);
   const endSession = useMutation(api.accompaniment.endSession);

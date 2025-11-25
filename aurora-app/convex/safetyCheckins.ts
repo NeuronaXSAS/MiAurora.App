@@ -65,12 +65,25 @@ export const confirmCheckin = mutation({
 export const getPendingCheckins = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("safetyCheckins")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .filter((q) => q.eq(q.field("status"), "pending"))
-      .order("asc")
-      .collect();
+    try {
+      // Verify user exists
+      const user = await ctx.db.get(args.userId);
+      if (!user) {
+        return [];
+      }
+
+      const checkins = await ctx.db
+        .query("safetyCheckins")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .filter((q) => q.eq(q.field("status"), "pending"))
+        .order("asc")
+        .collect();
+
+      return checkins;
+    } catch (error) {
+      console.error("Error fetching pending checkins:", error);
+      return [];
+    }
   },
 });
 

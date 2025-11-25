@@ -348,18 +348,23 @@ export const checkMembership = query({
 
 // Get circle categories
 export const getCircleCategories = query({
+  args: {},
   handler: async () => {
-    return [
-      { id: "career", name: "Career & Work", icon: "briefcase", color: "blue" },
-      { id: "motherhood", name: "Motherhood", icon: "heart", color: "pink" },
-      { id: "health", name: "Health & Wellness", icon: "activity", color: "green" },
-      { id: "safety", name: "Safety & Support", icon: "shield", color: "red" },
-      { id: "relationships", name: "Relationships", icon: "users", color: "purple" },
-      { id: "finance", name: "Finance & Money", icon: "dollar-sign", color: "yellow" },
-      { id: "wellness", name: "Mental Wellness", icon: "sun", color: "orange" },
-      { id: "tech", name: "Women in Tech", icon: "code", color: "cyan" },
-      { id: "entrepreneurship", name: "Entrepreneurship", icon: "rocket", color: "indigo" },
-      { id: "general", name: "General", icon: "message-circle", color: "gray" },
-    ];
+    try {
+      return [
+        { id: "career", name: "Career & Work", icon: "briefcase", color: "blue" },
+        { id: "motherhood", name: "Motherhood", icon: "heart", color: "pink" },
+        { id: "health", name: "Health & Wellness", icon: "activity", color: "green" },
+        { id: "safety", name: "Safety & Support", icon: "shield", color: "red" },
+        { id: "relationships", name: "Relationships", icon: "users", color: "purple" },
+        { id: "finance", name: "Finance & Money", icon: "dollar-sign", color: "yellow" },
+        { id: "wellness", name: "Mental Wellness", icon: "sun", color: "orange" },
+        { id: "tech", name: "Women in Tech", icon: "code", color: "cyan" },
+        { id: "entrepreneurship", name: "Entrepreneurship", icon: "rocket", color: "indigo" },
+        { id: "general", name: "General", icon: "message-circle", color: "gray" },
+      ];
+    } catch {
+      return [];
+    }
   },
 });

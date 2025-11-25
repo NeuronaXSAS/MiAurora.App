@@ -63,16 +63,17 @@ export function ResourceDirectory({ userId, country, city }: ResourceDirectoryPr
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const categories = useQuery(api.resources.getCategories, { country });
+  // Safe queries with null coalescing for error handling
+  const categories = useQuery(api.resources.getCategories, { country }) ?? [];
   const resources = useQuery(api.resources.getResources, {
     category: selectedCategory || undefined,
     country,
     city,
-  });
+  }) ?? [];
   const searchResults = useQuery(
     api.resources.searchResources,
     searchQuery.length >= 2 ? { query: searchQuery } : "skip"
-  );
+  ) ?? [];
   const verifyResource = useMutation(api.resources.verifyResource);
 
   const displayResources = searchQuery.length >= 2 ? searchResults : resources;

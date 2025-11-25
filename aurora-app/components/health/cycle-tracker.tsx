@@ -54,9 +54,11 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
   const [energy, setEnergy] = useState<number>(3);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // Safe query with error handling
-  const cycleHistory = useQuery(api.cycleTracker.getCycleHistory, { userId }) ?? [];
-  const predictions = useQuery(api.cycleTracker.getCyclePredictions, { userId }) ?? {
+  // Safe queries with null coalescing for error handling
+  const cycleHistoryRaw = useQuery(api.cycleTracker.getCycleHistory, { userId });
+  const cycleHistory = cycleHistoryRaw ?? [];
+  const predictionsRaw = useQuery(api.cycleTracker.getCyclePredictions, { userId });
+  const predictions = predictionsRaw ?? {
     hasEnoughData: false,
     averageCycleLength: 28,
     nextPeriodDate: null,

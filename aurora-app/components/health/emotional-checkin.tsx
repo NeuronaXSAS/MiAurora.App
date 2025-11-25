@@ -26,8 +26,9 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
   const [journal, setJournal] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  const todayMood = useQuery(api.health.getTodayMood, { userId });
-  const moodHistory = useQuery(api.health.getMoodHistory, { userId, days: 7 });
+  // Safe queries with null coalescing for error handling
+  const todayMood = useQuery(api.health.getTodayMood, { userId }) ?? null;
+  const moodHistory = useQuery(api.health.getMoodHistory, { userId, days: 7 }) ?? [];
   const logMood = useMutation(api.health.logMood);
 
   // Load today's mood if it exists

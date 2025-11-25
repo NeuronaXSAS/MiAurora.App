@@ -38,8 +38,9 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
   const [note, setNote] = useState("");
   const [isCheckinIn, setIsCheckinIn] = useState(false);
 
-  const pendingCheckins = useQuery(api.safetyCheckins.getPendingCheckins, { userId });
-  const checkinHistory = useQuery(api.safetyCheckins.getCheckinHistory, { userId, limit: 5 });
+  // Safe queries with null coalescing for error handling
+  const pendingCheckins = useQuery(api.safetyCheckins.getPendingCheckins, { userId }) ?? [];
+  const checkinHistory = useQuery(api.safetyCheckins.getCheckinHistory, { userId, limit: 5 }) ?? [];
   
   const scheduleCheckin = useMutation(api.safetyCheckins.scheduleCheckin);
   const confirmCheckin = useMutation(api.safetyCheckins.confirmCheckin);

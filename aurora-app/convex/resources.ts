@@ -207,32 +207,47 @@ export const reportResource = mutation({
 export const getCategories = query({
   args: { country: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    let resources = await ctx.db
-      .query("safetyResources")
-      .filter((q) => q.eq(q.field("isActive"), true))
-      .collect();
+    try {
+      let resources = await ctx.db
+        .query("safetyResources")
+        .filter((q) => q.eq(q.field("isActive"), true))
+        .collect();
 
-    if (args.country) {
-      resources = resources.filter(r => 
-        r.isGlobal || r.country?.toLowerCase() === args.country?.toLowerCase()
-      );
+      if (args.country) {
+        resources = resources.filter(r => 
+          r.isGlobal || r.country?.toLowerCase() === args.country?.toLowerCase()
+        );
+      }
+
+      const categories = [
+        { id: "hotline", name: "Emergency Hotlines", icon: "phone", color: "red" },
+        { id: "shelter", name: "Safe Shelters", icon: "home", color: "purple" },
+        { id: "legal", name: "Legal Aid", icon: "scale", color: "blue" },
+        { id: "medical", name: "Medical Services", icon: "heart", color: "pink" },
+        { id: "counseling", name: "Counseling", icon: "message-circle", color: "green" },
+        { id: "financial", name: "Financial Help", icon: "dollar-sign", color: "yellow" },
+        { id: "employment", name: "Job Resources", icon: "briefcase", color: "indigo" },
+        { id: "education", name: "Education", icon: "book", color: "cyan" },
+        { id: "community", name: "Community Groups", icon: "users", color: "orange" },
+      ];
+
+      return categories.map(cat => ({
+        ...cat,
+        count: resources.filter(r => r.category === cat.id).length,
+      }));
+    } catch {
+      // Return categories with zero counts on error
+      return [
+        { id: "hotline", name: "Emergency Hotlines", icon: "phone", color: "red", count: 0 },
+        { id: "shelter", name: "Safe Shelters", icon: "home", color: "purple", count: 0 },
+        { id: "legal", name: "Legal Aid", icon: "scale", color: "blue", count: 0 },
+        { id: "medical", name: "Medical Services", icon: "heart", color: "pink", count: 0 },
+        { id: "counseling", name: "Counseling", icon: "message-circle", color: "green", count: 0 },
+        { id: "financial", name: "Financial Help", icon: "dollar-sign", color: "yellow", count: 0 },
+        { id: "employment", name: "Job Resources", icon: "briefcase", color: "indigo", count: 0 },
+        { id: "education", name: "Education", icon: "book", color: "cyan", count: 0 },
+        { id: "community", name: "Community Groups", icon: "users", color: "orange", count: 0 },
+      ];
     }
-
-    const categories = [
-      { id: "hotline", name: "Emergency Hotlines", icon: "phone", color: "red" },
-      { id: "shelter", name: "Safe Shelters", icon: "home", color: "purple" },
-      { id: "legal", name: "Legal Aid", icon: "scale", color: "blue" },
-      { id: "medical", name: "Medical Services", icon: "heart", color: "pink" },
-      { id: "counseling", name: "Counseling", icon: "message-circle", color: "green" },
-      { id: "financial", name: "Financial Help", icon: "dollar-sign", color: "yellow" },
-      { id: "employment", name: "Job Resources", icon: "briefcase", color: "indigo" },
-      { id: "education", name: "Education", icon: "book", color: "cyan" },
-      { id: "community", name: "Community Groups", icon: "users", color: "orange" },
-    ];
-
-    return categories.map(cat => ({
-      ...cat,
-      count: resources.filter(r => r.category === cat.id).length,
-    }));
   },
 });
