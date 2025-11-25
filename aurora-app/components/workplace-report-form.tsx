@@ -1,0 +1,296 @@
+"use client";
+
+import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
+  Shield, 
+  AlertTriangle, 
+  Lock, 
+  Globe, 
+  Heart,
+  CheckCircle
+} from "lucide-react";
+import { motion } from "framer-motion";
+
+interface WorkplaceReportFormProps {
+  userId: Id<"users">;
+  onSuccess?: () => void;
+}
+
+const INCIDENT_TYPES = [
+  { value: "harassment", label: "Sexual Harassment", icon: "🚫" },
+  { value: "discrimination", label: "Discrimination", icon: "⚖️" },
+  { value: "pay_inequality", label: "Pay Inequality", icon: "💰" },
+  { value: "hostile_environment", label: "Hostile Environment", icon: "😰" },
+  { value: "retaliation", label: "Retaliation", icon: "🔄" },
+  { value: "other", label: "Other", icon: "📝" },
+];
+
+const SUPPORT_OPTIONS = [
+  { id: "legal", label: "Legal Advice" },
+  { id: "counseling", label: "Counseling" },
+  { id: "career", label: "Career Guidance" },
+  { id: "community", label: "Community Support" },
+  { id: "resources", label: "Educational Resources" },
+];
+
+export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormProps) {
+  const [companyName, setCompanyName] = useState("");
+  const [incidentType, setIncidentType] = useState<string>("");
+  const [description, setDescription] = useState("");
+  const [date, setDate] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(true);
+  const [isPublic, setIsPublic] = useState(false);
+  const [supportNeeded, setSupportNeeded] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const submitReport = useMutation(api.workplaceReports.submitReport);
+
+  const toggleSupport = (supportId: string) => {
+    setSupportNeeded(prev => 
+      prev.includes(supportId) 
+        ? prev.filter(s => s !== supportId)
+        : [...prev, supportId]
+    );
+  };
+
+  const handleSubmit = async () => {
+    if (!companyName || !incidentType || !description) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await submitReport({
+        reporterId: userId,
+        companyName,
+        incidentType: incidentType as any,
+        description,
+        date: date || undefined,
+        isAnonymous,
+        isPublic,
+        supportNeeded: supportNeeded.length > 0 ? supportNeeded : undefined,
+      });
+      setSubmitted(true);
+      onSuccess?.();
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      alert("Failed to submit report. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+      >
+        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-green-800 mb-2">
+              Thank You for Your Courage
+            </h3>
+            <p className="text-green-700 mb-4">
+              Your report has been submitted. You've earned 25 credits for helping protect other women.
+            </p>
+            <p className="text-sm text-green-600">
+              {isPublic 
+                ? "Your report will be visible to the community (anonymously if selected)."
+                : "Your report is private and will only be used for aggregate safety data."
+              }
+            </p>
+            <Button
+              className="mt-6"
+              onClick={() => {
+                setSubmitted(false);
+                setCompanyName("");
+                setIncidentType("");
+                setDescription("");
+                setDate("");
+                setSupportNeeded([]);
+              }}
+            >
+              Submit Another Report
+            </Button>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Shield className="w-5 h-5 text-purple-600" />
+          Report Workplace Incident
+        </CardTitle>
+        <p className="text-sm text-gray-600">
+          Your voice matters. Help protect other women by sharing your experience.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Company Name */}
+        <div>
+          <Label htmlFor="company">Company Name *</Label>
+          <Input
+            id="company"
+            placeholder="Enter company name"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+          />
+        </div>
+
+        {/* Incident Type */}
+        <div>
+          <Label>Type of Incident *</Label>
+          <Select value={incidentType} onValueChange={setIncidentType}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select incident type" />
+            </SelectTrigger>
+            <SelectContent>
+              {INCIDENT_TYPES.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.icon} {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Date */}
+        <div>
+          <Label htmlFor="date">When did this happen? (optional)</Label>
+          <Input
+            id="date"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </div>
+
+        {/* Description */}
+        <div>
+          <Label htmlFor="description">Describe what happened *</Label>
+          <Textarea
+            id="description"
+            placeholder="Share your experience. Be as detailed as you're comfortable with..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={5}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Your description helps others understand the situation and may help identify patterns.
+          </p>
+        </div>
+
+        {/* Privacy Options */}
+        <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+          <h4 className="font-semibold flex items-center gap-2">
+            <Lock className="w-4 h-4" />
+            Privacy Settings
+          </h4>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="anonymous">Submit Anonymously</Label>
+              <p className="text-xs text-gray-500">Your identity will never be revealed</p>
+            </div>
+            <Switch
+              id="anonymous"
+              checked={isAnonymous}
+              onCheckedChange={setIsAnonymous}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="public">Share with Community</Label>
+              <p className="text-xs text-gray-500">Help warn others about this company</p>
+            </div>
+            <Switch
+              id="public"
+              checked={isPublic}
+              onCheckedChange={setIsPublic}
+            />
+          </div>
+        </div>
+
+        {/* Support Needed */}
+        <div>
+          <Label>What support do you need? (optional)</Label>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {SUPPORT_OPTIONS.map((option) => (
+              <Badge
+                key={option.id}
+                variant={supportNeeded.includes(option.id) ? "default" : "outline"}
+                className={`cursor-pointer ${
+                  supportNeeded.includes(option.id) 
+                    ? "bg-purple-500 hover:bg-purple-600" 
+                    : "hover:bg-purple-50"
+                }`}
+                onClick={() => toggleSupport(option.id)}
+              >
+                {option.label}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        {/* Warning */}
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-yellow-800">
+              <p className="font-semibold mb-1">Important Notice</p>
+              <p>
+                This report is for community awareness and support. For legal action, 
+                please consult with a qualified attorney. If you're in immediate danger, 
+                contact emergency services.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Submit */}
+        <Button
+          onClick={handleSubmit}
+          disabled={isSubmitting || !companyName || !incidentType || !description}
+          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+        >
+          {isSubmitting ? (
+            <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+          ) : (
+            <>
+              <Heart className="w-4 h-4 mr-2" />
+              Submit Report (+25 credits)
+            </>
+          )}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}

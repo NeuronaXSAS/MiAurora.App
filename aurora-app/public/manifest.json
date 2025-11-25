@@ -4,8 +4,11 @@
   "description": "The front page of the internet for women to advance and enjoy life",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#9333ea",
+  "background_color": "#150F22",
+  "theme_color": "#FF6B7A",
+  "scope": "/",
+  "lang": "en",
+  "prefer_related_applications": false,
   "orientation": "portrait-primary",
   "icons": [
     {

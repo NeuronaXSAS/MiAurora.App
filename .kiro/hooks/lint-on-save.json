@@ -1,0 +1,13 @@
+{
+  "name": "Lint TypeScript on Save",
+  "description": "Runs ESLint on TypeScript files when saved to catch issues early",
+  "trigger": {
+    "type": "onFileSave",
+    "pattern": "aurora-app/**/*.{ts,tsx}"
+  },
+  "action": {
+    "type": "shellCommand",
+    "command": "cd aurora-app && npx eslint --fix"
+  },
+  "enabled": false
+}

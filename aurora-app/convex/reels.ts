@@ -13,31 +13,38 @@ import { api } from './_generated/api';
  * Generate secure upload credentials for client-side video uploads
  * 
  * This is called from the frontend before uploading a video.
- * Returns signed credentials that allow direct upload to Cloudinary.
+ * Returns basic metadata for client-side upload configuration.
  * 
- * Note: This is a simple implementation that returns the necessary credentials.
- * The actual Cloudinary signature generation happens client-side for now.
+ * IMPORTANT: Cloudinary credentials (cloud name, API key) must be configured
+ * on the client side via NEXT_PUBLIC_* environment variables.
+ * This query only provides server-side metadata like timestamps.
  */
 export const generateUploadCredentials = query({
   args: {
     userId: v.id('users'),
   },
   handler: async (ctx, args) => {
-    // Return Cloudinary configuration for client-side upload
-    // The signature will be generated client-side using the API secret
+    // Verify user exists
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      return {
+        success: false,
+        error: 'User not found',
+        credentials: null,
+      };
+    }
+
+    // Return server-side metadata only
+    // Client must use NEXT_PUBLIC_* env vars for Cloudinary config
     const timestamp = Math.round(Date.now() / 1000);
     
     return {
       success: true,
       credentials: {
-        uploadUrl: `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/video/upload`,
         timestamp,
-        apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY || '',
-        cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '',
-        // Note: Signature must be generated server-side in production
-        // For now, we'll use unsigned uploads with an upload preset
-        signature: '', // Will use upload preset instead
         expiresAt: timestamp + 3600,
+        // Note: uploadUrl, apiKey, cloudName must be configured client-side
+        // using NEXT_PUBLIC_CLOUDINARY_* environment variables
       },
     };
   },

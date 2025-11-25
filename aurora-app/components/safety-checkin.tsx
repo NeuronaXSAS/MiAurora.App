@@ -1,0 +1,325 @@
+"use client";
+
+import { useState } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Shield, 
+  Clock, 
+  CheckCircle, 
+  AlertTriangle,
+  MapPin,
+  Plus,
+  X,
+  Sparkles
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { formatDistanceToNow, format, addMinutes, addHours } from "date-fns";
+
+interface SafetyCheckinProps {
+  userId: Id<"users">;
+}
+
+const QUICK_TIMES = [
+  { label: "30 min", minutes: 30 },
+  { label: "1 hour", minutes: 60 },
+  { label: "2 hours", minutes: 120 },
+  { label: "4 hours", minutes: 240 },
+];
+
+export function SafetyCheckin({ userId }: SafetyCheckinProps) {
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [customMinutes, setCustomMinutes] = useState("");
+  const [note, setNote] = useState("");
+  const [isCheckinIn, setIsCheckinIn] = useState(false);
+
+  const pendingCheckins = useQuery(api.safetyCheckins.getPendingCheckins, { userId });
+  const checkinHistory = useQuery(api.safetyCheckins.getCheckinHistory, { userId, limit: 5 });
+  
+  const scheduleCheckin = useMutation(api.safetyCheckins.scheduleCheckin);
+  const confirmCheckin = useMutation(api.safetyCheckins.confirmCheckin);
+  const cancelCheckin = useMutation(api.safetyCheckins.cancelCheckin);
+  const quickCheckin = useMutation(api.safetyCheckins.quickCheckin);
+
+  const handleQuickCheckin = async () => {
+    setIsCheckinIn(true);
+    
+    // Get location if available
+    let location: { lat: number; lng: number } | undefined;
+    if ("geolocation" in navigator) {
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+        });
+        location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      } catch (e) {
+        // Location not available, continue without it
+      }
+    }
+
+    await quickCheckin({ userId, location });
+    setIsCheckinIn(false);
+  };
+
+  const handleSchedule = async (minutes: number) => {
+    const scheduledTime = Date.now() + minutes * 60 * 1000;
+    await scheduleCheckin({
+      userId,
+      scheduledTime,
+      note: note || undefined,
+    });
+    setShowScheduler(false);
+    setNote("");
+    setCustomMinutes("");
+  };
+
+  const handleConfirm = async (checkinId: Id<"safetyCheckins">) => {
+    let location: { lat: number; lng: number } | undefined;
+    if ("geolocation" in navigator) {
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+        });
+        location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      } catch (e) {
+        // Continue without location
+      }
+    }
+    await confirmCheckin({ checkinId, userId, location });
+  };
+
+  const handleCancel = async (checkinId: Id<"safetyCheckins">) => {
+    await cancelCheckin({ checkinId, userId });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Quick Check-in Button */}
+      <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <Shield className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-green-800">Quick Check-in</h3>
+                <p className="text-sm text-green-600">Let your contacts know you're safe</p>
+              </div>
+            </div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                size="lg"
+                onClick={handleQuickCheckin}
+                disabled={isCheckinIn}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg"
+              >
+                {isCheckinIn ? (
+                  <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    I'm OK
+                  </>
+                )}
+              </Button>
+            </motion.div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Pending Check-ins */}
+      {pendingCheckins && pendingCheckins.length > 0 && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-orange-700">
+              <Clock className="w-5 h-5" />
+              Scheduled Check-ins
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <AnimatePresence>
+              {pendingCheckins.map((checkin) => {
+                const isOverdue = Date.now() > checkin.scheduledTime;
+                
+                return (
+                  <motion.div
+                    key={checkin._id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                    className={`p-4 rounded-xl border ${
+                      isOverdue 
+                        ? "bg-red-100 border-red-300" 
+                        : "bg-white border-orange-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          {isOverdue ? (
+                            <AlertTriangle className="w-4 h-4 text-red-600" />
+                          ) : (
+                            <Clock className="w-4 h-4 text-orange-600" />
+                          )}
+                          <span className={`font-semibold ${isOverdue ? "text-red-700" : "text-orange-700"}`}>
+                            {isOverdue ? "Overdue!" : "Due"} {formatDistanceToNow(checkin.scheduledTime, { addSuffix: true })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          {format(checkin.scheduledTime, "h:mm a")}
+                          {checkin.note && ` • ${checkin.note}`}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleConfirm(checkin._id)}
+                          className="bg-green-500 hover:bg-green-600"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          I'm Safe
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCancel(checkin._id)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Schedule New Check-in */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Plus className="w-5 h-5" />
+              Schedule Check-in
+            </span>
+            {!showScheduler && (
+              <Button size="sm" onClick={() => setShowScheduler(true)}>
+                Schedule
+              </Button>
+            )}
+          </CardTitle>
+        </CardHeader>
+        {showScheduler && (
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Set a time when you'll check in. If you don't confirm, your emergency contacts will be notified.
+            </p>
+            
+            {/* Quick Time Options */}
+            <div className="grid grid-cols-4 gap-2">
+              {QUICK_TIMES.map((time) => (
+                <Button
+                  key={time.minutes}
+                  variant="outline"
+                  onClick={() => handleSchedule(time.minutes)}
+                  className="flex flex-col h-auto py-3"
+                >
+                  <span className="font-bold">{time.label}</span>
+                  <span className="text-xs text-gray-500">
+                    {format(addMinutes(new Date(), time.minutes), "h:mm a")}
+                  </span>
+                </Button>
+              ))}
+            </div>
+
+            {/* Custom Time */}
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                placeholder="Custom minutes"
+                value={customMinutes}
+                onChange={(e) => setCustomMinutes(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                onClick={() => handleSchedule(parseInt(customMinutes) || 60)}
+                disabled={!customMinutes}
+              >
+                Set
+              </Button>
+            </div>
+
+            {/* Note */}
+            <Input
+              placeholder="Add a note (optional) - e.g., 'Walking home'"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowScheduler(false)}
+            >
+              Cancel
+            </Button>
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Recent History */}
+      {checkinHistory && checkinHistory.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm text-gray-600">Recent Check-ins</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {checkinHistory.map((checkin) => (
+                <div
+                  key={checkin._id}
+                  className="flex items-center justify-between py-2 border-b last:border-0"
+                >
+                  <div className="flex items-center gap-3">
+                    {checkin.status === "confirmed" ? (
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                    ) : checkin.status === "missed" ? (
+                      <AlertTriangle className="w-4 h-4 text-red-500" />
+                    ) : (
+                      <Clock className="w-4 h-4 text-orange-500" />
+                    )}
+                    <div>
+                      <p className="text-sm font-medium">
+                        {checkin.note || "Check-in"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {format(checkin.scheduledTime, "MMM d, h:mm a")}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge
+                    variant={
+                      checkin.status === "confirmed" ? "default" :
+                      checkin.status === "missed" ? "destructive" : "secondary"
+                    }
+                    className={checkin.status === "confirmed" ? "bg-green-100 text-green-700" : ""}
+                  >
+                    {checkin.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

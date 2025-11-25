@@ -1,243 +1,231 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationSettings } from "@/components/notification-settings";
+import { useServiceWorker } from "@/hooks/use-service-worker";
+import { useTheme } from "@/lib/theme-context";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Settings, Trash2, AlertTriangle } from "lucide-react";
-import { Id } from "@/convex/_generated/dataModel";
-import { useRouter } from "next/navigation";
+  Settings, Bell, Palette, Shield, Download, Trash2,
+  Globe, Lock, Eye, EyeOff, Smartphone, Wifi, WifiOff,
+  RefreshCw, HardDrive, User, Heart
+} from "lucide-react";
 
 export default function SettingsPage() {
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [confirmationText, setConfirmationText] = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const { isOnline, isRegistered, updateAvailable, skipWaiting } = useServiceWorker();
+  const { theme } = useTheme();
+  const [activeSection, setActiveSection] = useState("appearance");
 
-  // Get user ID
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
-
-  // Fetch user data
-  const user = useQuery(
-    api.users.getUser,
-    userId ? { userId } : "skip"
-  );
-
-  const deleteAccount = useMutation(api.users.deleteAccount);
-
-  const handleDeleteAccount = async () => {
-    if (!userId || confirmationText !== "DELETE") {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await deleteAccount({ userId });
-      
-      // Logout and redirect
-      await fetch("/api/auth/logout", { method: "POST" });
-      router.push("/");
-    } catch (error) {
-      console.error("Delete account error:", error);
-      alert("Failed to delete account: " + (error as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-[#1e1b4b] to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-300">Loading settings...</p>
-        </div>
-      </div>
-    );
-  }
+  const sections = [
+    { id: "appearance", label: "Appearance", icon: Palette },
+    { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "privacy", label: "Privacy & Security", icon: Shield },
+    { id: "offline", label: "Offline & Data", icon: HardDrive },
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-[#1e1b4b] to-slate-900">
-      {/* Header */}
-      <div className="backdrop-blur-xl bg-white/5 border-b border-white/10 sticky top-16 lg:top-0 z-10">
-        <div className="px-4 sm:px-6 py-4 sm:py-6">
-          <div className="flex items-start gap-3">
-            <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400 flex-shrink-0 mt-1" />
+    <div className="min-h-screen p-4 sm:p-6">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF6B7A] to-[#8B5CF6] flex items-center justify-center">
+              <Settings className="w-6 h-6 text-white" />
+            </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Settings</h1>
-              <p className="text-xs sm:text-sm text-gray-300">
-                Manage your account preferences
-              </p>
+              <h1 className="text-2xl font-bold text-white">Settings</h1>
+              <p className="text-white/60">Customize your Aurora experience</p>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="container mx-auto px-6 py-8">
-        <div className="max-w-3xl mx-auto space-y-6">
-          {/* Account Information */}
-          <Card className="backdrop-blur-xl bg-white/10 border-white/20">
-            <CardHeader>
-              <CardTitle className="text-white">Account Information</CardTitle>
-              <CardDescription className="text-gray-300">Your basic account details</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-300">Name</label>
-                <p className="text-white mt-1">{user.name && user.name !== 'null' ? user.name : 'Not set'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-300">Email</label>
-                <p className="text-white mt-1">{user.email}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-300">Location</label>
-                <p className="text-white mt-1">{user.location || 'Not set'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-300">Industry</label>
-                <p className="text-white mt-1">{user.industry || 'Not set'}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Privacy Settings */}
-          <Card className="backdrop-blur-xl bg-white/10 border-white/20">
-            <CardHeader>
-              <CardTitle className="text-white">Privacy & Data</CardTitle>
-              <CardDescription className="text-gray-300">Control your privacy preferences and data</CardDescription>
-            </CardHeader>
-            <CardContent>
+        {/* Connection Status */}
+        <Card className="p-4 mb-6 bg-white/5 border-white/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {isOnline ? (
+                <Wifi className="w-5 h-5 text-green-400" />
+              ) : (
+                <WifiOff className="w-5 h-5 text-orange-400" />
+              )}
+              <span className="text-white">
+                {isOnline ? "Connected" : "Offline Mode"}
+              </span>
+            </div>
+            {updateAvailable && (
               <Button
-                variant="outline"
-                onClick={() => router.push('/settings/privacy')}
-                className="w-full sm:w-auto bg-white/5 border-white/20 text-white hover:bg-white/10"
+                size="sm"
+                onClick={skipWaiting}
+                className="bg-[#FF6B7A] hover:bg-[#E84D5F]"
               >
-                Manage Privacy Settings
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Update Available
               </Button>
-            </CardContent>
-          </Card>
+            )}
+          </div>
+        </Card>
 
-          {/* Danger Zone */}
-          <Card className="backdrop-blur-xl bg-red-500/10 border-red-500/30">
-            <CardHeader>
-              <CardTitle className="text-red-400">Danger Zone</CardTitle>
-              <CardDescription className="text-gray-300">Irreversible account actions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4">
-                <div className="flex items-start gap-3 mb-4">
-                  <AlertTriangle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-semibold text-red-300 mb-1">Delete Account</h3>
-                    <p className="text-sm text-gray-300">
-                      Permanently delete your account and all associated data. This action cannot be undone.
-                    </p>
-                  </div>
+        {/* Section Navigation */}
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+          {sections.map((section) => {
+            const Icon = section.icon;
+            return (
+              <Button
+                key={section.id}
+                variant={activeSection === section.id ? "default" : "ghost"}
+                onClick={() => setActiveSection(section.id)}
+                className={activeSection === section.id 
+                  ? "bg-[#FF6B7A] text-white" 
+                  : "text-white/60 hover:text-white hover:bg-white/10"
+                }
+              >
+                <Icon className="w-4 h-4 mr-2" />
+                {section.label}
+              </Button>
+            );
+          })}
+        </div>
+
+        {/* Appearance Section */}
+        {activeSection === "appearance" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <Card className="p-6 bg-white/5 border-white/10">
+              <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                <Palette className="w-5 h-5 text-[#FF6B7A]" />
+                Theme
+              </h3>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white">Color Mode</p>
+                  <p className="text-white/50 text-sm">
+                    Current: {theme === 'system' ? 'System' : theme === 'dark' ? 'Dark' : 'Light'}
+                  </p>
                 </div>
-                <Button
-                  variant="destructive"
-                  onClick={() => setDeleteDialogOpen(true)}
-                  className="w-full sm:w-auto bg-red-600 hover:bg-red-700"
-                >
+                <ThemeToggle variant="pill" />
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Notifications Section */}
+        {activeSection === "notifications" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <NotificationSettings />
+          </motion.div>
+        )}
+
+        {/* Privacy Section */}
+        {activeSection === "privacy" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <Card className="p-6 bg-white/5 border-white/10">
+              <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                <Lock className="w-5 h-5 text-[#8B5CF6]" />
+                Privacy Settings
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                  <div>
+                    <p className="text-white">Anonymous Posting</p>
+                    <p className="text-white/50 text-sm">Hide your identity in community posts</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                  <div>
+                    <p className="text-white">Location Sharing</p>
+                    <p className="text-white/50 text-sm">Share location with emergency contacts</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                  <div>
+                    <p className="text-white">Profile Visibility</p>
+                    <p className="text-white/50 text-sm">Who can see your profile</p>
+                  </div>
+                  <Badge variant="outline" className="border-white/20 text-white">
+                    Circles Only
+                  </Badge>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-red-500/10 border-red-500/20">
+              <h3 className="text-red-400 font-semibold mb-4 flex items-center gap-2">
+                <Trash2 className="w-5 h-5" />
+                Danger Zone
+              </h3>
+              <div className="space-y-3">
+                <Button variant="outline" className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export My Data
+                </Button>
+                <Button variant="outline" className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10">
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Delete My Account
+                  Delete Account
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Offline Section */}
+        {activeSection === "offline" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <Card className="p-6 bg-white/5 border-white/10">
+              <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-[#FFC285]" />
+                Offline Capabilities
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                  <div>
+                    <p className="text-white">Service Worker</p>
+                    <p className="text-white/50 text-sm">Enables offline functionality</p>
+                  </div>
+                  <Badge className={isRegistered ? "bg-green-500/20 text-green-400" : "bg-orange-500/20 text-orange-400"}>
+                    {isRegistered ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                  <div>
+                    <p className="text-white">Emergency Features Offline</p>
+                    <p className="text-white/50 text-sm">Panic button works without internet</p>
+                  </div>
+                  <Badge className="bg-green-500/20 text-green-400">Enabled</Badge>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Footer */}
+        <div className="mt-8 text-center">
+          <p className="text-white/40 text-sm flex items-center justify-center gap-2">
+            Made with <Heart className="w-4 h-4 text-[#FF6B7A]" /> for women everywhere
+          </p>
+          <p className="text-white/30 text-xs mt-1">Aurora v1.0.0</p>
         </div>
       </div>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="backdrop-blur-xl bg-slate-900/95 border-white/20 text-white">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-400">
-              <AlertTriangle className="w-5 h-5" />
-              Delete Account
-            </DialogTitle>
-            <DialogDescription className="text-gray-300">
-              This action is permanent and cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4">
-              <p className="text-sm text-red-300 font-medium mb-2">
-                The following data will be permanently deleted:
-              </p>
-              <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside">
-                <li>Your profile and account information</li>
-                <li>All posts and contributions</li>
-                <li>All comments and votes</li>
-                <li>All routes and activity data</li>
-                <li>Credit balance and transaction history</li>
-                <li>Unlocked opportunities</li>
-              </ul>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block text-gray-300">
-                Type <span className="font-bold text-red-400">DELETE</span> to confirm
-              </label>
-              <Input
-                value={confirmationText}
-                onChange={(e) => setConfirmationText(e.target.value)}
-                placeholder="DELETE"
-                className="font-mono bg-white/5 border-white/20 text-white"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteDialogOpen(false);
-                setConfirmationText("");
-              }}
-              disabled={loading}
-              className="bg-white/5 border-white/20 text-white hover:bg-white/10"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteAccount}
-              disabled={confirmationText !== "DELETE" || loading}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {loading ? "Deleting..." : "Delete My Account"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

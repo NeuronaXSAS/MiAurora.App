@@ -36,6 +36,16 @@ Aurora is a production-ready web application combining community engagement, saf
 - **Smart Notifications**: Intelligent notification timing and relevance
 - **Privacy Controls**: GDPR-compliant data export and deletion
 
+### 🌍 Elite Global Features (NEW)
+- **Cycle/Period Tracker**: Complete menstrual health tracking with predictions
+- **Safety Resources Directory**: Global database of hotlines, shelters, legal aid
+- **Support Circles**: Community groups by topic (career, motherhood, health, etc.)
+- **Safety Check-ins**: Scheduled "I'm OK" pings with auto-alerts
+- **Sister Accompaniment**: Real-time location sharing for safe journeys
+- **Workplace Reports**: Anonymous harassment/discrimination reporting
+- **Multi-language Support**: 18 languages for global accessibility
+- **Emergency Hotlines**: Country-specific emergency numbers
+
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 14, TypeScript, Tailwind CSS, shadcn/ui

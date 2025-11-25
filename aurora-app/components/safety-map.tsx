@@ -7,9 +7,12 @@ import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Crosshair, Navigation, Plus, Search, X, MapPin as MapPinIcon } from "lucide-react";
+import { Crosshair, Navigation, Plus, Search, X, MapPin as MapPinIcon, AlertTriangle } from "lucide-react";
 
-mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
+// Set access token only if available
+if (process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
+  mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+}
 
 interface SafetyMapProps {
   lifeDimension?: string;
@@ -24,6 +27,7 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
   const markers = useRef<mapboxgl.Marker[]>([]);
   const userLocationMarker = useRef<mapboxgl.Marker | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapState, setMapState] = useState<{ center: [number, number]; zoom: number } | null>(null);
@@ -49,34 +53,58 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
-    // Use custom Aurora style
-    const MAP_STYLE = "mapbox://styles/malunao/cm84u5ecf000x01qled5j8bvl";
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: MAP_STYLE,
-      center: [-98.5795, 39.8283], // Center of USA
-      zoom: 4,
-    });
+    // Check if Mapbox token is available
+    if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
+      setMapError("Map configuration unavailable");
+      return;
+    }
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-    // Add fullscreen control
-    map.current.addControl(new mapboxgl.FullscreenControl(), "top-right");
-
-    map.current.on("load", () => {
-      setMapLoaded(true);
+    try {
+      // Use custom Aurora style
+      const MAP_STYLE = "mapbox://styles/malunao/cm84u5ecf000x01qled5j8bvl";
       
-      // Restore map state if it exists
-      if (mapState && map.current) {
-        map.current.setCenter(mapState.center);
-        map.current.setZoom(mapState.zoom);
-      }
-    });
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: MAP_STYLE,
+        center: [-98.5795, 39.8283], // Center of USA
+        zoom: 4,
+      });
+
+      // Handle map errors (e.g., blocked by ad-blocker)
+      map.current.on("error", (e) => {
+        // Silently handle tile loading errors (common with ad-blockers)
+        if (e.error?.message?.includes("Failed to fetch") || 
+            e.error?.message?.includes("NetworkError")) {
+          // Don't spam console, just note it happened
+          console.debug("Map resource blocked, likely by ad-blocker");
+        }
+      });
+
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+      // Add fullscreen control
+      map.current.addControl(new mapboxgl.FullscreenControl(), "top-right");
+
+      map.current.on("load", () => {
+        setMapLoaded(true);
+        setMapError(null);
+        
+        // Restore map state if it exists
+        if (mapState && map.current) {
+          map.current.setCenter(mapState.center);
+          map.current.setZoom(mapState.zoom);
+        }
+      });
+    } catch (error) {
+      // Map initialization failed (possibly blocked by ad-blocker)
+      console.debug("Map initialization failed:", error);
+      setMapError("Unable to load map. Try disabling ad-blocker if you have one.");
+      return;
+    }
 
     // Save map state on move
-    map.current.on("moveend", () => {
+    map.current?.on("moveend", () => {
       if (map.current) {
         setMapState({
           center: map.current.getCenter().toArray() as [number, number],
@@ -86,7 +114,7 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
     });
 
     // Add click handler for location selection
-    map.current.on("click", async (e) => {
+    map.current?.on("click", async (e) => {
       if (!isSelectingLocation || !onLocationSelect) return;
 
       const { lng, lat } = e.lngLat;
@@ -339,6 +367,22 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
       }
     );
   };
+
+  // Show error state if map failed to load
+  if (mapError) {
+    return (
+      <div className="relative w-full h-full flex items-center justify-center bg-gray-100" style={{ minHeight: '100dvh' }}>
+        <div className="text-center p-8 max-w-md">
+          <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">Map Unavailable</h3>
+          <p className="text-gray-600 text-sm mb-4">{mapError}</p>
+          <p className="text-gray-500 text-xs">
+            If you have an ad-blocker enabled, try disabling it for this site to view the map.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-full" style={{ minHeight: '100dvh' }}>

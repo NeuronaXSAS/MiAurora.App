@@ -1,7 +1,30 @@
 /**
  * Aurora Design System
- * Consistent spacing, typography, and shadows across the app
+ * 
+ * Consistent spacing, typography, colors, and shadows across the app.
+ * Based on the Trinity Architecture: Health & Soul, Mobility & Safety, Social & Opportunity
+ * 
+ * BRAND COLORS (use these, NEVER generic Tailwind colors):
+ * - aurora-cream: #fffaf1 (Light backgrounds)
+ * - aurora-violet: #3d0d73 (Dark mode, navigation)
+ * - aurora-lavender: #c9cef4 (Cards, inputs)
+ * - aurora-blue: #2e2ad6 (Primary CTAs, routes)
+ * - aurora-orange: #ec4c28 (PANIC BUTTON ONLY, alerts)
+ * - aurora-pink: #f29de5 (Health widgets, feminine)
+ * - aurora-mint: #d6f4ec (Safe zones, success)
+ * - aurora-yellow: #e5e093 (Credits, gamification)
  */
+
+export const auroraColors = {
+  cream: "#fffaf1",
+  violet: "#3d0d73",
+  lavender: "#c9cef4",
+  blue: "#2e2ad6",
+  orange: "#ec4c28",
+  pink: "#f29de5",
+  mint: "#d6f4ec",
+  yellow: "#e5e093",
+} as const;
 
 export const spacing = {
   xs: "0.25rem",    // 4px

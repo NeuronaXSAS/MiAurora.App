@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "Aurora App - The Front Page of the Internet for Women",
   description: "A community-driven platform where women share intelligence and unlock opportunities",
   manifest: "/manifest.json",
-  themeColor: "#9333ea",
+  themeColor: "#FF6B7A",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -35,16 +35,36 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/Au_Logo_1.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        {process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID && (
-          <script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID}`}
-            crossOrigin="anonymous"
-          />
-        )}
+        <meta name="google-adsense-account" content="ca-pub-9358935810206071" />
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9358935810206071"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className={inter.className}>
+        <a href="#main-content" className="skip-to-main">
+          Skip to main content
+        </a>
         <Providers>{children}</Providers>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(
+                    function(registration) {
+                      console.log('[Aurora] Service Worker registered:', registration.scope);
+                    },
+                    function(err) {
+                      console.log('[Aurora] Service Worker registration failed:', err);
+                    }
+                  );
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

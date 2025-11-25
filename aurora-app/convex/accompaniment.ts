@@ -119,32 +119,48 @@ export const endSession = mutation({
 export const getActiveSession = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    const session = await ctx.db
-      .query("accompanimentSessions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .filter((q) => q.eq(q.field("status"), "active"))
-      .first();
+    try {
+      // Verify user exists first
+      const user = await ctx.db.get(args.userId);
+      if (!user) {
+        return null;
+      }
 
-    if (!session) return null;
+      const session = await ctx.db
+        .query("accompanimentSessions")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .filter((q) => q.eq(q.field("status"), "active"))
+        .first();
 
-    // Get companion details
-    const companions = await Promise.all(
-      session.companions.map(async (id) => {
-        const companion = await ctx.db.get(id);
-        return companion
-          ? {
-              _id: companion._id,
-              name: companion.name,
-              profileImage: companion.profileImage,
-            }
-          : null;
-      })
-    );
+      if (!session) return null;
 
-    return {
-      ...session,
-      companionDetails: companions.filter((c) => c !== null),
-    };
+      // Get companion details with error handling
+      const companions = await Promise.all(
+        session.companions.map(async (id) => {
+          try {
+            const companion = await ctx.db.get(id);
+            return companion
+              ? {
+                  _id: companion._id,
+                  name: companion.name,
+                  profileImage: companion.profileImage,
+                }
+              : null;
+          } catch {
+            // Companion may have been deleted
+            return null;
+          }
+        })
+      );
+
+      return {
+        ...session,
+        companionDetails: companions.filter((c) => c !== null),
+      };
+    } catch (error) {
+      console.error("Error in getActiveSession:", error);
+      return null;
+    }
   },
 });
 

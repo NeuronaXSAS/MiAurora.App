@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,10 +16,10 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
   const [showCelebration, setShowCelebration] = useState(false);
   
   const todayHydration = useQuery(
-    (api as any).health?.getTodayHydration ? (api as any).health.getTodayHydration : "skip",
+    api.health.getTodayHydration,
     userId ? { userId } : "skip"
   );
-  const logWater = useMutation((api as any).health?.logWater || (() => Promise.resolve()));
+  const logWater = useMutation(api.health.logWater);
 
   const glasses = todayHydration?.glasses || 0;
   const goal = todayHydration?.goal || 8;

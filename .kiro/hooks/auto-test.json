@@ -1,0 +1,13 @@
+{
+  "name": "Auto-Test on E2E Changes",
+  "description": "Automatically runs Playwright tests when E2E test files are modified",
+  "trigger": {
+    "type": "onFileSave",
+    "pattern": "**/e2e/**/*.spec.ts"
+  },
+  "action": {
+    "type": "shellCommand",
+    "command": "cd aurora-app && npx playwright test --reporter=line"
+  },
+  "enabled": true
+}

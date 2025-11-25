@@ -195,13 +195,21 @@ export function PanicButton({ testMode = false }: PanicButtonProps) {
       onMouseLeave={cancelPanic}
       onTouchStart={startPanicSequence}
       onTouchEnd={cancelPanic}
-      className="fixed top-20 right-4 lg:bottom-24 lg:top-auto lg:right-6 w-14 h-14 lg:w-16 lg:h-16 bg-aurora-orange hover:bg-aurora-orange/90 rounded-full shadow-2xl flex items-center justify-center z-[9999] transition-transform active:scale-95 border-4 border-white animate-pulse"
-      style={{ boxShadow: '0 0 30px rgba(236, 76, 40, 0.6)' }}
-      aria-label="Emergency SOS Button - Hold to activate"
+      className="fixed top-20 right-4 lg:bottom-24 lg:top-auto lg:right-6 w-14 h-14 lg:w-16 lg:h-16 bg-aurora-orange hover:bg-aurora-orange/90 rounded-full shadow-2xl flex items-center justify-center z-[9999] transition-transform active:scale-95 border-4 border-white"
+      style={{ 
+        boxShadow: '0 0 30px rgba(236, 76, 40, 0.6)',
+        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+      }}
+      aria-label="Emergency SOS Button - Press and hold for 5 seconds to activate emergency alert"
+      aria-describedby="sos-description"
       title="Emergency SOS - Hold to activate"
+      role="button"
     >
-      <AlertTriangle className="w-10 h-10 text-white drop-shadow-lg" />
-      <div className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg">
+      <span id="sos-description" className="sr-only">
+        This is an emergency button. Press and hold for 5 seconds to send an emergency alert to your contacts and nearby users.
+      </span>
+      <AlertTriangle className="w-10 h-10 text-white drop-shadow-lg" aria-hidden="true" />
+      <div className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg" aria-hidden="true">
         <span className="text-aurora-orange text-xs font-bold">SOS</span>
       </div>
     </button>

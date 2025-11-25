@@ -18,6 +18,19 @@ export default defineSchema({
     monthlyCreditsEarned: v.optional(v.number()), // Reset monthly
     lastCreditReset: v.optional(v.number()), // Timestamp
     
+    // Avatar configuration (Lorelei style)
+    avatarConfig: v.optional(v.object({
+      seed: v.string(),
+      backgroundColor: v.string(),
+      hairStyle: v.string(),
+      hairColor: v.string(),
+      skinColor: v.string(),
+      eyesStyle: v.string(),
+      mouthStyle: v.string(),
+      earrings: v.string(),
+      freckles: v.boolean(),
+    })),
+    
     // Monetization
     isPremium: v.optional(v.boolean()), // Default: false - Premium users get ad-free experience
     
@@ -121,6 +134,7 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_post_and_user", ["postId", "userId"]),
 
+  // Opportunities - Jobs, mentorship, resources for women
   opportunities: defineTable({
     creatorId: v.id("users"),
     title: v.string(),
@@ -132,16 +146,13 @@ export default defineSchema({
       v.literal("event"),
       v.literal("funding")
     ),
-    creditCost: v.number(),
+    creditCost: v.number(), // 5-100 credits to unlock
     company: v.optional(v.string()),
-    companyName: v.optional(v.string()), // Legacy field
     location: v.optional(v.string()),
     salary: v.optional(v.string()),
-    salaryRange: v.optional(v.string()), // Legacy field
-    safetyRating: v.optional(v.number()),
+    safetyRating: v.optional(v.number()), // 1-5 workplace safety
     contactEmail: v.optional(v.string()),
     externalLink: v.optional(v.string()),
-    externalUrl: v.optional(v.string()), // Legacy field
     thumbnailStorageId: v.optional(v.id("_storage")),
     requirements: v.optional(v.array(v.string())),
     isActive: v.boolean(),
@@ -850,5 +861,182 @@ export default defineSchema({
     })),
   })
     .index("by_user", ["userId"])
+    .index("by_status", ["status"]),
+
+  // ============================================
+  // ELITE FEATURES FOR GLOBAL WOMEN'S PLATFORM
+  // ============================================
+
+  // Cycle/Period Tracker - Essential women's health
+  cycleLogs: defineTable({
+    userId: v.id("users"),
+    date: v.string(), // YYYY-MM-DD
+    type: v.union(v.literal("period"), v.literal("symptom"), v.literal("note")),
+    flow: v.optional(v.union(
+      v.literal("light"),
+      v.literal("medium"),
+      v.literal("heavy"),
+      v.literal("spotting")
+    )),
+    symptoms: v.optional(v.array(v.string())), // cramps, headache, bloating, etc.
+    mood: v.optional(v.number()), // 1-5
+    energy: v.optional(v.number()), // 1-5
+    notes: v.optional(v.string()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_date", ["userId", "date"]),
+
+  // Safety Resources Directory - Global hotlines, shelters, legal aid
+  safetyResources: defineTable({
+    name: v.string(),
+    category: v.union(
+      v.literal("shelter"),
+      v.literal("hotline"),
+      v.literal("legal"),
+      v.literal("medical"),
+      v.literal("counseling"),
+      v.literal("financial"),
+      v.literal("employment"),
+      v.literal("education"),
+      v.literal("community")
+    ),
+    description: v.string(),
+    phone: v.optional(v.string()),
+    website: v.optional(v.string()),
+    email: v.optional(v.string()),
+    address: v.optional(v.string()),
+    country: v.optional(v.string()),
+    city: v.optional(v.string()),
+    isGlobal: v.optional(v.boolean()), // Available worldwide
+    services: v.optional(v.array(v.string())),
+    hours: v.optional(v.string()), // "24/7" or "Mon-Fri 9-5"
+    languages: v.optional(v.array(v.string())),
+    isVerified: v.boolean(),
+    isActive: v.boolean(),
+    priority: v.optional(v.number()), // 1-10, lower = higher priority
+    verificationCount: v.optional(v.number()),
+    submittedBy: v.optional(v.id("users")),
+  })
+    .index("by_category", ["category"])
+    .index("by_country", ["country"])
+    .index("by_active", ["isActive"]),
+
+  resourceVerifications: defineTable({
+    resourceId: v.id("safetyResources"),
+    userId: v.id("users"),
+  })
+    .index("by_resource", ["resourceId"])
+    .index("by_resource_and_user", ["resourceId", "userId"]),
+
+  resourceReports: defineTable({
+    resourceId: v.id("safetyResources"),
+    userId: v.id("users"),
+    reason: v.string(),
+    details: v.optional(v.string()),
+    status: v.union(v.literal("pending"), v.literal("reviewed"), v.literal("resolved")),
+  })
+    .index("by_resource", ["resourceId"])
+    .index("by_status", ["status"]),
+
+  // Support Circles - Community groups by topic
+  circles: defineTable({
+    name: v.string(),
+    description: v.string(),
+    category: v.union(
+      v.literal("career"),
+      v.literal("motherhood"),
+      v.literal("health"),
+      v.literal("safety"),
+      v.literal("relationships"),
+      v.literal("finance"),
+      v.literal("wellness"),
+      v.literal("tech"),
+      v.literal("entrepreneurship"),
+      v.literal("general")
+    ),
+    creatorId: v.id("users"),
+    isPrivate: v.boolean(),
+    maxMembers: v.optional(v.number()),
+    memberCount: v.number(),
+    postCount: v.number(),
+    rules: v.optional(v.array(v.string())),
+    tags: v.optional(v.array(v.string())),
+    isActive: v.boolean(),
+  })
+    .index("by_category", ["category"])
+    .index("by_creator", ["creatorId"])
+    .index("by_active", ["isActive"]),
+
+  circleMembers: defineTable({
+    circleId: v.id("circles"),
+    userId: v.id("users"),
+    role: v.union(v.literal("admin"), v.literal("moderator"), v.literal("member")),
+    joinedAt: v.number(),
+  })
+    .index("by_circle", ["circleId"])
+    .index("by_user", ["userId"])
+    .index("by_circle_and_user", ["circleId", "userId"]),
+
+  circlePosts: defineTable({
+    circleId: v.id("circles"),
+    authorId: v.id("users"),
+    content: v.string(),
+    isAnonymous: v.boolean(),
+    likes: v.number(),
+    commentCount: v.number(),
+  })
+    .index("by_circle", ["circleId"])
+    .index("by_author", ["authorId"]),
+
+  // Safety Check-ins - Scheduled "I'm OK" pings
+  safetyCheckins: defineTable({
+    userId: v.id("users"),
+    scheduledTime: v.number(), // When check-in is expected
+    status: v.union(
+      v.literal("pending"),
+      v.literal("confirmed"),
+      v.literal("missed"),
+      v.literal("alert_sent")
+    ),
+    confirmedAt: v.optional(v.number()),
+    location: v.optional(v.object({
+      lat: v.number(),
+      lng: v.number(),
+    })),
+    note: v.optional(v.string()),
+    alertContacts: v.optional(v.array(v.id("emergencyContacts"))),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_scheduled", ["scheduledTime"]),
+
+  // Anonymous Workplace Reports - For harassment reporting
+  workplaceReports: defineTable({
+    reporterId: v.id("users"),
+    companyName: v.string(),
+    incidentType: v.union(
+      v.literal("harassment"),
+      v.literal("discrimination"),
+      v.literal("pay_inequality"),
+      v.literal("hostile_environment"),
+      v.literal("retaliation"),
+      v.literal("other")
+    ),
+    description: v.string(),
+    date: v.optional(v.string()), // When incident occurred
+    isAnonymous: v.boolean(),
+    isPublic: v.boolean(), // Share with community or keep private
+    supportNeeded: v.optional(v.array(v.string())), // legal, counseling, etc.
+    status: v.union(
+      v.literal("submitted"),
+      v.literal("reviewed"),
+      v.literal("verified"),
+      v.literal("resolved")
+    ),
+    verificationCount: v.optional(v.number()),
+  })
+    .index("by_reporter", ["reporterId"])
+    .index("by_company", ["companyName"])
+    .index("by_type", ["incidentType"])
     .index("by_status", ["status"]),
 });

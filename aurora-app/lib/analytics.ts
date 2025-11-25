@@ -1,9 +1,11 @@
 /**
  * Comprehensive Event Tracking System
  * Provides structured analytics tracking for all user interactions
+ * 
+ * Handles ad-blocker scenarios gracefully without console spam
  */
 
-import { posthog } from './posthog';
+import { posthog, safeCapture, safeIdentify, isPostHogAvailable } from './posthog';
 
 // Event Categories
 export enum EventCategory {
@@ -189,6 +191,7 @@ class Analytics {
 
   /**
    * Track a custom event
+   * Fails silently if blocked by ad-blocker
    */
   track(eventName: string, properties?: Record<string, any>) {
     if (!this.isEnabled) {
@@ -196,19 +199,17 @@ class Analytics {
       return;
     }
 
-    try {
-      posthog.capture(eventName, {
-        ...properties,
-        timestamp: Date.now(),
-        platform: this.getPlatform(),
-      });
-    } catch (error) {
-      console.error('Analytics tracking error:', error);
-    }
+    // Use safe wrapper that handles ad-blocker scenarios
+    safeCapture(eventName, {
+      ...properties,
+      timestamp: Date.now(),
+      platform: this.getPlatform(),
+    });
   }
 
   /**
    * Identify a user
+   * Fails silently if blocked by ad-blocker
    */
   identify(userId: string, traits?: Record<string, any>) {
     if (!this.isEnabled) {
@@ -216,15 +217,12 @@ class Analytics {
       return;
     }
 
-    try {
-      posthog.identify(userId, traits);
-    } catch (error) {
-      console.error('Analytics identify error:', error);
-    }
+    safeIdentify(userId, traits);
   }
 
   /**
    * Track page view
+   * Fails silently if blocked by ad-blocker
    */
   page(pageName?: string, properties?: Record<string, any>) {
     if (!this.isEnabled) {
@@ -232,19 +230,16 @@ class Analytics {
       return;
     }
 
-    try {
-      posthog.capture('$pageview', {
-        ...properties,
-        pageName,
-        timestamp: Date.now(),
-      });
-    } catch (error) {
-      console.error('Analytics page error:', error);
-    }
+    safeCapture('$pageview', {
+      ...properties,
+      pageName,
+      timestamp: Date.now(),
+    });
   }
 
   /**
    * Track user properties
+   * Fails silently if blocked by ad-blocker
    */
   setUserProperties(properties: Record<string, any>) {
     if (!this.isEnabled) {
@@ -252,10 +247,12 @@ class Analytics {
       return;
     }
 
+    if (!isPostHogAvailable()) return;
+    
     try {
       posthog.people.set(properties);
-    } catch (error) {
-      console.error('Analytics set user properties error:', error);
+    } catch {
+      // Silently fail - likely blocked by ad-blocker
     }
   }
 
@@ -268,16 +265,13 @@ class Analytics {
       return;
     }
 
-    try {
-      // PostHog doesn't have increment, so we track it as an event instead
-      this.track(`${property}_incremented`, { value });
-    } catch (error) {
-      console.error('Analytics increment error:', error);
-    }
+    // PostHog doesn't have increment, so we track it as an event instead
+    this.track(`${property}_incremented`, { value });
   }
 
   /**
    * Reset analytics (on logout)
+   * Fails silently if blocked by ad-blocker
    */
   reset() {
     if (!this.isEnabled) {
@@ -285,10 +279,12 @@ class Analytics {
       return;
     }
 
+    if (!isPostHogAvailable()) return;
+    
     try {
       posthog.reset();
-    } catch (error) {
-      console.error('Analytics reset error:', error);
+    } catch {
+      // Silently fail - likely blocked by ad-blocker
     }
   }
 

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "convex-schema": {
+      "command": "node",
+      "args": [".kiro/mcp/convex-schema-server.js"],
+      "env": {},
+      "disabled": true,
+      "autoApprove": ["getSchema", "getTableInfo"]
+    }
+  }
+}

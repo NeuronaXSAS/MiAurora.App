@@ -1,6 +1,6 @@
 # Aurora Production Readiness Checklist
 
-Based on Anthony D. Mays' production engineering advice, here's Aurora's readiness status:
+Based on production engineering best practices, here's Aurora's readiness status:
 
 ## ✅ COMPLETED
 

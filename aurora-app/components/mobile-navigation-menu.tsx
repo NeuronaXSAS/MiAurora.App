@@ -212,6 +212,8 @@ export function MobileNavigationMenu({ children }: MobileNavigationMenuProps) {
       <nav 
         className="fixed bottom-0 left-0 right-0 bg-aurora-violet/95 backdrop-blur-lg border-t border-white/10 safe-area-inset-bottom z-50 shadow-2xl"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        role="navigation"
+        aria-label="Main navigation - Trinity Pillars"
       >
         <div className="flex items-center justify-around h-16 px-2">
           {tabs.map((tab) => {

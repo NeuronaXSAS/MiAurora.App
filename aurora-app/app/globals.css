@@ -245,27 +245,70 @@
   background-size: 1000px 100%;
 }
 
-/* Accessibility - Focus Styles */
+/* ============================================
+   ACCESSIBILITY - WCAG 2.1 AAA COMPLIANCE
+   ============================================ */
+
+/* Focus Styles - High visibility for keyboard navigation */
 *:focus-visible {
-  outline: 2px solid rgb(168, 85, 247);
-  outline-offset: 2px;
+  outline: 3px solid rgb(168, 85, 247);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(168, 85, 247, 0.25);
 }
 
-/* Skip to main content link */
+/* Enhanced focus for interactive elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgb(168, 85, 247);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px rgba(168, 85, 247, 0.3);
+}
+
+/* Skip to main content link - Essential for screen reader users */
 .skip-to-main {
   position: absolute;
   left: -9999px;
-  z-index: 999;
-  padding: 1rem;
+  z-index: 9999;
+  padding: 1rem 2rem;
   background-color: rgb(168, 85, 247);
   color: white;
   text-decoration: none;
+  font-weight: 600;
+  border-radius: 0 0 8px 8px;
 }
 
 .skip-to-main:focus {
   left: 50%;
   transform: translateX(-50%);
-  top: 1rem;
+  top: 0;
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Make sr-only content visible on focus (for skip links) */
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
 }
 
 /* Ensure sufficient color contrast */

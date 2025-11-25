@@ -12,9 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, RefreshCw, Check } from "lucide-react";
+import { Sparkles, RefreshCw, Check, Heart } from "lucide-react";
 import { createAvatar } from '@dicebear/core';
-import { avataaars } from '@dicebear/collection';
+import { lorelei } from '@dicebear/collection';
 
 interface AvatarCreatorProps {
   open: boolean;
@@ -23,95 +23,119 @@ interface AvatarCreatorProps {
 }
 
 export interface AvatarConfig {
-  skinTone: string;
+  seed: string;
+  backgroundColor: string;
   hairStyle: string;
   hairColor: string;
-  eyeColor: string;
-  outfit: string;
-  accessory: string;
+  skinColor: string;
+  eyesStyle: string;
+  mouthStyle: string;
+  earrings: string;
+  freckles: boolean;
 }
 
+// Feminine skin tones
 const SKIN_TONES = [
-  { id: "light", color: "#FFE0BD", name: "Light" },
-  { id: "medium-light", color: "#F1C27D", name: "Medium Light" },
-  { id: "medium", color: "#C68642", name: "Medium" },
-  { id: "medium-dark", color: "#8D5524", name: "Medium Dark" },
-  { id: "dark", color: "#5C3317", name: "Dark" },
+  { id: "f5d0c5", color: "#F5D0C5", name: "Porcelain" },
+  { id: "eac4a8", color: "#EAC4A8", name: "Fair" },
+  { id: "d4a574", color: "#D4A574", name: "Warm Beige" },
+  { id: "c68642", color: "#C68642", name: "Golden" },
+  { id: "8d5524", color: "#8D5524", name: "Caramel" },
+  { id: "5c3836", color: "#5C3836", name: "Deep" },
 ];
 
+// Lorelei-compatible hair styles (feminine)
 const HAIR_STYLES = [
-  { id: "long", name: "Long & Flowing", emoji: "💁‍♀️" },
-  { id: "short", name: "Short & Chic", emoji: "👩‍🦱" },
-  { id: "curly", name: "Curly", emoji: "👩‍🦱" },
-  { id: "wavy", name: "Wavy", emoji: "👱‍♀️" },
-  { id: "bun", name: "Bun", emoji: "👩" },
-  { id: "braids", name: "Braids", emoji: "👩‍🦱" },
+  { id: "variant01", name: "Elegant Waves", emoji: "💁‍♀️" },
+  { id: "variant02", name: "Soft Curls", emoji: "👩‍🦱" },
+  { id: "variant03", name: "Long & Flowing", emoji: "👱‍♀️" },
+  { id: "variant04", name: "Chic Bob", emoji: "💇‍♀️" },
+  { id: "variant05", name: "Natural", emoji: "🌸" },
+  { id: "variant06", name: "Romantic", emoji: "💕" },
 ];
 
+// Hair colors
 const HAIR_COLORS = [
-  { id: "black", color: "#2C1B18", name: "Black" },
-  { id: "brown", color: "#6F4E37", name: "Brown" },
-  { id: "blonde", color: "#F5DEB3", name: "Blonde" },
-  { id: "red", color: "#A52A2A", name: "Red" },
-  { id: "purple", color: "#9B59B6", name: "Purple" },
-  { id: "pink", color: "#FF69B4", name: "Pink" },
+  { id: "2c1b18", color: "#2C1B18", name: "Raven" },
+  { id: "6f4e37", color: "#6F4E37", name: "Chestnut" },
+  { id: "b5651d", color: "#B5651D", name: "Auburn" },
+  { id: "f5deb3", color: "#F5DEB3", name: "Honey Blonde" },
+  { id: "e84d5f", color: "#E84D5F", name: "Rose" },
+  { id: "8b5cf6", color: "#8B5CF6", name: "Lavender" },
 ];
 
-const EYE_COLORS = [
-  { id: "brown", color: "#8B4513", name: "Brown" },
-  { id: "blue", color: "#4169E1", name: "Blue" },
-  { id: "green", color: "#228B22", name: "Green" },
-  { id: "hazel", color: "#8E7618", name: "Hazel" },
-  { id: "gray", color: "#708090", name: "Gray" },
+// Eye styles
+const EYE_STYLES = [
+  { id: "variant01", name: "Dreamy", emoji: "✨" },
+  { id: "variant02", name: "Confident", emoji: "💫" },
+  { id: "variant03", name: "Gentle", emoji: "🌙" },
+  { id: "variant04", name: "Playful", emoji: "⭐" },
+  { id: "variant05", name: "Wise", emoji: "🔮" },
 ];
 
-const OUTFITS = [
-  { id: "casual", name: "Casual", emoji: "👕" },
-  { id: "professional", name: "Professional", emoji: "👔" },
-  { id: "sporty", name: "Sporty", emoji: "🏃‍♀️" },
-  { id: "elegant", name: "Elegant", emoji: "👗" },
+// Mouth styles
+const MOUTH_STYLES = [
+  { id: "happy", name: "Happy", emoji: "😊" },
+  { id: "sad", name: "Thoughtful", emoji: "🤔" },
+  { id: "surprised", name: "Surprised", emoji: "😮" },
+  { id: "serious", name: "Confident", emoji: "😌" },
 ];
 
-const ACCESSORIES = [
-  { id: "none", name: "None", emoji: "✨" },
-  { id: "glasses", name: "Glasses", emoji: "👓" },
-  { id: "earrings", name: "Earrings", emoji: "💎" },
-  { id: "necklace", name: "Necklace", emoji: "📿" },
-  { id: "headband", name: "Headband", emoji: "🎀" },
+// Earrings
+const EARRINGS = [
+  { id: "variant01", name: "Studs", emoji: "💎" },
+  { id: "variant02", name: "Hoops", emoji: "⭕" },
+  { id: "variant03", name: "Drops", emoji: "💧" },
+];
+
+// Background colors (warm, feminine)
+const BACKGROUNDS = [
+  { id: "ffe8e8", color: "#FFE8E8", name: "Blush" },
+  { id: "fff0f5", color: "#FFF0F5", name: "Lavender Blush" },
+  { id: "ffefd9", color: "#FFEFD9", name: "Cream" },
+  { id: "e8e4ff", color: "#E8E4FF", name: "Soft Violet" },
+  { id: "ffe4e6", color: "#FFE4E6", name: "Rose" },
+  { id: "f0fdf4", color: "#F0FDF4", name: "Mint" },
 ];
 
 export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) {
   const [config, setConfig] = useState<AvatarConfig>({
-    skinTone: "medium",
-    hairStyle: "long",
-    hairColor: "brown",
-    eyeColor: "brown",
-    outfit: "casual",
-    accessory: "none",
+    seed: `aurora-${Date.now()}`,
+    backgroundColor: "ffe8e8",
+    hairStyle: "variant01",
+    hairColor: "6f4e37",
+    skinColor: "eac4a8",
+    eyesStyle: "variant01",
+    mouthStyle: "happy",
+    earrings: "variant01",
+    freckles: false,
   });
 
   const randomize = () => {
     setConfig({
-      skinTone: SKIN_TONES[Math.floor(Math.random() * SKIN_TONES.length)].id,
+      seed: `aurora-${Date.now()}-${Math.random()}`,
+      backgroundColor: BACKGROUNDS[Math.floor(Math.random() * BACKGROUNDS.length)].id,
       hairStyle: HAIR_STYLES[Math.floor(Math.random() * HAIR_STYLES.length)].id,
       hairColor: HAIR_COLORS[Math.floor(Math.random() * HAIR_COLORS.length)].id,
-      eyeColor: EYE_COLORS[Math.floor(Math.random() * EYE_COLORS.length)].id,
-      outfit: OUTFITS[Math.floor(Math.random() * OUTFITS.length)].id,
-      accessory: ACCESSORIES[Math.floor(Math.random() * ACCESSORIES.length)].id,
+      skinColor: SKIN_TONES[Math.floor(Math.random() * SKIN_TONES.length)].id,
+      eyesStyle: EYE_STYLES[Math.floor(Math.random() * EYE_STYLES.length)].id,
+      mouthStyle: MOUTH_STYLES[Math.floor(Math.random() * MOUTH_STYLES.length)].id,
+      earrings: EARRINGS[Math.floor(Math.random() * EARRINGS.length)].id,
+      freckles: Math.random() > 0.7,
     });
   };
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-3xl backdrop-blur-xl bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 border-purple-500/30 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-3xl bg-gradient-to-br from-[#150F22] via-[#231E35] to-[#352D4D] border-[#FF6B7A]/30 shadow-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/50">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-gradient-to-br from-[#FF6B7A] to-[#E84D5F] rounded-2xl flex items-center justify-center shadow-lg shadow-[#FF6B7A]/30">
+              <Heart className="w-6 h-6 text-white" />
             </div>
             <div>
-              <DialogTitle className="text-2xl text-white">Create Your Avatar</DialogTitle>
-              <DialogDescription className="text-gray-300">
+              <DialogTitle className="text-2xl text-white">Create Your Aurora</DialogTitle>
+              <DialogDescription className="text-[#FFE8E8]">
                 Design your unique digital identity ✨
               </DialogDescription>
             </div>
@@ -121,33 +145,56 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
         <div className="grid md:grid-cols-2 gap-6 py-4">
           {/* Avatar Preview */}
           <div className="space-y-4">
-            <div className="backdrop-blur-xl bg-white/10 border-2 border-purple-500/30 rounded-2xl p-8 flex items-center justify-center min-h-[300px]">
+            <div 
+              className="border-2 border-[#FF6B7A]/30 rounded-3xl p-8 flex items-center justify-center min-h-[300px] transition-colors"
+              style={{ backgroundColor: `#${config.backgroundColor}` }}
+            >
               <AvatarPreview config={config} />
             </div>
             <Button
               onClick={randomize}
               variant="outline"
-              className="w-full bg-white/5 border-white/20 text-white hover:bg-white/10"
+              className="w-full bg-white/5 border-[#FF6B7A]/30 text-white hover:bg-[#FF6B7A]/10 hover:border-[#FF6B7A]/50"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
-              Randomize
+              Surprise Me ✨
             </Button>
           </div>
 
           {/* Customization Options */}
-          <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+          <div className="space-y-5 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin">
+            {/* Background */}
+            <div>
+              <Label className="text-[#FFE8E8] font-semibold mb-3 block text-sm">Background</Label>
+              <div className="flex flex-wrap gap-2">
+                {BACKGROUNDS.map((bg) => (
+                  <button
+                    key={bg.id}
+                    onClick={() => setConfig({ ...config, backgroundColor: bg.id })}
+                    className={`w-10 h-10 rounded-xl border-2 transition-all ${
+                      config.backgroundColor === bg.id
+                        ? "border-[#FF6B7A] scale-110 shadow-lg shadow-[#FF6B7A]/30"
+                        : "border-white/20 hover:border-[#FF6B7A]/50"
+                    }`}
+                    style={{ backgroundColor: bg.color }}
+                    title={bg.name}
+                  />
+                ))}
+              </div>
+            </div>
+
             {/* Skin Tone */}
             <div>
-              <Label className="text-white font-semibold mb-3 block">Skin Tone</Label>
+              <Label className="text-[#FFE8E8] font-semibold mb-3 block text-sm">Skin Tone</Label>
               <div className="flex flex-wrap gap-2">
                 {SKIN_TONES.map((tone) => (
                   <button
                     key={tone.id}
-                    onClick={() => setConfig({ ...config, skinTone: tone.id })}
-                    className={`w-12 h-12 rounded-full border-4 transition-all ${
-                      config.skinTone === tone.id
-                        ? "border-purple-400 scale-110 shadow-lg shadow-purple-500/50"
-                        : "border-white/20 hover:border-white/40"
+                    onClick={() => setConfig({ ...config, skinColor: tone.id })}
+                    className={`w-10 h-10 rounded-full border-2 transition-all ${
+                      config.skinColor === tone.id
+                        ? "border-[#FF6B7A] scale-110 shadow-lg shadow-[#FF6B7A]/30"
+                        : "border-white/20 hover:border-[#FF6B7A]/50"
                     }`}
                     style={{ backgroundColor: tone.color }}
                     title={tone.name}
@@ -158,16 +205,16 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
 
             {/* Hair Style */}
             <div>
-              <Label className="text-white font-semibold mb-3 block">Hair Style</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <Label className="text-[#FFE8E8] font-semibold mb-3 block text-sm">Hair Style</Label>
+              <div className="grid grid-cols-2 gap-2">
                 {HAIR_STYLES.map((style) => (
                   <Badge
                     key={style.id}
                     onClick={() => setConfig({ ...config, hairStyle: style.id })}
-                    className={`cursor-pointer px-3 py-2 text-sm transition-all ${
+                    className={`cursor-pointer px-3 py-2 text-xs transition-all justify-center ${
                       config.hairStyle === style.id
-                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/50"
-                        : "bg-white/5 border-white/20 text-gray-300 hover:bg-white/10"
+                        ? "bg-gradient-to-r from-[#FF6B7A] to-[#E84D5F] text-white shadow-lg shadow-[#FF6B7A]/30 border-0"
+                        : "bg-white/5 border-white/20 text-[#FFE8E8] hover:bg-[#FF6B7A]/10"
                     }`}
                   >
                     <span className="mr-1">{style.emoji}</span>
@@ -179,16 +226,16 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
 
             {/* Hair Color */}
             <div>
-              <Label className="text-white font-semibold mb-3 block">Hair Color</Label>
+              <Label className="text-[#FFE8E8] font-semibold mb-3 block text-sm">Hair Color</Label>
               <div className="flex flex-wrap gap-2">
                 {HAIR_COLORS.map((color) => (
                   <button
                     key={color.id}
                     onClick={() => setConfig({ ...config, hairColor: color.id })}
-                    className={`w-12 h-12 rounded-full border-4 transition-all ${
+                    className={`w-10 h-10 rounded-full border-2 transition-all ${
                       config.hairColor === color.id
-                        ? "border-purple-400 scale-110 shadow-lg shadow-purple-500/50"
-                        : "border-white/20 hover:border-white/40"
+                        ? "border-[#FF6B7A] scale-110 shadow-lg shadow-[#FF6B7A]/30"
+                        : "border-white/20 hover:border-[#FF6B7A]/50"
                     }`}
                     style={{ backgroundColor: color.color }}
                     title={color.name}
@@ -197,66 +244,59 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
               </div>
             </div>
 
-            {/* Eye Color */}
+            {/* Eyes */}
             <div>
-              <Label className="text-white font-semibold mb-3 block">Eye Color</Label>
-              <div className="flex flex-wrap gap-2">
-                {EYE_COLORS.map((color) => (
-                  <button
-                    key={color.id}
-                    onClick={() => setConfig({ ...config, eyeColor: color.id })}
-                    className={`w-12 h-12 rounded-full border-4 transition-all ${
-                      config.eyeColor === color.id
-                        ? "border-purple-400 scale-110 shadow-lg shadow-purple-500/50"
-                        : "border-white/20 hover:border-white/40"
-                    }`}
-                    style={{ backgroundColor: color.color }}
-                    title={color.name}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Outfit */}
-            <div>
-              <Label className="text-white font-semibold mb-3 block">Outfit Style</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {OUTFITS.map((outfit) => (
-                  <Badge
-                    key={outfit.id}
-                    onClick={() => setConfig({ ...config, outfit: outfit.id })}
-                    className={`cursor-pointer px-3 py-2 text-sm transition-all ${
-                      config.outfit === outfit.id
-                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/50"
-                        : "bg-white/5 border-white/20 text-gray-300 hover:bg-white/10"
-                    }`}
-                  >
-                    <span className="mr-1">{outfit.emoji}</span>
-                    {outfit.name}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            {/* Accessories */}
-            <div>
-              <Label className="text-white font-semibold mb-3 block">Accessories</Label>
+              <Label className="text-[#FFE8E8] font-semibold mb-3 block text-sm">Eyes</Label>
               <div className="grid grid-cols-3 gap-2">
-                {ACCESSORIES.map((acc) => (
+                {EYE_STYLES.map((style) => (
                   <Badge
-                    key={acc.id}
-                    onClick={() => setConfig({ ...config, accessory: acc.id })}
-                    className={`cursor-pointer px-3 py-2 text-sm transition-all ${
-                      config.accessory === acc.id
-                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/50"
-                        : "bg-white/5 border-white/20 text-gray-300 hover:bg-white/10"
+                    key={style.id}
+                    onClick={() => setConfig({ ...config, eyesStyle: style.id })}
+                    className={`cursor-pointer px-2 py-2 text-xs transition-all justify-center ${
+                      config.eyesStyle === style.id
+                        ? "bg-gradient-to-r from-[#FF6B7A] to-[#E84D5F] text-white shadow-lg shadow-[#FF6B7A]/30 border-0"
+                        : "bg-white/5 border-white/20 text-[#FFE8E8] hover:bg-[#FF6B7A]/10"
                     }`}
                   >
-                    <span className="mr-1">{acc.emoji}</span>
-                    {acc.name}
+                    {style.emoji} {style.name}
                   </Badge>
                 ))}
               </div>
+            </div>
+
+            {/* Earrings */}
+            <div>
+              <Label className="text-[#FFE8E8] font-semibold mb-3 block text-sm">Earrings</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {EARRINGS.map((earring) => (
+                  <Badge
+                    key={earring.id}
+                    onClick={() => setConfig({ ...config, earrings: earring.id })}
+                    className={`cursor-pointer px-2 py-2 text-xs transition-all justify-center ${
+                      config.earrings === earring.id
+                        ? "bg-gradient-to-r from-[#FF6B7A] to-[#E84D5F] text-white shadow-lg shadow-[#FF6B7A]/30 border-0"
+                        : "bg-white/5 border-white/20 text-[#FFE8E8] hover:bg-[#FF6B7A]/10"
+                    }`}
+                  >
+                    {earring.emoji} {earring.name}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* Freckles Toggle */}
+            <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+              <Label className="text-[#FFE8E8] text-sm">Add Freckles</Label>
+              <button
+                onClick={() => setConfig({ ...config, freckles: !config.freckles })}
+                className={`w-12 h-6 rounded-full transition-all ${
+                  config.freckles ? "bg-[#FF6B7A]" : "bg-white/20"
+                }`}
+              >
+                <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                  config.freckles ? "translate-x-6" : "translate-x-0.5"
+                }`} />
+              </button>
             </div>
           </div>
         </div>
@@ -272,10 +312,10 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
           </Button>
           <Button
             onClick={() => onComplete(config)}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/50"
+            className="bg-gradient-to-r from-[#FF6B7A] to-[#E84D5F] hover:from-[#E84D5F] hover:to-[#C73A4D] shadow-lg shadow-[#FF6B7A]/30"
           >
-            <Check className="w-4 h-4 mr-2" />
-            Create Avatar
+            <Heart className="w-4 h-4 mr-2" />
+            Create My Aurora
           </Button>
         </div>
       </DialogContent>
@@ -283,16 +323,19 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
   );
 }
 
-// Avatar Preview Component using DiceBear
+// Avatar Preview Component using DiceBear Lorelei (feminine style)
 function AvatarPreview({ config }: { config: AvatarConfig }) {
   const avatarSvg = useMemo(() => {
-    const avatar = createAvatar(avataaars, {
-      seed: JSON.stringify(config),
-      skinColor: [config.skinTone] as any,
+    const avatar = createAvatar(lorelei, {
+      seed: config.seed,
+      backgroundColor: [config.backgroundColor] as any,
+      hair: [config.hairStyle] as any,
       hairColor: [config.hairColor] as any,
-      top: [config.hairStyle] as any,
-      accessories: [config.accessory === 'none' ? 'blank' : config.accessory] as any,
-      clothingGraphic: ['none'] as any,
+      skinColor: [config.skinColor] as any,
+      eyes: [config.eyesStyle] as any,
+      mouth: [config.mouthStyle] as any,
+      earrings: [config.earrings] as any,
+      freckles: config.freckles ? ['variant01'] : [] as any,
       size: 200,
     });
 
@@ -301,12 +344,30 @@ function AvatarPreview({ config }: { config: AvatarConfig }) {
 
   return (
     <motion.div
-      key={JSON.stringify(config)}
-      initial={{ scale: 0.8, opacity: 0, rotate: -5 }}
-      animate={{ scale: 1, opacity: 1, rotate: 0 }}
-      transition={{ duration: 0.4, type: "spring" }}
-      className="relative w-48 h-48 mx-auto"
+      key={config.seed}
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
+      className="relative w-48 h-48 mx-auto rounded-full overflow-hidden shadow-2xl shadow-[#FF6B7A]/20"
       dangerouslySetInnerHTML={{ __html: avatarSvg }}
     />
   );
+}
+
+// Export function to generate avatar URL from config
+export function generateAvatarUrl(config: AvatarConfig): string {
+  const avatar = createAvatar(lorelei, {
+    seed: config.seed,
+    backgroundColor: [config.backgroundColor] as any,
+    hair: [config.hairStyle] as any,
+    hairColor: [config.hairColor] as any,
+    skinColor: [config.skinColor] as any,
+    eyes: [config.eyesStyle] as any,
+    mouth: [config.mouthStyle] as any,
+    earrings: [config.earrings] as any,
+    freckles: config.freckles ? ['variant01'] : [] as any,
+    size: 128,
+  });
+
+  return avatar.toDataUri();
 }

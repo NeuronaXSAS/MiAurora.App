@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertTriangle,
   Plus,
@@ -15,11 +16,37 @@ import {
   User,
   Shield,
   TestTube,
+  Clock,
+  Users as UsersIcon,
 } from "lucide-react";
 import { PanicButton } from "@/components/panic-button";
+import { SafetyCheckin } from "@/components/safety-checkin";
+import { SisterAccompaniment } from "@/components/sister-accompaniment";
 import { Id } from "@/convex/_generated/dataModel";
+import { useRouter } from "next/navigation";
 
 export default function EmergencyPage() {
+  const [userId, setUserId] = useState<Id<"users"> | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        const response = await fetch("/api/auth/me");
+        const data = await response.json();
+        if (data.userId) {
+          setUserId(data.userId as Id<"users">);
+        } else {
+          router.push("/");
+        }
+      } catch (error) {
+        console.error("Error getting user:", error);
+        router.push("/");
+      }
+    };
+    getUserId();
+  }, [router]);
+
   const contacts = useQuery(api.emergency.getEmergencyContacts);
   const alerts = useQuery(api.emergency.getMyEmergencyAlerts);
   const saveContact = useMutation(api.emergency.saveEmergencyContact);
@@ -27,6 +54,7 @@ export default function EmergencyPage() {
 
   const [isAdding, setIsAdding] = useState(false);
   const [testMode, setTestMode] = useState(false);
+  const [activeTab, setActiveTab] = useState("panic");
   const [newContact, setNewContact] = useState({
     name: "",
     phoneNumber: "",
@@ -73,31 +101,49 @@ export default function EmergencyPage() {
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
-        {/* Test Mode Toggle */}
-        <Card className="mb-6 border-yellow-400 bg-yellow-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <TestTube className="w-5 h-5 text-yellow-600" />
-                <div>
-                  <p className="font-semibold text-yellow-900">Test Mode</p>
-                  <p className="text-sm text-yellow-700">
-                    Practice using the panic button without sending real alerts
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant={testMode ? "default" : "outline"}
-                onClick={() => setTestMode(!testMode)}
-                className={testMode ? "bg-yellow-600 hover:bg-yellow-700" : ""}
-              >
-                {testMode ? "ON" : "OFF"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Tabs for different safety features */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+          <TabsList className="grid grid-cols-3 mb-6">
+            <TabsTrigger value="panic" className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              <span className="hidden sm:inline">Panic</span>
+            </TabsTrigger>
+            <TabsTrigger value="checkin" className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              <span className="hidden sm:inline">Check-in</span>
+            </TabsTrigger>
+            <TabsTrigger value="accompany" className="flex items-center gap-2">
+              <UsersIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">Accompany</span>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Emergency Contacts */}
+          <TabsContent value="panic">
+            {/* Test Mode Toggle */}
+            <Card className="mb-6 border-yellow-400 bg-yellow-50">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <TestTube className="w-5 h-5 text-yellow-600" />
+                    <div>
+                      <p className="font-semibold text-yellow-900">Test Mode</p>
+                      <p className="text-sm text-yellow-700">
+                        Practice using the panic button without sending real alerts
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant={testMode ? "default" : "outline"}
+                    onClick={() => setTestMode(!testMode)}
+                    className={testMode ? "bg-yellow-600 hover:bg-yellow-700" : ""}
+                  >
+                    {testMode ? "ON" : "OFF"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Emergency Contacts */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -245,65 +291,75 @@ export default function EmergencyPage() {
           </CardContent>
         </Card>
 
-        {/* Alert History */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Alert History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {alerts && alerts.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p>No emergency alerts triggered</p>
-              </div>
-            )}
-
-            <div className="space-y-3">
-              {alerts?.map((alert) => (
-                <div
-                  key={alert._id}
-                  className="p-4 border rounded-lg"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <span
-                        className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                          alert.status === "active"
-                            ? "bg-red-100 text-red-700"
-                            : alert.status === "resolved"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {alert.status.toUpperCase()}
-                      </span>
-                      <span className="ml-2 text-sm text-gray-600">
-                        {alert.alertType}
-                      </span>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {new Date(alert._creationTime).toLocaleString()}
-                    </span>
+            {/* Alert History */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Alert History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {alerts && alerts.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p>No emergency alerts triggered</p>
                   </div>
-                  {alert.location.address && (
-                    <p className="text-sm text-gray-600 mb-1">
-                      📍 {alert.location.address}
-                    </p>
-                  )}
-                  <p className="text-sm text-gray-600">
-                    {alert.notifiedContacts.length} contacts notified •{" "}
-                    {alert.nearbyUsersNotified} nearby users alerted
-                  </p>
-                  {alert.notes && (
-                    <p className="text-sm text-gray-500 mt-2 italic">
-                      {alert.notes}
-                    </p>
-                  )}
+                )}
+
+                <div className="space-y-3">
+                  {alerts?.map((alert) => (
+                    <div
+                      key={alert._id}
+                      className="p-4 border rounded-lg"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <span
+                            className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                              alert.status === "active"
+                                ? "bg-red-100 text-red-700"
+                                : alert.status === "resolved"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {alert.status.toUpperCase()}
+                          </span>
+                          <span className="ml-2 text-sm text-gray-600">
+                            {alert.alertType}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {new Date(alert._creationTime).toLocaleString()}
+                        </span>
+                      </div>
+                      {alert.location.address && (
+                        <p className="text-sm text-gray-600 mb-1">
+                          📍 {alert.location.address}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-600">
+                        {alert.notifiedContacts.length} contacts notified •{" "}
+                        {alert.nearbyUsersNotified} nearby users alerted
+                      </p>
+                      {alert.notes && (
+                        <p className="text-sm text-gray-500 mt-2 italic">
+                          {alert.notes}
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="checkin">
+            {userId && <SafetyCheckin userId={userId} />}
+          </TabsContent>
+
+          <TabsContent value="accompany">
+            {userId && <SisterAccompaniment userId={userId} />}
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Panic Button */}

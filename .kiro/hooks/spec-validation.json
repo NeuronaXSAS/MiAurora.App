@@ -1,0 +1,13 @@
+{
+  "name": "Spec Validation on Requirements Change",
+  "description": "Validates that all tasks reference valid requirements when specs are updated",
+  "trigger": {
+    "type": "onFileSave",
+    "pattern": "**/.kiro/specs/**/requirements.md"
+  },
+  "action": {
+    "type": "agentMessage",
+    "message": "The requirements.md file was updated. Please verify that all tasks in tasks.md still reference valid requirement IDs and that no orphaned tasks exist."
+  },
+  "enabled": true
+}

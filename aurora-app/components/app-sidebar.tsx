@@ -38,6 +38,7 @@ import { NotificationsDropdown } from "@/components/notifications-dropdown";
 import { CreateOptionsModal } from "@/components/create-options-modal";
 import { PostCreateDialog } from "@/components/post-create-dialog";
 import { PollCreateDialog } from "@/components/poll-create-dialog";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -118,6 +119,7 @@ export function AppSidebar() {
       borderColor: "border-aurora-pink/30",
       items: [
         { href: "/profile", icon: User, label: "Personal Dashboard", description: "Your wellness hub" },
+        { href: "/health", icon: Heart, label: "Soul Sanctuary", description: "Cycle, mood & wellness" },
         { href: "/assistant", icon: MessageSquare, label: "AI Therapist", description: "Digital companion" },
         { href: "/settings", icon: Settings, label: "Privacy & Settings", description: "Control your data" },
       ],
@@ -133,6 +135,9 @@ export function AppSidebar() {
       items: [
         { href: "/map", icon: MapPin, label: "Safety Map", description: "Navigate safely" },
         { href: "/routes", icon: Route, label: "Aurora Routes", description: "Track & share routes" },
+        { href: "/emergency", icon: Shield, label: "Emergency", description: "Panic button & contacts" },
+        { href: "/resources", icon: Shield, label: "Safety Resources", description: "Hotlines & shelters" },
+        { href: "/report", icon: Shield, label: "Report Incident", description: "Workplace safety reports" },
       ],
     },
     {
@@ -145,6 +150,7 @@ export function AppSidebar() {
       borderColor: "border-aurora-lavender/30",
       items: [
         { href: "/feed", icon: Home, label: "Community Feed", description: "Your personalized feed" },
+        { href: "/circles", icon: Users, label: "Support Circles", description: "Find your tribe" },
         { href: "/reels", icon: Play, label: "Aurora Reels", description: "Safety videos" },
         { href: "/live", icon: Video, label: "Aurora Live", description: "Livestreaming" },
         { href: "/opportunities", icon: Briefcase, label: "Opportunities", description: "Jobs & resources" },
@@ -369,6 +375,12 @@ export function AppSidebar() {
 
         {/* Settings & Logout */}
         <div className="p-4 border-t border-white/10 space-y-1">
+          {/* Theme Toggle */}
+          <div className="flex items-center justify-between px-3 py-2 mb-2">
+            <span className="text-sm text-slate-400">Theme</span>
+            <ThemeToggle />
+          </div>
+          
           <Link href="/credits" onClick={() => setIsMobileMenuOpen(false)}>
             <Button
               variant="ghost"
