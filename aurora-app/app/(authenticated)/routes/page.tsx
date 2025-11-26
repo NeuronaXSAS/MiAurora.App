@@ -94,7 +94,7 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
             <div className="flex items-center gap-3">
               <Route className="w-8 h-8" />
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold">Aurora App Routes</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold">Aurora Routes</h1>
                 <p className="text-sm sm:text-base text-white/80">
                   Track, share, and discover safe routes
                 </p>
@@ -102,7 +102,7 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
             </div>
             <Button
               size="lg"
-              className="bg-white text-[var(--color-aurora-violet)] hover:bg-white/90 w-full sm:w-auto hidden sm:flex"
+              className="bg-white text-[var(--color-aurora-violet)] hover:bg-white/90 w-full sm:w-auto min-h-[48px]"
               onClick={() => router.push("/routes/track")}
             >
               <Play className="w-5 h-5 mr-2" />

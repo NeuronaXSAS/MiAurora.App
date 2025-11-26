@@ -111,29 +111,6 @@ export default function ResourcesPage() {
       </div>
 
       <div className="container mx-auto px-4 py-6 max-w-4xl">
-        {/* Onboarding Info Card */}
-        <div className="bg-[var(--color-aurora-lavender)]/10 border border-[var(--color-aurora-lavender)]/30 rounded-xl p-4 mb-6">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-[var(--color-aurora-purple)]/20 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Shield className="w-5 h-5 text-[var(--color-aurora-purple)]" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-[var(--foreground)] mb-1">Community-Verified Resources</h3>
-              <p className="text-sm text-[var(--muted-foreground)]">
-                Find hotlines, shelters, legal aid, medical services, and counseling resources verified by our community. 
-                Select your country above to see local resources, or browse global resources available worldwide.
-              </p>
-              <div className="flex flex-wrap gap-2 mt-3">
-                <span className="text-xs bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] px-2 py-1 rounded-full">🆘 Emergency Hotlines</span>
-                <span className="text-xs bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] px-2 py-1 rounded-full">🏠 Shelters</span>
-                <span className="text-xs bg-[var(--color-aurora-blue)]/20 text-[var(--color-aurora-blue)] px-2 py-1 rounded-full">⚖️ Legal Aid</span>
-                <span className="text-xs bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)] px-2 py-1 rounded-full">🏥 Medical</span>
-                <span className="text-xs bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] px-2 py-1 rounded-full">💬 Counseling</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <ResourceDirectory 
           userId={userId} 
           country={selectedCountry === "global" ? undefined : selectedCountry}

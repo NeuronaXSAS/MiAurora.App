@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+
 import {
   Dialog,
   DialogContent,
@@ -111,24 +111,24 @@ export function CreateOptionsModal({
   ];
 
   const content = (
-    <div className="grid grid-cols-2 gap-3 p-4 max-h-[60vh] overflow-y-auto">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 max-h-[60vh] overflow-y-auto">
       {options.map((option) => (
         <button
           key={option.title}
           onClick={option.action}
-          className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-[var(--border)] bg-[var(--card)] transition-all hover:border-[var(--color-aurora-purple)]/50 hover:shadow-md active:scale-95 relative overflow-hidden group min-h-[100px]"
+          className={`flex flex-col items-center gap-3 p-4 sm:p-6 rounded-xl border-2 border-[var(--border)] bg-[var(--card)] transition-all hover:border-[var(--color-aurora-purple)]/50 hover:shadow-md active:scale-95 relative overflow-hidden group min-h-[120px]`}
         >
-          <div className="absolute top-1 right-1 text-xl opacity-20 group-hover:opacity-40 transition-opacity">
+          <div className="absolute top-2 right-2 text-xl sm:text-2xl opacity-20 group-hover:opacity-40 transition-opacity">
             {option.emoji}
           </div>
-          <div className={`w-12 h-12 ${option.color} rounded-full flex items-center justify-center shadow-lg`}>
-            <option.icon className="w-6 h-6 text-white" />
+          <div className={`w-12 h-12 sm:w-14 sm:h-14 ${option.color} rounded-full flex items-center justify-center shadow-lg`}>
+            <option.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
           </div>
           <div className="text-center">
-            <p className="font-semibold text-xs text-[var(--foreground)]">
+            <p className="font-semibold text-xs sm:text-sm flex items-center justify-center gap-1 text-[var(--foreground)]">
               {option.title}
             </p>
-            <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5 line-clamp-1">{option.description}</p>
+            <p className="text-[10px] sm:text-xs text-[var(--muted-foreground)] mt-1">{option.description}</p>
           </div>
         </button>
       ))}

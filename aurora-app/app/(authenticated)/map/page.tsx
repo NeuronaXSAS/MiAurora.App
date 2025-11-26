@@ -60,7 +60,7 @@ export default function MapPage() {
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">Safety Map</h1>
                 <p className="text-xs sm:text-sm text-[var(--muted-foreground)]">
-                  Click + to mark a location
+                  Rate and share safe places
                 </p>
               </div>
             </div>
@@ -89,8 +89,8 @@ export default function MapPage() {
               {/* Create Post Button */}
               <Button onClick={() => setShowCreateDialog(true)} className="w-full sm:w-auto bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]">
                 <Plus className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Create Post</span>
-                <span className="sm:hidden">New Post</span>
+                <span className="hidden sm:inline">Mark Location</span>
+                <span className="sm:hidden">Mark Map</span>
               </Button>
             </div>
           </div>

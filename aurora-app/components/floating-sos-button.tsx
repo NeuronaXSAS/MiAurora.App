@@ -140,12 +140,15 @@ export function FloatingSOSButton() {
                   <div className="flex gap-2 justify-center">
                     <button
                       onClick={() => {
-                        window.location.href = "tel:911";
+                        // Use tel:112 for international emergency (works in most countries)
+                        // 112 is the universal emergency number in EU and works in many other countries
+                        // It will redirect to local emergency services
+                        window.location.href = "tel:112";
                       }}
                       className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
                     >
                       <Phone className="w-4 h-4 text-white" />
-                      <span className="text-sm text-white">Call 911</span>
+                      <span className="text-sm text-white">Emergency Call</span>
                     </button>
                     <button
                       onClick={() => {

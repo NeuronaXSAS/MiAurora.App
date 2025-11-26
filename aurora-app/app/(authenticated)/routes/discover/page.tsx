@@ -163,7 +163,7 @@ export default function DiscoverRoutesPage() {
 
                   {/* Minimum Rating */}
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Minimum Rating</label>
+                    <label className="text-sm font-medium mb-2 block text-gray-300">Minimum Rating</label>
                     <div className="space-y-2">
                       {[0, 3, 4, 5].map((rating) => (
                         <button
@@ -171,8 +171,8 @@ export default function DiscoverRoutesPage() {
                           onClick={() => setMinRating(rating)}
                           className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                             minRating === rating
-                              ? "bg-purple-100 text-purple-700 font-medium"
-                              : "hover:bg-gray-100"
+                              ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium shadow-lg shadow-purple-500/30"
+                              : "text-gray-300 hover:bg-white/10"
                           }`}
                         >
                           {rating === 0 ? "Any" : `${rating}+ stars`}
@@ -184,7 +184,7 @@ export default function DiscoverRoutesPage() {
                   {/* Tags */}
                   {allTags.length > 0 && (
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Tags</label>
+                      <label className="text-sm font-medium mb-2 block text-gray-300">Tags</label>
                       <div className="flex flex-wrap gap-2">
                         {allTags.map((tag) => (
                           <button
@@ -192,8 +192,8 @@ export default function DiscoverRoutesPage() {
                             onClick={() => toggleTag(tag)}
                             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                               selectedTags.includes(tag)
-                                ? "bg-purple-600 text-white"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/30"
+                                : "bg-white/10 text-gray-300 hover:bg-white/20 border border-white/20"
                             }`}
                           >
                             {tag}
@@ -214,7 +214,7 @@ export default function DiscoverRoutesPage() {
                         setSelectedTags([]);
                         setSearchQuery("");
                       }}
-                      className="w-full"
+                      className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
                     >
                       Clear All Filters
                     </Button>

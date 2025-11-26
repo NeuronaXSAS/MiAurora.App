@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Menu, X, Home, MapPin, Shield, Users, Heart, Briefcase, 
   MessageSquare, Settings, User, Route, Play, Video, Mail,
-  FileText, Building, Activity, Sparkles
+  Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -103,7 +103,7 @@ export function MobileSidebar({ userCredits = 0, userName, userAvatar }: MobileS
         onClick={() => setIsOpen(true)}
         variant="ghost"
         size="sm"
-        className="fixed top-4 left-4 z-50 md:hidden min-w-[44px] min-h-[44px] bg-[var(--card)] backdrop-blur-sm border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--accent)]"
+        className="fixed top-4 left-4 z-50 md:hidden min-w-[44px] min-h-[44px] bg-[#150F22]/80 backdrop-blur-sm border border-white/10 text-white hover:bg-[#FF6B7A]/20"
         aria-label="Open menu"
       >
         <Menu className="w-5 h-5" />
@@ -137,7 +137,13 @@ export function MobileSidebar({ userCredits = 0, userName, userAvatar }: MobileS
             <div className="p-6 border-b border-white/10">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <img src="/Au_Logo_1.png" alt="Aurora App" className="w-10 h-10 rounded-xl" />
+                  <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg">
+                    <img 
+                      src="/Au_Logo_1.png" 
+                      alt="Aurora App Logo" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <span className="text-xl font-bold text-white">Aurora App</span>
                 </div>
                 <Button

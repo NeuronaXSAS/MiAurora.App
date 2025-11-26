@@ -308,19 +308,27 @@ export function PostCard({
           {/* Upvote/Downvote */}
           <div className="flex items-center gap-2">
             <Button
-              variant={userVote === "upvote" ? "default" : "ghost"}
+              variant="ghost"
               size="sm"
               onClick={() => handleVote("upvote")}
-              className="min-h-[44px] px-3 flex-1 sm:flex-none"
+              className={`min-h-[44px] px-3 flex-1 sm:flex-none transition-colors ${
+                userVote === "upvote" 
+                  ? "bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] hover:bg-[var(--color-aurora-pink)]/30" 
+                  : "hover:bg-[var(--color-aurora-pink)]/10 hover:text-[var(--color-aurora-pink)]"
+              }`}
             >
               <ThumbsUp className="w-4 h-4 mr-1" />
               <span className="min-w-[20px] text-center">{displayPost.upvotes || 0}</span>
             </Button>
             <Button
-              variant={userVote === "downvote" ? "default" : "ghost"}
+              variant="ghost"
               size="sm"
               onClick={() => handleVote("downvote")}
-              className="min-h-[44px] px-3 flex-1 sm:flex-none"
+              className={`min-h-[44px] px-3 flex-1 sm:flex-none transition-colors ${
+                userVote === "downvote" 
+                  ? "bg-[var(--color-aurora-salmon)]/20 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/30" 
+                  : "hover:bg-[var(--muted-foreground)]/10"
+              }`}
             >
               <ThumbsDown className="w-4 h-4 mr-1" />
               <span className="min-w-[20px] text-center">{displayPost.downvotes || 0}</span>
@@ -341,13 +349,13 @@ export function PostCard({
           {/* Verification */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ml-auto">
             {displayPost.isVerified && (
-              <Badge variant="outline" className="text-green-600 border-green-600 justify-center py-1.5">
+              <Badge variant="outline" className="text-[var(--color-aurora-mint)] border-[var(--color-aurora-mint)] justify-center py-1.5">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
                 Verified
               </Badge>
             )}
             {!displayPost.isVerified && displayPost.verificationCount > 0 && (
-              <Badge variant="outline" className="text-aurora-blue border-aurora-blue justify-center py-1.5 whitespace-nowrap">
+              <Badge variant="outline" className="text-[var(--color-aurora-purple)] border-[var(--color-aurora-purple)] justify-center py-1.5 whitespace-nowrap">
                 {displayPost.verificationCount}/5 verifications
               </Badge>
             )}
@@ -357,7 +365,13 @@ export function PostCard({
                 size="sm"
                 onClick={handleVerify}
                 disabled={hasVerified || isVerifying || verifySuccess}
-                className={`min-h-[44px] ${verifySuccess ? "bg-[var(--color-aurora-mint)] text-green-700 border-[var(--color-aurora-mint)]" : ""}`}
+                className={`min-h-[44px] ${
+                  verifySuccess 
+                    ? "bg-[var(--color-aurora-mint)] text-green-700 border-[var(--color-aurora-mint)]" 
+                    : hasVerified 
+                    ? "bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] border-[var(--color-aurora-mint)]"
+                    : "bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white"
+                }`}
               >
                 {verifySuccess ? (
                   <>

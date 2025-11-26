@@ -19,7 +19,7 @@ import {
   Clock,
   Users as UsersIcon,
 } from "lucide-react";
-import { PanicButton } from "@/components/panic-button";
+
 import { SafetyCheckin } from "@/components/safety-checkin";
 import { SisterAccompaniment } from "@/components/sister-accompaniment";
 import { Id } from "@/convex/_generated/dataModel";
@@ -369,8 +369,6 @@ export default function EmergencyPage() {
         </Tabs>
       </div>
 
-      {/* Panic Button */}
-      <PanicButton testMode={testMode} />
     </div>
   );
 }

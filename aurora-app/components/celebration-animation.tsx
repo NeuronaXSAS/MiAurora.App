@@ -29,31 +29,31 @@ const celebrationConfig = {
     icon: Coins,
     title: 'Credits Earned!',
     colors: ['#FFC285', '#FFD4A3', '#FFE4C2', '#FF6B7A'],
-    particleCount: 30,
+    particleCount: 15, // Reduced for better performance
   },
   achievement: {
     icon: Trophy,
     title: 'Achievement Unlocked!',
     colors: ['#8B5CF6', '#A78BFA', '#C4B5FD', '#FF6B7A'],
-    particleCount: 40,
+    particleCount: 20,
   },
   milestone: {
     icon: Star,
     title: 'Milestone Reached!',
     colors: ['#FF6B7A', '#FFB3BC', '#FFC285', '#8B5CF6'],
-    particleCount: 50,
+    particleCount: 25,
   },
   welcome: {
     icon: Heart,
-    title: 'Welcome to Aurora!',
+    title: 'Welcome to Aurora App!',
     colors: ['#FF6B7A', '#FFE8E8', '#FFC285', '#8B5CF6'],
-    particleCount: 35,
+    particleCount: 18,
   },
   streak: {
     icon: Sparkles,
     title: 'Streak Bonus!',
     colors: ['#FFC285', '#FF6B7A', '#8B5CF6', '#FFD4A3'],
-    particleCount: 25,
+    particleCount: 12,
   },
 };
 
@@ -201,7 +201,7 @@ export function CelebrationAnimation({
     const timer = setTimeout(() => {
       setIsVisible(false);
       onComplete?.();
-    }, 4000);
+    }, 2500); // Faster animation
 
     return () => clearTimeout(timer);
   }, [config, onComplete]);

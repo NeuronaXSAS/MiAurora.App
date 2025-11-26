@@ -8,11 +8,13 @@ import { PollCard } from "@/components/poll-card";
 import { AIChatCard } from "@/components/ai-chat-card";
 import { PostCard } from "@/components/post-card";
 import { PostCardSkeleton } from "@/components/loading-skeleton";
+import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { Sparkles } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 
 export function MobileFeed() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Get user ID
   useEffect(() => {
@@ -29,6 +31,16 @@ export function MobileFeed() {
     };
     getUserId();
   }, []);
+
+  // Get user data to check onboarding status
+  const user = useQuery(api.users.getUser, userId ? { userId } : "skip");
+
+  // Show onboarding if user has no industry set (first time)
+  useEffect(() => {
+    if (user && !user.industry) {
+      setShowOnboarding(true);
+    }
+  }, [user]);
 
   // Fetch unified feed
   const feedItems = useQuery(api.feed.getUnifiedFeed, {
@@ -135,6 +147,15 @@ export function MobileFeed() {
         return null;
       })}
       </div>
+
+      {/* Onboarding Wizard for new users */}
+      {userId && (
+        <OnboardingWizard
+          open={showOnboarding}
+          onComplete={() => setShowOnboarding(false)}
+          userId={userId}
+        />
+      )}
     </div>
   );
 }

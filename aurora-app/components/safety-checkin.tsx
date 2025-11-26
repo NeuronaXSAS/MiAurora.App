@@ -110,7 +110,7 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
               </div>
               <div>
                 <h3 className="font-bold text-lg text-[var(--foreground)]">Quick Check-in</h3>
-                <p className="text-sm text-[var(--muted-foreground)]">Let your contacts know you're safe</p>
+                <p className="text-sm text-[var(--muted-foreground)]">Confirm you're safe right now</p>
               </div>
             </div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -222,7 +222,7 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
         {showScheduler && (
           <CardContent className="space-y-4">
             <p className="text-sm text-[var(--muted-foreground)]">
-              Set a time when you'll check in. If you don't confirm, your emergency contacts will be notified.
+              Set a reminder to check in. If you don't confirm by the scheduled time, your Aurora App emergency contacts will be notified automatically.
             </p>
             
             {/* Quick Time Options */}
