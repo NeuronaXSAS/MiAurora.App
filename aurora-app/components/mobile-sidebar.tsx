@@ -103,7 +103,7 @@ export function MobileSidebar({ userCredits = 0, userName, userAvatar }: MobileS
         onClick={() => setIsOpen(true)}
         variant="ghost"
         size="sm"
-        className="fixed top-4 left-4 z-50 md:hidden min-w-[44px] min-h-[44px] bg-[#150F22]/80 backdrop-blur-sm border border-white/10 text-white hover:bg-[#FF6B7A]/20"
+        className="fixed top-4 left-4 z-50 md:hidden min-w-[44px] min-h-[44px] bg-[var(--card)] backdrop-blur-sm border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--accent)]"
         aria-label="Open menu"
       >
         <Menu className="w-5 h-5" />
@@ -137,10 +137,8 @@ export function MobileSidebar({ userCredits = 0, userName, userAvatar }: MobileS
             <div className="p-6 border-b border-white/10">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#FF6B7A] to-[#E84D5F] rounded-xl flex items-center justify-center">
-                    <Heart className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="text-xl font-bold text-white">Aurora</span>
+                  <img src="/Au_Logo_1.png" alt="Aurora App" className="w-10 h-10 rounded-xl" />
+                  <span className="text-xl font-bold text-white">Aurora App</span>
                 </div>
                 <Button
                   onClick={() => setIsOpen(false)}

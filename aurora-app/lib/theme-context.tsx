@@ -28,8 +28,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const root = window.document.documentElement;
     
-    // Determine resolved theme
-    let resolved: 'light' | 'dark' = 'dark';
+    // Determine resolved theme - default to light
+    let resolved: 'light' | 'dark' = 'light';
     if (theme === 'system') {
       resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     } else {

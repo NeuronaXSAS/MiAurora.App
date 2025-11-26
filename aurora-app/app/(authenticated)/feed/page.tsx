@@ -163,15 +163,15 @@ export default function FeedPage() {
             {/* Filter */}
             {isMounted && (
               <Select value={contentType} onValueChange={setContentType}>
-                <SelectTrigger className="w-[140px] sm:w-[180px] bg-[var(--background)] border-[var(--border)]" suppressHydrationWarning>
+                <SelectTrigger className="w-[140px] sm:w-[180px] bg-[var(--background)] border-[var(--border)] min-h-[44px]" suppressHydrationWarning>
                   <SelectValue placeholder="All Content" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Content</SelectItem>
-                  <SelectItem value="post">Posts</SelectItem>
-                  <SelectItem value="poll">Polls</SelectItem>
-                  <SelectItem value="route">Routes</SelectItem>
-                  <SelectItem value="opportunity">Opportunities</SelectItem>
+                <SelectContent className="bg-[var(--card)] border-[var(--border)]">
+                  <SelectItem value="all">🌟 All Content</SelectItem>
+                  <SelectItem value="post">📝 Posts & Reviews</SelectItem>
+                  <SelectItem value="poll">📊 Polls</SelectItem>
+                  <SelectItem value="route">🗺️ Safe Routes</SelectItem>
+                  <SelectItem value="opportunity">💼 Opportunities</SelectItem>
                 </SelectContent>
               </Select>
             )}

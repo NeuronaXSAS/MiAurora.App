@@ -501,8 +501,8 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
         )}
       </div>
       
-      {/* Control Buttons */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+      {/* Control Buttons - Positioned to not overlap with Mapbox controls */}
+      <div className="absolute top-4 right-20 sm:right-24 flex flex-col gap-2 z-10">
         {/* GPS Location Button */}
         <Button
           onClick={handleGetUserLocation}
@@ -523,7 +523,7 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
                 : "bg-[var(--card)] text-[var(--foreground)] hover:bg-[var(--accent)] border border-[var(--border)]"
             }`}
             size="icon"
-            title="Click map to select location"
+            title="Mark this location on the map"
           >
             {isSelectingLocation ? <Crosshair className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
           </Button>
@@ -537,20 +537,20 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
         </div>
       )}
 
-      {/* Legend */}
-      <div className="absolute bottom-4 left-4 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-lg p-4 z-10">
-        <h4 className="font-semibold text-sm mb-3 text-[var(--foreground)]">Safety Rating</h4>
-        <div className="space-y-2">
+      {/* Legend - Collapsible on mobile */}
+      <div className="absolute bottom-20 sm:bottom-4 left-4 right-4 sm:right-auto sm:max-w-[200px] bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-lg p-3 sm:p-4 z-10">
+        <h4 className="font-semibold text-xs sm:text-sm mb-2 sm:mb-3 text-[var(--foreground)]">Safety Rating</h4>
+        <div className="flex sm:flex-col gap-3 sm:gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-[var(--color-aurora-mint)]" />
+            <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[var(--color-aurora-mint)]" />
             <span className="text-xs text-[var(--foreground)]">Safe (4-5)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-[var(--color-aurora-yellow)]" />
+            <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[var(--color-aurora-yellow)]" />
             <span className="text-xs text-[var(--foreground)]">Neutral (3)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-[var(--color-aurora-salmon)]" />
+            <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[var(--color-aurora-salmon)]" />
             <span className="text-xs text-[var(--foreground)]">Unsafe (1-2)</span>
           </div>
         </div>

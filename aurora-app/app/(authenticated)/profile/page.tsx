@@ -31,12 +31,15 @@ import {
   Target,
   Edit,
   Heart,
+  Palette,
+  HelpCircle,
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 import { HydrationTracker } from "@/components/health/hydration-tracker";
 import { EmotionalCheckin } from "@/components/health/emotional-checkin";
 import { MeditationSection } from "@/components/health/meditation-section";
+import { AvatarCreator, AvatarConfig, generateAvatarUrl } from "@/components/avatar-creator";
 
 export default function ProfilePage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
@@ -50,6 +53,8 @@ export default function ProfilePage() {
     careerGoals: "",
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [showAvatarCreator, setShowAvatarCreator] = useState(false);
+  const [customAvatar, setCustomAvatar] = useState<string | null>(null);
 
   const updateProfile = useMutation(api.users.completeOnboarding);
 
@@ -195,12 +200,22 @@ export default function ProfilePage() {
       <div className="bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
           <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
-            <Avatar className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 border-4 border-white/50">
-              <AvatarImage src={user.profileImage} />
-              <AvatarFallback className="text-2xl sm:text-3xl bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white">
-                {(user.name && user.name !== 'null' ? user.name : 'U').charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 border-4 border-white/50">
+                <AvatarImage src={customAvatar || user.profileImage} />
+                <AvatarFallback className="text-2xl sm:text-3xl bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white">
+                  {(user.name && user.name !== 'null' ? user.name : 'U').charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <Button
+                onClick={() => setShowAvatarCreator(true)}
+                size="icon"
+                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-[var(--color-aurora-purple)] shadow-lg min-h-[32px] min-w-[32px]"
+                title="Create Custom Avatar"
+              >
+                <Palette className="w-4 h-4" />
+              </Button>
+            </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-2xl sm:text-3xl font-bold">
@@ -608,6 +623,18 @@ export default function ProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Avatar Creator Modal */}
+      <AvatarCreator
+        open={showAvatarCreator}
+        onComplete={(avatarConfig: AvatarConfig) => {
+          const avatarUrl = generateAvatarUrl(avatarConfig);
+          setCustomAvatar(avatarUrl);
+          setShowAvatarCreator(false);
+          // TODO: Save avatar to user profile in Convex
+        }}
+        onSkip={() => setShowAvatarCreator(false)}
+      />
     </div>
   );
 }

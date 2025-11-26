@@ -88,6 +88,29 @@ export default function LivePage() {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
+        {/* Onboarding Info Card */}
+        <div className="bg-[var(--color-aurora-lavender)]/10 border border-[var(--color-aurora-lavender)]/30 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-[var(--color-aurora-purple)]/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Video className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-[var(--foreground)] mb-1">What is Aurora Live?</h3>
+              <p className="text-sm text-[var(--muted-foreground)]">
+                Aurora Live lets you broadcast real-time video to the community. Use it to share safety experiences, 
+                host discussions, or activate emergency mode to alert your contacts and record evidence. 
+                Viewers can interact via chat and send support.
+              </p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <span className="text-xs bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] px-2 py-1 rounded-full">🛡️ Safety Mode</span>
+                <span className="text-xs bg-red-500/20 text-red-500 px-2 py-1 rounded-full">🚨 Emergency Broadcast</span>
+                <span className="text-xs bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)] px-2 py-1 rounded-full">💬 Live Chat</span>
+                <span className="text-xs bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] px-2 py-1 rounded-full">✨ Earn Credits</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Loading State */}
         {livestreams === undefined && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

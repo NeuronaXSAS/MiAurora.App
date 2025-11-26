@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
-import { FloatingSOSButton } from "@/components/floating-sos-button";
+import { PanicButton } from "@/components/panic-button";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { useCreditsCelebration } from "@/hooks/use-credits-celebration";
 import { Id } from "@/convex/_generated/dataModel";
@@ -54,8 +54,8 @@ export default function AuthenticatedLayout({
         {children}
       </main>
       
-      {/* Floating SOS Button - Always visible for safety */}
-      <FloatingSOSButton />
+      {/* Global Panic Button - Always visible for safety (except on /emergency page which has its own) */}
+      <PanicButton />
       <PWAInstallPrompt />
     </div>
   );

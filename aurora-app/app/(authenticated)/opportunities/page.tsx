@@ -150,6 +150,30 @@ export default function OpportunitiesPage() {
       {/* Content */}
       <div className="container mx-auto px-6 py-8">
         <div className="max-w-5xl mx-auto">
+          {/* Onboarding Info Card */}
+          <div className="bg-[var(--color-aurora-lavender)]/10 border border-[var(--color-aurora-lavender)]/30 rounded-xl p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-[var(--color-aurora-purple)]/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Briefcase className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-[var(--foreground)] mb-1">How Opportunities Work</h3>
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  Use your earned credits to unlock exclusive opportunities. Jobs, mentorships, resources, and events 
+                  are posted by verified organizations and community members. The more you contribute to Aurora App, 
+                  the more opportunities you can access!
+                </p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <span className="text-xs bg-[var(--color-aurora-blue)]/20 text-[var(--color-aurora-blue)] px-2 py-1 rounded-full">💼 Jobs</span>
+                  <span className="text-xs bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] px-2 py-1 rounded-full">🎓 Mentorship</span>
+                  <span className="text-xs bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] px-2 py-1 rounded-full">📚 Resources</span>
+                  <span className="text-xs bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] px-2 py-1 rounded-full">🎉 Events</span>
+                  <span className="text-xs bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)] px-2 py-1 rounded-full">💰 Funding</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Loading State */}
           {opportunities === undefined && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">

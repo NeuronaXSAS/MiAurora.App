@@ -65,6 +65,28 @@ export default function HealthPage() {
       </div>
 
       <div className="container mx-auto px-4 py-4 sm:py-6 max-w-4xl">
+        {/* Onboarding Info Card */}
+        <div className="bg-[var(--color-aurora-lavender)]/10 border border-[var(--color-aurora-lavender)]/30 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-[var(--color-aurora-pink)]/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Flower2 className="w-5 h-5 text-[var(--color-aurora-pink)]" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-[var(--foreground)] mb-1">Your Wellness Hub</h3>
+              <p className="text-sm text-[var(--muted-foreground)]">
+                Track your menstrual cycle, stay hydrated, check in with your emotions, and find peace through guided meditation. 
+                All your wellness data is private and encrypted. Earn credits for daily check-ins!
+              </p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <span className="text-xs bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] px-2 py-1 rounded-full">🌙 Cycle Predictions</span>
+                <span className="text-xs bg-[var(--color-aurora-blue)]/20 text-[var(--color-aurora-blue)] px-2 py-1 rounded-full">💧 Hydration Goals</span>
+                <span className="text-xs bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)] px-2 py-1 rounded-full">💜 Mood Tracking</span>
+                <span className="text-xs bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] px-2 py-1 rounded-full">🧘 Guided Meditation</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid grid-cols-4 mb-4 sm:mb-6 bg-[var(--card)] border border-[var(--border)] p-1 rounded-xl">
             <TabsTrigger 

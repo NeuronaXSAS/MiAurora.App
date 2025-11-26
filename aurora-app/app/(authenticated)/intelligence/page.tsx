@@ -133,6 +133,28 @@ export default function IntelligenceDashboard() {
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-7xl">
+        {/* Onboarding Info Card */}
+        <div className="bg-[var(--color-aurora-lavender)]/10 border border-[var(--color-aurora-lavender)]/30 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-[var(--color-aurora-purple)]/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Database className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-[var(--foreground)] mb-1">What is Aurora App Intelligence?</h3>
+              <p className="text-sm text-[var(--muted-foreground)]">
+                Aurora App Intelligence aggregates anonymous safety data from our community to create actionable insights. 
+                View safety heatmaps, corporate safety scores, and urban analytics. This data helps women make informed decisions 
+                and helps organizations improve their safety practices.
+              </p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <span className="text-xs bg-[var(--color-aurora-blue)]/20 text-[var(--color-aurora-blue)] px-2 py-1 rounded-full">🗺️ Safety Heatmaps</span>
+                <span className="text-xs bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] px-2 py-1 rounded-full">🏢 Corporate Scores</span>
+                <span className="text-xs bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)] px-2 py-1 rounded-full">📊 Analytics</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="border-l-4 border-l-[var(--color-aurora-blue)] bg-[var(--card)] border-[var(--border)]">

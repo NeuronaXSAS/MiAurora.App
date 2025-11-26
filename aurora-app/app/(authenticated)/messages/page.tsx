@@ -125,6 +125,29 @@ export default function MessagesPage() {
       {/* Conversations List */}
       <div className="container mx-auto px-4 sm:px-6 py-6">
         <div className="max-w-4xl mx-auto">
+          {/* Onboarding Info Card - Show when no conversations */}
+          {conversations && conversations.length === 0 && (
+            <div className="bg-[var(--color-aurora-lavender)]/10 border border-[var(--color-aurora-lavender)]/30 rounded-xl p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-[var(--color-aurora-purple)]/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <MessageSquare className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[var(--foreground)] mb-1">Private & Secure Messaging</h3>
+                  <p className="text-sm text-[var(--muted-foreground)]">
+                    Connect directly with other Aurora App members. All messages are encrypted and private. 
+                    Use the search above to find community members by name or location.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <span className="text-xs bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] px-2 py-1 rounded-full">🔒 End-to-end encrypted</span>
+                    <span className="text-xs bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)] px-2 py-1 rounded-full">👥 Community connections</span>
+                    <span className="text-xs bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] px-2 py-1 rounded-full">💜 Support network</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {!conversations && (
             <div className="text-center py-12">
               <div className="w-16 h-16 border-4 border-[var(--color-aurora-purple)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />

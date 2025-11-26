@@ -213,6 +213,40 @@ export function CirclesHub({ userId }: CirclesHubProps) {
         </Dialog>
       </div>
 
+      {/* Onboarding Card - Show when user has no circles */}
+      {(!myCircles || myCircles.length === 0) && (
+        <Card className="bg-gradient-to-br from-[var(--color-aurora-lavender)]/20 to-[var(--color-aurora-pink)]/10 border-[var(--color-aurora-lavender)]/30">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row items-start gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-2xl flex items-center justify-center flex-shrink-0">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">Welcome to Support Circles! 💜</h3>
+                <p className="text-sm text-[var(--muted-foreground)] mb-4">
+                  Circles are private or public groups where women connect, share experiences, and support each other. 
+                  Join circles based on your interests, career, or life stage.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                  <div className="flex items-start gap-2">
+                    <span className="w-6 h-6 bg-[var(--color-aurora-mint)] text-white rounded-full flex items-center justify-center text-xs flex-shrink-0">✓</span>
+                    <span className="text-[var(--muted-foreground)]">Share experiences safely</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="w-6 h-6 bg-[var(--color-aurora-mint)] text-white rounded-full flex items-center justify-center text-xs flex-shrink-0">✓</span>
+                    <span className="text-[var(--muted-foreground)]">Get advice from peers</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="w-6 h-6 bg-[var(--color-aurora-mint)] text-white rounded-full flex items-center justify-center text-xs flex-shrink-0">✓</span>
+                    <span className="text-[var(--muted-foreground)]">Earn credits by helping</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* My Circles */}
       {myCircles && myCircles.length > 0 && (
         <div>

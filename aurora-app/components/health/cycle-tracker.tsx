@@ -204,11 +204,40 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
               )}
             </div>
           ) : (
-            <div className="text-center py-6">
-              <Moon className="w-12 h-12 mx-auto mb-3 text-[var(--color-aurora-pink)]" />
-              <p className="text-[var(--foreground)] mb-2">Start logging your period</p>
-              <p className="text-sm text-[var(--muted-foreground)]">
-                Log at least 2 cycles to see predictions
+            <div className="text-center py-6 space-y-4">
+              <Moon className="w-12 h-12 mx-auto text-[var(--color-aurora-pink)]" />
+              <div>
+                <p className="text-lg font-semibold text-[var(--foreground)] mb-2">Welcome to Cycle Tracker! 🌸</p>
+                <p className="text-sm text-[var(--muted-foreground)] max-w-sm mx-auto">
+                  Track your menstrual cycle to get personalized predictions for your next period, fertile window, and ovulation.
+                </p>
+              </div>
+              
+              {/* Quick Start Guide */}
+              <div className="bg-[var(--color-aurora-lavender)]/10 rounded-xl p-4 text-left space-y-3">
+                <p className="font-medium text-[var(--foreground)] text-sm">How to get started:</p>
+                <div className="space-y-2 text-sm text-[var(--muted-foreground)]">
+                  <div className="flex items-start gap-2">
+                    <span className="w-5 h-5 bg-[var(--color-aurora-pink)] text-white rounded-full flex items-center justify-center text-xs flex-shrink-0">1</span>
+                    <span>Select a date on the calendar when your period started</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="w-5 h-5 bg-[var(--color-aurora-pink)] text-white rounded-full flex items-center justify-center text-xs flex-shrink-0">2</span>
+                    <span>Choose your flow intensity (spotting, light, medium, heavy)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="w-5 h-5 bg-[var(--color-aurora-pink)] text-white rounded-full flex items-center justify-center text-xs flex-shrink-0">3</span>
+                    <span>Log symptoms and how you're feeling</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="w-5 h-5 bg-[var(--color-aurora-pink)] text-white rounded-full flex items-center justify-center text-xs flex-shrink-0">4</span>
+                    <span>After 2 cycles, you'll see predictions!</span>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-xs text-[var(--muted-foreground)]">
+                🔒 Your data is private and encrypted
               </p>
             </div>
           )}

@@ -111,24 +111,24 @@ export function CreateOptionsModal({
   ];
 
   const content = (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-4">
+    <div className="grid grid-cols-2 gap-3 p-4 max-h-[60vh] overflow-y-auto">
       {options.map((option) => (
         <button
           key={option.title}
           onClick={option.action}
-          className={`flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-100 transition-all ${option.hoverColor} hover:border-gray-200 hover:shadow-md active:scale-95 relative overflow-hidden group`}
+          className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-[var(--border)] bg-[var(--card)] transition-all hover:border-[var(--color-aurora-purple)]/50 hover:shadow-md active:scale-95 relative overflow-hidden group min-h-[100px]"
         >
-          <div className="absolute top-2 right-2 text-2xl opacity-20 group-hover:opacity-40 transition-opacity">
+          <div className="absolute top-1 right-1 text-xl opacity-20 group-hover:opacity-40 transition-opacity">
             {option.emoji}
           </div>
-          <div className={`w-14 h-14 ${option.color} rounded-full flex items-center justify-center shadow-lg`}>
-            <option.icon className="w-7 h-7 text-white" />
+          <div className={`w-12 h-12 ${option.color} rounded-full flex items-center justify-center shadow-lg`}>
+            <option.icon className="w-6 h-6 text-white" />
           </div>
           <div className="text-center">
-            <p className="font-semibold text-sm flex items-center justify-center gap-1">
-              {option.emoji} {option.title}
+            <p className="font-semibold text-xs text-[var(--foreground)]">
+              {option.title}
             </p>
-            <p className="text-xs text-gray-500 mt-1">{option.description}</p>
+            <p className="text-[10px] text-[var(--muted-foreground)] mt-0.5 line-clamp-1">{option.description}</p>
           </div>
         </button>
       ))}
