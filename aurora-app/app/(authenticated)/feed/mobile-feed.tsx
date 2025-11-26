@@ -39,11 +39,11 @@ export function MobileFeed() {
   const displayItems = feedItems || [];
 
   return (
-    <div className="px-3 py-4 space-y-4 max-w-2xl mx-auto">
+    <div className="px-3 py-4 space-y-4 max-w-2xl mx-auto bg-[var(--background)] min-h-screen">
       {/* Header */}
       <div className="mb-4 px-1">
-        <h2 className="text-2xl font-bold mb-1">Your Feed</h2>
-        <p className="text-sm text-gray-600">
+        <h2 className="text-2xl font-bold mb-1 text-[var(--foreground)]">Your Feed</h2>
+        <p className="text-sm text-[var(--muted-foreground)]">
           Discover and share community intelligence
         </p>
       </div>
@@ -60,11 +60,11 @@ export function MobileFeed() {
       {/* Empty State */}
       {displayItems.length === 0 && feedItems !== undefined && (
         <div className="text-center py-12">
-          <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="w-8 h-8 text-purple-600" />
+          <div className="w-16 h-16 bg-[var(--color-aurora-purple)]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Sparkles className="w-8 h-8 text-[var(--color-aurora-purple)]" />
           </div>
-          <h3 className="text-lg font-semibold mb-2">No content yet</h3>
-          <p className="text-gray-600 mb-4">
+          <h3 className="text-lg font-semibold mb-2 text-[var(--foreground)]">No content yet</h3>
+          <p className="text-[var(--muted-foreground)] mb-4">
             Be the first to share!
           </p>
         </div>

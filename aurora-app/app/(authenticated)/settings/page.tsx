@@ -61,7 +61,7 @@ export default function SettingsPage() {
               <Button
                 size="sm"
                 onClick={skipWaiting}
-                className="bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-purple)]"
+                className="min-h-[44px] bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-purple)]"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Update Available
@@ -79,10 +79,10 @@ export default function SettingsPage() {
                 key={section.id}
                 variant={activeSection === section.id ? "default" : "ghost"}
                 onClick={() => setActiveSection(section.id)}
-                className={activeSection === section.id 
+                className={`min-h-[44px] ${activeSection === section.id 
                   ? "bg-[var(--color-aurora-purple)] text-white" 
                   : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
-                }
+                }`}
               >
                 <Icon className="w-4 h-4 mr-2" />
                 {section.label}
@@ -171,11 +171,11 @@ export default function SettingsPage() {
                 Danger Zone
               </h3>
               <div className="space-y-3">
-                <Button variant="outline" className="w-full border-[var(--color-aurora-salmon)]/30 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10">
+                <Button variant="outline" className="w-full min-h-[44px] border-[var(--color-aurora-salmon)]/30 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10">
                   <Download className="w-4 h-4 mr-2" />
                   Export My Data
                 </Button>
-                <Button variant="outline" className="w-full border-[var(--color-aurora-salmon)]/30 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10">
+                <Button variant="outline" className="w-full min-h-[44px] border-[var(--color-aurora-salmon)]/30 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10">
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete Account
                 </Button>

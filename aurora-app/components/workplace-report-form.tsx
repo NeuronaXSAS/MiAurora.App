@@ -105,25 +105,25 @@ export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormPr
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
       >
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+        <Card className="bg-[var(--color-aurora-mint)]/30 border-[var(--color-aurora-mint)]">
           <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 bg-[var(--color-aurora-mint)] rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-[var(--color-aurora-violet)]" />
             </div>
-            <h3 className="text-2xl font-bold text-green-800 mb-2">
+            <h3 className="text-2xl font-bold text-[var(--foreground)] mb-2">
               Thank You for Your Courage
             </h3>
-            <p className="text-green-700 mb-4">
+            <p className="text-[var(--muted-foreground)] mb-4">
               Your report has been submitted. You've earned 25 credits for helping protect other women.
             </p>
-            <p className="text-sm text-green-600">
+            <p className="text-sm text-[var(--muted-foreground)]">
               {isPublic 
                 ? "Your report will be visible to the community (anonymously if selected)."
                 : "Your report is private and will only be used for aggregate safety data."
               }
             </p>
             <Button
-              className="mt-6"
+              className="mt-6 min-h-[44px] bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
               onClick={() => {
                 setSubmitted(false);
                 setCompanyName("");
@@ -142,33 +142,34 @@ export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormPr
   }
 
   return (
-    <Card>
+    <Card className="bg-[var(--card)] border-[var(--border)]">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="w-5 h-5 text-purple-600" />
+        <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+          <Shield className="w-5 h-5 text-[var(--color-aurora-purple)]" />
           Report Workplace Incident
         </CardTitle>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-[var(--muted-foreground)]">
           Your voice matters. Help protect other women by sharing your experience.
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Company Name */}
         <div>
-          <Label htmlFor="company">Company Name *</Label>
+          <Label htmlFor="company" className="text-[var(--foreground)]">Company Name *</Label>
           <Input
             id="company"
             placeholder="Enter company name"
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
+            className="min-h-[44px]"
           />
         </div>
 
         {/* Incident Type */}
         <div>
-          <Label>Type of Incident *</Label>
+          <Label className="text-[var(--foreground)]">Type of Incident *</Label>
           <Select value={incidentType} onValueChange={setIncidentType}>
-            <SelectTrigger>
+            <SelectTrigger className="min-h-[44px]">
               <SelectValue placeholder="Select incident type" />
             </SelectTrigger>
             <SelectContent>
@@ -183,18 +184,19 @@ export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormPr
 
         {/* Date */}
         <div>
-          <Label htmlFor="date">When did this happen? (optional)</Label>
+          <Label htmlFor="date" className="text-[var(--foreground)]">When did this happen? (optional)</Label>
           <Input
             id="date"
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
+            className="min-h-[44px]"
           />
         </div>
 
         {/* Description */}
         <div>
-          <Label htmlFor="description">Describe what happened *</Label>
+          <Label htmlFor="description" className="text-[var(--foreground)]">Describe what happened *</Label>
           <Textarea
             id="description"
             placeholder="Share your experience. Be as detailed as you're comfortable with..."
@@ -202,22 +204,22 @@ export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormPr
             onChange={(e) => setDescription(e.target.value)}
             rows={5}
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-[var(--muted-foreground)] mt-1">
             Your description helps others understand the situation and may help identify patterns.
           </p>
         </div>
 
         {/* Privacy Options */}
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-          <h4 className="font-semibold flex items-center gap-2">
+        <div className="space-y-4 p-4 bg-[var(--accent)] rounded-xl">
+          <h4 className="font-semibold flex items-center gap-2 text-[var(--foreground)]">
             <Lock className="w-4 h-4" />
             Privacy Settings
           </h4>
           
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="anonymous">Submit Anonymously</Label>
-              <p className="text-xs text-gray-500">Your identity will never be revealed</p>
+              <Label htmlFor="anonymous" className="text-[var(--foreground)]">Submit Anonymously</Label>
+              <p className="text-xs text-[var(--muted-foreground)]">Your identity will never be revealed</p>
             </div>
             <Switch
               id="anonymous"
@@ -228,8 +230,8 @@ export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormPr
 
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="public">Share with Community</Label>
-              <p className="text-xs text-gray-500">Help warn others about this company</p>
+              <Label htmlFor="public" className="text-[var(--foreground)]">Share with Community</Label>
+              <p className="text-xs text-[var(--muted-foreground)]">Help warn others about this company</p>
             </div>
             <Switch
               id="public"
@@ -241,16 +243,16 @@ export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormPr
 
         {/* Support Needed */}
         <div>
-          <Label>What support do you need? (optional)</Label>
+          <Label className="text-[var(--foreground)]">What support do you need? (optional)</Label>
           <div className="flex flex-wrap gap-2 mt-2">
             {SUPPORT_OPTIONS.map((option) => (
               <Badge
                 key={option.id}
                 variant={supportNeeded.includes(option.id) ? "default" : "outline"}
-                className={`cursor-pointer ${
+                className={`cursor-pointer min-h-[36px] px-3 ${
                   supportNeeded.includes(option.id) 
-                    ? "bg-purple-500 hover:bg-purple-600" 
-                    : "hover:bg-purple-50"
+                    ? "bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]" 
+                    : "hover:bg-[var(--color-aurora-lavender)]/30"
                 }`}
                 onClick={() => toggleSupport(option.id)}
               >
@@ -261,12 +263,12 @@ export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormPr
         </div>
 
         {/* Warning */}
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <div className="p-4 bg-[var(--color-aurora-yellow)]/20 border border-[var(--color-aurora-yellow)]/50 rounded-xl">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-yellow-800">
+            <AlertTriangle className="w-5 h-5 text-[var(--color-aurora-yellow)] flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-[var(--foreground)]">
               <p className="font-semibold mb-1">Important Notice</p>
-              <p>
+              <p className="text-[var(--muted-foreground)]">
                 This report is for community awareness and support. For legal action, 
                 please consult with a qualified attorney. If you're in immediate danger, 
                 contact emergency services.
@@ -279,7 +281,7 @@ export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormPr
         <Button
           onClick={handleSubmit}
           disabled={isSubmitting || !companyName || !incidentType || !description}
-          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+          className="w-full min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:from-[var(--color-aurora-violet)] hover:to-[var(--color-aurora-pink)]/90"
         >
           {isSubmitting ? (
             <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />

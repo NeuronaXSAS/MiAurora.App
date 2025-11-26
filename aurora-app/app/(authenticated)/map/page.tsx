@@ -48,16 +48,18 @@ export default function MapPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-[var(--background)]">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-[var(--card)] border-b border-[var(--border)]">
         <div className="px-4 sm:px-6 py-4">
           <div className="flex flex-col gap-4">
             <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 flex-shrink-0 mt-1" />
+              <div className="w-10 h-10 bg-[var(--color-aurora-purple)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+              </div>
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold">Safety Map</h1>
-                <p className="text-xs sm:text-sm text-gray-600">
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">Safety Map</h1>
+                <p className="text-xs sm:text-sm text-[var(--muted-foreground)]">
                   Click + to mark a location
                 </p>
               </div>
@@ -71,10 +73,10 @@ export default function MapPage() {
                   setLifeDimension(value === "all" ? undefined : value)
                 }
               >
-                <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectTrigger className="w-full sm:w-[200px] bg-[var(--background)] border-[var(--border)]">
                   <SelectValue placeholder="All Dimensions" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[var(--card)] border-[var(--border)]">
                   <SelectItem value="all">All Dimensions</SelectItem>
                   <SelectItem value="professional">Professional</SelectItem>
                   <SelectItem value="social">Social</SelectItem>
@@ -85,7 +87,7 @@ export default function MapPage() {
               </Select>
 
               {/* Create Post Button */}
-              <Button onClick={() => setShowCreateDialog(true)} className="w-full sm:w-auto">
+              <Button onClick={() => setShowCreateDialog(true)} className="w-full sm:w-auto bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]">
                 <Plus className="w-4 h-4 mr-2" />
                 <span className="hidden sm:inline">Create Post</span>
                 <span className="sm:hidden">New Post</span>

@@ -129,48 +129,50 @@ export function CirclesHub({ userId }: CirclesHubProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Support Circles</h1>
-          <p className="text-gray-600">Connect with women who understand</p>
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">Support Circles</h1>
+          <p className="text-[var(--muted-foreground)]">Connect with women who understand</p>
         </div>
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-purple-500 to-pink-500">
+            <Button className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] min-h-[44px]">
               <Plus className="w-4 h-4 mr-2" />
               Create Circle
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="bg-[var(--card)] border-[var(--border)]">
             <DialogHeader>
-              <DialogTitle>Create a Support Circle</DialogTitle>
+              <DialogTitle className="text-[var(--foreground)]">Create a Support Circle</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Circle Name</label>
+                <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">Circle Name</label>
                 <Input
                   placeholder="e.g., Working Moms Support"
                   value={newCircle.name}
                   onChange={(e) => setNewCircle({ ...newCircle, name: e.target.value })}
+                  className="bg-[var(--background)] border-[var(--border)]"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-2 block">Description</label>
+                <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">Description</label>
                 <Textarea
                   placeholder="What is this circle about?"
                   value={newCircle.description}
                   onChange={(e) => setNewCircle({ ...newCircle, description: e.target.value })}
                   rows={3}
+                  className="bg-[var(--background)] border-[var(--border)]"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-2 block">Category</label>
+                <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">Category</label>
                 <Select
                   value={newCircle.category}
                   onValueChange={(value) => setNewCircle({ ...newCircle, category: value as any })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-[var(--background)] border-[var(--border)]">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[var(--card)] border-[var(--border)]">
                     {categories?.map((cat: any) => (
                       <SelectItem key={cat.id} value={cat.id}>
                         {cat.name}
@@ -184,6 +186,7 @@ export function CirclesHub({ userId }: CirclesHubProps) {
                   variant={newCircle.isPrivate ? "default" : "outline"}
                   size="sm"
                   onClick={() => setNewCircle({ ...newCircle, isPrivate: true })}
+                  className={`min-h-[44px] ${newCircle.isPrivate ? "bg-[var(--color-aurora-purple)]" : "border-[var(--border)]"}`}
                 >
                   <Lock className="w-4 h-4 mr-2" />
                   Private
@@ -192,6 +195,7 @@ export function CirclesHub({ userId }: CirclesHubProps) {
                   variant={!newCircle.isPrivate ? "default" : "outline"}
                   size="sm"
                   onClick={() => setNewCircle({ ...newCircle, isPrivate: false })}
+                  className={`min-h-[44px] ${!newCircle.isPrivate ? "bg-[var(--color-aurora-purple)]" : "border-[var(--border)]"}`}
                 >
                   <Globe className="w-4 h-4 mr-2" />
                   Public
@@ -199,7 +203,7 @@ export function CirclesHub({ userId }: CirclesHubProps) {
               </div>
               <Button 
                 onClick={handleCreateCircle} 
-                className="w-full"
+                className="w-full bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] min-h-[44px]"
                 disabled={!newCircle.name || !newCircle.description}
               >
                 Create Circle (+20 credits)
@@ -212,7 +216,7 @@ export function CirclesHub({ userId }: CirclesHubProps) {
       {/* My Circles */}
       {myCircles && myCircles.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold mb-3">My Circles</h2>
+          <h2 className="text-lg font-semibold mb-3 text-[var(--foreground)]">My Circles</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {myCircles.map((circle: any) => {
               const Icon = CATEGORY_ICONS[circle.category] || Users;
@@ -224,7 +228,7 @@ export function CirclesHub({ userId }: CirclesHubProps) {
                   whileHover={{ scale: 1.02 }}
                   className="cursor-pointer"
                 >
-                  <Card className="overflow-hidden h-full">
+                  <Card className="overflow-hidden h-full bg-[var(--card)] border-[var(--border)]">
                     <div className={`h-2 bg-gradient-to-r ${gradient}`} />
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
@@ -232,17 +236,17 @@ export function CirclesHub({ userId }: CirclesHubProps) {
                           <Icon className="w-5 h-5 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold truncate">{circle.name}</h3>
-                          <p className="text-sm text-gray-500 line-clamp-2">
+                          <h3 className="font-semibold truncate text-[var(--foreground)]">{circle.name}</h3>
+                          <p className="text-sm text-[var(--muted-foreground)] line-clamp-2">
                             {circle.description}
                           </p>
                           <div className="flex items-center gap-2 mt-2">
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="secondary" className="text-xs bg-[var(--accent)]">
                               <Users className="w-3 h-3 mr-1" />
                               {circle.memberCount}
                             </Badge>
                             {circle.role === "admin" && (
-                              <Badge className="text-xs bg-purple-100 text-purple-700">
+                              <Badge className="text-xs bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]">
                                 Admin
                               </Badge>
                             )}
@@ -260,27 +264,27 @@ export function CirclesHub({ userId }: CirclesHubProps) {
 
       {/* Discover */}
       <div>
-        <h2 className="text-lg font-semibold mb-3">Discover Circles</h2>
+        <h2 className="text-lg font-semibold mb-3 text-[var(--foreground)]">Discover Circles</h2>
         
         {/* Search & Filter */}
-        <div className="flex gap-3 mb-4">
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
             <Input
               placeholder="Search circles..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="pl-9 bg-[var(--background)] border-[var(--border)] min-h-[44px]"
             />
           </div>
           <Select
             value={selectedCategory || "all"}
             onValueChange={(value) => setSelectedCategory(value === "all" ? null : value)}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px] bg-[var(--background)] border-[var(--border)] min-h-[44px]">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-[var(--card)] border-[var(--border)]">
               <SelectItem value="all">All Categories</SelectItem>
               {categories?.map((cat: any) => (
                 <SelectItem key={cat.id} value={cat.id}>
@@ -303,7 +307,7 @@ export function CirclesHub({ userId }: CirclesHubProps) {
                 variant={isSelected ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedCategory(isSelected ? null : cat.id)}
-                className={isSelected ? `bg-gradient-to-r ${CATEGORY_COLORS[cat.id]}` : ""}
+                className={`min-h-[44px] ${isSelected ? `bg-gradient-to-r ${CATEGORY_COLORS[cat.id]}` : ""}`}
               >
                 <Icon className="w-4 h-4 mr-1" />
                 {cat.name}
@@ -325,7 +329,7 @@ export function CirclesHub({ userId }: CirclesHubProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <Card className="overflow-hidden h-full">
+                <Card className="overflow-hidden h-full bg-[var(--card)] border-[var(--border)]">
                   <div className={`h-2 bg-gradient-to-r ${gradient}`} />
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3 mb-3">
@@ -333,31 +337,31 @@ export function CirclesHub({ userId }: CirclesHubProps) {
                         <Icon className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold">{circle.name}</h3>
-                        <p className="text-xs text-gray-500">
+                        <h3 className="font-semibold text-[var(--foreground)]">{circle.name}</h3>
+                        <p className="text-xs text-[var(--muted-foreground)]">
                           by {circle.creator?.name || "Anonymous"}
                         </p>
                       </div>
                     </div>
                     
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                    <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mb-3">
                       {circle.description}
                     </p>
                     
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs bg-[var(--accent)]">
                           <Users className="w-3 h-3 mr-1" />
                           {circle.memberCount} members
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs border-[var(--border)]">
                           {circle.postCount} posts
                         </Badge>
                       </div>
                     </div>
                     
                     <Button
-                      className={`w-full mt-3 ${isMember ? '' : `bg-gradient-to-r ${gradient}`}`}
+                      className={`w-full mt-3 min-h-[44px] ${isMember ? 'border-[var(--border)]' : `bg-gradient-to-r ${gradient}`}`}
                       variant={isMember ? "outline" : "default"}
                       disabled={isMember}
                       onClick={() => handleJoinCircle(circle._id)}
@@ -372,14 +376,14 @@ export function CirclesHub({ userId }: CirclesHubProps) {
         </div>
 
         {discoverCircles?.length === 0 && (
-          <Card>
+          <Card className="bg-[var(--card)] border-[var(--border)]">
             <CardContent className="py-12 text-center">
-              <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-semibold mb-2">No circles found</h3>
-              <p className="text-gray-500 text-sm mb-4">
+              <Users className="w-12 h-12 mx-auto mb-4 text-[var(--color-aurora-lavender)]" />
+              <h3 className="text-lg font-semibold mb-2 text-[var(--foreground)]">No circles found</h3>
+              <p className="text-[var(--muted-foreground)] text-sm mb-4">
                 Be the first to create a circle in this category!
               </p>
-              <Button onClick={() => setShowCreateDialog(true)}>
+              <Button onClick={() => setShowCreateDialog(true)} className="min-h-[44px] bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Circle
               </Button>

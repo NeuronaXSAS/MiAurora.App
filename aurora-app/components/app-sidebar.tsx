@@ -188,7 +188,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden min-w-[44px] min-h-[44px]"
               onClick={() => setMobileOpen(false)}
             >
               <X className="w-5 h-5" />
@@ -224,7 +224,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
           {/* Create Button */}
           <Button
             onClick={() => setShowCreateModal(true)}
-            className="w-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 text-white font-semibold rounded-xl"
+            className="w-full min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 text-white font-semibold rounded-xl"
           >
             <Plus className="w-4 h-4 mr-2" />
             Create
@@ -303,7 +303,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
         
         <Button
           variant="ghost"
-          className="w-full justify-start text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
+          className="w-full min-h-[44px] justify-start text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
           onClick={handleLogout}
         >
           <LogOut className="w-5 h-5 mr-3" />
@@ -318,7 +318,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
       {/* Mobile Menu Button - Fixed top left */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-xl bg-[var(--card)] border border-[var(--border)] shadow-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 min-w-[44px] min-h-[44px] p-2 rounded-xl bg-[var(--card)] border border-[var(--border)] shadow-lg flex items-center justify-center"
         aria-label="Open menu"
       >
         <Menu className="w-5 h-5 text-[var(--foreground)]" />

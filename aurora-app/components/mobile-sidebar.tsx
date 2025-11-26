@@ -103,7 +103,7 @@ export function MobileSidebar({ userCredits = 0, userName, userAvatar }: MobileS
         onClick={() => setIsOpen(true)}
         variant="ghost"
         size="sm"
-        className="fixed top-4 left-4 z-50 md:hidden bg-[#150F22]/80 backdrop-blur-sm border border-white/10 text-white hover:bg-[#FF6B7A]/20"
+        className="fixed top-4 left-4 z-50 md:hidden min-w-[44px] min-h-[44px] bg-[#150F22]/80 backdrop-blur-sm border border-white/10 text-white hover:bg-[#FF6B7A]/20"
         aria-label="Open menu"
       >
         <Menu className="w-5 h-5" />
@@ -146,7 +146,7 @@ export function MobileSidebar({ userCredits = 0, userName, userAvatar }: MobileS
                   onClick={() => setIsOpen(false)}
                   variant="ghost"
                   size="sm"
-                  className="text-white hover:bg-white/10"
+                  className="min-w-[44px] min-h-[44px] text-white hover:bg-white/10"
                   aria-label="Close menu"
                 >
                   <X className="w-5 h-5" />

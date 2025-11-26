@@ -14,6 +14,8 @@
   --color-aurora-pink: #f29de5;
   --color-aurora-mint: #d6f4ec;
   --color-aurora-yellow: #e5e093;
+  --color-aurora-salmon: #f05a6b;
+  --color-aurora-purple: #5537a7;
   
   /* Existing theme colors */
   --color-background: var(--background);

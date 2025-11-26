@@ -150,36 +150,36 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
   return (
     <div className="space-y-6">
       {/* Cycle Overview Card */}
-      <Card className="bg-gradient-to-br from-pink-50 to-purple-50 border-pink-200">
+      <Card className="bg-[var(--card)] border-[var(--border)]">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-pink-700">
-            <Moon className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+            <Moon className="w-5 h-5 text-[var(--color-aurora-pink)]" />
             Your Cycle
           </CardTitle>
         </CardHeader>
         <CardContent>
           {predictions?.hasEnoughData ? (
             <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-white/50 rounded-xl">
-                <p className="text-3xl font-bold text-pink-600">
+              <div className="text-center p-4 bg-[var(--color-aurora-pink)]/10 rounded-xl">
+                <p className="text-3xl font-bold text-[var(--color-aurora-pink)]">
                   Day {predictions.cycleDay}
                 </p>
-                <p className="text-sm text-gray-600">of your cycle</p>
+                <p className="text-sm text-[var(--muted-foreground)]">of your cycle</p>
               </div>
-              <div className="text-center p-4 bg-white/50 rounded-xl">
-                <p className="text-3xl font-bold text-purple-600">
+              <div className="text-center p-4 bg-[var(--color-aurora-purple)]/10 rounded-xl">
+                <p className="text-3xl font-bold text-[var(--color-aurora-purple)]">
                   {predictions.averageCycleLength}
                 </p>
-                <p className="text-sm text-gray-600">day avg cycle</p>
+                <p className="text-sm text-[var(--muted-foreground)]">day avg cycle</p>
               </div>
               
               {predictions.nextPeriodDate && (
-                <div className="col-span-2 p-4 bg-pink-100 rounded-xl">
+                <div className="col-span-2 p-4 bg-[var(--color-aurora-pink)]/20 rounded-xl">
                   <div className="flex items-center gap-2 mb-1">
-                    <Droplets className="w-4 h-4 text-pink-600" />
-                    <span className="font-semibold text-pink-700">Next Period</span>
+                    <Droplets className="w-4 h-4 text-[var(--color-aurora-pink)]" />
+                    <span className="font-semibold text-[var(--foreground)]">Next Period</span>
                   </div>
-                  <p className="text-lg text-pink-800">
+                  <p className="text-lg text-[var(--foreground)]">
                     {new Date(predictions.nextPeriodDate).toLocaleDateString('en-US', {
                       weekday: 'long',
                       month: 'short',
@@ -190,12 +190,12 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
               )}
               
               {predictions.fertileWindowStart && (
-                <div className="col-span-2 p-4 bg-purple-100 rounded-xl">
+                <div className="col-span-2 p-4 bg-[var(--color-aurora-lavender)]/20 rounded-xl">
                   <div className="flex items-center gap-2 mb-1">
-                    <Sparkles className="w-4 h-4 text-purple-600" />
-                    <span className="font-semibold text-purple-700">Fertile Window</span>
+                    <Sparkles className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                    <span className="font-semibold text-[var(--foreground)]">Fertile Window</span>
                   </div>
-                  <p className="text-sm text-purple-800">
+                  <p className="text-sm text-[var(--foreground)]">
                     {new Date(predictions.fertileWindowStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     {' - '}
                     {new Date(predictions.fertileWindowEnd!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -205,9 +205,9 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
             </div>
           ) : (
             <div className="text-center py-6">
-              <Moon className="w-12 h-12 mx-auto mb-3 text-pink-300" />
-              <p className="text-gray-600 mb-2">Start logging your period</p>
-              <p className="text-sm text-gray-500">
+              <Moon className="w-12 h-12 mx-auto mb-3 text-[var(--color-aurora-pink)]" />
+              <p className="text-[var(--foreground)] mb-2">Start logging your period</p>
+              <p className="text-sm text-[var(--muted-foreground)]">
                 Log at least 2 cycles to see predictions
               </p>
             </div>
@@ -216,11 +216,11 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
       </Card>
 
       {/* Calendar */}
-      <Card>
+      <Card className="bg-[var(--card)] border-[var(--border)]">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
+            <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+              <Calendar className="w-5 h-5 text-[var(--color-aurora-purple)]" />
               {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </CardTitle>
             <div className="flex gap-2">
@@ -228,6 +228,7 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}
+                className="border-[var(--border)] min-w-[44px] min-h-[44px]"
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
@@ -235,6 +236,7 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}
+                className="border-[var(--border)] min-w-[44px] min-h-[44px]"
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>
@@ -244,7 +246,7 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
         <CardContent>
           <div className="grid grid-cols-7 gap-1 mb-2">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
+              <div key={day} className="text-center text-xs font-medium text-[var(--muted-foreground)] py-2">
                 {day}
               </div>
             ))}
@@ -267,14 +269,14 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
                   className={`
                     aspect-square rounded-full flex items-center justify-center text-sm
                     transition-all relative
-                    ${isSelected ? 'ring-2 ring-pink-500 ring-offset-2' : ''}
+                    ${isSelected ? 'ring-2 ring-[var(--color-aurora-pink)] ring-offset-2' : ''}
                     ${isToday ? 'font-bold' : ''}
-                    ${status === 'period' ? 'bg-pink-500 text-white' : ''}
-                    ${status === 'symptom' ? 'bg-purple-200' : ''}
-                    ${status === 'predicted_period' ? 'bg-pink-200 border-2 border-dashed border-pink-400' : ''}
-                    ${status === 'fertile' ? 'bg-green-100' : ''}
-                    ${status === 'ovulation' ? 'bg-green-300' : ''}
-                    ${!status ? 'hover:bg-gray-100' : ''}
+                    ${status === 'period' ? 'bg-[var(--color-aurora-pink)] text-white' : ''}
+                    ${status === 'symptom' ? 'bg-[var(--color-aurora-lavender)]' : ''}
+                    ${status === 'predicted_period' ? 'bg-[var(--color-aurora-pink)]/30 border-2 border-dashed border-[var(--color-aurora-pink)]' : ''}
+                    ${status === 'fertile' ? 'bg-[var(--color-aurora-mint)]/30' : ''}
+                    ${status === 'ovulation' ? 'bg-[var(--color-aurora-mint)]' : ''}
+                    ${!status ? 'hover:bg-[var(--accent)]' : ''}
                   `}
                 >
                   {date.getDate()}
@@ -287,21 +289,21 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
           </div>
           
           {/* Legend */}
-          <div className="flex flex-wrap gap-3 mt-4 text-xs">
+          <div className="flex flex-wrap gap-3 mt-4 text-xs text-[var(--foreground)]">
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-pink-500" />
+              <div className="w-3 h-3 rounded-full bg-[var(--color-aurora-pink)]" />
               <span>Period</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-pink-200 border-2 border-dashed border-pink-400" />
+              <div className="w-3 h-3 rounded-full bg-[var(--color-aurora-pink)]/30 border-2 border-dashed border-[var(--color-aurora-pink)]" />
               <span>Predicted</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-green-100" />
+              <div className="w-3 h-3 rounded-full bg-[var(--color-aurora-mint)]/30" />
               <span>Fertile</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-green-300" />
+              <div className="w-3 h-3 rounded-full bg-[var(--color-aurora-mint)]" />
               <span>Ovulation</span>
             </div>
           </div>
@@ -309,9 +311,9 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
       </Card>
 
       {/* Log Entry */}
-      <Card>
+      <Card className="bg-[var(--card)] border-[var(--border)]">
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="text-[var(--foreground)]">
             Log for {new Date(selectedDate).toLocaleDateString('en-US', { 
               weekday: 'long', 
               month: 'long', 
@@ -322,17 +324,17 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
         <CardContent className="space-y-6">
           {/* Flow Selection */}
           <div>
-            <label className="text-sm font-medium mb-3 block">Period Flow</label>
-            <div className="flex gap-2">
+            <label className="text-sm font-medium mb-3 block text-[var(--foreground)]">Period Flow</label>
+            <div className="flex flex-wrap gap-2">
               {FLOW_OPTIONS.map(flow => (
                 <Button
                   key={flow.id}
                   variant={selectedFlow === flow.id ? "default" : "outline"}
                   size="sm"
                   onClick={() => setSelectedFlow(selectedFlow === flow.id ? null : flow.id)}
-                  className={selectedFlow === flow.id ? "bg-pink-500 hover:bg-pink-600" : ""}
+                  className={`min-h-[44px] ${selectedFlow === flow.id ? "bg-[var(--color-aurora-pink)] hover:bg-[var(--color-aurora-pink)]/90" : "border-[var(--border)]"}`}
                 >
-                  <Droplets className={`w-4 h-4 mr-1 ${flow.color.replace('bg-', 'text-')}`} />
+                  <Droplets className="w-4 h-4 mr-1 text-[var(--color-aurora-pink)]" />
                   {flow.label}
                 </Button>
               ))}
@@ -341,16 +343,16 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
 
           {/* Symptoms */}
           <div>
-            <label className="text-sm font-medium mb-3 block">Symptoms</label>
+            <label className="text-sm font-medium mb-3 block text-[var(--foreground)]">Symptoms</label>
             <div className="flex flex-wrap gap-2">
               {SYMPTOMS.map(symptom => (
                 <Badge
                   key={symptom.id}
                   variant={selectedSymptoms.includes(symptom.id) ? "default" : "outline"}
-                  className={`cursor-pointer transition-all ${
+                  className={`cursor-pointer transition-all min-h-[36px] px-3 ${
                     selectedSymptoms.includes(symptom.id) 
-                      ? "bg-purple-500 hover:bg-purple-600" 
-                      : "hover:bg-purple-50"
+                      ? "bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white" 
+                      : "hover:bg-[var(--accent)] border-[var(--border)]"
                   }`}
                   onClick={() => toggleSymptom(symptom.id)}
                 >
@@ -363,13 +365,13 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
           {/* Mood & Energy */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Mood</label>
+              <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">Mood</label>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map(level => (
                   <button
                     key={level}
                     onClick={() => setMood(level)}
-                    className={`text-2xl transition-transform ${
+                    className={`text-2xl transition-transform min-w-[44px] min-h-[44px] ${
                       mood >= level ? 'scale-110' : 'opacity-30'
                     }`}
                   >
@@ -379,13 +381,13 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Energy</label>
+              <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">Energy</label>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map(level => (
                   <button
                     key={level}
                     onClick={() => setEnergy(level)}
-                    className={`text-2xl transition-transform ${
+                    className={`text-2xl transition-transform min-w-[44px] min-h-[44px] ${
                       energy >= level ? 'scale-110' : 'opacity-30'
                     }`}
                   >
@@ -398,12 +400,13 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
 
           {/* Notes */}
           <div>
-            <label className="text-sm font-medium mb-2 block">Notes</label>
+            <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">Notes</label>
             <Textarea
               placeholder="How are you feeling today?"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
+              className="bg-[var(--background)] border-[var(--border)]"
             />
           </div>
 
@@ -412,7 +415,7 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
             {selectedFlow && (
               <Button 
                 onClick={handleLogPeriod}
-                className="flex-1 bg-pink-500 hover:bg-pink-600"
+                className="flex-1 bg-[var(--color-aurora-pink)] hover:bg-[var(--color-aurora-pink)]/90 min-h-[44px]"
               >
                 <Droplets className="w-4 h-4 mr-2" />
                 Log Period Day
@@ -421,7 +424,7 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
             <Button 
               onClick={handleLogSymptoms}
               variant={selectedFlow ? "outline" : "default"}
-              className={`flex-1 ${!selectedFlow ? "bg-purple-500 hover:bg-purple-600" : ""}`}
+              className={`flex-1 min-h-[44px] ${!selectedFlow ? "bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]" : "border-[var(--border)]"}`}
               disabled={selectedSymptoms.length === 0 && !notes}
             >
               <Heart className="w-4 h-4 mr-2" />

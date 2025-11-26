@@ -38,7 +38,7 @@ const INTERESTS = [
   "Skill Development",
 ];
 
-export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardProps) {
+export function OnboardingWizard({ open, onComplete, userId: _userId }: OnboardingWizardProps) {
   const [step, setStep] = useState(0); // Start at 0 for avatar creation
   const [role, setRole] = useState("");
   const [bio, setBio] = useState("");
@@ -146,6 +146,12 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
   // Handle avatar creation
   const handleAvatarComplete = (config: AvatarConfig) => {
     setAvatarConfig(config);
+    // Save avatar to localStorage so it persists across the app
+    try {
+      localStorage.setItem('aurora-avatar-config', JSON.stringify(config));
+    } catch (error) {
+      console.error('Error saving avatar:', error);
+    }
     setShowAvatarCreator(false);
     setStep(1);
   };
@@ -261,7 +267,7 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
                 <Button
                   onClick={() => setStep(2)}
                   disabled={!role}
-                  className="bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50"
+                  className="min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50"
                 >
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -309,14 +315,14 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
               </div>
 
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(1)} className="bg-white/5 border-white/20 text-white hover:bg-white/10">
+                <Button variant="outline" onClick={() => setStep(1)} className="min-h-[44px] bg-white/5 border-white/20 text-white hover:bg-white/10">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </Button>
                 <Button
                   onClick={() => setStep(3)}
                   disabled={selectedInterests.length === 0}
-                  className="bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50"
+                  className="min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50"
                 >
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -389,14 +395,14 @@ export function OnboardingWizard({ open, onComplete, userId }: OnboardingWizardP
               </div>
 
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(2)} className="bg-white/5 border-white/20 text-white hover:bg-white/10">
+                <Button variant="outline" onClick={() => setStep(2)} className="min-h-[44px] bg-white/5 border-white/20 text-white hover:bg-white/10">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </Button>
                 <Button
                   onClick={handleComplete}
                   disabled={isSubmitting}
-                  className="bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50 disabled:opacity-50"
+                  className="min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50 disabled:opacity-50"
                 >
                   {isSubmitting ? "Saving..." : "Complete Setup"}
                   <Check className="w-4 h-4 ml-2" />

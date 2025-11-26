@@ -199,14 +199,14 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
             variant="ghost"
             size="icon"
             onClick={() => setIsMuted(!isMuted)}
-            className="text-white/60 hover:text-white hover:bg-white/10"
+            className="min-w-[44px] min-h-[44px] text-white/60 hover:text-white hover:bg-white/10"
           >
             {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="text-white/60 hover:text-white hover:bg-white/10"
+            className="min-w-[44px] min-h-[44px] text-white/60 hover:text-white hover:bg-white/10"
           >
             <MoreHorizontal className="w-5 h-5" />
           </Button>
@@ -265,7 +265,7 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
           <Button
             variant="ghost"
             size="icon"
-            className="text-white/60 hover:text-white hover:bg-white/10 shrink-0"
+            className="min-w-[44px] min-h-[44px] text-white/60 hover:text-white hover:bg-white/10 shrink-0"
           >
             <Smile className="w-5 h-5" />
           </Button>
@@ -276,7 +276,7 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Share what's on your mind..."
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/40 pr-12 rounded-full"
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/40 pr-12 rounded-full min-h-[44px]"
               disabled={isLoading}
             />
           </div>
@@ -286,7 +286,7 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
             size="icon"
             onClick={() => setIsRecording(!isRecording)}
             className={cn(
-              "shrink-0 transition-colors",
+              "shrink-0 transition-colors min-w-[44px] min-h-[44px]",
               isRecording 
                 ? "text-[#FF6B7A] bg-[#FF6B7A]/20 hover:bg-[#FF6B7A]/30" 
                 : "text-white/60 hover:text-white hover:bg-white/10"
@@ -298,7 +298,7 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
           <Button
             onClick={handleSendMessage}
             disabled={!inputValue.trim() || isLoading}
-            className="bg-gradient-to-r from-[#FF6B7A] to-[#E84D5F] hover:from-[#E84D5F] hover:to-[#C73A4D] text-white rounded-full shrink-0"
+            className="min-w-[44px] min-h-[44px] bg-gradient-to-r from-[#FF6B7A] to-[#E84D5F] hover:from-[#E84D5F] hover:to-[#C73A4D] text-white rounded-full shrink-0"
             size="icon"
           >
             <Send className="w-4 h-4" />

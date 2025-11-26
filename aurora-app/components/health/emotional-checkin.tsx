@@ -71,30 +71,30 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
   };
 
   return (
-    <Card className="backdrop-blur-xl bg-white/10 border-white/20">
+    <Card className="bg-[var(--card)] border-[var(--border)]">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-white">
-          <Heart className="w-5 h-5 text-aurora-pink" />
+        <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+          <Heart className="w-5 h-5 text-[var(--color-aurora-pink)]" />
           Emotional Check-in
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Mood Selector */}
         <div>
-          <p className="text-sm text-gray-300 mb-3">How are you feeling today?</p>
+          <p className="text-sm text-[var(--muted-foreground)] mb-3">How are you feeling today?</p>
           <div className="flex justify-between gap-2">
             {moodEmojis.map((mood) => (
               <button
                 key={mood.value}
                 onClick={() => setSelectedMood(mood.value)}
-                className={`flex flex-col items-center p-3 rounded-lg transition-all ${
+                className={`flex flex-col items-center p-3 rounded-xl transition-all min-w-[56px] min-h-[72px] ${
                   selectedMood === mood.value
-                    ? "bg-aurora-pink/30 border-2 border-aurora-pink scale-110"
-                    : "bg-white/5 border border-white/10 hover:bg-white/10"
+                    ? "bg-[var(--color-aurora-pink)]/30 border-2 border-[var(--color-aurora-pink)] scale-110"
+                    : "bg-[var(--accent)] border border-[var(--border)] hover:bg-[var(--accent)]/80"
                 }`}
               >
-                <span className="text-3xl mb-1">{mood.emoji}</span>
-                <span className={`text-xs font-medium ${mood.color}`}>
+                <span className="text-2xl sm:text-3xl mb-1">{mood.emoji}</span>
+                <span className="text-xs font-medium text-[var(--foreground)]">
                   {mood.label}
                 </span>
               </button>
@@ -105,7 +105,7 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
         {/* Journal Entry */}
         {selectedMood !== null && (
           <div className="space-y-2 animate-in fade-in slide-in-from-top duration-300">
-            <label className="text-sm text-gray-300">
+            <label className="text-sm text-[var(--muted-foreground)]">
               Want to share more? (Optional)
             </label>
             <Textarea
@@ -114,9 +114,9 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
               placeholder="What's on your mind today?"
               maxLength={500}
               rows={3}
-              className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
+              className="bg-[var(--background)] border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
             />
-            <p className="text-xs text-gray-400 text-right">
+            <p className="text-xs text-[var(--muted-foreground)] text-right">
               {journal.length}/500
             </p>
           </div>
@@ -127,7 +127,7 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
           <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="w-full bg-gradient-to-r from-aurora-pink/80 to-aurora-pink hover:from-aurora-pink hover:to-aurora-pink/80 text-white font-semibold"
+            className="w-full bg-[var(--color-aurora-pink)] hover:bg-[var(--color-aurora-pink)]/90 text-white font-semibold min-h-[44px]"
           >
             {isSaving ? "Saving..." : todayMood ? "Update Check-in" : "Save Check-in"}
           </Button>
@@ -135,8 +135,8 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
 
         {/* Mood History Chart */}
         {moodHistory && moodHistory.length > 0 && (
-          <div className="pt-4 border-t border-white/10">
-            <p className="text-sm font-medium text-gray-300 mb-3">Last 7 Days</p>
+          <div className="pt-4 border-t border-[var(--border)]">
+            <p className="text-sm font-medium text-[var(--foreground)] mb-3">Last 7 Days</p>
             <div className="flex items-end justify-between gap-2 h-24">
               {moodHistory.slice(0, 7).reverse().map((log, idx) => {
                 const moodData = moodEmojis.find(m => m.value === log.mood);
@@ -145,7 +145,7 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
                 return (
                   <div key={idx} className="flex-1 flex flex-col items-center gap-1">
                     <div
-                      className="w-full bg-gradient-to-t from-aurora-pink/60 to-aurora-pink/30 rounded-t transition-all duration-300"
+                      className="w-full bg-gradient-to-t from-[var(--color-aurora-pink)]/60 to-[var(--color-aurora-pink)]/30 rounded-t transition-all duration-300"
                       style={{ height: `${height}%` }}
                     />
                     <span className="text-xs">{moodData?.emoji}</span>
@@ -157,8 +157,8 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
         )}
 
         {/* Mood Insight */}
-        <div className="bg-aurora-pink/10 border border-aurora-pink/20 rounded-lg p-3">
-          <p className="text-sm text-gray-200 text-center">
+        <div className="bg-[var(--color-aurora-pink)]/10 border border-[var(--color-aurora-pink)]/20 rounded-xl p-3">
+          <p className="text-sm text-[var(--foreground)] text-center">
             {getMoodInsight()}
           </p>
         </div>

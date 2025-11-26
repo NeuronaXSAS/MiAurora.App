@@ -62,22 +62,22 @@ export default function LivePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-40 shadow-sm">
+      <div className="bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <Video className="w-6 h-6 text-purple-600" />
+              <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--foreground)]">
+                <Video className="w-6 h-6 text-[var(--color-aurora-purple)]" />
                 Aurora Live
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[var(--muted-foreground)]">
                 Real-time safety streams from the community
               </p>
             </div>
             <Link href="/live/broadcast">
-              <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+              <Button className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] min-h-[44px]">
                 <Video className="w-4 h-4 mr-2" />
                 Go Live
               </Button>
@@ -92,11 +92,11 @@ export default function LivePage() {
         {livestreams === undefined && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-lg overflow-hidden shadow animate-pulse">
-                <div className="aspect-video bg-gray-200" />
+              <div key={i} className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden animate-pulse">
+                <div className="aspect-video bg-[var(--accent)]" />
                 <div className="p-4 space-y-3">
-                  <div className="h-4 bg-gray-200 rounded w-3/4" />
-                  <div className="h-3 bg-gray-200 rounded w-1/2" />
+                  <div className="h-4 bg-[var(--accent)] rounded w-3/4" />
+                  <div className="h-3 bg-[var(--accent)] rounded w-1/2" />
                 </div>
               </div>
             ))}
@@ -106,15 +106,15 @@ export default function LivePage() {
         {/* Empty State */}
         {livestreams && livestreams.length === 0 && (
           <div className="text-center py-20">
-            <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Video className="w-12 h-12 text-purple-600" />
+            <div className="w-24 h-24 bg-[var(--color-aurora-purple)]/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Video className="w-12 h-12 text-[var(--color-aurora-purple)]" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">No Live Streams</h2>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            <h2 className="text-2xl font-bold mb-2 text-[var(--foreground)]">No Live Streams</h2>
+            <p className="text-[var(--muted-foreground)] mb-6 max-w-md mx-auto">
               No one is streaming right now. Be the first to share your experience with the community!
             </p>
             <Link href="/live/broadcast">
-              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+              <Button size="lg" className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] min-h-[44px]">
                 <Video className="w-5 h-5 mr-2" />
                 Start Your First Stream
               </Button>
@@ -129,7 +129,7 @@ export default function LivePage() {
               <button
                 key={livestream._id}
                 onClick={() => setSelectedLivestream(livestream._id)}
-                className="bg-white rounded-lg overflow-hidden shadow hover:shadow-xl transition-shadow text-left"
+                className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden hover:shadow-xl transition-shadow text-left"
               >
                 {/* Thumbnail */}
                 <div className="relative aspect-video bg-gradient-to-br from-purple-900 to-pink-900">
@@ -170,31 +170,31 @@ export default function LivePage() {
 
                 {/* Info */}
                 <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+                  <h3 className="font-semibold text-lg mb-2 line-clamp-2 text-[var(--foreground)]">
                     {livestream.title}
                   </h3>
 
                   {livestream.host && (
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      <div className="w-8 h-8 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-full flex items-center justify-center text-white text-xs font-bold">
                         {livestream.host.name[0].toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{livestream.host.name}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm font-medium text-[var(--foreground)]">{livestream.host.name}</p>
+                        <p className="text-xs text-[var(--muted-foreground)]">
                           Trust Score: {livestream.host.trustScore}
                         </p>
                       </div>
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
                     <Users className="w-4 h-4" />
                     <span>{livestream.viewerCount} watching</span>
                     {livestream.safetyMode && (
                       <>
                         <span>•</span>
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 text-[var(--color-aurora-mint)]">
                           <Sparkles className="w-3 h-3" />
                           Safety Mode
                         </span>

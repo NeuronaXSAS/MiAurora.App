@@ -371,12 +371,14 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
   // Show error state if map failed to load
   if (mapError) {
     return (
-      <div className="relative w-full h-full flex items-center justify-center bg-gray-100" style={{ minHeight: '100dvh' }}>
+      <div className="relative w-full h-full flex items-center justify-center bg-[var(--background)]" style={{ minHeight: '100dvh' }}>
         <div className="text-center p-8 max-w-md">
-          <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">Map Unavailable</h3>
-          <p className="text-gray-600 text-sm mb-4">{mapError}</p>
-          <p className="text-gray-500 text-xs">
+          <div className="w-16 h-16 bg-[var(--color-aurora-yellow)]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8 text-[var(--color-aurora-yellow)]" />
+          </div>
+          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">Map Unavailable</h3>
+          <p className="text-[var(--muted-foreground)] text-sm mb-4">{mapError}</p>
+          <p className="text-[var(--muted-foreground)] text-xs">
             If you have an ad-blocker enabled, try disabling it for this site to view the map.
           </p>
         </div>
@@ -401,12 +403,12 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="bg-white shadow-lg pr-10"
+            className="bg-[var(--card)] border-[var(--border)] shadow-lg pr-10 text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
           />
           <Button
             onClick={handleSearch}
             size="icon"
-            className="absolute right-0 top-0 h-full"
+            className="absolute right-0 top-0 h-full text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
             variant="ghost"
           >
             <Search className="w-4 h-4" />
@@ -415,17 +417,17 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
 
         {/* Search Results */}
         {searchResults.length > 0 && (
-          <div className="mt-2 bg-white rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          <div className="mt-2 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-lg max-h-60 overflow-y-auto">
             {searchResults.map((result, index) => (
               <button
                 key={index}
                 onClick={() => handleSelectSearchResult(result)}
-                className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 flex items-start gap-2"
+                className="w-full text-left px-4 py-3 hover:bg-[var(--accent)] border-b border-[var(--border)] last:border-b-0 flex items-start gap-2 transition-colors"
               >
-                <MapPinIcon className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                <MapPinIcon className="w-4 h-4 text-[var(--color-aurora-purple)] mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{result.text}</p>
-                  <p className="text-xs text-gray-500 truncate">{result.place_name}</p>
+                  <p className="font-medium text-sm truncate text-[var(--foreground)]">{result.text}</p>
+                  <p className="text-xs text-[var(--muted-foreground)] truncate">{result.place_name}</p>
                 </div>
               </button>
             ))}
@@ -438,7 +440,7 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
         {/* GPS Location Button */}
         <Button
           onClick={handleGetUserLocation}
-          className="bg-white text-gray-700 hover:bg-gray-100 shadow-lg"
+          className="bg-[var(--card)] text-[var(--foreground)] hover:bg-[var(--accent)] shadow-lg border border-[var(--border)] min-w-[44px] min-h-[44px]"
           size="icon"
           title="Go to my location"
         >
@@ -449,10 +451,10 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
         {onLocationSelect && (
           <Button
             onClick={() => setIsSelectingLocation(!isSelectingLocation)}
-            className={`shadow-lg ${
+            className={`shadow-lg min-w-[44px] min-h-[44px] ${
               isSelectingLocation
-                ? "bg-aurora-violet text-white hover:bg-aurora-violet/90"
-                : "bg-white text-gray-700 hover:bg-gray-100"
+                ? "bg-[var(--color-aurora-purple)] text-white hover:bg-[var(--color-aurora-violet)]"
+                : "bg-[var(--card)] text-[var(--foreground)] hover:bg-[var(--accent)] border border-[var(--border)]"
             }`}
             size="icon"
             title="Click map to select location"
@@ -464,39 +466,39 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
 
       {/* Selection Mode Indicator */}
       {isSelectingLocation && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-aurora-violet text-white px-4 py-2 rounded-lg shadow-lg z-10">
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-[var(--color-aurora-purple)] text-white px-4 py-2 rounded-xl shadow-lg z-10">
           <p className="text-sm font-medium">Click anywhere on the map to select a location</p>
         </div>
       )}
 
       {/* Legend */}
-      <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4 z-10">
-        <h4 className="font-semibold text-sm mb-2">Safety Rating</h4>
+      <div className="absolute bottom-4 left-4 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-lg p-4 z-10">
+        <h4 className="font-semibold text-sm mb-3 text-[var(--foreground)]">Safety Rating</h4>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-green-500" />
-            <span className="text-xs">Safe (4-5)</span>
+            <div className="w-4 h-4 rounded-full bg-[var(--color-aurora-mint)]" />
+            <span className="text-xs text-[var(--foreground)]">Safe (4-5)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-yellow-500" />
-            <span className="text-xs">Neutral (3)</span>
+            <div className="w-4 h-4 rounded-full bg-[var(--color-aurora-yellow)]" />
+            <span className="text-xs text-[var(--foreground)]">Neutral (3)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-red-500" />
-            <span className="text-xs">Unsafe (1-2)</span>
+            <div className="w-4 h-4 rounded-full bg-[var(--color-aurora-salmon)]" />
+            <span className="text-xs text-[var(--foreground)]">Unsafe (1-2)</span>
           </div>
         </div>
       </div>
 
       {/* Nearby Posts Panel */}
       {nearbyPosts.length > 0 && (
-        <div className="absolute bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 z-10 max-w-xs max-h-80 overflow-y-auto">
+        <div className="absolute bottom-4 right-4 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-lg p-4 z-10 max-w-xs max-h-80 overflow-y-auto">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-semibold text-sm">Nearby Locations ({nearbyPosts.length})</h4>
+            <h4 className="font-semibold text-sm text-[var(--foreground)]">Nearby Locations ({nearbyPosts.length})</h4>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6"
+              className="h-6 w-6 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
               onClick={() => setNearbyPosts([])}
             >
               <X className="w-4 h-4" />
@@ -507,23 +509,23 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
               <button
                 key={post._id}
                 onClick={() => onMarkerClick && onMarkerClick(post._id)}
-                className="w-full text-left p-2 hover:bg-gray-50 rounded border"
+                className="w-full text-left p-2 hover:bg-[var(--accent)] rounded-lg border border-[var(--border)] transition-colors"
               >
                 <div className="flex items-start gap-2">
                   <Badge
-                    className={`flex-shrink-0 ${
+                    className={`flex-shrink-0 text-white ${
                       post.rating >= 4
-                        ? "bg-green-500"
+                        ? "bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)]"
                         : post.rating >= 3
-                        ? "bg-yellow-500"
-                        : "bg-red-500"
+                        ? "bg-[var(--color-aurora-yellow)] text-[var(--color-aurora-violet)]"
+                        : "bg-[var(--color-aurora-salmon)]"
                     }`}
                   >
                     {post.rating}
                   </Badge>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-xs truncate">{post.title}</p>
-                    <p className="text-xs text-gray-500 truncate">{post.location?.name}</p>
+                    <p className="font-medium text-xs truncate text-[var(--foreground)]">{post.title}</p>
+                    <p className="text-xs text-[var(--muted-foreground)] truncate">{post.location?.name}</p>
                   </div>
                 </div>
               </button>

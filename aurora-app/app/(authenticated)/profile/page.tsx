@@ -180,37 +180,24 @@ export default function ProfilePage() {
 
   if (!user || !stats) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-[#1e1b4b] to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-300">Loading your profile...</p>
+          <div className="w-16 h-16 border-4 border-[var(--color-aurora-purple)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-[var(--muted-foreground)]">Loading your profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/30 to-pink-950/20">
-      {/* Sanctuary Header */}
-      <div className="bg-gradient-to-r from-aurora-pink/40 to-aurora-lavender/40 backdrop-blur-xl text-white border-b border-aurora-pink/20">
-        <div className="container mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center gap-3 mb-2">
-            <Heart className="w-6 h-6 text-aurora-pink" />
-            <div>
-              <h1 className="text-2xl font-bold text-white">The Sanctuary</h1>
-              <p className="text-sm text-gray-200">Your Health & Soul Dashboard</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Profile Header */}
-      <div className="bg-gradient-to-r from-aurora-pink/20 to-aurora-lavender/20 backdrop-blur-xl text-white border-b border-white/10">
+      <div className="bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
           <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
-            <Avatar className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 border-4 border-white">
+            <Avatar className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 border-4 border-white/50">
               <AvatarImage src={user.profileImage} />
-              <AvatarFallback className="text-2xl sm:text-3xl bg-white text-purple-600">
+              <AvatarFallback className="text-2xl sm:text-3xl bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white">
                 {(user.name && user.name !== 'null' ? user.name : 'U').charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -223,7 +210,7 @@ export default function ProfilePage() {
                   onClick={() => setShowEditDialog(true)}
                   variant="outline"
                   size="sm"
-                  className="bg-white/20 border-white/40 text-white hover:bg-white/30"
+                  className="bg-white/20 border-white/40 text-white hover:bg-white/30 min-h-[44px]"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit Profile
@@ -249,12 +236,12 @@ export default function ProfilePage() {
                 </div>
               </div>
               {user.bio && (
-                <div className="bg-white/10 rounded-lg p-2 sm:p-3 mb-2">
+                <div className="bg-white/10 rounded-xl p-2 sm:p-3 mb-2">
                   <p className="text-xs sm:text-sm">{user.bio}</p>
                 </div>
               )}
               {user.careerGoals && (
-                <div className="flex items-start gap-2 bg-white/10 rounded-lg p-2 sm:p-3">
+                <div className="flex items-start gap-2 bg-white/10 rounded-xl p-2 sm:p-3">
                   <Target className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0" />
                   <p className="text-xs sm:text-sm">{user.careerGoals}</p>
                 </div>
@@ -272,20 +259,20 @@ export default function ProfilePage() {
           </div>
 
           {/* Profile Completion Bar */}
-          <div className="container mx-auto px-4 sm:px-6 -mt-4">
-            <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg shadow-2xl p-4 max-w-2xl">
+          <div className="container mx-auto px-4 sm:px-6 py-4">
+            <div className="bg-white/10 border border-white/20 rounded-xl p-4 max-w-2xl">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-200">Profile Completion</span>
-                <span className="text-sm font-bold text-purple-300">{profileCompletion}%</span>
+                <span className="text-sm font-medium text-white/80">Profile Completion</span>
+                <span className="text-sm font-bold text-white">{profileCompletion}%</span>
               </div>
-              <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
+              <div className="w-full bg-white/20 rounded-full h-3 overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500 shadow-lg shadow-purple-500/50"
+                  className="h-full bg-gradient-to-r from-[var(--color-aurora-yellow)] to-[var(--color-aurora-mint)] rounded-full transition-all duration-500"
                   style={{ width: `${profileCompletion}%` }}
                 />
               </div>
               {profileCompletion < 100 && (
-                <p className="text-xs text-gray-300 mt-2">
+                <p className="text-xs text-white/70 mt-2">
                   Complete your profile to increase your Trust Score and unlock more features
                 </p>
               )}
@@ -301,8 +288,8 @@ export default function ProfilePage() {
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Wellness Section */}
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-aurora-pink" />
+              <h2 className="text-xl font-bold text-[var(--foreground)] flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[var(--color-aurora-pink)]" />
                 Daily Wellness
               </h2>
               
@@ -320,58 +307,58 @@ export default function ProfilePage() {
 
             {/* Stats Section */}
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-aurora-blue" />
+              <h2 className="text-xl font-bold text-[var(--foreground)] flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-[var(--color-aurora-blue)]" />
                 Your Progress
               </h2>
               {/* Stats Cards */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-              <Card className="backdrop-blur-xl bg-white/10 border-white/20">
+              <Card className="bg-[var(--card)] border-[var(--border)]">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-gray-300">Credits</CardTitle>
+                  <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Credits</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center border border-purple-500/30">
-                      <Sparkles className="w-6 h-6 text-purple-400" />
+                    <div className="w-12 h-12 bg-[var(--color-aurora-yellow)]/20 rounded-full flex items-center justify-center">
+                      <Sparkles className="w-6 h-6 text-[var(--color-aurora-yellow)]" />
                     </div>
                     <div>
-                      <p className="text-3xl font-bold text-white">{user.credits}</p>
-                      <p className="text-sm text-gray-400">Available to spend</p>
+                      <p className="text-3xl font-bold text-[var(--foreground)]">{user.credits}</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">Available to spend</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="backdrop-blur-xl bg-white/10 border-white/20">
+              <Card className="bg-[var(--card)] border-[var(--border)]">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-gray-300">Monthly Earnings</CardTitle>
+                  <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Monthly Earnings</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center border border-yellow-500/30">
-                      <TrendingUp className="w-6 h-6 text-yellow-400" />
+                    <div className="w-12 h-12 bg-[var(--color-aurora-mint)]/20 rounded-full flex items-center justify-center">
+                      <TrendingUp className="w-6 h-6 text-[var(--color-aurora-mint)]" />
                     </div>
                     <div>
-                      <p className="text-3xl font-bold text-white">{user.monthlyCreditsEarned || 0}</p>
-                      <p className="text-sm text-gray-400">This month</p>
+                      <p className="text-3xl font-bold text-[var(--foreground)]">{user.monthlyCreditsEarned || 0}</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">This month</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="backdrop-blur-xl bg-white/10 border-white/20">
+              <Card className="bg-[var(--card)] border-[var(--border)]">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-gray-300">Trust Score</CardTitle>
+                  <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Trust Score</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center border border-green-500/30">
-                      <TrendingUp className="w-6 h-6 text-green-400" />
+                    <div className="w-12 h-12 bg-[var(--color-aurora-purple)]/20 rounded-full flex items-center justify-center">
+                      <TrendingUp className="w-6 h-6 text-[var(--color-aurora-purple)]" />
                     </div>
                     <div>
-                      <p className="text-3xl font-bold text-white">{user.trustScore}</p>
-                      <p className="text-sm text-gray-400">{getRankPercentile(user.trustScore)}</p>
+                      <p className="text-3xl font-bold text-[var(--foreground)]">{user.trustScore}</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">{getRankPercentile(user.trustScore)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
@@ -379,7 +366,7 @@ export default function ProfilePage() {
                       <span
                         key={star}
                         className={`text-lg ${
-                          star <= trustStars ? 'text-yellow-400' : 'text-gray-600'
+                          star <= trustStars ? 'text-[var(--color-aurora-yellow)]' : 'text-[var(--muted-foreground)]'
                         }`}
                       >
                         ★
@@ -389,35 +376,35 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
 
-              <Card className="backdrop-blur-xl bg-white/10 border-white/20">
+              <Card className="bg-[var(--card)] border-[var(--border)]">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-gray-300">Posts Created</CardTitle>
+                  <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Posts Created</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center border border-blue-500/30">
-                      <FileText className="w-6 h-6 text-blue-400" />
+                    <div className="w-12 h-12 bg-[var(--color-aurora-blue)]/20 rounded-full flex items-center justify-center">
+                      <FileText className="w-6 h-6 text-[var(--color-aurora-blue)]" />
                     </div>
                     <div>
-                      <p className="text-3xl font-bold text-white">{stats.totalPosts}</p>
-                      <p className="text-sm text-gray-400">Contributions</p>
+                      <p className="text-3xl font-bold text-[var(--foreground)]">{stats.totalPosts}</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">Contributions</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="backdrop-blur-xl bg-white/10 border-white/20">
+              <Card className="bg-[var(--card)] border-[var(--border)]">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-gray-300">Verifications</CardTitle>
+                  <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Verifications</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center border border-orange-500/30">
-                      <CheckCircle2 className="w-6 h-6 text-orange-400" />
+                    <div className="w-12 h-12 bg-[var(--color-aurora-pink)]/20 rounded-full flex items-center justify-center">
+                      <CheckCircle2 className="w-6 h-6 text-[var(--color-aurora-pink)]" />
                     </div>
                     <div>
-                      <p className="text-3xl font-bold text-white">{stats.totalVerifications}</p>
-                      <p className="text-sm text-gray-400">Posts verified</p>
+                      <p className="text-3xl font-bold text-[var(--foreground)]">{stats.totalVerifications}</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">Posts verified</p>
                     </div>
                   </div>
                 </CardContent>
@@ -425,17 +412,17 @@ export default function ProfilePage() {
               </div>
 
               {/* Impact */}
-              <Card className="backdrop-blur-xl bg-white/10 border-white/20">
+              <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardHeader>
-                <CardTitle className="text-white">Your Impact</CardTitle>
+                <CardTitle className="text-[var(--foreground)]">Your Impact</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-purple-500/50">
+                  <div className="w-20 h-20 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                     <span className="text-3xl font-bold text-white">{stats.womenHelped}</span>
                   </div>
-                  <p className="text-2xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Women Helped</p>
-                  <p className="text-gray-300">
+                  <p className="text-2xl font-bold mb-2 text-[var(--color-aurora-purple)]">Women Helped</p>
+                  <p className="text-[var(--muted-foreground)]">
                     Your contributions have been verified {stats.womenHelped} times, helping other women make informed decisions
                   </p>
                 </div>
@@ -443,42 +430,42 @@ export default function ProfilePage() {
               </Card>
 
               {/* Recent Activity */}
-              <Card className="backdrop-blur-xl bg-white/10 border-white/20">
+              <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardHeader>
-                <CardTitle className="text-white">Recent Activity</CardTitle>
+                <CardTitle className="text-[var(--foreground)]">Recent Activity</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {transactions && transactions.length > 0 ? (
                     transactions.map((tx, index) => (
-                      <div key={index} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
+                      <div key={index} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            tx.amount > 0 ? 'bg-green-500/20 border border-green-500/30' : 'bg-red-500/20 border border-red-500/30'
+                            tx.amount > 0 ? 'bg-[var(--color-aurora-mint)]/20' : 'bg-[var(--color-aurora-salmon)]/20'
                           }`}>
-                            <span className={tx.amount > 0 ? 'text-green-400' : 'text-red-400'}>
+                            <span className={tx.amount > 0 ? 'text-[var(--color-aurora-mint)]' : 'text-[var(--color-aurora-salmon)]'}>
                               {tx.amount > 0 ? '+' : ''}
                             </span>
                           </div>
                           <div>
-                            <p className="font-medium text-sm text-white">
+                            <p className="font-medium text-sm text-[var(--foreground)]">
                               {tx.type === 'post_created' && 'Created a post'}
                               {tx.type === 'verification' && 'Verified a post'}
                               {tx.type === 'opportunity_unlock' && 'Unlocked opportunity'}
                               {tx.type === 'signup_bonus' && 'Signup bonus'}
                             </p>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-[var(--muted-foreground)]">
                               {formatDistanceToNow(tx._creationTime, { addSuffix: true })}
                             </p>
                           </div>
                         </div>
-                        <Badge variant={tx.amount > 0 ? "default" : "secondary"} className="bg-purple-600/30 text-purple-200 border-purple-500/30">
+                        <Badge variant={tx.amount > 0 ? "default" : "secondary"} className={tx.amount > 0 ? "bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)]" : "bg-[var(--color-aurora-salmon)]/20 text-[var(--color-aurora-salmon)]"}>
                           {tx.amount > 0 ? '+' : ''}{tx.amount} credits
                         </Badge>
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-gray-400 py-4">No activity yet</p>
+                    <p className="text-center text-[var(--muted-foreground)] py-4">No activity yet</p>
                   )}
                 </div>
               </CardContent>
@@ -489,10 +476,10 @@ export default function ProfilePage() {
           {/* Right Column - Badges & Recent Posts */}
           <div className="space-y-6">
             {/* Badges */}
-            <Card className="backdrop-blur-xl bg-white/10 border-white/20">
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <Award className="w-5 h-5 text-purple-400" />
+                <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+                  <Award className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
                   Badges
                 </CardTitle>
               </CardHeader>
@@ -502,15 +489,15 @@ export default function ProfilePage() {
                     {badges.map((badge, index) => (
                       <div
                         key={index}
-                        className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/30 rounded-lg p-3 text-center backdrop-blur-xl"
+                        className="bg-[var(--color-aurora-lavender)]/20 border border-[var(--color-aurora-lavender)]/30 rounded-xl p-3 text-center"
                       >
                         <div className="text-3xl mb-2">{badge.icon}</div>
-                        <p className="text-xs font-medium text-white">{badge.name}</p>
+                        <p className="text-xs font-medium text-[var(--foreground)]">{badge.name}</p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-center text-gray-400 py-4">
+                  <p className="text-center text-[var(--muted-foreground)] py-4">
                     Earn badges by contributing!
                   </p>
                 )}
@@ -518,28 +505,28 @@ export default function ProfilePage() {
             </Card>
 
             {/* Recent Posts */}
-            <Card className="backdrop-blur-xl bg-white/10 border-white/20">
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardHeader>
-                <CardTitle className="text-white">Recent Posts</CardTitle>
+                <CardTitle className="text-[var(--foreground)]">Recent Posts</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {recentPosts && recentPosts.length > 0 ? (
                     recentPosts.map((post) => (
-                      <div key={post._id} className="border-b border-white/10 last:border-0 pb-3 last:pb-0">
-                        <p className="font-medium text-sm line-clamp-1 text-white">{post.title}</p>
+                      <div key={post._id} className="border-b border-[var(--border)] last:border-0 pb-3 last:pb-0">
+                        <p className="font-medium text-sm line-clamp-1 text-[var(--foreground)]">{post.title}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" className="text-xs bg-purple-600/30 text-purple-200 border-purple-500/30">
+                          <Badge variant="secondary" className="text-xs bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)]">
                             {post.rating}/5 ⭐
                           </Badge>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-[var(--muted-foreground)]">
                             {post.verificationCount} verifications
                           </span>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-gray-400 py-4">No posts yet</p>
+                    <p className="text-center text-[var(--muted-foreground)] py-4">No posts yet</p>
                   )}
                 </div>
               </CardContent>
@@ -550,10 +537,10 @@ export default function ProfilePage() {
 
       {/* Edit Profile Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="sm:max-w-[500px] backdrop-blur-xl bg-slate-900/95 border-white/20 text-white">
+        <DialogContent className="sm:max-w-[500px] bg-[var(--card)] border-[var(--border)]">
           <DialogHeader>
-            <DialogTitle className="text-white">Edit Profile</DialogTitle>
-            <DialogDescription className="text-gray-300">
+            <DialogTitle className="text-[var(--foreground)]">Edit Profile</DialogTitle>
+            <DialogDescription className="text-[var(--muted-foreground)]">
               Update your profile information. This helps others connect with you.
             </DialogDescription>
           </DialogHeader>
@@ -607,13 +594,14 @@ export default function ProfilePage() {
               variant="outline"
               onClick={() => setShowEditDialog(false)}
               disabled={isSaving}
+              className="border-[var(--border)]"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSaveProfile}
               disabled={isSaving}
-              className="bg-gradient-to-r from-purple-600 to-pink-600"
+              className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
             >
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>

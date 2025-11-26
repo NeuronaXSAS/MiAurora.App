@@ -46,10 +46,10 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
   };
 
   return (
-    <Card className="backdrop-blur-xl bg-white/10 border-white/20 relative overflow-hidden">
+    <Card className="bg-[var(--card)] border-[var(--border)] relative overflow-hidden">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-white">
-          <Droplet className="w-5 h-5 text-aurora-mint" />
+        <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+          <Droplet className="w-5 h-5 text-[var(--color-aurora-blue)]" />
           Hydration Tracker
         </CardTitle>
       </CardHeader>
@@ -113,7 +113,7 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
 
           {/* Percentage Text */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-2xl font-bold text-white drop-shadow-lg">
+            <span className="text-2xl font-bold text-[var(--foreground)] drop-shadow-lg">
               {Math.round(percentage)}%
             </span>
           </div>
@@ -121,10 +121,10 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
 
         {/* Progress Info */}
         <div className="text-center mb-4">
-          <p className="text-lg font-semibold text-white">
+          <p className="text-lg font-semibold text-[var(--foreground)]">
             {glasses} / {goal} glasses
           </p>
-          <p className="text-sm text-gray-300">
+          <p className="text-sm text-[var(--muted-foreground)]">
             {completed ? "🎉 Goal reached!" : `${goal - glasses} more to go`}
           </p>
         </div>
@@ -136,14 +136,14 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
             disabled={glasses === 0}
             variant="outline"
             size="icon"
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            className="border-[var(--border)] min-w-[44px] min-h-[44px]"
           >
             <Minus className="w-4 h-4" />
           </Button>
 
           <Button
             onClick={handleAddGlass}
-            className="bg-gradient-to-r from-aurora-mint/80 to-aurora-mint hover:from-aurora-mint hover:to-aurora-mint/80 text-slate-900 font-semibold px-6"
+            className="bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-purple)] text-white font-semibold px-6 min-h-[44px]"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Glass
@@ -152,11 +152,11 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
 
         {/* Celebration Animation */}
         {showCelebration && (
-          <div className="absolute inset-0 flex items-center justify-center bg-aurora-mint/20 backdrop-blur-sm animate-in fade-in zoom-in duration-500">
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-aurora-mint)]/20 backdrop-blur-sm animate-in fade-in zoom-in duration-500">
             <div className="text-center">
-              <Sparkles className="w-16 h-16 text-aurora-mint mx-auto mb-2 animate-pulse" />
-              <p className="text-2xl font-bold text-white">Goal Reached!</p>
-              <p className="text-sm text-gray-200">Great job staying hydrated! 💧</p>
+              <Sparkles className="w-16 h-16 text-[var(--color-aurora-mint)] mx-auto mb-2 animate-pulse" />
+              <p className="text-2xl font-bold text-[var(--foreground)]">Goal Reached!</p>
+              <p className="text-sm text-[var(--muted-foreground)]">Great job staying hydrated! 💧</p>
             </div>
           </div>
         )}

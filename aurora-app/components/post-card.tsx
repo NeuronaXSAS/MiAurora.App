@@ -208,7 +208,7 @@ export function PostCard({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 text-xs"
+                    className="min-h-[44px] text-xs"
                     onClick={() => window.location.href = `/messages/${post.authorId}`}
                   >
                     <MessageSquare className="w-3 h-3 mr-1" />
@@ -226,7 +226,7 @@ export function PostCard({
             {isAuthor && onDelete && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px]">
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -311,7 +311,7 @@ export function PostCard({
               variant={userVote === "upvote" ? "default" : "ghost"}
               size="sm"
               onClick={() => handleVote("upvote")}
-              className="h-9 px-3 flex-1 sm:flex-none"
+              className="min-h-[44px] px-3 flex-1 sm:flex-none"
             >
               <ThumbsUp className="w-4 h-4 mr-1" />
               <span className="min-w-[20px] text-center">{displayPost.upvotes || 0}</span>
@@ -320,7 +320,7 @@ export function PostCard({
               variant={userVote === "downvote" ? "default" : "ghost"}
               size="sm"
               onClick={() => handleVote("downvote")}
-              className="h-9 px-3 flex-1 sm:flex-none"
+              className="min-h-[44px] px-3 flex-1 sm:flex-none"
             >
               <ThumbsDown className="w-4 h-4 mr-1" />
               <span className="min-w-[20px] text-center">{displayPost.downvotes || 0}</span>
@@ -332,7 +332,7 @@ export function PostCard({
             variant="ghost"
             size="sm"
             onClick={() => setShowComments(!showComments)}
-            className="h-9 px-3"
+            className="min-h-[44px] px-3"
           >
             <MessageSquare className="w-4 h-4 mr-1" />
             <span className="min-w-[20px] text-center">{displayPost.commentCount || 0}</span>
@@ -357,7 +357,7 @@ export function PostCard({
                 size="sm"
                 onClick={handleVerify}
                 disabled={hasVerified || isVerifying || verifySuccess}
-                className={`h-9 ${verifySuccess ? "bg-green-100 text-green-700 border-green-300" : ""}`}
+                className={`min-h-[44px] ${verifySuccess ? "bg-[var(--color-aurora-mint)] text-green-700 border-[var(--color-aurora-mint)]" : ""}`}
               >
                 {verifySuccess ? (
                   <>
@@ -390,6 +390,7 @@ export function PostCard({
                   size="sm"
                   onClick={handleComment}
                   disabled={!commentText.trim()}
+                  className="min-h-[44px] min-w-[44px]"
                 >
                   <Send className="w-4 h-4" />
                 </Button>

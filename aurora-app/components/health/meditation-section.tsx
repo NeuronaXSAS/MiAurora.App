@@ -83,10 +83,10 @@ export function MeditationSection({ userId }: MeditationSectionProps) {
   const breathingPhase = Math.floor((timeLeft % 8) / 4); // 0 = inhale, 1 = exhale
 
   return (
-    <Card className="backdrop-blur-xl bg-white/10 border-white/20">
+    <Card className="bg-[var(--card)] border-[var(--border)]">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-white">
-          <Sparkles className="w-5 h-5 text-aurora-lavender" />
+        <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+          <Sparkles className="w-5 h-5 text-[var(--color-aurora-lavender)]" />
           Meditation & Mindfulness
         </CardTitle>
       </CardHeader>
@@ -95,16 +95,16 @@ export function MeditationSection({ userId }: MeditationSectionProps) {
         {isActive && (
           <div className="relative w-48 h-48 mx-auto">
             <div
-              className={`absolute inset-0 rounded-full bg-gradient-to-br from-aurora-lavender/40 to-aurora-pink/40 transition-all duration-[4000ms] ease-in-out ${
+              className={`absolute inset-0 rounded-full bg-gradient-to-br from-[var(--color-aurora-lavender)]/40 to-[var(--color-aurora-pink)]/40 transition-all duration-[4000ms] ease-in-out ${
                 breathingPhase === 0 ? "scale-100" : "scale-75"
               }`}
             />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <p className="text-4xl font-bold text-white mb-2">
+                <p className="text-4xl font-bold text-[var(--foreground)] mb-2">
                   {formatTime(timeLeft)}
                 </p>
-                <p className="text-sm text-gray-300">
+                <p className="text-sm text-[var(--muted-foreground)]">
                   {breathingPhase === 0 ? "Breathe In..." : "Breathe Out..."}
                 </p>
               </div>
@@ -115,7 +115,7 @@ export function MeditationSection({ userId }: MeditationSectionProps) {
         {/* Duration Selection */}
         {!isActive && timeLeft === 0 && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-300 text-center">
+            <p className="text-sm text-[var(--muted-foreground)] text-center">
               Choose your meditation duration
             </p>
             <div className="flex justify-center gap-3">
@@ -123,10 +123,10 @@ export function MeditationSection({ userId }: MeditationSectionProps) {
                 <button
                   key={duration}
                   onClick={() => setSelectedDuration(duration)}
-                  className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                  className={`px-6 py-3 rounded-xl font-semibold transition-all min-h-[44px] ${
                     selectedDuration === duration
-                      ? "bg-aurora-lavender text-slate-900 scale-110"
-                      : "bg-white/10 text-white hover:bg-white/20"
+                      ? "bg-[var(--color-aurora-lavender)] text-[var(--color-aurora-violet)] scale-110"
+                      : "bg-[var(--accent)] text-[var(--foreground)] hover:bg-[var(--accent)]/80"
                   }`}
                 >
                   {duration} min
@@ -141,7 +141,7 @@ export function MeditationSection({ userId }: MeditationSectionProps) {
           {!isActive && timeLeft === 0 && (
             <Button
               onClick={startMeditation}
-              className="bg-gradient-to-r from-aurora-lavender/80 to-aurora-lavender hover:from-aurora-lavender hover:to-aurora-lavender/80 text-slate-900 font-semibold px-8"
+              className="bg-[var(--color-aurora-lavender)] hover:bg-[var(--color-aurora-lavender)]/90 text-[var(--color-aurora-violet)] font-semibold px-8 min-h-[44px]"
             >
               <Play className="w-4 h-4 mr-2" />
               Start Session
@@ -153,7 +153,7 @@ export function MeditationSection({ userId }: MeditationSectionProps) {
               <Button
                 onClick={pauseMeditation}
                 variant="outline"
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                className="border-[var(--border)] min-h-[44px]"
               >
                 <Pause className="w-4 h-4 mr-2" />
                 Pause
@@ -161,7 +161,7 @@ export function MeditationSection({ userId }: MeditationSectionProps) {
               <Button
                 onClick={resetMeditation}
                 variant="outline"
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                className="border-[var(--border)] min-h-[44px]"
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Reset
@@ -173,7 +173,7 @@ export function MeditationSection({ userId }: MeditationSectionProps) {
             <>
               <Button
                 onClick={startMeditation}
-                className="bg-gradient-to-r from-aurora-lavender/80 to-aurora-lavender hover:from-aurora-lavender hover:to-aurora-lavender/80 text-slate-900 font-semibold"
+                className="bg-[var(--color-aurora-lavender)] hover:bg-[var(--color-aurora-lavender)]/90 text-[var(--color-aurora-violet)] font-semibold min-h-[44px]"
               >
                 <Play className="w-4 h-4 mr-2" />
                 Resume
@@ -181,7 +181,7 @@ export function MeditationSection({ userId }: MeditationSectionProps) {
               <Button
                 onClick={resetMeditation}
                 variant="outline"
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                className="border-[var(--border)] min-h-[44px]"
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Reset
@@ -192,33 +192,33 @@ export function MeditationSection({ userId }: MeditationSectionProps) {
 
         {/* Stats */}
         {stats && stats.totalSessions > 0 && (
-          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/10">
+          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-[var(--border)]">
             <div className="text-center">
-              <p className="text-2xl font-bold text-white">{stats.totalSessions}</p>
-              <p className="text-xs text-gray-400">Sessions</p>
+              <p className="text-2xl font-bold text-[var(--foreground)]">{stats.totalSessions}</p>
+              <p className="text-xs text-[var(--muted-foreground)]">Sessions</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-white">{stats.totalMinutes}</p>
-              <p className="text-xs text-gray-400">Minutes</p>
+              <p className="text-2xl font-bold text-[var(--foreground)]">{stats.totalMinutes}</p>
+              <p className="text-xs text-[var(--muted-foreground)]">Minutes</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-aurora-yellow">{stats.totalCredits}</p>
-              <p className="text-xs text-gray-400">Credits</p>
+              <p className="text-2xl font-bold text-[var(--color-aurora-yellow)]">{stats.totalCredits}</p>
+              <p className="text-xs text-[var(--muted-foreground)]">Credits</p>
             </div>
           </div>
         )}
 
         {/* Mindfulness Quote */}
-        <div className="bg-aurora-lavender/10 border border-aurora-lavender/20 rounded-lg p-4">
-          <p className="text-sm text-gray-200 text-center italic">
+        <div className="bg-[var(--color-aurora-lavender)]/10 border border-[var(--color-aurora-lavender)]/20 rounded-xl p-4">
+          <p className="text-sm text-[var(--foreground)] text-center italic">
             "Peace comes from within. Do not seek it without." - Buddha
           </p>
         </div>
 
         {/* Credit Reward Info */}
         <div className="text-center">
-          <p className="text-xs text-gray-400">
-            Complete a session to earn <span className="text-aurora-yellow font-semibold">5 credits</span>
+          <p className="text-xs text-[var(--muted-foreground)]">
+            Complete a session to earn <span className="text-[var(--color-aurora-yellow)] font-semibold">5 credits</span>
           </p>
         </div>
       </CardContent>

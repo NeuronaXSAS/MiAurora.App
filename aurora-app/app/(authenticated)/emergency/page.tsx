@@ -84,15 +84,17 @@ export default function EmergencyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-[var(--background)] pb-24">
       {/* Header */}
-      <div className="bg-gradient-to-r from-red-600 to-pink-600 text-white">
+      <div className="bg-gradient-to-r from-[var(--color-aurora-orange)] to-[var(--color-aurora-pink)] text-white">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8" />
+            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+              <Shield className="w-6 h-6" />
+            </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold">Aurora Guardian</h1>
-              <p className="text-sm sm:text-base text-red-100">
+              <p className="text-sm sm:text-base text-white/80">
                 Emergency Safety System
               </p>
             </div>
@@ -103,16 +105,16 @@ export default function EmergencyPage() {
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
         {/* Tabs for different safety features */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="grid grid-cols-3 mb-6">
-            <TabsTrigger value="panic" className="flex items-center gap-2">
+          <TabsList className="grid grid-cols-3 mb-6 bg-[var(--card)] border border-[var(--border)] p-1 rounded-xl">
+            <TabsTrigger value="panic" className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-[var(--color-aurora-orange)] data-[state=active]:text-white rounded-lg py-2 sm:py-2.5">
               <AlertTriangle className="w-4 h-4" />
               <span className="hidden sm:inline">Panic</span>
             </TabsTrigger>
-            <TabsTrigger value="checkin" className="flex items-center gap-2">
+            <TabsTrigger value="checkin" className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg py-2 sm:py-2.5">
               <Clock className="w-4 h-4" />
               <span className="hidden sm:inline">Check-in</span>
             </TabsTrigger>
-            <TabsTrigger value="accompany" className="flex items-center gap-2">
+            <TabsTrigger value="accompany" className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-[var(--color-aurora-pink)] data-[state=active]:text-white rounded-lg py-2 sm:py-2.5">
               <UsersIcon className="w-4 h-4" />
               <span className="hidden sm:inline">Accompany</span>
             </TabsTrigger>
@@ -120,22 +122,24 @@ export default function EmergencyPage() {
 
           <TabsContent value="panic">
             {/* Test Mode Toggle */}
-            <Card className="mb-6 border-yellow-400 bg-yellow-50">
+            <Card className="mb-6 border-[var(--color-aurora-yellow)]/50 bg-[var(--color-aurora-yellow)]/10">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <TestTube className="w-5 h-5 text-yellow-600" />
+                    <div className="w-10 h-10 bg-[var(--color-aurora-yellow)]/20 rounded-xl flex items-center justify-center">
+                      <TestTube className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
+                    </div>
                     <div>
-                      <p className="font-semibold text-yellow-900">Test Mode</p>
-                      <p className="text-sm text-yellow-700">
-                        Practice using the panic button without sending real alerts
+                      <p className="font-semibold text-[var(--foreground)]">Test Mode</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">
+                        Practice without sending real alerts
                       </p>
                     </div>
                   </div>
                   <Button
                     variant={testMode ? "default" : "outline"}
                     onClick={() => setTestMode(!testMode)}
-                    className={testMode ? "bg-yellow-600 hover:bg-yellow-700" : ""}
+                    className={testMode ? "bg-[var(--color-aurora-yellow)] hover:bg-[var(--color-aurora-yellow)]/90 text-[var(--color-aurora-violet)]" : "border-[var(--border)]"}
                   >
                     {testMode ? "ON" : "OFF"}
                   </Button>
@@ -144,15 +148,16 @@ export default function EmergencyPage() {
             </Card>
 
             {/* Emergency Contacts */}
-        <Card className="mb-6">
+        <Card className="mb-6 bg-[var(--card)] border-[var(--border)]">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center justify-between text-[var(--foreground)]">
               <span>Emergency Contacts</span>
               {contacts && contacts.length < 5 && (
                 <Button
                   size="sm"
                   onClick={() => setIsAdding(true)}
                   disabled={isAdding}
+                  className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Contact
@@ -161,13 +166,13 @@ export default function EmergencyPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-[var(--muted-foreground)] mb-4">
               Add up to 5 emergency contacts who will be notified when you trigger an alert.
               They will receive WhatsApp messages with your location.
             </p>
 
             {isAdding && (
-              <div className="bg-gray-50 p-4 rounded-lg mb-4 space-y-4">
+              <div className="bg-[var(--accent)] p-4 rounded-xl mb-4 space-y-4">
                 <div>
                   <Label htmlFor="name">Name *</Label>
                   <Input
@@ -217,16 +222,17 @@ export default function EmergencyPage() {
                       })
                     }
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-[var(--muted-foreground)] mt-1">
                     Lower numbers are notified first
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={handleSaveContact} className="flex-1">
+                  <Button onClick={handleSaveContact} className="flex-1 bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]">
                     Save Contact
                   </Button>
                   <Button
                     variant="outline"
+                    className="border-[var(--border)]"
                     onClick={() => {
                       setIsAdding(false);
                       setNewContact({
@@ -244,9 +250,9 @@ export default function EmergencyPage() {
             )}
 
             {contacts && contacts.length === 0 && !isAdding && (
-              <div className="text-center py-8 text-gray-500">
-                <User className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p>No emergency contacts added yet</p>
+              <div className="text-center py-8 text-[var(--muted-foreground)]">
+                <User className="w-12 h-12 mx-auto mb-3 text-[var(--color-aurora-lavender)]" />
+                <p className="text-[var(--foreground)]">No emergency contacts added yet</p>
                 <p className="text-sm">Add contacts to enable emergency alerts</p>
               </div>
             )}
@@ -255,15 +261,15 @@ export default function EmergencyPage() {
               {contacts?.map((contact) => (
                 <div
                   key={contact._id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                  className="flex items-center justify-between p-4 border border-[var(--border)] rounded-xl hover:bg-[var(--accent)] transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5 text-red-600" />
+                    <div className="w-10 h-10 bg-[var(--color-aurora-orange)]/20 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-[var(--color-aurora-orange)]" />
                     </div>
                     <div>
-                      <p className="font-semibold">{contact.name}</p>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <p className="font-semibold text-[var(--foreground)]">{contact.name}</p>
+                      <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
                         <Phone className="w-3 h-3" />
                         <span>{contact.phoneNumber}</span>
                         {contact.relationship && (
@@ -273,7 +279,7 @@ export default function EmergencyPage() {
                           </>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[var(--muted-foreground)]">
                         Priority: {contact.priority}
                       </p>
                     </div>
@@ -282,8 +288,9 @@ export default function EmergencyPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDeleteContact(contact._id)}
+                    className="hover:bg-[var(--color-aurora-salmon)]/10"
                   >
-                    <Trash2 className="w-4 h-4 text-red-600" />
+                    <Trash2 className="w-4 h-4 text-[var(--color-aurora-salmon)]" />
                   </Button>
                 </div>
               ))}
@@ -292,15 +299,15 @@ export default function EmergencyPage() {
         </Card>
 
             {/* Alert History */}
-            <Card>
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardHeader>
-                <CardTitle>Alert History</CardTitle>
+                <CardTitle className="text-[var(--foreground)]">Alert History</CardTitle>
               </CardHeader>
               <CardContent>
                 {alerts && alerts.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No emergency alerts triggered</p>
+                  <div className="text-center py-8 text-[var(--muted-foreground)]">
+                    <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-[var(--color-aurora-lavender)]" />
+                    <p className="text-[var(--foreground)]">No emergency alerts triggered</p>
                   </div>
                 )}
 
@@ -308,40 +315,40 @@ export default function EmergencyPage() {
                   {alerts?.map((alert) => (
                     <div
                       key={alert._id}
-                      className="p-4 border rounded-lg"
+                      className="p-4 border border-[var(--border)] rounded-xl"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <span
-                            className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                            className={`inline-block px-2 py-1 rounded-lg text-xs font-semibold ${
                               alert.status === "active"
-                                ? "bg-red-100 text-red-700"
+                                ? "bg-[var(--color-aurora-orange)]/20 text-[var(--color-aurora-orange)]"
                                 : alert.status === "resolved"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-gray-100 text-gray-700"
+                                ? "bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)]"
+                                : "bg-[var(--accent)] text-[var(--muted-foreground)]"
                             }`}
                           >
                             {alert.status.toUpperCase()}
                           </span>
-                          <span className="ml-2 text-sm text-gray-600">
+                          <span className="ml-2 text-sm text-[var(--muted-foreground)]">
                             {alert.alertType}
                           </span>
                         </div>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-[var(--muted-foreground)]">
                           {new Date(alert._creationTime).toLocaleString()}
                         </span>
                       </div>
                       {alert.location.address && (
-                        <p className="text-sm text-gray-600 mb-1">
+                        <p className="text-sm text-[var(--muted-foreground)] mb-1">
                           📍 {alert.location.address}
                         </p>
                       )}
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[var(--muted-foreground)]">
                         {alert.notifiedContacts.length} contacts notified •{" "}
                         {alert.nearbyUsersNotified} nearby users alerted
                       </p>
                       {alert.notes && (
-                        <p className="text-sm text-gray-500 mt-2 italic">
+                        <p className="text-sm text-[var(--muted-foreground)] mt-2 italic">
                           {alert.notes}
                         </p>
                       )}

@@ -1,5 +1,5 @@
-// Aurora Service Worker v1.0.0
-const CACHE_NAME = 'aurora-cache-v1';
+// Aurora Service Worker v2.0.0 - Updated to fix CORS issues
+const CACHE_NAME = 'aurora-cache-v2';
 const OFFLINE_URL = '/offline';
 
 // Critical assets to cache immediately

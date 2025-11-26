@@ -24,7 +24,7 @@ export function ThemeToggle({ className, showLabel = false, variant = 'icon' }: 
         <button
           onClick={() => setTheme('light')}
           className={cn(
-            "p-2 rounded-full transition-all",
+            "min-w-[44px] min-h-[44px] p-2 rounded-full transition-all flex items-center justify-center",
             theme === 'light' 
               ? "bg-[#FFC285] text-[#150F22]" 
               : "text-white/60 hover:text-white"
@@ -36,7 +36,7 @@ export function ThemeToggle({ className, showLabel = false, variant = 'icon' }: 
         <button
           onClick={() => setTheme('dark')}
           className={cn(
-            "p-2 rounded-full transition-all",
+            "min-w-[44px] min-h-[44px] p-2 rounded-full transition-all flex items-center justify-center",
             theme === 'dark' 
               ? "bg-[#8B5CF6] text-white" 
               : "text-white/60 hover:text-white"
@@ -48,7 +48,7 @@ export function ThemeToggle({ className, showLabel = false, variant = 'icon' }: 
         <button
           onClick={() => setTheme('system')}
           className={cn(
-            "p-2 rounded-full transition-all",
+            "min-w-[44px] min-h-[44px] p-2 rounded-full transition-all flex items-center justify-center",
             theme === 'system' 
               ? "bg-[#FF6B7A] text-white" 
               : "text-white/60 hover:text-white"
@@ -67,7 +67,7 @@ export function ThemeToggle({ className, showLabel = false, variant = 'icon' }: 
       size={showLabel ? "default" : "icon"}
       onClick={toggleTheme}
       className={cn(
-        "relative overflow-hidden",
+        "relative overflow-hidden min-w-[44px] min-h-[44px]",
         resolvedTheme === 'dark' 
           ? "text-white/80 hover:text-white hover:bg-white/10" 
           : "text-[#150F22]/80 hover:text-[#150F22] hover:bg-[#150F22]/10",

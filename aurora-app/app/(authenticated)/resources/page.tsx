@@ -67,25 +67,25 @@ export default function ResourcesPage() {
 
   if (!userId) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full" />
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="animate-spin w-8 h-8 border-4 border-[var(--color-aurora-purple)] border-t-transparent rounded-full" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900">
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white">
-        <div className="container mx-auto px-4 py-8">
+      <div className="bg-gradient-to-r from-[var(--color-aurora-purple)] via-[var(--color-aurora-pink)] to-[var(--color-aurora-orange)] text-white">
+        <div className="container mx-auto px-4 py-6 sm:py-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-                <Shield className="w-8 h-8" />
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                <Shield className="w-6 h-6 sm:w-8 sm:h-8" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Safety Resources</h1>
-                <p className="text-white/80">Hotlines, shelters, legal aid & more</p>
+                <h1 className="text-2xl sm:text-3xl font-bold">Safety Resources</h1>
+                <p className="text-white/80 text-sm sm:text-base">Hotlines, shelters, legal aid & more</p>
               </div>
             </div>
             
@@ -93,10 +93,10 @@ export default function ResourcesPage() {
             <div className="flex items-center gap-2">
               <Globe className="w-5 h-5 text-white/70" />
               <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                <SelectTrigger className="w-[200px] bg-white/10 border-white/20 text-white">
+                <SelectTrigger className="w-[200px] bg-white/10 border-white/20 text-white min-h-[44px]">
                   <SelectValue placeholder="Select Country" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[var(--card)] border-[var(--border)]">
                   <SelectItem value="global">🌍 Global Resources</SelectItem>
                   {COUNTRIES.map((country) => (
                     <SelectItem key={country.code} value={country.name}>

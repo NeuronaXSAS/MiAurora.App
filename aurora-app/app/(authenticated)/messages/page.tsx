@@ -63,7 +63,7 @@ export default function MessagesPage() {
             </div>
             <Button
               onClick={() => setShowSearch(!showSearch)}
-              className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
+              className="min-h-[44px] bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
             >
               <Plus className="w-4 h-4 mr-2" />
               New Message
@@ -79,7 +79,7 @@ export default function MessagesPage() {
                   placeholder="Search users to message..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-[var(--background)] border-[var(--border)]"
+                  className="pl-9 min-h-[44px] bg-[var(--background)] border-[var(--border)]"
                 />
               </div>
 
@@ -95,7 +95,7 @@ export default function MessagesPage() {
                           setShowSearch(false);
                           setSearchQuery("");
                         }}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-[var(--accent)] rounded-lg transition-colors"
+                        className="w-full flex items-center gap-3 p-3 min-h-[56px] hover:bg-[var(--accent)] rounded-lg transition-colors"
                       >
                         <Avatar>
                           <AvatarImage src={user.profileImage} />
@@ -140,7 +140,7 @@ export default function MessagesPage() {
                 <p className="text-[var(--muted-foreground)] mb-4">
                   Start a conversation with someone from the community
                 </p>
-                <Button onClick={() => setShowSearch(true)} className="bg-[var(--color-aurora-purple)]">
+                <Button onClick={() => setShowSearch(true)} className="min-h-[44px] bg-[var(--color-aurora-purple)]">
                   <Plus className="w-4 h-4 mr-2" />
                   Start Messaging
                 </Button>

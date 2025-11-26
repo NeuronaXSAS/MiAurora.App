@@ -101,16 +101,16 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
   return (
     <div className="space-y-6">
       {/* Quick Check-in Button */}
-      <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+      <Card className="bg-[var(--color-aurora-mint)]/30 border-[var(--color-aurora-mint)]">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <Shield className="w-7 h-7 text-white" />
+              <div className="w-14 h-14 bg-gradient-to-br from-[var(--color-aurora-mint)] to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <Shield className="w-7 h-7 text-[var(--color-aurora-violet)]" />
               </div>
               <div>
-                <h3 className="font-bold text-lg text-green-800">Quick Check-in</h3>
-                <p className="text-sm text-green-600">Let your contacts know you're safe</p>
+                <h3 className="font-bold text-lg text-[var(--foreground)]">Quick Check-in</h3>
+                <p className="text-sm text-[var(--muted-foreground)]">Let your contacts know you're safe</p>
               </div>
             </div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -118,10 +118,10 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
                 size="lg"
                 onClick={handleQuickCheckin}
                 disabled={isCheckinIn}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg"
+                className="min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-mint)] to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-[var(--color-aurora-violet)] shadow-lg font-semibold"
               >
                 {isCheckinIn ? (
-                  <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                  <div className="animate-spin w-5 h-5 border-2 border-current border-t-transparent rounded-full" />
                 ) : (
                   <>
                     <CheckCircle className="w-5 h-5 mr-2" />
@@ -136,10 +136,10 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
 
       {/* Pending Check-ins */}
       {pendingCheckins && pendingCheckins.length > 0 && (
-        <Card className="border-orange-200 bg-orange-50">
+        <Card className="border-[var(--color-aurora-yellow)]/50 bg-[var(--color-aurora-yellow)]/10">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-orange-700">
-              <Clock className="w-5 h-5" />
+            <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+              <Clock className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
               Scheduled Check-ins
             </CardTitle>
           </CardHeader>
@@ -156,23 +156,23 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
                     exit={{ opacity: 0, x: -100 }}
                     className={`p-4 rounded-xl border ${
                       isOverdue 
-                        ? "bg-red-100 border-red-300" 
-                        : "bg-white border-orange-200"
+                        ? "bg-[var(--color-aurora-salmon)]/20 border-[var(--color-aurora-salmon)]/50" 
+                        : "bg-[var(--card)] border-[var(--border)]"
                     }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           {isOverdue ? (
-                            <AlertTriangle className="w-4 h-4 text-red-600" />
+                            <AlertTriangle className="w-4 h-4 text-[var(--color-aurora-salmon)]" />
                           ) : (
-                            <Clock className="w-4 h-4 text-orange-600" />
+                            <Clock className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
                           )}
-                          <span className={`font-semibold ${isOverdue ? "text-red-700" : "text-orange-700"}`}>
+                          <span className={`font-semibold ${isOverdue ? "text-[var(--color-aurora-salmon)]" : "text-[var(--foreground)]"}`}>
                             {isOverdue ? "Overdue!" : "Due"} {formatDistanceToNow(checkin.scheduledTime, { addSuffix: true })}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-[var(--muted-foreground)]">
                           {format(checkin.scheduledTime, "h:mm a")}
                           {checkin.note && ` • ${checkin.note}`}
                         </p>
@@ -181,7 +181,7 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
                         <Button
                           size="sm"
                           onClick={() => handleConfirm(checkin._id)}
-                          className="bg-green-500 hover:bg-green-600"
+                          className="min-h-[44px] bg-[var(--color-aurora-mint)] hover:bg-[var(--color-aurora-mint)]/80 text-[var(--color-aurora-violet)]"
                         >
                           <CheckCircle className="w-4 h-4 mr-1" />
                           I'm Safe
@@ -190,6 +190,7 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
                           size="sm"
                           variant="outline"
                           onClick={() => handleCancel(checkin._id)}
+                          className="min-h-[44px] min-w-[44px]"
                         >
                           <X className="w-4 h-4" />
                         </Button>
@@ -204,15 +205,15 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
       )}
 
       {/* Schedule New Check-in */}
-      <Card>
+      <Card className="bg-[var(--card)] border-[var(--border)]">
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex items-center justify-between text-[var(--foreground)]">
             <span className="flex items-center gap-2">
               <Plus className="w-5 h-5" />
               Schedule Check-in
             </span>
             {!showScheduler && (
-              <Button size="sm" onClick={() => setShowScheduler(true)}>
+              <Button size="sm" onClick={() => setShowScheduler(true)} className="min-h-[44px]">
                 Schedule
               </Button>
             )}
@@ -220,21 +221,21 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
         </CardHeader>
         {showScheduler && (
           <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-[var(--muted-foreground)]">
               Set a time when you'll check in. If you don't confirm, your emergency contacts will be notified.
             </p>
             
             {/* Quick Time Options */}
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {QUICK_TIMES.map((time) => (
                 <Button
                   key={time.minutes}
                   variant="outline"
                   onClick={() => handleSchedule(time.minutes)}
-                  className="flex flex-col h-auto py-3"
+                  className="flex flex-col h-auto py-3 min-h-[60px]"
                 >
                   <span className="font-bold">{time.label}</span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-[var(--muted-foreground)]">
                     {format(addMinutes(new Date(), time.minutes), "h:mm a")}
                   </span>
                 </Button>
@@ -248,11 +249,12 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
                 placeholder="Custom minutes"
                 value={customMinutes}
                 onChange={(e) => setCustomMinutes(e.target.value)}
-                className="flex-1"
+                className="flex-1 min-h-[44px]"
               />
               <Button
                 onClick={() => handleSchedule(parseInt(customMinutes) || 60)}
                 disabled={!customMinutes}
+                className="min-h-[44px]"
               >
                 Set
               </Button>
@@ -263,11 +265,12 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
               placeholder="Add a note (optional) - e.g., 'Walking home'"
               value={note}
               onChange={(e) => setNote(e.target.value)}
+              className="min-h-[44px]"
             />
 
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full min-h-[44px]"
               onClick={() => setShowScheduler(false)}
             >
               Cancel
@@ -278,30 +281,30 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
 
       {/* Recent History */}
       {checkinHistory && checkinHistory.length > 0 && (
-        <Card>
+        <Card className="bg-[var(--card)] border-[var(--border)]">
           <CardHeader>
-            <CardTitle className="text-sm text-gray-600">Recent Check-ins</CardTitle>
+            <CardTitle className="text-sm text-[var(--muted-foreground)]">Recent Check-ins</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {checkinHistory.map((checkin) => (
                 <div
                   key={checkin._id}
-                  className="flex items-center justify-between py-2 border-b last:border-0"
+                  className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0"
                 >
                   <div className="flex items-center gap-3">
                     {checkin.status === "confirmed" ? (
-                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <CheckCircle className="w-4 h-4 text-[var(--color-aurora-mint)]" />
                     ) : checkin.status === "missed" ? (
-                      <AlertTriangle className="w-4 h-4 text-red-500" />
+                      <AlertTriangle className="w-4 h-4 text-[var(--color-aurora-salmon)]" />
                     ) : (
-                      <Clock className="w-4 h-4 text-orange-500" />
+                      <Clock className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
                     )}
                     <div>
-                      <p className="text-sm font-medium">
+                      <p className="text-sm font-medium text-[var(--foreground)]">
                         {checkin.note || "Check-in"}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[var(--muted-foreground)]">
                         {format(checkin.scheduledTime, "MMM d, h:mm a")}
                       </p>
                     </div>
@@ -311,7 +314,7 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
                       checkin.status === "confirmed" ? "default" :
                       checkin.status === "missed" ? "destructive" : "secondary"
                     }
-                    className={checkin.status === "confirmed" ? "bg-green-100 text-green-700" : ""}
+                    className={checkin.status === "confirmed" ? "bg-[var(--color-aurora-mint)]/30 text-[var(--color-aurora-violet)]" : ""}
                   >
                     {checkin.status}
                   </Badge>
