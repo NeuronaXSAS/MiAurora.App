@@ -193,6 +193,7 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
                 variant={filterType === "all" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFilterType("all")}
+                className={filterType === "all" ? "bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]" : "border-[var(--border)]"}
               >
                 All
               </Button>
@@ -202,7 +203,7 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
                   variant={filterType === type ? "default" : "outline"}
                   size="sm"
                   onClick={() => setFilterType(type)}
-                  className="capitalize"
+                  className={`capitalize ${filterType === type ? "bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]" : "border-[var(--border)]"}`}
                 >
                   {type}
                 </Button>
@@ -210,13 +211,14 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
               
               {allTags.length > 0 && (
                 <>
-                  <div className="w-px bg-gray-300 mx-1" />
+                  <div className="w-px bg-[var(--border)] mx-1" />
                   {allTags.slice(0, 5).map((tag) => (
                     <Button
                       key={tag}
                       variant={filterTag === tag ? "default" : "outline"}
                       size="sm"
                       onClick={() => setFilterTag(filterTag === tag ? null : tag)}
+                      className={filterTag === tag ? "bg-[var(--color-aurora-pink)] hover:bg-[var(--color-aurora-pink)]/80" : "border-[var(--border)]"}
                     >
                       <Filter className="w-3 h-3 mr-1" />
                       {tag}

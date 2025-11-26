@@ -19,6 +19,68 @@ import {
   Play,
   Share2
 } from "lucide-react";
+import Map, { Source, Layer } from "react-map-gl/mapbox";
+import "mapbox-gl/dist/mapbox-gl.css";
+
+// Route Map Preview Component
+function RouteMapPreview({ coordinates }: { coordinates: Array<{ lat: number; lng: number }> }) {
+  if (!coordinates || coordinates.length < 2) return null;
+  
+  const lngs = coordinates.map(c => c.lng);
+  const lats = coordinates.map(c => c.lat);
+  const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+  const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  
+  return (
+    <div className="w-full h-64 sm:h-80 rounded-xl overflow-hidden">
+      {process.env.NEXT_PUBLIC_MAPBOX_TOKEN && (
+        <Map
+          mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+          initialViewState={{
+            longitude: centerLng,
+            latitude: centerLat,
+            zoom: 13,
+          }}
+          style={{ width: "100%", height: "100%" }}
+          mapStyle="mapbox://styles/malunao/cm84u5ecf000x01qled5j8bvl"
+          interactive={false}
+        >
+          <Source
+            type="geojson"
+            data={{
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "LineString",
+                coordinates: coordinates.map(c => [c.lng, c.lat]),
+              },
+            }}
+          >
+            <Layer
+              id="route-line"
+              type="line"
+              paint={{
+                "line-color": "#f29de5",
+                "line-width": 4,
+                "line-opacity": 0.9,
+              }}
+            />
+            <Layer
+              id="route-glow"
+              type="line"
+              paint={{
+                "line-color": "#5537a7",
+                "line-width": 8,
+                "line-opacity": 0.3,
+                "line-blur": 4,
+              }}
+            />
+          </Source>
+        </Map>
+      )}
+    </div>
+  );
+}
 import { Id } from "@/convex/_generated/dataModel";
 import { useRouter, useParams } from "next/navigation";
 import { formatDistance, formatDuration, formatPace } from "@/lib/gps-tracker";
@@ -123,10 +185,10 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
 
   if (!route) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading route...</p>
+          <div className="w-16 h-16 border-4 border-[var(--color-aurora-purple)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-[var(--muted-foreground)]">Loading route...</p>
         </div>
       </div>
     );
@@ -135,9 +197,9 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
   const pace = route.duration > 0 ? route.distance / (route.duration / 60) : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Header */}
-      <div className="bg-white border-b sticky top-16 lg:top-0 z-10">
+      <div className="bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-10">
         <div className="container mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
             <Button
@@ -185,18 +247,27 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Title and Tags */}
           <div>
-            <h1 className="text-3xl font-bold mb-2">{route.title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-[var(--foreground)]">{route.title}</h1>
             <div className="flex flex-wrap gap-2">
               {route.tags.map((tag, i) => (
                 <span
                   key={i}
-                  className="px-3 py-1 bg-purple-100 text-purple-700 text-sm rounded-full"
+                  className="px-3 py-1 bg-[var(--color-aurora-lavender)]/30 text-[var(--color-aurora-purple)] text-sm rounded-full"
                 >
                   {tag}
                 </span>
               ))}
             </div>
           </div>
+
+          {/* Route Map Preview */}
+          {route.coordinates && route.coordinates.length > 1 && (
+            <Card className="bg-[var(--card)] border-[var(--border)] overflow-hidden">
+              <CardContent className="p-0">
+                <RouteMapPreview coordinates={route.coordinates} />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

@@ -12,10 +12,59 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Route, MapPin, Clock, TrendingUp, Star, MoreVertical, Trash2 } from "lucide-react";
+import { Route, TrendingUp, Star, MoreVertical, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { Id } from "@/convex/_generated/dataModel";
+import Map, { Source, Layer } from "react-map-gl/mapbox";
+import "mapbox-gl/dist/mapbox-gl.css";
+
+// Mini Route Map Preview
+function MiniRouteMap({ coordinates }: { coordinates: Array<{ lat: number; lng: number }> }) {
+  if (!coordinates || coordinates.length < 2 || !process.env.NEXT_PUBLIC_MAPBOX_TOKEN) return null;
+  
+  const lngs = coordinates.map(c => c.lng);
+  const lats = coordinates.map(c => c.lat);
+  const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+  const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  
+  return (
+    <Map
+      mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+      initialViewState={{
+        longitude: centerLng,
+        latitude: centerLat,
+        zoom: 12,
+      }}
+      style={{ width: "100%", height: "100%" }}
+      mapStyle="mapbox://styles/malunao/cm84u5ecf000x01qled5j8bvl"
+      interactive={false}
+      attributionControl={false}
+    >
+      <Source
+        type="geojson"
+        data={{
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "LineString",
+            coordinates: coordinates.map(c => [c.lng, c.lat]),
+          },
+        }}
+      >
+        <Layer
+          id="route-line"
+          type="line"
+          paint={{
+            "line-color": "#f29de5",
+            "line-width": 3,
+            "line-opacity": 0.9,
+          }}
+        />
+      </Source>
+    </Map>
+  );
+}
 
 interface RouteFeedCardProps {
   route: {
@@ -35,6 +84,7 @@ interface RouteFeedCardProps {
       name: string;
     };
     completionCount: number;
+    coordinates?: Array<{ lat: number; lng: number }>;
   };
   currentUserId?: Id<"users">;
   onDelete?: () => void;
@@ -108,15 +158,21 @@ export function RouteFeedCard({ route, currentUserId, onDelete }: RouteFeedCardP
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Route Preview - Visual representation */}
-        <div className="w-full h-24 bg-gradient-to-r from-[var(--color-aurora-mint)]/10 via-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 rounded-xl border border-[var(--border)] flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-between px-4">
-            <div className="w-3 h-3 rounded-full bg-[var(--color-aurora-mint)] shadow-lg" />
-            <div className="flex-1 h-0.5 bg-gradient-to-r from-[var(--color-aurora-mint)] via-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] mx-2 rounded-full" />
-            <div className="w-3 h-3 rounded-full bg-[var(--color-aurora-pink)] shadow-lg" />
-          </div>
-          <div className="absolute bottom-2 right-2">
-            <Badge className="bg-[var(--color-aurora-purple)]/80 text-white text-[10px]">
+        {/* Route Preview - Map or Visual representation */}
+        <div className="w-full h-32 rounded-xl border border-[var(--border)] overflow-hidden relative">
+          {route.coordinates && route.coordinates.length > 1 ? (
+            <MiniRouteMap coordinates={route.coordinates} />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-r from-[var(--color-aurora-mint)]/10 via-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-between px-4">
+                <div className="w-3 h-3 rounded-full bg-[var(--color-aurora-mint)] shadow-lg" />
+                <div className="flex-1 h-0.5 bg-gradient-to-r from-[var(--color-aurora-mint)] via-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] mx-2 rounded-full" />
+                <div className="w-3 h-3 rounded-full bg-[var(--color-aurora-pink)] shadow-lg" />
+              </div>
+            </div>
+          )}
+          <div className="absolute bottom-2 right-2 z-10">
+            <Badge className="bg-[var(--color-aurora-purple)]/90 text-white text-[10px] shadow-lg">
               {distanceKm} km
             </Badge>
           </div>

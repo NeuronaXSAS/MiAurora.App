@@ -19,6 +19,69 @@ import {
   Navigation,
   Trash2
 } from "lucide-react";
+import Map, { Source, Layer } from "react-map-gl/mapbox";
+import "mapbox-gl/dist/mapbox-gl.css";
+
+// Route Map Preview Component
+function RouteMapPreview({ coordinates }: { coordinates: Array<{ lat: number; lng: number }> }) {
+  if (!coordinates || coordinates.length < 2) return null;
+  
+  // Calculate bounds
+  const lngs = coordinates.map(c => c.lng);
+  const lats = coordinates.map(c => c.lat);
+  const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+  const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  
+  return (
+    <div className="w-full h-64 sm:h-96">
+      {process.env.NEXT_PUBLIC_MAPBOX_TOKEN && (
+        <Map
+          mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+          initialViewState={{
+            longitude: centerLng,
+            latitude: centerLat,
+            zoom: 13,
+          }}
+          style={{ width: "100%", height: "100%" }}
+          mapStyle="mapbox://styles/malunao/cm84u5ecf000x01qled5j8bvl"
+          interactive={false}
+        >
+          <Source
+            type="geojson"
+            data={{
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "LineString",
+                coordinates: coordinates.map(c => [c.lng, c.lat]),
+              },
+            }}
+          >
+            <Layer
+              id="route-line"
+              type="line"
+              paint={{
+                "line-color": "#f29de5",
+                "line-width": 4,
+                "line-opacity": 0.9,
+              }}
+            />
+            <Layer
+              id="route-glow"
+              type="line"
+              paint={{
+                "line-color": "#5537a7",
+                "line-width": 8,
+                "line-opacity": 0.3,
+                "line-blur": 4,
+              }}
+            />
+          </Source>
+        </Map>
+      )}
+    </div>
+  );
+}
 import { Id } from "@/convex/_generated/dataModel";
 import { useRouter, useParams } from "next/navigation";
 import { formatDistance, formatDuration, formatPace } from "@/lib/gps-tracker";
@@ -134,50 +197,58 @@ export default function CommunityRouteDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b sticky top-16 lg:top-0 z-10">
+      <div className="bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-10">
         <div className="container mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={() => router.push("/routes/discover")}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Discovery
-            </Button>
-            <div className="flex gap-2">
+          <div className="flex flex-col gap-3">
+            {/* Top row - Back button */}
+            <div className="flex items-center justify-between">
+              <Button
+                variant="ghost"
+                onClick={() => router.push("/routes/discover")}
+                className="min-h-[44px]"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Back to Discovery</span>
+                <span className="sm:hidden">Back</span>
+              </Button>
+              {userId === route?.creatorId && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDelete}
+                  className="min-h-[44px] min-w-[44px]"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+            {/* Bottom row - Actions */}
+            <div className="flex gap-2 overflow-x-auto pb-1">
               <Button
                 variant="outline"
                 size="sm"
+                className="min-h-[44px] flex-shrink-0"
               >
-                <Bookmark className="w-4 h-4 mr-2" />
-                Save
+                <Bookmark className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Save</span>
               </Button>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.push(`/routes/navigate/${routeId}`)}
-                >
-                  <Navigation className="w-4 h-4 mr-2" />
-                  Navigate
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => setShowCompletionDialog(true)}
-                >
-                  <Play className="w-4 h-4 mr-2" />
-                  Start This Route
-                </Button>
-                {userId === route?.creatorId && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDelete}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/routes/navigate/${routeId}`)}
+                className="min-h-[44px] flex-shrink-0"
+              >
+                <Navigation className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Navigate</span>
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setShowCompletionDialog(true)}
+                className="min-h-[44px] flex-shrink-0 bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Start Route
+              </Button>
             </div>
           </div>
         </div>
@@ -208,57 +279,61 @@ export default function CommunityRouteDetailPage() {
             ))}
           </div>
 
-          {/* Map Preview Placeholder */}
-          <Card>
+          {/* Route Map Preview */}
+          <Card className="bg-[var(--card)] border-[var(--border)] overflow-hidden">
             <CardContent className="p-0">
-              <div className="w-full h-96 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <MapPin className="w-16 h-16 text-purple-600 mx-auto mb-2" />
-                  <p className="text-gray-600">Route map preview</p>
+              {route.coordinates && route.coordinates.length > 1 ? (
+                <RouteMapPreview coordinates={route.coordinates} />
+              ) : (
+                <div className="w-full h-64 sm:h-96 bg-gradient-to-br from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20 flex items-center justify-center">
+                  <div className="text-center">
+                    <MapPin className="w-12 h-12 text-[var(--color-aurora-purple)] mx-auto mb-2" />
+                    <p className="text-[var(--muted-foreground)]">No route data available</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Card>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <TrendingUp className="w-4 h-4 text-gray-500" />
-                  <p className="text-sm text-gray-500">Distance</p>
+                  <TrendingUp className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                  <p className="text-sm text-[var(--muted-foreground)]">Distance</p>
                 </div>
-                <p className="text-2xl font-bold">{formatDistance(route.distance)}</p>
+                <p className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">{formatDistance(route.distance)}</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <Clock className="w-4 h-4 text-gray-500" />
-                  <p className="text-sm text-gray-500">Duration</p>
+                  <Clock className="w-4 h-4 text-[var(--color-aurora-mint)]" />
+                  <p className="text-sm text-[var(--muted-foreground)]">Duration</p>
                 </div>
-                <p className="text-2xl font-bold">{formatDuration(route.duration)}</p>
+                <p className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">{formatDuration(route.duration)}</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <Star className="w-4 h-4 text-yellow-500" />
-                  <p className="text-sm text-gray-500">Rating</p>
+                  <Star className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
+                  <p className="text-sm text-[var(--muted-foreground)]">Rating</p>
                 </div>
-                <p className="text-2xl font-bold">{avgRating.toFixed(1)}/5</p>
+                <p className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">{avgRating.toFixed(1)}/5</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <Users className="w-4 h-4 text-gray-500" />
-                  <p className="text-sm text-gray-500">Completed</p>
+                  <Users className="w-4 h-4 text-[var(--color-aurora-pink)]" />
+                  <p className="text-sm text-[var(--muted-foreground)]">Completed</p>
                 </div>
-                <p className="text-2xl font-bold">{route.completionCount}</p>
+                <p className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">{route.completionCount}</p>
               </CardContent>
             </Card>
           </div>

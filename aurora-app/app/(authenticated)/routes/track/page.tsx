@@ -51,8 +51,10 @@ export default function TrackRoutePage() {
       setRouteId(result.routeId);
       setShowTypeSelector(false);
 
-      // Start GPS tracking
+      // Start GPS tracking with fresh state
       const tracker = new GPSTracker();
+      // Clear any persisted state from previous sessions
+      tracker.clearPersistedState();
       trackerRef.current = tracker;
 
       tracker.start(
@@ -175,44 +177,27 @@ export default function TrackRoutePage() {
           </div>
         )}
 
-        {/* Stats Overlay - Strava Style */}
+        {/* Stats Overlay - Aurora Style */}
         {trackingState && !showTypeSelector && (
-          <div className="absolute top-4 left-4 right-4 backdrop-blur-xl bg-slate-900/90 border border-aurora-blue/30 rounded-2xl shadow-2xl p-6">
-            <div className="grid grid-cols-3 gap-6 text-center">
-              <div>
-                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">Distance</p>
-                <p className="text-4xl font-black text-aurora-blue drop-shadow-lg">{formatDistance(trackingState.stats.distance)}</p>
-                <p className="text-xs text-gray-500 mt-1">kilometers</p>
+          <div className="absolute top-4 left-4 right-4 backdrop-blur-xl bg-[var(--color-aurora-violet)]/95 border border-[var(--color-aurora-pink)]/30 rounded-2xl shadow-2xl p-4 sm:p-6">
+            <div className="grid grid-cols-3 gap-3 sm:gap-6 text-center">
+              <div className="bg-white/10 rounded-xl p-3">
+                <p className="text-[10px] sm:text-xs text-[var(--color-aurora-cream)]/70 font-semibold uppercase tracking-wide mb-1">Distance</p>
+                <p className="text-2xl sm:text-3xl font-black text-[var(--color-aurora-pink)] drop-shadow-lg">{formatDistance(trackingState.stats.distance)}</p>
               </div>
-              <div>
-                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">Duration</p>
-                <p className="text-4xl font-black text-aurora-blue drop-shadow-lg">{formatDuration(trackingState.stats.duration)}</p>
-                <p className="text-xs text-gray-500 mt-1">time</p>
+              <div className="bg-white/10 rounded-xl p-3">
+                <p className="text-[10px] sm:text-xs text-[var(--color-aurora-cream)]/70 font-semibold uppercase tracking-wide mb-1">Duration</p>
+                <p className="text-2xl sm:text-3xl font-black text-[var(--color-aurora-mint)] drop-shadow-lg">{formatDuration(trackingState.stats.duration)}</p>
               </div>
-              <div>
-                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">Pace</p>
-                <p className="text-4xl font-black text-aurora-blue drop-shadow-lg">{formatPace(trackingState.stats.pace)}</p>
-                <p className="text-xs text-gray-500 mt-1">min/km</p>
-              </div>
-            </div>
-            
-            {/* Additional Stats Row */}
-            <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-white/10">
-              <div className="text-center">
-                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Points</p>
-                <p className="text-xl font-bold text-white">{trackingState.coordinates.length}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1">Speed</p>
-                <p className="text-xl font-bold text-white">
-                  {trackingState.stats.pace > 0 ? (60 / trackingState.stats.pace).toFixed(1) : '0.0'} km/h
-                </p>
+              <div className="bg-white/10 rounded-xl p-3">
+                <p className="text-[10px] sm:text-xs text-[var(--color-aurora-cream)]/70 font-semibold uppercase tracking-wide mb-1">Pace</p>
+                <p className="text-2xl sm:text-3xl font-black text-[var(--color-aurora-yellow)] drop-shadow-lg">{formatPace(trackingState.stats.pace)}</p>
               </div>
             </div>
             
             {trackingState.isPaused && (
               <div className="mt-4 text-center">
-                <Badge className="bg-yellow-600 text-white text-sm px-4 py-1">⏸️ Paused</Badge>
+                <Badge className="bg-[var(--color-aurora-yellow)] text-[var(--color-aurora-violet)] text-sm px-4 py-1">⏸️ Paused</Badge>
               </div>
             )}
           </div>
@@ -228,17 +213,17 @@ export default function TrackRoutePage() {
       </div>
 
       {/* Controls */}
-      <div className="backdrop-blur-xl bg-white/5 border-t border-white/10 p-4">
+      <div className="backdrop-blur-xl bg-[var(--color-aurora-violet)]/95 border-t border-[var(--color-aurora-pink)]/30 p-4 pb-safe">
         {showTypeSelector ? (
           <div className="max-w-md mx-auto space-y-4">
-            <h3 className="font-semibold text-center text-white">Select Activity Type</h3>
+            <h3 className="font-semibold text-center text-[var(--color-aurora-cream)]">Select Activity Type</h3>
             <div className="grid grid-cols-2 gap-3">
               {(["walking", "running", "cycling", "commuting"] as const).map((type) => (
                 <Button
                   key={type}
                   variant={routeType === type ? "default" : "outline"}
                   onClick={() => setRouteType(type)}
-                  className={`capitalize ${routeType === type ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}`}
+                  className={`capitalize min-h-[48px] ${routeType === type ? 'bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}`}
                 >
                   {type}
                 </Button>
@@ -246,7 +231,7 @@ export default function TrackRoutePage() {
             </div>
             <Button 
               onClick={handleStart} 
-              className="w-full min-h-[56px] bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/50" 
+              className="w-full min-h-[56px] bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:from-[var(--color-aurora-violet)] hover:to-[var(--color-aurora-purple)] shadow-lg shadow-[var(--color-aurora-purple)]/50 text-white" 
               size="lg"
               aria-label="Start tracking route"
             >
@@ -261,7 +246,7 @@ export default function TrackRoutePage() {
                 onClick={handlePause} 
                 variant="outline" 
                 size="lg" 
-                className="flex-1 min-h-[56px] bg-white/10 border-white/20 text-white hover:bg-white/20"
+                className="flex-1 min-h-[56px] bg-[var(--color-aurora-yellow)]/20 border-[var(--color-aurora-yellow)]/50 text-[var(--color-aurora-yellow)] hover:bg-[var(--color-aurora-yellow)]/30"
                 aria-label="Pause route tracking"
               >
                 <Pause className="w-5 h-5 mr-2" aria-hidden="true" />
@@ -271,7 +256,7 @@ export default function TrackRoutePage() {
               <Button 
                 onClick={handleResume} 
                 size="lg" 
-                className="flex-1 min-h-[56px] bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                className="flex-1 min-h-[56px] bg-gradient-to-r from-[var(--color-aurora-mint)] to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-[var(--color-aurora-violet)]"
                 aria-label="Resume route tracking"
               >
                 <Play className="w-5 h-5 mr-2" aria-hidden="true" />
@@ -280,13 +265,12 @@ export default function TrackRoutePage() {
             )}
             <Button 
               onClick={handleStop} 
-              variant="destructive" 
               size="lg" 
-              className="flex-1 min-h-[56px] bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700"
+              className="flex-1 min-h-[56px] bg-gradient-to-r from-[var(--color-aurora-orange)] to-[var(--color-aurora-salmon)] hover:from-[var(--color-aurora-salmon)] hover:to-red-600 text-white"
               aria-label="Stop route tracking"
             >
               <Square className="w-5 h-5 mr-2" aria-hidden="true" />
-              Stop & Save
+              Save
             </Button>
           </div>
         )}
