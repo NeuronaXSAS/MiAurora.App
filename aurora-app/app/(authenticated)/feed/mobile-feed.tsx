@@ -39,14 +39,19 @@ export function MobileFeed() {
   const displayItems = feedItems || [];
 
   return (
-    <div className="px-3 py-4 space-y-4 max-w-2xl mx-auto bg-[var(--background)] min-h-screen">
-      {/* Header */}
-      <div className="mb-4 px-1">
-        <h2 className="text-2xl font-bold mb-1 text-[var(--foreground)]">Your Feed</h2>
-        <p className="text-sm text-[var(--muted-foreground)]">
-          Discover and share community intelligence
-        </p>
+    <div className="bg-[var(--background)] min-h-screen">
+      {/* Header - Fixed with proper spacing for mobile menu button */}
+      <div className="sticky top-0 z-30 bg-[var(--card)] border-b border-[var(--border)] px-4 py-4">
+        <div className="ml-12">
+          <h2 className="text-xl font-bold text-[var(--foreground)]">Your Feed</h2>
+          <p className="text-sm text-[var(--muted-foreground)]">
+            Discover and share community intelligence
+          </p>
+        </div>
       </div>
+      
+      {/* Feed Content */}
+      <div className="px-3 py-4 space-y-4 max-w-2xl mx-auto">
 
       {/* Loading State */}
       {feedItems === undefined && (
@@ -129,6 +134,7 @@ export function MobileFeed() {
 
         return null;
       })}
+      </div>
     </div>
   );
 }

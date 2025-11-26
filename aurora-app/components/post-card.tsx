@@ -216,7 +216,7 @@ export function PostCard({
                   </Button>
                 )}
               </div>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[var(--muted-foreground)]">
                 {formatDistanceToNow(post._creationTime, { addSuffix: true })}
               </p>
             </div>
@@ -249,27 +249,27 @@ export function PostCard({
         {/* Title and Rating */}
         <div>
           <div className="flex items-start justify-between gap-3 mb-2">
-            <h3 className="font-semibold text-base sm:text-lg flex-1 min-w-0">{post.title}</h3>
+            <h3 className="font-semibold text-base sm:text-lg flex-1 min-w-0 text-[var(--foreground)]">{post.title}</h3>
             <div className="flex items-center gap-0.5 flex-shrink-0">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
                   className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
                     i < post.rating
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-gray-300"
+                      ? "fill-[var(--color-aurora-yellow)] text-[var(--color-aurora-yellow)]"
+                      : "text-[var(--muted-foreground)]"
                   }`}
                 />
               ))}
             </div>
           </div>
-          <p className="text-gray-700 whitespace-pre-wrap">{post.description}</p>
+          <p className="text-[var(--foreground)] whitespace-pre-wrap leading-relaxed">{post.description}</p>
         </div>
 
         {/* Location */}
         {post.location && (
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <MapPin className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
+            <MapPin className="w-4 h-4 text-[var(--color-aurora-purple)]" />
             <span>{post.location.name}</span>
           </div>
         )}
@@ -412,7 +412,7 @@ export function PostCard({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500 text-center py-4">
+              <p className="text-sm text-[var(--muted-foreground)] text-center py-4">
                 No comments yet. Be the first to comment!
               </p>
             )}

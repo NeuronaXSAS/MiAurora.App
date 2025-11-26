@@ -326,23 +326,72 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
     }
   };
 
-  // Get user's GPS location
+  // Get user's GPS location with high accuracy
   const handleGetUserLocation = () => {
     if (!navigator.geolocation) {
       alert("Geolocation is not supported by your browser");
       return;
     }
 
+    // Request high accuracy GPS position
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords;
+        const { latitude, longitude, accuracy } = position.coords;
+        console.log(`GPS Location: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`);
+        
         setUserLocation({ lat: latitude, lng: longitude });
 
         if (map.current) {
-          // Fly to user location with smooth animation
+          // Remove existing user marker if any
+          if (userLocationMarker.current) {
+            userLocationMarker.current.remove();
+            userLocationMarker.current = null;
+          }
+
+          // Create a more visible user location marker with accuracy circle
+          const el = document.createElement("div");
+          el.className = "user-location-marker";
+          el.innerHTML = `
+            <div style="
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+              border: 4px solid white;
+              box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 2px 8px rgba(0,0,0,0.3);
+              animation: pulse 2s infinite;
+            "></div>
+          `;
+
+          // Add CSS animation for pulsing effect
+          const style = document.createElement('style');
+          style.textContent = `
+            @keyframes pulse {
+              0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+              70% { box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
+              100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+            }
+          `;
+          document.head.appendChild(style);
+
+          userLocationMarker.current = new mapboxgl.Marker(el)
+            .setLngLat([longitude, latitude])
+            .setPopup(
+              new mapboxgl.Popup({ offset: 25 }).setHTML(
+                `<div style="padding: 8px;">
+                  <strong>📍 Your Location</strong>
+                  <p style="font-size: 11px; color: #666; margin-top: 4px;">
+                    Accuracy: ~${Math.round(accuracy)}m
+                  </p>
+                </div>`
+              )
+            )
+            .addTo(map.current);
+
+          // Fly to user location with higher zoom for better precision view
           map.current.flyTo({
             center: [longitude, latitude],
-            zoom: 14,
+            zoom: 16, // Higher zoom for better precision
             duration: 2000,
             essential: true,
           });
@@ -363,7 +412,24 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
       },
       (error) => {
         console.error("Error getting location:", error);
-        alert("Unable to get your location. Please enable location services.");
+        let errorMessage = "Unable to get your location.";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Location permission denied. Please enable location access in your browser settings.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Location information unavailable. Please try again.";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Location request timed out. Please try again.";
+            break;
+        }
+        alert(errorMessage);
+      },
+      {
+        enableHighAccuracy: true, // Request high accuracy GPS
+        timeout: 15000, // Wait up to 15 seconds
+        maximumAge: 0 // Don't use cached position
       }
     );
   };

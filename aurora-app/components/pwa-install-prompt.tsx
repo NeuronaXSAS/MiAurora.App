@@ -61,24 +61,24 @@ export function PWAInstallPrompt() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 sm:left-auto sm:right-4 sm:max-w-sm">
-      <Card className="shadow-lg border-2 border-aurora-lavender">
+      <Card className="shadow-xl border border-[var(--border)] bg-[var(--card)]">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-aurora-lavender/30 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Download className="w-5 h-5 text-aurora-violet" />
+            <div className="w-10 h-10 bg-[var(--color-aurora-lavender)]/30 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Download className="w-5 h-5 text-[var(--color-aurora-purple)]" />
             </div>
             
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm mb-1">Install Aurora App</h3>
-              <p className="text-xs text-gray-600 mb-3">
+              <h3 className="font-semibold text-sm mb-1 text-[var(--foreground)]">Install Aurora App</h3>
+              <p className="text-xs text-[var(--muted-foreground)] mb-3">
                 Get quick access and work offline. Install our app for the best experience.
               </p>
               
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleInstall} className="flex-1">
+                <Button size="sm" onClick={handleInstall} className="flex-1 min-h-[44px] bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]">
                   Install
                 </Button>
-                <Button size="sm" variant="outline" onClick={handleDismiss}>
+                <Button size="sm" variant="outline" onClick={handleDismiss} className="min-h-[44px] border-[var(--border)]">
                   Not Now
                 </Button>
               </div>
@@ -86,7 +86,7 @@ export function PWAInstallPrompt() {
 
             <button
               onClick={handleDismiss}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               <X className="w-4 h-4" />
             </button>
