@@ -141,13 +141,18 @@ async function cacheFirst(request) {
   
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    // Only cache successful, complete responses (not partial 206 responses)
+    if (response.ok && response.status !== 206) {
       const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
+      try {
+        cache.put(request, response.clone());
+      } catch (cacheError) {
+        console.debug('[Aurora SW] Cache put failed:', cacheError);
+      }
     }
     return response;
   } catch (error) {
-    console.error('[Aurora SW] Cache-first fetch failed:', error);
+    console.debug('[Aurora SW] Cache-first fetch failed:', error);
     return new Response('Offline', { status: 503 });
   }
 }
@@ -156,9 +161,16 @@ async function cacheFirst(request) {
 async function networkFirst(request) {
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    // Only cache successful, complete responses (not partial 206 responses)
+    if (response.ok && response.status !== 206) {
       const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
+      // Clone before caching
+      try {
+        cache.put(request, response.clone());
+      } catch (cacheError) {
+        // Silently fail cache operations (e.g., for opaque responses)
+        console.debug('[Aurora SW] Cache put failed:', cacheError);
+      }
     }
     return response;
   } catch (error) {
@@ -183,8 +195,13 @@ async function staleWhileRevalidate(request) {
   
   const fetchPromise = fetch(request)
     .then((response) => {
-      if (response.ok) {
-        cache.put(request, response.clone());
+      // Only cache successful, complete responses (not partial 206 responses)
+      if (response.ok && response.status !== 206) {
+        try {
+          cache.put(request, response.clone());
+        } catch (cacheError) {
+          console.debug('[Aurora SW] Cache put failed:', cacheError);
+        }
       }
       return response;
     })

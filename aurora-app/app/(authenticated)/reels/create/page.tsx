@@ -76,9 +76,9 @@ function CreateReelContent() {
       )}
 
       {flowState === 'success' && (
-        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-[var(--background)] flex items-center justify-center">
           <div className="text-center space-y-4 animate-in fade-in zoom-in duration-500">
-            <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
+            <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center">
               <svg
                 className="w-12 h-12 text-white"
                 fill="none"
@@ -93,8 +93,8 @@ function CreateReelContent() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-white">Reel Posted!</h2>
-            <p className="text-gray-400">You earned 20 credits 🎉</p>
+            <h2 className="text-2xl font-bold text-[var(--foreground)]">Reel Posted!</h2>
+            <p className="text-[var(--color-aurora-yellow)]">You earned 20 credits 🎉</p>
           </div>
         </div>
       )}

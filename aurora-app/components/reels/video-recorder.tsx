@@ -301,7 +301,7 @@ export function VideoRecorder({
 
             <button
               onClick={acceptRecording}
-              className="w-20 h-20 rounded-full bg-purple-500 border-4 border-white shadow-lg hover:scale-110 transition-transform active:scale-95 flex items-center justify-center"
+              className="w-20 h-20 rounded-full bg-[var(--color-aurora-purple)] border-4 border-white shadow-lg hover:scale-110 transition-transform active:scale-95 flex items-center justify-center"
             >
               <Check className="h-8 w-8 text-white" />
             </button>

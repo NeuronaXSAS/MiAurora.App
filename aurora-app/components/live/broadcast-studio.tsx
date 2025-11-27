@@ -238,37 +238,37 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
   // Setup Stage
   if (stage === 'setup') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-900 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4">
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-xl p-8 max-w-md w-full">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-full flex items-center justify-center mx-auto mb-4">
               <Video className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">Go Live</h1>
-            <p className="text-gray-600">Share your experience with the community</p>
+            <h1 className="text-2xl font-bold mb-2 text-[var(--foreground)]">Go Live</h1>
+            <p className="text-[var(--muted-foreground)]">Share your experience with the community</p>
           </div>
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="title">Stream Title *</Label>
+              <Label htmlFor="title" className="text-[var(--foreground)]">Stream Title *</Label>
               <Input
                 id="title"
                 placeholder="e.g., Evening Safety Walk in Downtown"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={100}
-                className="mt-1"
+                className="mt-1 bg-[var(--background)] border-[var(--border)] text-[var(--foreground)]"
               />
-              <p className="text-xs text-gray-500 mt-1">{title.length}/100</p>
+              <p className="text-xs text-[var(--muted-foreground)] mt-1">{title.length}/100</p>
             </div>
 
             <div>
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category" className="text-[var(--foreground)]">Category</Label>
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 bg-[var(--background)] border-[var(--border)] text-[var(--foreground)]">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[var(--card)] border-[var(--border)]">
                   <SelectItem value="safety-walk">🚶 Safety Walk</SelectItem>
                   <SelectItem value="commute">🚇 Commute</SelectItem>
                   <SelectItem value="qa">💬 Q&A</SelectItem>
@@ -278,29 +278,29 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
               </Select>
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-[var(--color-aurora-lavender)]/20 rounded-xl border border-[var(--color-aurora-lavender)]/30">
               <div className="flex items-center gap-2">
-                <Shield className="w-5 h-5 text-purple-600" />
+                <Shield className="w-5 h-5 text-[var(--color-aurora-purple)]" />
                 <div>
-                  <p className="font-medium text-sm">Safety Mode</p>
-                  <p className="text-xs text-gray-600">AI content moderation</p>
+                  <p className="font-medium text-sm text-[var(--foreground)]">Safety Mode</p>
+                  <p className="text-xs text-[var(--muted-foreground)]">Enable emergency alerts</p>
                 </div>
               </div>
               <input
                 type="checkbox"
                 checked={safetyMode}
                 onChange={(e) => setSafetyMode(e.target.checked)}
-                className="w-5 h-5"
+                className="w-5 h-5 accent-[var(--color-aurora-purple)]"
               />
             </div>
 
             {permissionError && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="p-4 bg-[var(--color-aurora-yellow)]/20 border border-[var(--color-aurora-yellow)]/30 rounded-xl">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-5 h-5 text-[var(--color-aurora-yellow)] flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-red-900 text-sm">Permission Required</p>
-                    <p className="text-red-700 text-xs mt-1">{permissionError}</p>
+                    <p className="font-medium text-[var(--foreground)] text-sm">Coming Soon</p>
+                    <p className="text-[var(--muted-foreground)] text-xs mt-1">{permissionError}</p>
                   </div>
                 </div>
               </div>
@@ -308,7 +308,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
 
             <Button
               onClick={handleGoLive}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+              className="w-full bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
               size="lg"
             >
               <Camera className="w-5 h-5 mr-2" />
@@ -318,7 +318,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
             <Button
               onClick={() => router.push('/live')}
               variant="outline"
-              className="w-full"
+              className="w-full border-[var(--border)]"
             >
               Cancel
             </Button>

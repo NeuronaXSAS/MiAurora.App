@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { MapPin, Plus } from "lucide-react";
+import { MapPin, Plus, Menu } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 
 export default function MapPage() {
@@ -25,6 +25,7 @@ export default function MapPage() {
     address: string;
   } | null>(null);
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
+  const [showControls, setShowControls] = useState(false);
 
   // Get user ID
   useEffect(() => {
@@ -48,62 +49,68 @@ export default function MapPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[var(--background)]">
-      {/* Header */}
-      <div className="bg-[var(--card)] border-b border-[var(--border)]">
-        <div className="px-4 sm:px-6 py-4">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-[var(--color-aurora-purple)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                <MapPin className="w-5 h-5 text-[var(--color-aurora-purple)]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">Safety Map</h1>
-                <p className="text-xs sm:text-sm text-[var(--muted-foreground)]">
-                  Rate and share safe places
-                </p>
-              </div>
-            </div>
+    <div className="h-[100dvh] w-full relative overflow-hidden bg-[var(--background)]">
+      {/* Full-screen Map */}
+      <SafetyMap 
+        lifeDimension={lifeDimension}
+        onLocationSelect={handleLocationSelect}
+      />
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              {/* Filter */}
-              <Select
-                value={lifeDimension || "all"}
-                onValueChange={(value) =>
-                  setLifeDimension(value === "all" ? undefined : value)
-                }
-              >
-                <SelectTrigger className="w-full sm:w-[200px] bg-[var(--background)] border-[var(--border)]">
-                  <SelectValue placeholder="All Dimensions" />
-                </SelectTrigger>
-                <SelectContent className="bg-[var(--card)] border-[var(--border)]">
-                  <SelectItem value="all">All Dimensions</SelectItem>
-                  <SelectItem value="professional">Professional</SelectItem>
-                  <SelectItem value="social">Social</SelectItem>
-                  <SelectItem value="daily">Daily Life</SelectItem>
-                  <SelectItem value="travel">Travel</SelectItem>
-                  <SelectItem value="financial">Financial</SelectItem>
-                </SelectContent>
-              </Select>
+      {/* Floating Header Controls */}
+      <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
+        {/* Toggle Controls Button */}
+        <Button
+          onClick={() => setShowControls(!showControls)}
+          className="bg-[var(--card)] text-[var(--foreground)] hover:bg-[var(--accent)] shadow-lg border border-[var(--border)] min-w-[44px] min-h-[44px]"
+          size="icon"
+          title="Toggle controls"
+        >
+          <Menu className="w-5 h-5" />
+        </Button>
 
-              {/* Create Post Button */}
-              <Button onClick={() => setShowCreateDialog(true)} className="w-full sm:w-auto bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]">
-                <Plus className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Mark Location</span>
-                <span className="sm:hidden">Mark Map</span>
-              </Button>
-            </div>
-          </div>
+        {/* Title Badge */}
+        <div className="bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg px-3 py-2 flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+          <span className="font-semibold text-sm text-[var(--foreground)]">Safety Map</span>
         </div>
       </div>
 
-      {/* Map */}
-      <div className="flex-1">
-        <SafetyMap 
-          lifeDimension={lifeDimension}
-          onLocationSelect={handleLocationSelect}
-        />
-      </div>
+      {/* Expandable Controls Panel */}
+      {showControls && (
+        <div className="absolute top-16 left-4 z-20 bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg p-3 flex flex-col gap-3 min-w-[200px]">
+          {/* Filter */}
+          <Select
+            value={lifeDimension || "all"}
+            onValueChange={(value) =>
+              setLifeDimension(value === "all" ? undefined : value)
+            }
+          >
+            <SelectTrigger className="w-full bg-[var(--background)] border-[var(--border)]">
+              <SelectValue placeholder="All Dimensions" />
+            </SelectTrigger>
+            <SelectContent className="bg-[var(--card)] border-[var(--border)]">
+              <SelectItem value="all">All Dimensions</SelectItem>
+              <SelectItem value="professional">Professional</SelectItem>
+              <SelectItem value="social">Social</SelectItem>
+              <SelectItem value="daily">Daily Life</SelectItem>
+              <SelectItem value="travel">Travel</SelectItem>
+              <SelectItem value="financial">Financial</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Create Post Button */}
+          <Button 
+            onClick={() => {
+              setShowCreateDialog(true);
+              setShowControls(false);
+            }} 
+            className="w-full bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Mark Location
+          </Button>
+        </div>
+      )}
 
       {/* Create Post Dialog */}
       {userId && (

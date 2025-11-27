@@ -72,9 +72,9 @@ export function UploadForm({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+    <div className="fixed inset-0 z-50 bg-[var(--background)] flex flex-col">
       {/* Video Preview (Small) */}
-      <div className="relative w-full h-64 bg-gray-900">
+      <div className="relative w-full h-64 bg-[var(--color-aurora-violet)]">
         <video
           src={videoPreviewUrl}
           autoPlay
@@ -83,14 +83,14 @@ export function UploadForm({
           playsInline
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[var(--background)]/60" />
       </div>
 
       {/* Form Content */}
-      <div className="flex-1 overflow-y-auto bg-gray-950 p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto bg-[var(--background)] p-6 space-y-6">
         {/* Caption */}
         <div className="space-y-2">
-          <Label htmlFor="caption" className="text-white text-lg">
+          <Label htmlFor="caption" className="text-[var(--foreground)] text-lg">
             Caption
           </Label>
           <Textarea
@@ -100,17 +100,17 @@ export function UploadForm({
             onChange={(e) => setCaption(e.target.value)}
             maxLength={500}
             rows={4}
-            className="bg-gray-900 border-gray-800 text-white placeholder:text-gray-500 resize-none"
+            className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] resize-none rounded-xl"
           />
-          <p className="text-sm text-gray-500 text-right">
+          <p className="text-sm text-[var(--muted-foreground)] text-right">
             {caption.length}/500
           </p>
         </div>
 
         {/* Safety Tags */}
         <div className="space-y-3">
-          <Label className="text-white text-lg">Safety Tags</Label>
-          <p className="text-sm text-gray-400">
+          <Label className="text-[var(--foreground)] text-lg">Safety Tags</Label>
+          <p className="text-sm text-[var(--muted-foreground)]">
             Help other women by tagging the safety aspects of this location
           </p>
           <div className="grid grid-cols-2 gap-3">
@@ -118,14 +118,14 @@ export function UploadForm({
               <button
                 key={tag.id}
                 onClick={() => toggleTag(tag.id)}
-                className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
                   selectedTags.includes(tag.id)
-                    ? 'border-purple-500 bg-purple-500/20'
-                    : 'border-gray-800 bg-gray-900 hover:border-gray-700'
+                    ? 'border-[var(--color-aurora-purple)] bg-[var(--color-aurora-purple)]/20'
+                    : 'border-[var(--border)] bg-[var(--card)] hover:border-[var(--color-aurora-lavender)]'
                 }`}
               >
                 <span className="text-2xl">{tag.emoji}</span>
-                <span className="text-sm text-white font-medium">
+                <span className="text-sm text-[var(--foreground)] font-medium">
                   {tag.label}
                 </span>
               </button>
@@ -134,36 +134,36 @@ export function UploadForm({
         </div>
 
         {/* Anonymous Option */}
-        <div className="flex items-center space-x-3 p-4 bg-gray-900 rounded-lg">
+        <div className="flex items-center space-x-3 p-4 bg-[var(--card)] border border-[var(--border)] rounded-xl">
           <Checkbox
             id="anonymous"
             checked={isAnonymous}
             onCheckedChange={(checked) => setIsAnonymous(checked as boolean)}
-            className="border-gray-700"
+            className="border-[var(--border)]"
           />
           <div className="flex-1">
             <Label
               htmlFor="anonymous"
-              className="text-white font-medium cursor-pointer"
+              className="text-[var(--foreground)] font-medium cursor-pointer"
             >
               Post anonymously
             </Label>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-[var(--muted-foreground)]">
               Your name won't be shown, but you'll still earn credits
             </p>
           </div>
         </div>
 
         {/* Location (Future Feature) */}
-        <div className="flex items-center gap-2 p-4 bg-gray-900 rounded-lg opacity-50">
-          <MapPin className="h-5 w-5 text-gray-500" />
-          <span className="text-gray-500 text-sm">Add location (Coming soon)</span>
+        <div className="flex items-center gap-2 p-4 bg-[var(--card)] border border-[var(--border)] rounded-xl opacity-50">
+          <MapPin className="h-5 w-5 text-[var(--muted-foreground)]" />
+          <span className="text-[var(--muted-foreground)] text-sm">Add location (Coming soon)</span>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="p-4 bg-red-500/20 border border-red-500 rounded-lg">
-            <p className="text-red-400 text-sm">{error}</p>
+          <div className="p-4 bg-[var(--color-aurora-salmon)]/20 border border-[var(--color-aurora-salmon)] rounded-xl">
+            <p className="text-[var(--color-aurora-salmon)] text-sm">{error}</p>
           </div>
         )}
 
@@ -171,8 +171,8 @@ export function UploadForm({
         {isUploading && progress && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Uploading...</span>
-              <span className="text-purple-400 font-semibold">
+              <span className="text-[var(--muted-foreground)]">Uploading...</span>
+              <span className="text-[var(--color-aurora-purple)] font-semibold">
                 {progress.percentage}%
               </span>
             </div>
@@ -182,11 +182,11 @@ export function UploadForm({
       </div>
 
       {/* Bottom Actions */}
-      <div className="p-6 bg-gray-950 border-t border-gray-900 space-y-3">
+      <div className="p-6 bg-[var(--card)] border-t border-[var(--border)] space-y-3">
         <Button
           onClick={handleSubmit}
           disabled={isUploading || caption.trim().length === 0}
-          className="w-full h-14 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold text-lg rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-14 bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white font-semibold text-lg rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isUploading ? (
             <>
@@ -205,7 +205,7 @@ export function UploadForm({
           onClick={onCancel}
           disabled={isUploading}
           variant="ghost"
-          className="w-full text-gray-400 hover:text-white hover:bg-gray-900"
+          className="w-full text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
         >
           Cancel
         </Button>

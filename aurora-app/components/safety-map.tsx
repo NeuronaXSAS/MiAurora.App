@@ -437,7 +437,7 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
   // Show error state if map failed to load
   if (mapError) {
     return (
-      <div className="relative w-full h-full flex items-center justify-center bg-[var(--background)]" style={{ minHeight: '100dvh' }}>
+      <div className="absolute inset-0 flex items-center justify-center bg-[var(--background)]">
         <div className="text-center p-8 max-w-md">
           <div className="w-16 h-16 bg-[var(--color-aurora-yellow)]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <AlertTriangle className="w-8 h-8 text-[var(--color-aurora-yellow)]" />
@@ -453,15 +453,14 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
   }
 
   return (
-    <div className="relative w-full h-full" style={{ minHeight: '100dvh' }}>
+    <div className="absolute inset-0">
       <div 
         ref={mapContainer} 
-        className={`w-full rounded-lg ${isSelectingLocation ? 'cursor-crosshair' : ''}`}
-        style={{ height: '100dvh' }}
+        className={`w-full h-full ${isSelectingLocation ? 'cursor-crosshair' : ''}`}
       />
 
-      {/* Search Bar */}
-      <div className="absolute top-4 left-4 right-20 z-10 max-w-md">
+      {/* Search Bar - Positioned to not overlap with page controls */}
+      <div className="absolute top-4 left-[180px] sm:left-[220px] right-16 z-10 max-w-sm">
         <div className="relative">
           <Input
             type="text"
@@ -469,7 +468,7 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="bg-[var(--card)] border-[var(--border)] shadow-lg pr-10 text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
+            className="bg-[var(--card)]/95 backdrop-blur-sm border-[var(--border)] shadow-lg pr-10 text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] h-[44px]"
           />
           <Button
             onClick={handleSearch}
@@ -501,8 +500,8 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
         )}
       </div>
       
-      {/* Control Buttons - Positioned to avoid Mapbox controls */}
-      <div className="absolute top-4 left-4 flex flex-col gap-2 z-10 sm:left-auto sm:right-[60px]">
+      {/* Control Buttons - Right side, below Mapbox controls */}
+      <div className="absolute top-[120px] right-[10px] flex flex-col gap-2 z-10">
         {/* GPS Location Button */}
         <Button
           onClick={handleGetUserLocation}
@@ -537,30 +536,29 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
         </div>
       )}
 
-      {/* Legend - Responsive positioning */}
-      <div className="absolute bottom-20 sm:bottom-4 left-4 right-4 sm:right-auto bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-lg p-3 sm:p-4 z-10 max-w-[200px] sm:max-w-none">
-        <h4 className="font-semibold text-xs sm:text-sm mb-2 sm:mb-3 text-[var(--foreground)]">Safety Rating</h4>
-        <div className="flex sm:flex-col gap-3 sm:gap-2 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[var(--color-aurora-mint)]" />
-            <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Safe (4-5)</span>
+      {/* Legend - Compact bottom-left positioning */}
+      <div className="absolute bottom-24 sm:bottom-6 left-4 bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg p-2 sm:p-3 z-10">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-[#22c55e]" />
+            <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Safe</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[var(--color-aurora-yellow)]" />
-            <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Neutral (3)</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-[#eab308]" />
+            <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Neutral</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[var(--color-aurora-salmon)]" />
-            <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Unsafe (1-2)</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-[#ef4444]" />
+            <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Unsafe</span>
           </div>
         </div>
       </div>
 
       {/* Nearby Posts Panel */}
       {nearbyPosts.length > 0 && (
-        <div className="absolute bottom-4 right-4 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-lg p-4 z-10 max-w-xs max-h-80 overflow-y-auto">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="font-semibold text-sm text-[var(--foreground)]">Nearby Locations ({nearbyPosts.length})</h4>
+        <div className="absolute bottom-24 sm:bottom-6 right-4 bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg p-3 z-10 max-w-[280px] max-h-[40vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-semibold text-xs text-[var(--foreground)]">Nearby ({nearbyPosts.length})</h4>
             <Button
               variant="ghost"
               size="icon"
@@ -570,8 +568,8 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
               <X className="w-4 h-4" />
             </Button>
           </div>
-          <div className="space-y-2">
-            {nearbyPosts.map((post) => (
+          <div className="space-y-1.5">
+            {nearbyPosts.slice(0, 5).map((post) => (
               <button
                 key={post._id}
                 onClick={() => onMarkerClick && onMarkerClick(post._id)}
@@ -579,19 +577,19 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
               >
                 <div className="flex items-start gap-2">
                   <Badge
-                    className={`flex-shrink-0 text-white ${
+                    className={`flex-shrink-0 text-white text-[10px] px-1.5 ${
                       post.rating >= 4
-                        ? "bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)]"
+                        ? "bg-[#22c55e]"
                         : post.rating >= 3
-                        ? "bg-[var(--color-aurora-yellow)] text-[var(--color-aurora-violet)]"
-                        : "bg-[var(--color-aurora-salmon)]"
+                        ? "bg-[#eab308]"
+                        : "bg-[#ef4444]"
                     }`}
                   >
                     {post.rating}
                   </Badge>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-xs truncate text-[var(--foreground)]">{post.title}</p>
-                    <p className="text-xs text-[var(--muted-foreground)] truncate">{post.location?.name}</p>
+                    <p className="text-[10px] text-[var(--muted-foreground)] truncate">{post.location?.name}</p>
                   </div>
                 </div>
               </button>
