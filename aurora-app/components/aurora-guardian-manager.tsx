@@ -181,7 +181,7 @@ export function AuroraGuardianManager({ userId }: AuroraGuardianManagerProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             <AnimatePresence>
-              {pendingRequests.map((request) => (
+              {pendingRequests.filter((r): r is NonNullable<typeof r> => r !== null).map((request) => (
                 <motion.div
                   key={request._id}
                   initial={{ opacity: 0, y: -10 }}
