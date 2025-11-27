@@ -1,16 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useState, useEffect, useCallback } from "react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Badge } from "./ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Shield, MapPin, Clock, Users, Send, AlertTriangle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { generateAvatarUrl } from "@/hooks/use-avatar";
+import { 
+  MapPin, 
+  Navigation, 
+  Users, 
+  Clock, 
+  CheckCircle,
+  AlertTriangle,
+  X,
+  Play,
+  Square,
+  Eye
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 
 interface SisterAccompanimentProps {
@@ -19,248 +30,311 @@ interface SisterAccompanimentProps {
 
 export function SisterAccompaniment({ userId }: SisterAccompanimentProps) {
   const [destination, setDestination] = useState("");
-  const [selectedCompanions, setSelectedCompanions] = useState<Id<"users">[]>([]);
-  const [estimatedMinutes, setEstimatedMinutes] = useState(30);
-  const [checkInMessage, setCheckInMessage] = useState("");
+  const [isTracking, setIsTracking] = useState(false);
+  const [watchId, setWatchId] = useState<number | null>(null);
 
-  // Safe queries with error handling - use null coalescing for safety
-  const activeSession = useQuery(api.accompaniment.getActiveSession, { userId }) ?? null;
-  const companionSessions = useQuery(api.accompaniment.getCompanionSessions, { userId }) ?? [];
-  const createSession = useMutation(api.accompaniment.createSession);
-  const updateLocation = useMutation(api.accompaniment.updateLocation);
-  const endSession = useMutation(api.accompaniment.endSession);
-  const sendCheckIn = useMutation(api.accompaniment.sendCheckIn);
+  // Queries
+  const activeSession = useQuery(api.locationSharing.getActiveSession, { userId });
+  const watchingSessions = useQuery(api.locationSharing.getWatchingSessions, { userId }) ?? [];
+  const myGuardians = useQuery(api.guardians.getMyGuardians, { userId }) ?? [];
 
-  // Update location every 30 seconds when session is active
-  useEffect(() => {
-    if (!activeSession) return;
+  // Mutations
+  const startShare = useMutation(api.locationSharing.startLocationShare);
+  const updateLocation = useMutation(api.locationSharing.updateLocation);
+  const endShare = useMutation(api.locationSharing.endLocationShare);
 
-    const updateLocationInterval = setInterval(() => {
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            updateLocation({
-              sessionId: activeSession._id,
+  // Location tracking
+  const startTracking = useCallback(async () => {
+    if (!("geolocation" in navigator)) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+
+    try {
+      // Start the session
+      const result = await startShare({
+        userId,
+        destination: destination || undefined,
+      });
+
+      setIsTracking(true);
+
+      // Start watching position
+      const id = navigator.geolocation.watchPosition(
+        async (position) => {
+          if (result.sessionId) {
+            await updateLocation({
+              sessionId: result.sessionId,
               location: {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude,
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
                 accuracy: position.coords.accuracy,
               },
             });
-          },
-          (error) => console.error("Location error:", error)
-        );
-      }
-    }, 30000); // Every 30 seconds
+          }
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 5000,
+        }
+      );
 
-    return () => clearInterval(updateLocationInterval);
-  }, [activeSession, updateLocation]);
-
-  const handleStartSession = async () => {
-    if (!destination || selectedCompanions.length === 0) return;
-
-    try {
-      await createSession({
-        userId,
-        destination,
-        estimatedArrival: Date.now() + estimatedMinutes * 60 * 1000,
-        companions: selectedCompanions,
-      });
-      setDestination("");
-      setSelectedCompanions([]);
+      setWatchId(id);
     } catch (error) {
-      console.error("Failed to start session:", error);
+      console.error("Error starting location share:", error);
+      alert("Failed to start location sharing. Make sure you have Aurora Guardians.");
     }
-  };
+  }, [userId, destination, startShare, updateLocation]);
 
-  const handleEndSession = async (status: "completed" | "cancelled" | "emergency") => {
-    if (!activeSession) return;
-    await endSession({ sessionId: activeSession._id, status });
-  };
+  const stopTracking = useCallback(async (status: "arrived" | "cancelled" = "arrived") => {
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      setWatchId(null);
+    }
 
-  const handleSendCheckIn = async () => {
-    if (!activeSession || !checkInMessage.trim()) return;
-    await sendCheckIn({
-      sessionId: activeSession._id,
-      message: checkInMessage,
-    });
-    setCheckInMessage("");
-  };
+    if (activeSession) {
+      await endShare({
+        sessionId: activeSession._id,
+        status,
+      });
+    }
+
+    setIsTracking(false);
+    setDestination("");
+  }, [watchId, activeSession, endShare]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [watchId]);
+
+  // Sync tracking state with active session
+  useEffect(() => {
+    if (activeSession && !isTracking) {
+      setIsTracking(true);
+    } else if (!activeSession && isTracking && watchId === null) {
+      setIsTracking(false);
+    }
+  }, [activeSession, isTracking, watchId]);
 
   return (
     <div className="space-y-6">
-      {/* Active Session */}
-      {activeSession && (
-        <Card className="border-aurora-violet/30 bg-gradient-to-br from-aurora-lavender/10 to-aurora-pink/10">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] flex items-center justify-center">
+          <Users className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-[var(--foreground)]">Sister Accompaniment</h2>
+          <p className="text-sm text-[var(--muted-foreground)]">
+            Share your journey with Aurora Guardians
+          </p>
+        </div>
+      </div>
+
+      {/* Active Sharing Session */}
+      {activeSession ? (
+        <Card className="border-[var(--color-aurora-mint)] bg-[var(--color-aurora-mint)]/10">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-aurora-violet" />
-              Active Journey Protection
+            <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+              <div className="w-3 h-3 bg-[var(--color-aurora-mint)] rounded-full animate-pulse" />
+              Sharing Location
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <MapPin className="w-5 h-5 text-aurora-violet" />
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Destination</p>
-                <p className="font-semibold">{activeSession.destination}</p>
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  Started {formatDistanceToNow(activeSession.startedAt, { addSuffix: true })}
+                </p>
+                {activeSession.destination && (
+                  <p className="font-medium text-[var(--foreground)]">
+                    <MapPin className="w-4 h-4 inline mr-1" />
+                    {activeSession.destination}
+                  </p>
+                )}
               </div>
+              <Badge className="bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)]">
+                {activeSession.sharedWith.length} guardians watching
+              </Badge>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-aurora-blue" />
-              <div>
-                <p className="text-sm text-gray-600">Estimated Arrival</p>
-                <p className="font-semibold">
-                  {formatDistanceToNow(activeSession.estimatedArrival, { addSuffix: true })}
+            {activeSession.lastLocation && (
+              <div className="p-3 bg-[var(--card)] rounded-lg text-sm">
+                <p className="text-[var(--muted-foreground)]">Last update:</p>
+                <p className="font-mono text-[var(--foreground)]">
+                  {activeSession.lastLocation.lat.toFixed(6)}, {activeSession.lastLocation.lng.toFixed(6)}
                 </p>
               </div>
-            </div>
+            )}
 
-            <div>
-              <p className="text-sm text-gray-600 mb-2">Companions Tracking You</p>
-              <div className="flex flex-wrap gap-2">
-                {activeSession.companionDetails?.map((companion: any) => (
-                  <div key={companion._id} className="flex items-center gap-2 bg-white/50 rounded-full px-3 py-1">
-                    <Avatar className="w-6 h-6">
-                      <AvatarImage src={companion.profileImage} />
-                      <AvatarFallback>{companion.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm">{companion.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Check-in */}
-            <div className="space-y-2">
-              <Label>Send Check-in Message</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="I'm doing fine..."
-                  value={checkInMessage}
-                  onChange={(e) => setCheckInMessage(e.target.value)}
-                />
-                <Button onClick={handleSendCheckIn} disabled={!checkInMessage.trim()}>
-                  <Send className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Actions */}
             <div className="flex gap-2">
               <Button
-                className="flex-1 bg-green-600 hover:bg-green-700"
-                onClick={() => handleEndSession("completed")}
+                onClick={() => stopTracking("arrived")}
+                className="flex-1 min-h-[44px] bg-[var(--color-aurora-mint)] hover:bg-[var(--color-aurora-mint)]/80 text-[var(--color-aurora-violet)]"
               >
+                <CheckCircle className="w-4 h-4 mr-2" />
                 I Arrived Safely
               </Button>
               <Button
                 variant="outline"
-                onClick={() => handleEndSession("cancelled")}
+                onClick={() => stopTracking("cancelled")}
+                className="min-h-[44px]"
               >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => handleEndSession("emergency")}
-              >
-                <AlertTriangle className="w-4 h-4 mr-2" />
-                Emergency
+                <Square className="w-4 h-4" />
               </Button>
             </div>
           </CardContent>
         </Card>
-      )}
-
-      {/* Start New Session */}
-      {!activeSession && (
-        <Card>
+      ) : (
+        /* Start Sharing */
+        <Card className="bg-[var(--card)] border-[var(--border)]">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-aurora-violet" />
-              Start Sister Accompaniment
+            <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+              <Navigation className="w-5 h-5 text-[var(--color-aurora-pink)]" />
+              Start Journey
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Where are you going?</Label>
-              <Input
-                placeholder="e.g., Home, Office, Friend's place"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-              />
-            </div>
+            {myGuardians.length === 0 ? (
+              <div className="text-center py-4">
+                <Users className="w-10 h-10 text-[var(--muted-foreground)] mx-auto mb-2" />
+                <p className="text-[var(--muted-foreground)]">
+                  Add Aurora Guardians first to share your location
+                </p>
+              </div>
+            ) : (
+              <>
+                <Input
+                  placeholder="Where are you going? (optional)"
+                  value={destination}
+                  onChange={(e) => setDestination(e.target.value)}
+                  className="min-h-[44px]"
+                />
+                
+                <div className="p-3 bg-[var(--accent)] rounded-lg">
+                  <p className="text-sm text-[var(--muted-foreground)] mb-2">
+                    Will notify {myGuardians.length} guardian{myGuardians.length !== 1 ? "s" : ""}:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {myGuardians.slice(0, 5).map((g) => (
+                      <Badge key={g?.user._id} variant="outline" className="text-xs">
+                        {g?.user.name}
+                      </Badge>
+                    ))}
+                    {myGuardians.length > 5 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{myGuardians.length - 5} more
+                      </Badge>
+                    )}
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <Label>Estimated time (minutes)</Label>
-              <Input
-                type="number"
-                value={estimatedMinutes}
-                onChange={(e) => setEstimatedMinutes(parseInt(e.target.value) || 30)}
-                min={5}
-                max={180}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Select companions to track you</Label>
-              <p className="text-xs text-gray-600">
-                Choose trusted friends who will receive your real-time location
-              </p>
-              {/* TODO: Add friend selector component */}
-              <p className="text-sm text-gray-500 italic">
-                Friend selector coming soon - connect with friends first
-              </p>
-            </div>
-
-            <Button
-              className="w-full bg-aurora-violet hover:bg-aurora-violet/90"
-              onClick={handleStartSession}
-              disabled={!destination || selectedCompanions.length === 0}
-            >
-              Start Protected Journey
-            </Button>
+                <Button
+                  onClick={startTracking}
+                  className="w-full min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-pink)]"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Start Sharing Location
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
 
-      {/* Sessions You're Tracking */}
-      {companionSessions && companionSessions.length > 0 && (
-        <Card>
+      {/* Watching Others */}
+      {watchingSessions.length > 0 && (
+        <Card className="bg-[var(--card)] border-[var(--border)]">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-aurora-blue" />
-              Tracking Sisters
+            <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+              <Eye className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+              Sisters You're Watching ({watchingSessions.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {companionSessions.map((session: any) => (
-              <div
-                key={session._id}
-                className="p-4 bg-aurora-blue/5 rounded-lg border border-aurora-blue/20"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <Avatar>
-                    <AvatarImage src={session.userDetails?.profileImage} />
-                    <AvatarFallback>
-                      {session.userDetails?.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="font-semibold">{session.userDetails?.name}</p>
-                    <p className="text-sm text-gray-600">→ {session.destination}</p>
+            <AnimatePresence>
+              {watchingSessions.map((session) => (
+                <motion.div
+                  key={session._id}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  className="p-4 rounded-xl border border-[var(--color-aurora-mint)]/50 bg-[var(--color-aurora-mint)]/10"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-white font-bold">
+                          {session.user?.avatarConfig ? (
+                            <img
+                              src={generateAvatarUrl(session.user.avatarConfig as any)}
+                              alt={session.user.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            session.user?.name.charAt(0)
+                          )}
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[var(--color-aurora-mint)] rounded-full border-2 border-[var(--card)] flex items-center justify-center">
+                          <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                        </div>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-[var(--foreground)]">{session.user?.name}</p>
+                        {session.destination && (
+                          <p className="text-sm text-[var(--muted-foreground)]">
+                            <MapPin className="w-3 h-3 inline mr-1" />
+                            {session.destination}
+                          </p>
+                        )}
+                        <p className="text-xs text-[var(--muted-foreground)]">
+                          Started {formatDistanceToNow(session.startedAt, { addSuffix: true })}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className="bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)]">
+                      Live
+                    </Badge>
                   </div>
-                  <Badge className="bg-green-500">Active</Badge>
-                </div>
-                <p className="text-xs text-gray-500">
-                  Last update: {formatDistanceToNow(session.lastUpdate, { addSuffix: true })}
-                </p>
-              </div>
-            ))}
+
+                  {session.lastLocation && (
+                    <div className="mt-3 p-2 bg-[var(--card)] rounded-lg">
+                      <p className="text-xs text-[var(--muted-foreground)]">
+                        Last seen: {session.lastLocation.lat.toFixed(4)}, {session.lastLocation.lng.toFixed(4)}
+                      </p>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </CardContent>
         </Card>
       )}
+
+      {/* Info */}
+      <Card className="bg-[var(--color-aurora-lavender)]/20 border-[var(--color-aurora-lavender)]">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <Navigation className="w-5 h-5 text-[var(--color-aurora-purple)] flex-shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-semibold text-[var(--foreground)] mb-1">Sister Accompaniment</p>
+              <p className="text-[var(--muted-foreground)]">
+                Share your real-time location with your Aurora Guardians when traveling alone.
+                They'll be notified when you start, and when you arrive safely.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

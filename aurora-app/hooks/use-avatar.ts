@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 export interface AvatarConfig {
   seed: string;
@@ -15,7 +18,7 @@ export interface AvatarConfig {
 }
 
 // Simple avatar URL generator using DiceBear API
-export function generateAvatarUrl(config: AvatarConfig | null): string {
+export function generateAvatarUrl(config: AvatarConfig | null | undefined): string {
   if (!config) return '';
   
   const baseUrl = 'https://api.dicebear.com/7.x/lorelei/svg';
@@ -37,39 +40,67 @@ export function generateAvatarUrl(config: AvatarConfig | null): string {
 
 const STORAGE_KEY = 'aurora-avatar-config';
 
-export function useAvatar() {
+/**
+ * Hook to manage user avatar - uses Convex as primary source, localStorage as fallback
+ */
+export function useAvatar(userId?: Id<"users">) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarConfig, setAvatarConfig] = useState<AvatarConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load avatar on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const config = JSON.parse(stored) as AvatarConfig;
-        setAvatarConfig(config);
-        setAvatarUrl(generateAvatarUrl(config));
-      }
-    } catch (error) {
-      console.error('Error loading avatar:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  // Get user from Convex (includes avatarConfig)
+  const user = useQuery(api.users.getUser, userId ? { userId } : "skip");
+  const updateAvatarMutation = useMutation(api.users.updateAvatar);
 
-  // Update avatar and persist to localStorage
-  const updateAvatar = useCallback((config: AvatarConfig) => {
+  // Load avatar from Convex or localStorage
+  useEffect(() => {
+    // If we have user data from Convex with avatar, use it
+    if (user?.avatarConfig) {
+      setAvatarConfig(user.avatarConfig as AvatarConfig);
+      setAvatarUrl(generateAvatarUrl(user.avatarConfig as AvatarConfig));
+      setIsLoading(false);
+      return;
+    }
+
+    // Fallback to localStorage if no Convex data
+    if (user === null || !userId) {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const config = JSON.parse(stored) as AvatarConfig;
+          setAvatarConfig(config);
+          setAvatarUrl(generateAvatarUrl(config));
+        }
+      } catch (error) {
+        console.error('Error loading avatar:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, [user, userId]);
+
+  // Update avatar and persist to both Convex and localStorage
+  const updateAvatar = useCallback(async (config: AvatarConfig) => {
     setAvatarConfig(config);
     const url = generateAvatarUrl(config);
     setAvatarUrl(url);
     
+    // Save to localStorage as backup
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
     } catch (error) {
-      console.error('Error saving avatar:', error);
+      console.error('Error saving avatar to localStorage:', error);
     }
-  }, []);
+
+    // Save to Convex if we have userId
+    if (userId) {
+      try {
+        await updateAvatarMutation({ userId, avatarConfig: config });
+      } catch (error) {
+        console.error('Error saving avatar to Convex:', error);
+      }
+    }
+  }, [userId, updateAvatarMutation]);
 
   // Clear avatar
   const clearAvatar = useCallback(() => {

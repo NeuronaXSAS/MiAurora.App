@@ -37,6 +37,7 @@ import { formatDistanceToNow } from "date-fns";
 import { HydrationTracker } from "@/components/health/hydration-tracker";
 import { EmotionalCheckin } from "@/components/health/emotional-checkin";
 import { MeditationSection } from "@/components/health/meditation-section";
+import { generateAvatarUrl, AvatarConfig } from "@/hooks/use-avatar";
 
 export default function ProfilePage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
@@ -196,7 +197,7 @@ export default function ProfilePage() {
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
           <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
             <Avatar className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 border-4 border-white/50">
-              <AvatarImage src={user.profileImage} />
+              <AvatarImage src={user.avatarConfig ? generateAvatarUrl(user.avatarConfig as AvatarConfig) : user.profileImage} />
               <AvatarFallback className="text-2xl sm:text-3xl bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white">
                 {(user.name && user.name !== 'null' ? user.name : 'U').charAt(0).toUpperCase()}
               </AvatarFallback>

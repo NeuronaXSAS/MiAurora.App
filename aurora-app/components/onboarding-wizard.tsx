@@ -88,6 +88,8 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
     );
   };
 
+  const updateAvatar = useMutation(api.users.updateAvatar);
+
   const handleComplete = async () => {
     if (!workosId) {
       setError("Unable to save preferences. Please refresh and try again.");
@@ -115,6 +117,19 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
         careerGoals: selectedInterests.join(", ") || undefined,
         interests: selectedInterests.length > 0 ? selectedInterests : undefined,
       });
+
+      // Save avatar to Convex if created
+      if (avatarConfig && _userId) {
+        try {
+          await updateAvatar({
+            userId: _userId,
+            avatarConfig,
+          });
+          console.log("✅ Avatar saved to Convex");
+        } catch (avatarError) {
+          console.warn("⚠️ Avatar save failed (non-critical):", avatarError);
+        }
+      }
 
       console.log("✅ Onboarding mutation completed successfully");
 

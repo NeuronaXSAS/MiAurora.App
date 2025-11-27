@@ -22,6 +22,7 @@ import {
 
 import { SafetyCheckin } from "@/components/safety-checkin";
 import { SisterAccompaniment } from "@/components/sister-accompaniment";
+import { AuroraGuardianManager } from "@/components/aurora-guardian-manager";
 import { Id } from "@/convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
 
@@ -105,12 +106,16 @@ export default function EmergencyPage() {
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
         {/* Tabs for different safety features */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="grid grid-cols-3 mb-6 bg-[var(--card)] border border-[var(--border)] p-1 rounded-xl">
+          <TabsList className="grid grid-cols-4 mb-6 bg-[var(--card)] border border-[var(--border)] p-1 rounded-xl">
             <TabsTrigger value="panic" className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-[var(--color-aurora-orange)] data-[state=active]:text-white rounded-lg py-2 sm:py-2.5">
               <AlertTriangle className="w-4 h-4" />
               <span className="hidden sm:inline">Panic</span>
             </TabsTrigger>
-            <TabsTrigger value="checkin" className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg py-2 sm:py-2.5">
+            <TabsTrigger value="guardians" className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg py-2 sm:py-2.5">
+              <Shield className="w-4 h-4" />
+              <span className="hidden sm:inline">Guardians</span>
+            </TabsTrigger>
+            <TabsTrigger value="checkin" className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm data-[state=active]:bg-[var(--color-aurora-mint)] data-[state=active]:text-white rounded-lg py-2 sm:py-2.5">
               <Clock className="w-4 h-4" />
               <span className="hidden sm:inline">Check-in</span>
             </TabsTrigger>
@@ -357,6 +362,10 @@ export default function EmergencyPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="guardians">
+            {userId && <AuroraGuardianManager userId={userId} />}
           </TabsContent>
 
           <TabsContent value="checkin">

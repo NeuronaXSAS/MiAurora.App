@@ -1039,4 +1039,87 @@ export default defineSchema({
     .index("by_company", ["companyName"])
     .index("by_type", ["incidentType"])
     .index("by_status", ["status"]),
+
+  // ============================================
+  // AURORA GUARDIAN SYSTEM - In-Platform Contacts
+  // ============================================
+
+  // Aurora Guardian Connections (like friends)
+  auroraGuardians: defineTable({
+    userId: v.id("users"), // The user who has this guardian
+    guardianId: v.id("users"), // The guardian user
+    status: v.union(
+      v.literal("pending"), // Request sent
+      v.literal("accepted"), // Both connected
+      v.literal("declined"), // Request declined
+      v.literal("blocked") // Blocked
+    ),
+    requestedAt: v.number(),
+    acceptedAt: v.optional(v.number()),
+    message: v.optional(v.string()), // Request message
+    // Permissions
+    canSeeLocation: v.boolean(), // Can see real-time location
+    canReceiveAlerts: v.boolean(), // Receives emergency alerts
+    canReceiveCheckins: v.boolean(), // Receives check-in notifications
+  })
+    .index("by_user", ["userId"])
+    .index("by_guardian", ["guardianId"])
+    .index("by_user_status", ["userId", "status"])
+    .index("by_guardian_status", ["guardianId", "status"]),
+
+  // Guardian Notifications - For check-ins and alerts
+  guardianNotifications: defineTable({
+    guardianId: v.id("users"), // Who receives the notification
+    fromUserId: v.id("users"), // Who triggered it
+    type: v.union(
+      v.literal("checkin_missed"), // User missed a check-in
+      v.literal("emergency_alert"), // Panic button pressed
+      v.literal("location_share"), // Started sharing location
+      v.literal("accompaniment_request"), // Wants accompaniment
+      v.literal("safe_arrival") // Arrived safely
+    ),
+    message: v.string(),
+    location: v.optional(v.object({
+      lat: v.number(),
+      lng: v.number(),
+      address: v.optional(v.string()),
+    })),
+    isRead: v.boolean(),
+    isActioned: v.boolean(), // Guardian took action
+    actionTaken: v.optional(v.string()),
+    relatedId: v.optional(v.string()), // Related checkin/alert ID
+  })
+    .index("by_guardian", ["guardianId"])
+    .index("by_guardian_unread", ["guardianId", "isRead"])
+    .index("by_from_user", ["fromUserId"]),
+
+  // Location Sharing Sessions
+  locationShares: defineTable({
+    userId: v.id("users"), // Who is sharing
+    sharedWith: v.array(v.id("users")), // Aurora Guardians receiving
+    destination: v.optional(v.string()),
+    estimatedArrival: v.optional(v.number()),
+    status: v.union(
+      v.literal("active"),
+      v.literal("arrived"),
+      v.literal("cancelled"),
+      v.literal("emergency")
+    ),
+    startedAt: v.number(),
+    endedAt: v.optional(v.number()),
+    lastLocation: v.optional(v.object({
+      lat: v.number(),
+      lng: v.number(),
+      accuracy: v.optional(v.number()),
+      timestamp: v.number(),
+    })),
+    locationHistory: v.optional(v.array(v.object({
+      lat: v.number(),
+      lng: v.number(),
+      timestamp: v.number(),
+    }))),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_user_status", ["userId", "status"]),
 });

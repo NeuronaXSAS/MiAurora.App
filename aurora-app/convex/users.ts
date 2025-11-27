@@ -200,6 +200,38 @@ export const getTransactionHistory = query({
 });
 
 /**
+ * Update user avatar
+ */
+export const updateAvatar = mutation({
+  args: {
+    userId: v.id("users"),
+    avatarConfig: v.object({
+      seed: v.string(),
+      backgroundColor: v.string(),
+      hairStyle: v.string(),
+      hairColor: v.string(),
+      skinColor: v.string(),
+      eyesStyle: v.string(),
+      mouthStyle: v.string(),
+      earrings: v.string(),
+      freckles: v.boolean(),
+    }),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(args.userId, {
+      avatarConfig: args.avatarConfig,
+    });
+
+    return { success: true };
+  },
+});
+
+/**
  * Get user statistics for profile page
  */
 export const getUserStats = query({

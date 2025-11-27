@@ -41,6 +41,7 @@ import { CreateOptionsModal } from "@/components/create-options-modal";
 import { PostCreateDialog } from "@/components/post-create-dialog";
 import { PollCreateDialog } from "@/components/poll-create-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { generateAvatarUrl, AvatarConfig } from "@/hooks/use-avatar";
 import { cn } from "@/lib/utils";
 
 interface AppSidebarProps {
@@ -202,7 +203,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
         <div className="p-4 border-b border-[var(--border)]">
           <div className="flex items-center gap-3 mb-3">
             <Avatar className="w-10 h-10 border-2 border-[var(--color-aurora-purple)]/50">
-              <AvatarImage src={user.profileImage} />
+              <AvatarImage src={user.avatarConfig ? generateAvatarUrl(user.avatarConfig as AvatarConfig) : user.profileImage} />
               <AvatarFallback className="bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white">
                 {(user.name && user.name !== "null" ? user.name : "U").charAt(0).toUpperCase()}
               </AvatarFallback>

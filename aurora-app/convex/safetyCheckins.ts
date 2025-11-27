@@ -116,16 +116,15 @@ export const cancelCheckin = mutation({
   },
 });
 
-// Mark check-in as missed (called by scheduled job)
+// Mark check-in as missed and notify Aurora Guardians
 export const markMissedCheckin = mutation({
   args: { checkinId: v.id("safetyCheckins") },
   handler: async (ctx, args) => {
     const checkin = await ctx.db.get(args.checkinId);
     if (!checkin || checkin.status !== "pending") return;
 
-    // Check if past due
+    // Check if past due (15 min grace period)
     if (Date.now() < checkin.scheduledTime + 15 * 60 * 1000) {
-      // 15 min grace period
       return;
     }
 
@@ -133,16 +132,54 @@ export const markMissedCheckin = mutation({
       status: "missed",
     });
 
+    // Get user info
+    const user = await ctx.db.get(checkin.userId);
+    if (!user) return;
+
     // Create notification for user
     await ctx.db.insert("notifications", {
       userId: checkin.userId,
       type: "emergency",
       title: "⚠️ Missed Safety Check-in",
-      message: "You missed your scheduled check-in. Your emergency contacts may be notified.",
+      message: "You missed your scheduled check-in. Your Aurora Guardians have been notified.",
       isRead: false,
     });
 
-    return { missed: true };
+    // Notify Aurora Guardians
+    const guardianConnections = await ctx.db
+      .query("auroraGuardians")
+      .withIndex("by_user_status", (q) => 
+        q.eq("userId", checkin.userId).eq("status", "accepted")
+      )
+      .filter((q) => q.eq(q.field("canReceiveCheckins"), true))
+      .collect();
+
+    for (const conn of guardianConnections) {
+      // Create guardian notification
+      await ctx.db.insert("guardianNotifications", {
+        guardianId: conn.guardianId,
+        fromUserId: checkin.userId,
+        type: "checkin_missed",
+        message: `${user.name} missed their scheduled check-in. Please check on them.`,
+        location: checkin.location,
+        isRead: false,
+        isActioned: false,
+        relatedId: args.checkinId,
+      });
+
+      // Also create regular notification
+      await ctx.db.insert("notifications", {
+        userId: conn.guardianId,
+        type: "emergency",
+        title: "⚠️ Missed Check-in Alert",
+        message: `${user.name} missed their scheduled check-in`,
+        isRead: false,
+        fromUserId: checkin.userId,
+        relatedId: args.checkinId,
+      });
+    }
+
+    return { missed: true, guardiansNotified: guardianConnections.length };
   },
 });
 
