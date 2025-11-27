@@ -5,10 +5,11 @@
  * 
  * Mobile-first video recording interface inspired by TikTok/Instagram Stories.
  * Full-screen camera view with floating controls.
+ * Supports both recording and uploading from gallery.
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { Camera, X, RotateCw, Check, Trash2 } from 'lucide-react';
+import { Camera, X, RotateCw, Check, Trash2, Upload, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface VideoRecorderProps {
@@ -269,15 +270,41 @@ export function VideoRecorder({
       </div>
 
       {/* Bottom Controls */}
-      <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/60 to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/60 to-transparent safe-area-inset-bottom">
         {state === 'idle' && (
-          <div className="flex justify-center">
+          <div className="flex justify-center items-center gap-8">
+            {/* Upload from Gallery */}
+            <label className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/40 shadow-lg hover:scale-110 transition-transform active:scale-95 flex items-center justify-center cursor-pointer">
+              <ImageIcon className="h-6 w-6 text-white" />
+              <input
+                type="file"
+                accept="video/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const blob = new Blob([file], { type: file.type });
+                    setRecordedBlob(blob);
+                    if (previewRef.current) {
+                      previewRef.current.src = URL.createObjectURL(blob);
+                    }
+                    stopCamera();
+                    setState('preview');
+                  }
+                }}
+              />
+            </label>
+
+            {/* Record Button */}
             <button
               onClick={startRecording}
               className="w-20 h-20 rounded-full bg-red-500 border-4 border-white shadow-lg hover:scale-110 transition-transform active:scale-95 flex items-center justify-center"
             >
               <Camera className="h-8 w-8 text-white" />
             </button>
+
+            {/* Spacer for balance */}
+            <div className="w-14 h-14" />
           </div>
         )}
 

@@ -476,6 +476,26 @@ export default defineSchema({
     .index("by_user_and_reel", ["userId", "reelId"])
     .index("by_reel", ["reelId"]),
 
+  // Reel Comments - Nested threading support
+  reelComments: defineTable({
+    reelId: v.id("reels"),
+    authorId: v.id("users"),
+    content: v.string(), // Max 500 chars
+    parentId: v.optional(v.id("reelComments")), // For replies
+    likes: v.number(), // Default: 0
+    isDeleted: v.boolean(), // Soft delete
+  })
+    .index("by_reel", ["reelId"])
+    .index("by_author", ["authorId"])
+    .index("by_parent", ["parentId"]),
+
+  reelCommentLikes: defineTable({
+    userId: v.id("users"),
+    commentId: v.id("reelComments"),
+  })
+    .index("by_user_and_comment", ["userId", "commentId"])
+    .index("by_comment", ["commentId"]),
+
   livestreams: defineTable({
     hostId: v.id("users"),
     channelName: v.string(), // Agora channel name

@@ -9,16 +9,17 @@ import type { Id } from "@/convex/_generated/dataModel";
 
 interface ReelsFeedProps {
   currentUserId: Id<"users">;
+  sortBy?: "recent" | "trending";
 }
 
-export function ReelsFeed({ currentUserId }: ReelsFeedProps) {
+export function ReelsFeed({ currentUserId, sortBy = "recent" }: ReelsFeedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [hasScrolled, setHasScrolled] = useState(false);
   
   const feedData = useQuery(api.reels.getReelsFeed, {
     limit: 10,
-    sortBy: "recent",
+    sortBy: sortBy === "trending" ? "trending" : "recent",
   });
 
   const likeReel = useMutation(api.reels.likeReel);
@@ -96,11 +97,26 @@ export function ReelsFeed({ currentUserId }: ReelsFeedProps) {
 
   if (reels.length === 0) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-black text-white p-8">
-        <p className="text-xl font-semibold mb-2">No reels yet</p>
-        <p className="text-white/60 text-center">
-          Be the first to share your safety experience!
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-[var(--color-aurora-violet)] to-black text-white p-8">
+        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center mb-6 animate-pulse">
+          <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold mb-2">No Safety Reels Yet</h2>
+        <p className="text-white/60 text-center mb-8 max-w-xs">
+          Be the first to share your safety experience and help other women in your community!
         </p>
+        <a
+          href="/reels/create"
+          className="px-8 py-4 bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-full text-white font-semibold hover:opacity-90 transition-opacity"
+        >
+          Create First Reel
+        </a>
+        <div className="mt-8 text-center">
+          <p className="text-[var(--color-aurora-yellow)] font-medium">🎁 Earn 20 credits</p>
+          <p className="text-white/40 text-sm">for your first reel</p>
+        </div>
       </div>
     );
   }
@@ -125,6 +141,7 @@ export function ReelsFeed({ currentUserId }: ReelsFeedProps) {
           <ReelPlayer
             reel={reel}
             isActive={index === activeIndex}
+            currentUserId={currentUserId}
             onLike={() => handleLike(reel._id)}
             onComment={() => handleComment(reel._id)}
             onShare={() => handleShare(reel._id)}

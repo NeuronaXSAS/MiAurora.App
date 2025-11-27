@@ -409,6 +409,26 @@ export const getReel = query({
 });
 
 /**
+ * Check if user has liked a reel
+ */
+export const checkLikeStatus = query({
+  args: {
+    reelId: v.id('reels'),
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const like = await ctx.db
+      .query('reelLikes')
+      .withIndex('by_user_and_reel', (q) =>
+        q.eq('userId', args.userId).eq('reelId', args.reelId)
+      )
+      .first();
+    
+    return { isLiked: !!like };
+  },
+});
+
+/**
  * Get reels by user
  */
 export const getUserReels = query({
@@ -538,6 +558,223 @@ export const deleteReel = mutation({
     // });
 
     return { success: true };
+  },
+});
+
+/**
+ * Increment share count
+ */
+export const incrementShares = mutation({
+  args: {
+    reelId: v.id('reels'),
+  },
+  handler: async (ctx, args) => {
+    const reel = await ctx.db.get(args.reelId);
+    if (!reel) {
+      throw new Error('Reel not found');
+    }
+
+    await ctx.db.patch(args.reelId, {
+      shares: reel.shares + 1,
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Get comments for a reel
+ */
+export const getReelComments = query({
+  args: {
+    reelId: v.id('reels'),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 50;
+
+    // Get current user for isLiked status
+    const identity = await ctx.auth.getUserIdentity();
+    const currentUser = identity
+      ? await ctx.db
+          .query('users')
+          .withIndex('by_workos_id', (q) => q.eq('workosId', identity.subject))
+          .first()
+      : null;
+
+    // Get top-level comments (no parentId)
+    const comments = await ctx.db
+      .query('reelComments')
+      .withIndex('by_reel', (q) => q.eq('reelId', args.reelId))
+      .order('desc')
+      .take(limit);
+
+    // Filter to top-level only and fetch data
+    const topLevelComments = comments.filter(c => !c.parentId);
+
+    const commentsWithData = await Promise.all(
+      topLevelComments.map(async (comment) => {
+        const author = await ctx.db.get(comment.authorId);
+        
+        let isLiked = false;
+        if (currentUser) {
+          const like = await ctx.db
+            .query('reelCommentLikes')
+            .withIndex('by_user_and_comment', (q) =>
+              q.eq('userId', currentUser._id).eq('commentId', comment._id)
+            )
+            .first();
+          isLiked = !!like;
+        }
+
+        // Get replies
+        const replies = await ctx.db
+          .query('reelComments')
+          .withIndex('by_parent', (q) => q.eq('parentId', comment._id))
+          .order('asc')
+          .take(3);
+
+        const repliesWithData = await Promise.all(
+          replies.map(async (reply) => {
+            const replyAuthor = await ctx.db.get(reply.authorId);
+            let replyIsLiked = false;
+            if (currentUser) {
+              const replyLike = await ctx.db
+                .query('reelCommentLikes')
+                .withIndex('by_user_and_comment', (q) =>
+                  q.eq('userId', currentUser._id).eq('commentId', reply._id)
+                )
+                .first();
+              replyIsLiked = !!replyLike;
+            }
+            return {
+              ...reply,
+              author: replyAuthor ? {
+                _id: replyAuthor._id,
+                name: replyAuthor.name,
+                profileImage: replyAuthor.profileImage,
+              } : null,
+              isLiked: replyIsLiked,
+            };
+          })
+        );
+
+        return {
+          ...comment,
+          author: author ? {
+            _id: author._id,
+            name: author.name,
+            profileImage: author.profileImage,
+          } : null,
+          isLiked,
+          replies: repliesWithData,
+        };
+      })
+    );
+
+    const allComments = await ctx.db
+      .query('reelComments')
+      .withIndex('by_reel', (q) => q.eq('reelId', args.reelId))
+      .collect();
+
+    return {
+      comments: commentsWithData,
+      total: allComments.length,
+    };
+  },
+});
+
+/**
+ * Add a comment to a reel
+ */
+export const addComment = mutation({
+  args: {
+    reelId: v.id('reels'),
+    userId: v.id('users'),
+    content: v.string(),
+    parentId: v.optional(v.id('reelComments')),
+  },
+  handler: async (ctx, args) => {
+    if (!args.content.trim()) {
+      throw new Error('Comment cannot be empty');
+    }
+    if (args.content.length > 500) {
+      throw new Error('Comment must be 500 characters or less');
+    }
+
+    const reel = await ctx.db.get(args.reelId);
+    if (!reel) {
+      throw new Error('Reel not found');
+    }
+
+    const commentId = await ctx.db.insert('reelComments', {
+      reelId: args.reelId,
+      authorId: args.userId,
+      content: args.content.trim(),
+      parentId: args.parentId,
+      likes: 0,
+      isDeleted: false,
+    });
+
+    await ctx.db.patch(args.reelId, {
+      comments: reel.comments + 1,
+    });
+
+    // Award 2 credits for commenting
+    const user = await ctx.db.get(args.userId);
+    if (user) {
+      await ctx.db.patch(args.userId, {
+        credits: user.credits + 2,
+      });
+      await ctx.db.insert('transactions', {
+        userId: args.userId,
+        amount: 2,
+        type: 'reel_comment',
+        relatedId: args.reelId,
+      });
+    }
+
+    return { success: true, commentId };
+  },
+});
+
+/**
+ * Like/unlike a comment
+ */
+export const likeComment = mutation({
+  args: {
+    commentId: v.id('reelComments'),
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const comment = await ctx.db.get(args.commentId);
+    if (!comment) {
+      throw new Error('Comment not found');
+    }
+
+    const existingLike = await ctx.db
+      .query('reelCommentLikes')
+      .withIndex('by_user_and_comment', (q) =>
+        q.eq('userId', args.userId).eq('commentId', args.commentId)
+      )
+      .first();
+
+    if (existingLike) {
+      await ctx.db.delete(existingLike._id);
+      await ctx.db.patch(args.commentId, {
+        likes: Math.max(0, comment.likes - 1),
+      });
+      return { liked: false };
+    } else {
+      await ctx.db.insert('reelCommentLikes', {
+        userId: args.userId,
+        commentId: args.commentId,
+      });
+      await ctx.db.patch(args.commentId, {
+        likes: comment.likes + 1,
+      });
+      return { liked: true };
+    }
   },
 });
 
