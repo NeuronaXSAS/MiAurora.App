@@ -9,6 +9,7 @@ import { PollCard } from "@/components/poll-card";
 import { AIChatCard } from "@/components/ai-chat-card";
 import { PostCardSkeleton } from "@/components/loading-skeleton";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
+import { AIChatCompanion } from "@/components/ai-chat-companion";
 import { 
   Sparkles, 
   ChevronDown, 
@@ -19,6 +20,9 @@ import {
   Bell,
   Search,
   User,
+  MessageCircle,
+  Shield,
+  Menu,
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import {
@@ -28,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Image from "next/image";
+import Link from "next/link";
 
 type SortOption = "best" | "hot" | "new" | "top";
 
@@ -35,6 +40,7 @@ export function MobileFeed() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("best");
+  const [showAIChat, setShowAIChat] = useState(false);
 
   // Get user ID
   useEffect(() => {
@@ -80,7 +86,6 @@ export function MobileFeed() {
         return ((b.upvotes || 0) - (b.downvotes || 0)) - ((a.upvotes || 0) - (a.downvotes || 0));
       case "best":
       default:
-        // Best combines recency with engagement
         const aEngagement = (a.upvotes || 0) + (a.commentCount || 0);
         const bEngagement = (b.upvotes || 0) + (b.commentCount || 0);
         const aRecency = 1 / (Date.now() - a._creationTime + 1);
@@ -99,81 +104,103 @@ export function MobileFeed() {
   const currentSort = sortOptions.find(opt => opt.value === sortBy) || sortOptions[0];
 
   return (
-    <div className="bg-[#0e1113] min-h-screen">
-      {/* Reddit-style Header */}
-      <div className="sticky top-0 z-30 bg-[#1a1a1b] border-b border-[#343536]">
+    <div className="bg-[var(--background)] min-h-screen">
+      {/* Aurora-styled Header */}
+      <div className="sticky top-0 z-30 bg-[var(--card)] border-b border-[var(--border)] shadow-sm">
         <div className="flex items-center justify-between px-4 py-3">
           {/* Left: Menu + Logo */}
           <div className="flex items-center gap-3">
-            <button className="p-1 -ml-1">
-              <svg className="w-6 h-6 text-[#d7dadc]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+            <button className="p-1.5 -ml-1 rounded-lg hover:bg-[var(--accent)] transition-colors">
+              <Menu className="w-5 h-5 text-[var(--foreground)]" />
             </button>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-[var(--color-aurora-purple)] flex items-center justify-center">
-                <Image 
-                  src="/Au_Logo_1.png" 
-                  alt="Aurora" 
-                  width={24} 
-                  height={24}
-                  className="object-contain"
-                />
+            <Link href="/feed" className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-0.5">
+                <div className="w-full h-full rounded-[10px] bg-[var(--card)] flex items-center justify-center overflow-hidden">
+                  <Image 
+                    src="/Au_Logo_1.png" 
+                    alt="Aurora" 
+                    width={28} 
+                    height={28}
+                    className="object-contain"
+                  />
+                </div>
               </div>
-            </div>
+            </Link>
           </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-2">
-            <button className="p-2 rounded-full hover:bg-[#272729]">
-              <Search className="w-5 h-5 text-[#d7dadc]" />
+          {/* Right: AI Chat + Panic + Search + Notifications + Profile */}
+          <div className="flex items-center gap-1">
+            {/* AI Companion Button */}
+            <button 
+              onClick={() => setShowAIChat(true)}
+              className="p-2 rounded-xl hover:bg-[var(--accent)] transition-colors group"
+              aria-label="AI Companion"
+            >
+              <MessageCircle className="w-5 h-5 text-[var(--color-aurora-purple)] group-hover:text-[var(--color-aurora-pink)] transition-colors" />
             </button>
-            <button className="p-2 rounded-full hover:bg-[#272729]">
-              <Bell className="w-5 h-5 text-[#d7dadc]" />
+
+            {/* Panic/Emergency Button */}
+            <Link 
+              href="/emergency"
+              className="p-2 rounded-xl bg-[var(--color-aurora-orange)] hover:bg-[var(--color-aurora-orange)]/90 transition-colors shadow-lg"
+              aria-label="Emergency"
+            >
+              <Shield className="w-5 h-5 text-white" />
+            </Link>
+
+            <button className="p-2 rounded-xl hover:bg-[var(--accent)] transition-colors">
+              <Search className="w-5 h-5 text-[var(--muted-foreground)]" />
             </button>
-            <button className="w-8 h-8 rounded-full bg-[var(--color-aurora-mint)] flex items-center justify-center">
-              <User className="w-4 h-4 text-[#1a1a1b]" />
+            
+            <button className="p-2 rounded-xl hover:bg-[var(--accent)] transition-colors">
+              <Bell className="w-5 h-5 text-[var(--muted-foreground)]" />
             </button>
+            
+            <Link href="/profile" className="ml-1">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center">
+                <User className="w-4 h-4 text-white" />
+              </div>
+            </Link>
           </div>
         </div>
 
         {/* Sort Bar */}
-        <div className="flex items-center gap-2 px-4 py-2 border-t border-[#343536]">
+        <div className="flex items-center gap-2 px-4 py-2 border-t border-[var(--border)]">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#272729] hover:bg-[#343536] text-[#d7dadc] text-sm font-medium">
-                <currentSort.icon className="w-4 h-4" />
+              <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--foreground)] text-sm font-medium transition-colors">
+                <currentSort.icon className="w-4 h-4 text-[var(--color-aurora-purple)]" />
                 {currentSort.label}
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className="w-4 h-4 text-[var(--muted-foreground)]" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="bg-[#1a1a1b] border-[#343536]">
+            <DropdownMenuContent align="start" className="bg-[var(--card)] border-[var(--border)]">
               {sortOptions.map((option) => (
                 <DropdownMenuItem
                   key={option.value}
                   onClick={() => setSortBy(option.value as SortOption)}
-                  className={`flex items-center gap-2 text-[#d7dadc] hover:bg-[#272729] ${
-                    sortBy === option.value ? "bg-[#272729]" : ""
+                  className={`flex items-center gap-2 text-[var(--foreground)] hover:bg-[var(--accent)] ${
+                    sortBy === option.value ? "bg-[var(--accent)]" : ""
                   }`}
                 >
-                  <option.icon className="w-4 h-4" />
+                  <option.icon className="w-4 h-4 text-[var(--color-aurora-purple)]" />
                   {option.label}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <button className="p-1.5 rounded hover:bg-[#272729]">
-            <LayoutGrid className="w-5 h-5 text-[#818384]" />
+          <button className="p-1.5 rounded-lg hover:bg-[var(--accent)] transition-colors ml-auto">
+            <LayoutGrid className="w-5 h-5 text-[var(--muted-foreground)]" />
           </button>
         </div>
       </div>
 
       {/* Feed Content */}
-      <div className="py-2 space-y-2">
+      <div className="py-3 space-y-3 px-3">
         {/* Loading State */}
         {feedItems === undefined && (
-          <div className="px-2 space-y-2">
+          <div className="space-y-3">
             <PostCardSkeleton />
             <PostCardSkeleton />
             <PostCardSkeleton />
@@ -183,11 +210,11 @@ export function MobileFeed() {
         {/* Empty State */}
         {sortedItems.length === 0 && feedItems !== undefined && (
           <div className="text-center py-12 px-4">
-            <div className="w-16 h-16 bg-[#272729] rounded-full flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-8 h-8 text-[#818384]" />
+            <div className="w-16 h-16 bg-gradient-to-br from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-8 h-8 text-[var(--color-aurora-purple)]" />
             </div>
-            <h3 className="text-lg font-semibold mb-2 text-[#d7dadc]">No posts yet</h3>
-            <p className="text-[#818384] text-sm mb-4">
+            <h3 className="text-lg font-semibold mb-2 text-[var(--foreground)]">No posts yet</h3>
+            <p className="text-[var(--muted-foreground)] text-sm mb-4">
               Be the first to share something with the community!
             </p>
           </div>
@@ -195,64 +222,57 @@ export function MobileFeed() {
 
         {/* Suggested for you label */}
         {sortedItems.length > 0 && (
-          <div className="px-4 py-2">
-            <span className="text-xs text-[#818384] font-medium">Suggested for you</span>
+          <div className="px-1 py-1">
+            <span className="text-xs text-[var(--muted-foreground)] font-medium">Suggested for you</span>
           </div>
         )}
 
         {/* Feed Items */}
         {sortedItems.map((item: any, index: number) => {
-          // Show "Suggested for you" divider after first few items
           const showSuggested = index === 3;
 
           return (
             <div key={item._id}>
               {showSuggested && (
-                <div className="px-4 py-3 flex items-center gap-2">
-                  <span className="text-xs text-[#818384]">•••</span>
+                <div className="px-1 py-2 flex items-center gap-2">
+                  <div className="flex-1 h-px bg-[var(--border)]" />
+                  <span className="text-xs text-[var(--muted-foreground)]">More posts</span>
+                  <div className="flex-1 h-px bg-[var(--border)]" />
                 </div>
               )}
 
               {item.type === "route" && (
-                <div className="px-2">
-                  <MobileRouteCard
-                    route={item}
-                    safetyInsight={`Safety score: ${Math.round(item.rating * 20)}%`}
-                  />
-                </div>
+                <MobileRouteCard
+                  route={item}
+                  safetyInsight={`Safety score: ${Math.round(item.rating * 20)}%`}
+                />
               )}
 
               {item.type === "post" && item.postType === "poll" && (
-                <div className="px-2">
-                  <PollCard
-                    post={item}
-                    currentUserId={userId || undefined}
-                    isMobile={true}
-                  />
-                </div>
+                <PollCard
+                  post={item}
+                  currentUserId={userId || undefined}
+                  isMobile={true}
+                />
               )}
 
               {item.type === "post" && item.postType === "ai_chat" && (
-                <div className="px-2">
-                  <AIChatCard
-                    post={item}
-                    currentUserId={userId || undefined}
-                    isMobile={true}
-                  />
-                </div>
+                <AIChatCard
+                  post={item}
+                  currentUserId={userId || undefined}
+                  isMobile={true}
+                />
               )}
 
               {item.type === "post" && (!item.postType || item.postType === "standard") && (
-                <div className="px-2">
-                  <RedditPostCard
-                    post={item}
-                    currentUserId={userId || undefined}
-                    onVerify={() => {}}
-                    onDelete={() => {}}
-                    hasVerified={false}
-                    showActions={true}
-                  />
-                </div>
+                <RedditPostCard
+                  post={item}
+                  currentUserId={userId || undefined}
+                  onVerify={() => {}}
+                  onDelete={() => {}}
+                  hasVerified={false}
+                  showActions={true}
+                />
               )}
             </div>
           );
@@ -266,6 +286,15 @@ export function MobileFeed() {
           onComplete={() => setShowOnboarding(false)}
           userId={userId}
         />
+      )}
+
+      {/* AI Chat Companion Modal */}
+      {showAIChat && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center" onClick={() => setShowAIChat(false)}>
+          <div className="w-full sm:max-w-lg sm:p-4" onClick={(e) => e.stopPropagation()}>
+            <AIChatCompanion className="h-[85vh] sm:h-[600px] rounded-t-3xl sm:rounded-2xl" />
+          </div>
+        </div>
       )}
     </div>
   );

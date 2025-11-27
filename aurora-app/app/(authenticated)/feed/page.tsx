@@ -11,6 +11,7 @@ import { OpportunityFeedCard } from "@/components/opportunity-feed-card";
 import { FeedAd } from "@/components/ads/feed-ad";
 import { PostCardSkeleton } from "@/components/loading-skeleton";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
+import { AIChatCompanion } from "@/components/ai-chat-companion";
 import { MobileFeed } from "./mobile-feed";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { Button } from "@/components/ui/button";
@@ -22,20 +23,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { 
-  Sparkles, 
-  CheckCircle2, 
-  MapPin, 
-  Users, 
-  Target, 
-  Share2, 
-  Copy, 
-  Mail,
-  ChevronDown,
-  Flame,
-  TrendingUp,
-  Clock,
-  LayoutGrid,
-  List,
+  Sparkles, MapPin, Users, Target, Share2, Copy, Mail,
+  ChevronDown, Flame, TrendingUp, Clock, LayoutGrid, List,
+  MessageCircle, Shield,
 } from "lucide-react";
 import {
   Dialog,
@@ -48,6 +38,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 type SortOption = "best" | "hot" | "new" | "top";
 type ViewMode = "card" | "compact";
@@ -62,6 +53,7 @@ export default function FeedPage() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("best");
   const [viewMode, setViewMode] = useState<ViewMode>("card");
+  const [showAIChat, setShowAIChat] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -117,7 +109,6 @@ export default function FeedPage() {
       await deletePost({ postId, userId });
     } catch (error) {
       console.error("Delete error:", error);
-      alert("Failed to delete post. " + (error as Error).message);
     }
   };
 
@@ -128,7 +119,6 @@ export default function FeedPage() {
       await deleteRoute({ routeId, userId });
     } catch (error) {
       console.error("Delete error:", error);
-      alert("Failed to delete route. " + (error as Error).message);
     }
   };
 
@@ -139,7 +129,6 @@ export default function FeedPage() {
       await deleteOpportunity({ opportunityId, userId });
     } catch (error) {
       console.error("Delete error:", error);
-      alert("Failed to delete opportunity. " + (error as Error).message);
     }
   };
 
@@ -178,64 +167,87 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0e1113]">
-      {/* Reddit-style Header */}
-      <div className="bg-[#1a1a1b] border-b border-[#343536] sticky top-0 z-40">
+    <div className="min-h-screen bg-[var(--background)]">
+      {/* Aurora-styled Header */}
+      <div className="bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-40 shadow-sm">
         <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-bold text-[#d7dadc]">Your Feed</h1>
-              <p className="text-sm text-[#818384]">
-                Community intelligence for women
-              </p>
+            <div className="flex items-center gap-3">
+              <Link href="/feed" className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-0.5">
+                  <div className="w-full h-full rounded-[10px] bg-[var(--card)] flex items-center justify-center overflow-hidden">
+                    <Image src="/Au_Logo_1.png" alt="Aurora" width={32} height={32} className="object-contain" />
+                  </div>
+                </div>
+              </Link>
+              <div>
+                <h1 className="text-xl font-bold text-[var(--foreground)]">Your Feed</h1>
+                <p className="text-sm text-[var(--muted-foreground)]">Community intelligence for women</p>
+              </div>
             </div>
 
-            {/* Content Type Filter */}
-            {isMounted && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 px-3 py-1.5 rounded bg-[#272729] hover:bg-[#343536] text-[#d7dadc] text-sm">
-                    {contentType === "all" ? "All" : contentType.charAt(0).toUpperCase() + contentType.slice(1)}
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-[#1a1a1b] border-[#343536]">
-                  {["all", "post", "poll", "route", "opportunity"].map((type) => (
-                    <DropdownMenuItem
-                      key={type}
-                      onClick={() => setContentType(type)}
-                      className={`text-[#d7dadc] hover:bg-[#272729] ${contentType === type ? "bg-[#272729]" : ""}`}
-                    >
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            {/* Right actions: AI + Panic + Filter */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setShowAIChat(true)}
+                className="p-2 rounded-xl hover:bg-[var(--accent)] transition-colors"
+                aria-label="AI Companion"
+              >
+                <MessageCircle className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+              </button>
+
+              <Link 
+                href="/emergency"
+                className="p-2 rounded-xl bg-[var(--color-aurora-orange)] hover:bg-[var(--color-aurora-orange)]/90 transition-colors shadow-lg"
+                aria-label="Emergency"
+              >
+                <Shield className="w-5 h-5 text-white" />
+              </Link>
+
+              {isMounted && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--foreground)] text-sm">
+                      {contentType === "all" ? "All" : contentType.charAt(0).toUpperCase() + contentType.slice(1)}
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-[var(--card)] border-[var(--border)]">
+                    {["all", "post", "poll", "route", "opportunity"].map((type) => (
+                      <DropdownMenuItem
+                        key={type}
+                        onClick={() => setContentType(type)}
+                        className={`text-[var(--foreground)] hover:bg-[var(--accent)] ${contentType === type ? "bg-[var(--accent)]" : ""}`}
+                      >
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Sort Bar */}
-        <div className="max-w-3xl mx-auto px-4 py-2 border-t border-[#343536]">
+        <div className="max-w-3xl mx-auto px-4 py-2 border-t border-[var(--border)]">
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#272729] hover:bg-[#343536] text-[#d7dadc] text-sm font-medium">
-                  <currentSort.icon className="w-4 h-4" />
+                <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--foreground)] text-sm font-medium transition-colors">
+                  <currentSort.icon className="w-4 h-4 text-[var(--color-aurora-purple)]" />
                   {currentSort.label}
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-4 h-4 text-[var(--muted-foreground)]" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="bg-[#1a1a1b] border-[#343536]">
+              <DropdownMenuContent align="start" className="bg-[var(--card)] border-[var(--border)]">
                 {sortOptions.map((option) => (
                   <DropdownMenuItem
                     key={option.value}
                     onClick={() => setSortBy(option.value as SortOption)}
-                    className={`flex items-center gap-2 text-[#d7dadc] hover:bg-[#272729] ${
-                      sortBy === option.value ? "bg-[#272729]" : ""
-                    }`}
+                    className={`flex items-center gap-2 text-[var(--foreground)] hover:bg-[var(--accent)] ${sortBy === option.value ? "bg-[var(--accent)]" : ""}`}
                   >
-                    <option.icon className="w-4 h-4" />
+                    <option.icon className="w-4 h-4 text-[var(--color-aurora-purple)]" />
                     {option.label}
                   </DropdownMenuItem>
                 ))}
@@ -245,15 +257,15 @@ export default function FeedPage() {
             <div className="flex items-center gap-1 ml-auto">
               <button
                 onClick={() => setViewMode("card")}
-                className={`p-1.5 rounded ${viewMode === "card" ? "bg-[#272729]" : "hover:bg-[#272729]"}`}
+                className={`p-1.5 rounded-lg transition-colors ${viewMode === "card" ? "bg-[var(--accent)]" : "hover:bg-[var(--accent)]"}`}
               >
-                <LayoutGrid className="w-5 h-5 text-[#818384]" />
+                <LayoutGrid className="w-5 h-5 text-[var(--muted-foreground)]" />
               </button>
               <button
                 onClick={() => setViewMode("compact")}
-                className={`p-1.5 rounded ${viewMode === "compact" ? "bg-[#272729]" : "hover:bg-[#272729]"}`}
+                className={`p-1.5 rounded-lg transition-colors ${viewMode === "compact" ? "bg-[var(--accent)]" : "hover:bg-[var(--accent)]"}`}
               >
-                <List className="w-5 h-5 text-[#818384]" />
+                <List className="w-5 h-5 text-[var(--muted-foreground)]" />
               </button>
             </div>
           </div>
@@ -279,16 +291,9 @@ export default function FeedPage() {
                 <div className="w-14 h-14 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-2xl flex items-center justify-center mx-auto mb-3">
                   <Sparkles className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-1 text-[#d7dadc]">
-                  Welcome to Your Feed!
-                </h3>
-                <p className="text-[#818384] text-sm mb-2">
-                  Complete these steps to get started and earn credits
-                </p>
-                <button
-                  onClick={() => setShowQuests(false)}
-                  className="text-xs text-[#818384] hover:text-[#d7dadc] transition-colors underline"
-                >
+                <h3 className="text-xl font-bold mb-1 text-[var(--foreground)]">Welcome to Your Feed!</h3>
+                <p className="text-[var(--muted-foreground)] text-sm mb-2">Complete these steps to get started and earn credits</p>
+                <button onClick={() => setShowQuests(false)} className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors underline">
                   Hide quests
                 </button>
               </div>
@@ -296,14 +301,14 @@ export default function FeedPage() {
               <div className="grid gap-3">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                   <Link href="/settings">
-                    <div className="group bg-[#1a1a1b] border border-[#343536] rounded-lg p-4 hover:border-[var(--color-aurora-purple)]/50 transition-all cursor-pointer">
+                    <div className="group bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--color-aurora-purple)]/50 hover:shadow-lg transition-all cursor-pointer">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-[var(--color-aurora-purple)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
                           <Target className="w-5 h-5 text-[var(--color-aurora-purple)]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-[#d7dadc]">Complete Your Profile</h4>
-                          <p className="text-[#818384] text-sm truncate">Add bio, location, and goals</p>
+                          <h4 className="font-semibold text-[var(--foreground)]">Complete Your Profile</h4>
+                          <p className="text-[var(--muted-foreground)] text-sm truncate">Add bio, location, and goals</p>
                         </div>
                         <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">+10</Badge>
                       </div>
@@ -313,14 +318,14 @@ export default function FeedPage() {
 
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
                   <Link href="/map">
-                    <div className="group bg-[#1a1a1b] border border-[#343536] rounded-lg p-4 hover:border-[var(--color-aurora-blue)]/50 transition-all cursor-pointer">
+                    <div className="group bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--color-aurora-blue)]/50 hover:shadow-lg transition-all cursor-pointer">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-[var(--color-aurora-blue)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
                           <MapPin className="w-5 h-5 text-[var(--color-aurora-blue)]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-[#d7dadc]">Share Your First Location</h4>
-                          <p className="text-[#818384] text-sm truncate">Rate a place to help others</p>
+                          <h4 className="font-semibold text-[var(--foreground)]">Share Your First Location</h4>
+                          <p className="text-[var(--muted-foreground)] text-sm truncate">Rate a place to help others</p>
                         </div>
                         <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">+50</Badge>
                       </div>
@@ -329,38 +334,14 @@ export default function FeedPage() {
                 </motion.div>
 
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                  <div
-                    onClick={() => {
-                      const createButton = document.querySelector('[data-create-button]') as HTMLButtonElement;
-                      if (createButton) createButton.click();
-                    }}
-                    className="group bg-[#1a1a1b] border border-[#343536] rounded-lg p-4 hover:border-[var(--color-aurora-mint)]/50 transition-all cursor-pointer"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-[var(--color-aurora-mint)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Sparkles className="w-5 h-5 text-[var(--color-aurora-mint)]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-[#d7dadc]">Share Your First Experience</h4>
-                        <p className="text-[#818384] text-sm truncate">Create a post for the community</p>
-                      </div>
-                      <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">+25</Badge>
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-                  <div
-                    onClick={() => setShowShareDialog(true)}
-                    className="group bg-[#1a1a1b] border border-[#343536] rounded-lg p-4 hover:border-[var(--color-aurora-pink)]/50 transition-all cursor-pointer"
-                  >
+                  <div onClick={() => setShowShareDialog(true)} className="group bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--color-aurora-pink)]/50 hover:shadow-lg transition-all cursor-pointer">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-[var(--color-aurora-pink)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
                         <Users className="w-5 h-5 text-[var(--color-aurora-pink)]" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-[#d7dadc]">Invite a Friend</h4>
-                        <p className="text-[#818384] text-sm truncate">Earn credits when they join</p>
+                        <h4 className="font-semibold text-[var(--foreground)]">Invite a Friend</h4>
+                        <p className="text-[var(--muted-foreground)] text-sm truncate">Earn credits when they join</p>
                       </div>
                       <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">+15</Badge>
                     </div>
@@ -373,10 +354,7 @@ export default function FeedPage() {
           {/* Show quests button when hidden */}
           {sortedItems.length === 0 && feedItems !== undefined && !showQuests && (
             <div className="text-center py-8">
-              <button
-                onClick={() => setShowQuests(true)}
-                className="bg-[#1a1a1b] border border-[#343536] rounded-lg px-6 py-3 text-[#d7dadc] hover:bg-[#272729] transition-all"
-              >
+              <button onClick={() => setShowQuests(true)} className="bg-[var(--card)] border border-[var(--border)] rounded-xl px-6 py-3 text-[var(--foreground)] hover:bg-[var(--accent)] transition-all">
                 <Sparkles className="w-4 h-4 inline mr-2" />
                 Show earning opportunities
               </button>
@@ -393,27 +371,15 @@ export default function FeedPage() {
             })
             .map((item: any, index: number) => {
               const showAd = index > 0 && index % 5 === 0;
-
               return (
                 <div key={item._id}>
                   {showAd && <FeedAd />}
-
                   {item.type === "post" && item.postType === "poll" && (
-                    <PollCard
-                      post={item}
-                      currentUserId={userId || undefined}
-                      onDelete={() => handleDelete(item._id as Id<"posts">)}
-                    />
+                    <PollCard post={item} currentUserId={userId || undefined} onDelete={() => handleDelete(item._id as Id<"posts">)} />
                   )}
-
                   {item.type === "post" && item.postType === "ai_chat" && (
-                    <AIChatCard
-                      post={item}
-                      currentUserId={userId || undefined}
-                      onDelete={() => handleDelete(item._id as Id<"posts">)}
-                    />
+                    <AIChatCard post={item} currentUserId={userId || undefined} onDelete={() => handleDelete(item._id as Id<"posts">)} />
                   )}
-
                   {item.type === "post" && item.postType !== "poll" && item.postType !== "ai_chat" && (
                     <RedditPostCard
                       post={item}
@@ -424,21 +390,11 @@ export default function FeedPage() {
                       showActions={true}
                     />
                   )}
-
                   {item.type === "route" && (
-                    <RouteFeedCard
-                      route={item as any}
-                      currentUserId={userId || undefined}
-                      onDelete={() => handleRouteDelete(item._id as Id<"routes">)}
-                    />
+                    <RouteFeedCard route={item as any} currentUserId={userId || undefined} onDelete={() => handleRouteDelete(item._id as Id<"routes">)} />
                   )}
-
                   {item.type === "opportunity" && (
-                    <OpportunityFeedCard
-                      opportunity={item as any}
-                      currentUserId={userId || undefined}
-                      onDelete={() => handleOpportunityDelete(item._id as Id<"opportunities">)}
-                    />
+                    <OpportunityFeedCard opportunity={item as any} currentUserId={userId || undefined} onDelete={() => handleOpportunityDelete(item._id as Id<"opportunities">)} />
                   )}
                 </div>
               );
@@ -447,80 +403,62 @@ export default function FeedPage() {
       </div>
 
       {/* Onboarding Wizard */}
-      {userId && (
-        <OnboardingWizard
-          open={showOnboarding}
-          onComplete={() => setShowOnboarding(false)}
-          userId={userId}
-        />
+      {userId && <OnboardingWizard open={showOnboarding} onComplete={() => setShowOnboarding(false)} userId={userId} />}
+
+      {/* AI Chat Companion */}
+      {showAIChat && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowAIChat(false)}>
+          <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+            <AIChatCompanion className="h-[600px]" />
+          </div>
+        </div>
       )}
 
       {/* Share Dialog */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-        <DialogContent className="sm:max-w-md bg-[#1a1a1b] border-[#343536]">
+        <DialogContent className="sm:max-w-md bg-[var(--card)] border-[var(--border)]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-[#d7dadc]">
+            <DialogTitle className="flex items-center gap-2 text-[var(--foreground)]">
               <Share2 className="w-5 h-5" />
               Invite Friends to Aurora
             </DialogTitle>
-            <DialogDescription className="text-[#818384]">
+            <DialogDescription className="text-[var(--muted-foreground)]">
               Share Aurora and earn 15 credits when your friends join!
             </DialogDescription>
           </DialogHeader>
-
           <div className="space-y-3 py-4">
             <Button
               onClick={() => {
-                const inviteLink = `${window.location.origin}?ref=${userId}`;
-                navigator.clipboard.writeText(inviteLink);
-                alert("✅ Link copied! Share it with your friends.");
+                navigator.clipboard.writeText(`${window.location.origin}?ref=${userId}`);
+                alert("✅ Link copied!");
               }}
-              className="w-full justify-start bg-[#272729] hover:bg-[#343536] text-[#d7dadc] border-[#343536]"
+              className="w-full justify-start bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--foreground)]"
               variant="outline"
             >
               <Copy className="w-4 h-4 mr-3" />
               Copy Invite Link
             </Button>
-
             <Button
               onClick={() => {
-                const text = encodeURIComponent("Join me on Aurora - a safe space for women to connect and thrive! 💜");
+                const text = encodeURIComponent("Join me on Aurora - a safe space for women! 💜");
                 const url = encodeURIComponent(`${window.location.origin}?ref=${userId}`);
                 window.open(`https://wa.me/?text=${text}%20${url}`, '_blank');
               }}
               className="w-full justify-start bg-green-600 hover:bg-green-700 text-white"
             >
-              <svg className="w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-              </svg>
               Share on WhatsApp
             </Button>
-
             <Button
               onClick={() => {
                 const subject = encodeURIComponent("Join me on Aurora!");
-                const body = encodeURIComponent(`Hi!\n\nI've been using Aurora - a safe space for women to connect and thrive.\n\nJoin me here: ${window.location.origin}?ref=${userId}\n\n💜 Aurora App`);
+                const body = encodeURIComponent(`Join me on Aurora: ${window.location.origin}?ref=${userId}`);
                 window.location.href = `mailto:?subject=${subject}&body=${body}`;
               }}
-              className="w-full justify-start bg-[#272729] hover:bg-[#343536] text-[#d7dadc] border-[#343536]"
+              className="w-full justify-start bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--foreground)]"
               variant="outline"
             >
               <Mail className="w-4 h-4 mr-3" />
               Share via Email
-            </Button>
-
-            <Button
-              onClick={() => {
-                const text = encodeURIComponent("Join me on Aurora - a safe space for women to connect and thrive! 💜");
-                const url = encodeURIComponent(`${window.location.origin}?ref=${userId}`);
-                window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
-              }}
-              className="w-full justify-start bg-black hover:bg-gray-800 text-white"
-            >
-              <svg className="w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-              </svg>
-              Share on X (Twitter)
             </Button>
           </div>
         </DialogContent>

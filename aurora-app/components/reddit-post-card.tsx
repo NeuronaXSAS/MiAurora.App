@@ -92,8 +92,6 @@ export function RedditPostCard({
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [userVote, setUserVote] = useState<"upvote" | "downvote" | null>(null);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verifySuccess, setVerifySuccess] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
 
   const isAuthor = currentUserId === post.authorId;
@@ -168,21 +166,21 @@ export function RedditPostCard({
   };
 
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg overflow-hidden hover:border-[var(--muted-foreground)]/50 transition-colors">
+    <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden hover:border-[var(--color-aurora-purple)]/30 transition-all shadow-sm hover:shadow-md">
       {/* Main content area */}
       <div className="flex">
         {/* Vote column - Desktop */}
-        <div className="hidden sm:flex flex-col items-center py-2 px-2 bg-[var(--background)]/50 gap-1">
+        <div className="hidden sm:flex flex-col items-center py-3 px-2 bg-[var(--accent)]/30 gap-1">
           <button
             onClick={() => handleVote("upvote")}
-            className={`p-1 rounded hover:bg-[var(--accent)] transition-colors ${
-              userVote === "upvote" ? "text-[var(--color-aurora-orange)]" : "text-[var(--muted-foreground)]"
+            className={`p-1.5 rounded-lg hover:bg-[var(--accent)] transition-colors ${
+              userVote === "upvote" ? "text-[var(--color-aurora-pink)]" : "text-[var(--muted-foreground)]"
             }`}
           >
             <ArrowBigUp className="w-6 h-6" fill={userVote === "upvote" ? "currentColor" : "none"} />
           </button>
           <span className={`text-xs font-bold ${
-            voteScore > 0 ? "text-[var(--color-aurora-orange)]" : 
+            voteScore > 0 ? "text-[var(--color-aurora-pink)]" : 
             voteScore < 0 ? "text-[var(--color-aurora-blue)]" : 
             "text-[var(--muted-foreground)]"
           }`}>
@@ -190,7 +188,7 @@ export function RedditPostCard({
           </span>
           <button
             onClick={() => handleVote("downvote")}
-            className={`p-1 rounded hover:bg-[var(--accent)] transition-colors ${
+            className={`p-1.5 rounded-lg hover:bg-[var(--accent)] transition-colors ${
               userVote === "downvote" ? "text-[var(--color-aurora-blue)]" : "text-[var(--muted-foreground)]"
             }`}
           >
@@ -199,13 +197,13 @@ export function RedditPostCard({
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-3">
+        <div className="flex-1 p-4">
           {/* Header */}
-          <div className="flex items-center gap-2 text-xs mb-2">
-            <div className="w-5 h-5 rounded-full bg-[var(--color-aurora-purple)] flex items-center justify-center text-[10px]">
+          <div className="flex items-center gap-2 text-xs mb-3">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-xs">
               {communityIcon}
             </div>
-            <span className="font-bold text-[var(--foreground)] hover:underline cursor-pointer">
+            <span className="font-semibold text-[var(--color-aurora-purple)] hover:underline cursor-pointer">
               {communityName}
             </span>
             <span className="text-[var(--muted-foreground)]">•</span>
@@ -216,7 +214,7 @@ export function RedditPostCard({
               {formatDistanceToNow(post._creationTime, { addSuffix: false })}
             </span>
             {displayPost.isVerified && (
-              <Badge className="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] border-0 text-[10px] px-1.5 py-0">
+              <Badge className="bg-[var(--color-aurora-mint)]/30 text-green-700 dark:text-[var(--color-aurora-mint)] border-0 text-[10px] px-1.5 py-0">
                 <CheckCircle2 className="w-3 h-3 mr-0.5" />
                 Verified
               </Badge>
@@ -225,7 +223,7 @@ export function RedditPostCard({
               <Button
                 size="sm"
                 onClick={() => setIsJoined(true)}
-                className="ml-auto h-6 px-3 text-xs bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-blue)]/80 text-white rounded-full"
+                className="ml-auto h-7 px-4 text-xs bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-blue)]/90 text-white rounded-full font-semibold"
               >
                 Join
               </Button>
@@ -233,18 +231,18 @@ export function RedditPostCard({
           </div>
 
           {/* Title */}
-          <h3 className="font-semibold text-[var(--foreground)] mb-2 leading-snug">
+          <h3 className="font-semibold text-[var(--foreground)] mb-2 leading-snug text-base">
             {post.title}
           </h3>
 
           {/* Description */}
-          <p className="text-sm text-[var(--foreground)]/90 mb-3 line-clamp-4">
+          <p className="text-sm text-[var(--foreground)]/80 mb-3 line-clamp-4 leading-relaxed">
             {post.description}
           </p>
 
           {/* Media */}
           {post.media && post.media.length > 0 && (
-            <div className="mb-3 rounded-lg overflow-hidden">
+            <div className="mb-3 rounded-xl overflow-hidden border border-[var(--border)]">
               {post.media[0].type === "image" && (
                 <img
                   src={post.media[0].url}
@@ -258,24 +256,24 @@ export function RedditPostCard({
           {/* Actions bar */}
           <div className="flex items-center gap-1 text-[var(--muted-foreground)]">
             {/* Mobile vote buttons */}
-            <div className="flex sm:hidden items-center gap-1 mr-2">
+            <div className="flex sm:hidden items-center gap-1 mr-2 bg-[var(--accent)]/50 rounded-full px-1">
               <button
                 onClick={() => handleVote("upvote")}
-                className={`p-1.5 rounded-full hover:bg-[var(--accent)] ${
-                  userVote === "upvote" ? "text-[var(--color-aurora-orange)]" : ""
+                className={`p-2 rounded-full hover:bg-[var(--accent)] transition-colors ${
+                  userVote === "upvote" ? "text-[var(--color-aurora-pink)]" : ""
                 }`}
               >
                 <ArrowBigUp className="w-5 h-5" fill={userVote === "upvote" ? "currentColor" : "none"} />
               </button>
               <span className={`text-xs font-bold min-w-[20px] text-center ${
-                voteScore > 0 ? "text-[var(--color-aurora-orange)]" : 
+                voteScore > 0 ? "text-[var(--color-aurora-pink)]" : 
                 voteScore < 0 ? "text-[var(--color-aurora-blue)]" : ""
               }`}>
                 {voteScore}
               </span>
               <button
                 onClick={() => handleVote("downvote")}
-                className={`p-1.5 rounded-full hover:bg-[var(--accent)] ${
+                className={`p-2 rounded-full hover:bg-[var(--accent)] transition-colors ${
                   userVote === "downvote" ? "text-[var(--color-aurora-blue)]" : ""
                 }`}
               >
@@ -285,7 +283,7 @@ export function RedditPostCard({
 
             <button
               onClick={() => setShowComments(!showComments)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-[var(--accent)] text-xs font-medium"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-[var(--accent)] text-xs font-medium transition-colors"
             >
               <MessageSquare className="w-4 h-4" />
               {displayPost.commentCount || 0}
@@ -293,26 +291,26 @@ export function RedditPostCard({
 
             <button
               onClick={handleShare}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-[var(--accent)] text-xs font-medium"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-[var(--accent)] text-xs font-medium transition-colors"
             >
               <Share2 className="w-4 h-4" />
               Share
             </button>
 
-            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-[var(--accent)] text-xs font-medium">
+            <button className="flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-[var(--accent)] text-xs font-medium transition-colors">
               <Bookmark className="w-4 h-4" />
               Save
             </button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="p-1.5 rounded-full hover:bg-[var(--accent)] ml-auto">
+                <button className="p-2 rounded-full hover:bg-[var(--accent)] ml-auto transition-colors">
                   <MoreHorizontal className="w-4 h-4" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="bg-[var(--card)] border-[var(--border)]">
                 {isAuthor && onDelete && (
-                  <DropdownMenuItem onClick={onDelete} className="text-red-500">
+                  <DropdownMenuItem onClick={onDelete} className="text-[var(--color-aurora-salmon)]">
                     <Trash2 className="w-4 h-4 mr-2" />
                     Delete
                   </DropdownMenuItem>
@@ -331,7 +329,7 @@ export function RedditPostCard({
 
       {/* Comments Section */}
       {showComments && (
-        <div className="border-t border-[var(--border)] p-3 bg-[var(--background)]/30">
+        <div className="border-t border-[var(--border)] p-4 bg-[var(--accent)]/20">
           {/* Comment Input */}
           {currentUserId && (
             <div className="flex gap-2 mb-4">
@@ -339,13 +337,13 @@ export function RedditPostCard({
                 placeholder="What are your thoughts?"
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
-                className="min-h-[80px] bg-[var(--background)] border-[var(--border)] resize-none"
+                className="min-h-[80px] bg-[var(--background)] border-[var(--border)] resize-none rounded-xl"
               />
               <Button
                 size="sm"
                 onClick={handleComment}
                 disabled={!commentText.trim()}
-                className="self-end min-h-[44px] bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-blue)]/80"
+                className="self-end min-h-[44px] bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-blue)]/90 rounded-xl"
               >
                 <Send className="w-4 h-4" />
               </Button>
