@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { FloatingSOSButton } from "@/components/floating-sos-button";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
@@ -14,6 +15,11 @@ export default function AuthenticatedLayout({
 }) {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const pathname = usePathname();
+
+  // Pages where the SOS button is already in the header
+  const pagesWithIntegratedSOS = ["/feed"];
+  const showFloatingSOS = !pagesWithIntegratedSOS.includes(pathname);
 
   // Get user ID for credit celebrations
   useEffect(() => {
@@ -54,8 +60,8 @@ export default function AuthenticatedLayout({
         {children}
       </main>
       
-      {/* Floating SOS Button - Always visible for safety */}
-      <FloatingSOSButton />
+      {/* Floating SOS Button - Hidden on pages with integrated SOS */}
+      {showFloatingSOS && <FloatingSOSButton />}
       <PWAInstallPrompt />
     </div>
   );

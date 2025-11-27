@@ -25,8 +25,11 @@ import {
 import { 
   Sparkles, MapPin, Users, Target, Share2, Copy, Mail,
   ChevronDown, Flame, TrendingUp, Clock, LayoutGrid, List,
-  MessageCircle, Shield,
+  MessageCircle, Shield, Plus,
 } from "lucide-react";
+import { CreateOptionsModal } from "@/components/create-options-modal";
+import { PostCreateDialog } from "@/components/post-create-dialog";
+import { PollCreateDialog } from "@/components/poll-create-dialog";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +57,9 @@ export default function FeedPage() {
   const [sortBy, setSortBy] = useState<SortOption>("best");
   const [viewMode, setViewMode] = useState<ViewMode>("card");
   const [showAIChat, setShowAIChat] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showPostDialog, setShowPostDialog] = useState(false);
+  const [showPollDialog, setShowPollDialog] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -186,8 +192,17 @@ export default function FeedPage() {
               </div>
             </div>
 
-            {/* Right actions: AI + Panic + Filter */}
+            {/* Right actions: Create + AI + Panic + Filter */}
             <div className="flex items-center gap-2">
+              {/* Create Post Button */}
+              <button 
+                onClick={() => setShowCreateModal(true)}
+                className="p-2 rounded-xl bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 transition-all shadow-md"
+                aria-label="Create Post"
+              >
+                <Plus className="w-5 h-5 text-white" />
+              </button>
+
               <button 
                 onClick={() => setShowAIChat(true)}
                 className="p-2 rounded-xl hover:bg-[var(--accent)] transition-colors"
@@ -412,6 +427,20 @@ export default function FeedPage() {
             <AIChatCompanion className="h-[600px]" />
           </div>
         </div>
+      )}
+
+      {/* Create Modals */}
+      <CreateOptionsModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onSelectPost={() => setShowPostDialog(true)}
+        onSelectPoll={() => setShowPollDialog(true)}
+      />
+      {userId && (
+        <>
+          <PostCreateDialog open={showPostDialog} onOpenChange={setShowPostDialog} userId={userId} />
+          <PollCreateDialog open={showPollDialog} onOpenChange={setShowPollDialog} userId={userId} />
+        </>
       )}
 
       {/* Share Dialog */}

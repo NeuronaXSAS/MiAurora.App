@@ -23,7 +23,11 @@ import {
   MessageCircle,
   Shield,
   Menu,
+  Plus,
 } from "lucide-react";
+import { CreateOptionsModal } from "@/components/create-options-modal";
+import { PostCreateDialog } from "@/components/post-create-dialog";
+import { PollCreateDialog } from "@/components/poll-create-dialog";
 import { Id } from "@/convex/_generated/dataModel";
 import {
   DropdownMenu,
@@ -41,6 +45,9 @@ export function MobileFeed() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("best");
   const [showAIChat, setShowAIChat] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showPostDialog, setShowPostDialog] = useState(false);
+  const [showPollDialog, setShowPollDialog] = useState(false);
 
   // Get user ID
   useEffect(() => {
@@ -128,8 +135,17 @@ export function MobileFeed() {
             </Link>
           </div>
 
-          {/* Right: AI Chat + Panic + Search + Notifications + Profile */}
+          {/* Right: Create + AI Chat + Panic + Search + Notifications + Profile */}
           <div className="flex items-center gap-1">
+            {/* Create Post Button */}
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="p-2 rounded-xl bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 transition-all shadow-md"
+              aria-label="Create Post"
+            >
+              <Plus className="w-5 h-5 text-white" />
+            </button>
+
             {/* AI Companion Button */}
             <button 
               onClick={() => setShowAIChat(true)}
@@ -295,6 +311,20 @@ export function MobileFeed() {
             <AIChatCompanion className="h-[85vh] sm:h-[600px] rounded-t-3xl sm:rounded-2xl" />
           </div>
         </div>
+      )}
+
+      {/* Create Modals */}
+      <CreateOptionsModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onSelectPost={() => setShowPostDialog(true)}
+        onSelectPoll={() => setShowPollDialog(true)}
+      />
+      {userId && (
+        <>
+          <PostCreateDialog open={showPostDialog} onOpenChange={setShowPostDialog} userId={userId} />
+          <PollCreateDialog open={showPollDialog} onOpenChange={setShowPollDialog} userId={userId} />
+        </>
       )}
     </div>
   );

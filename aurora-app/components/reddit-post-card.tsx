@@ -28,6 +28,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { NestedComment } from "@/components/nested-comment";
 import { Id } from "@/convex/_generated/dataModel";
+import Link from "next/link";
 
 interface RedditPostCardProps {
   post: {
@@ -71,14 +72,20 @@ const communityIcons: Record<string, string> = {
   daily: "🏠",
   travel: "✈️",
   financial: "💰",
+  safety: "🛡️",
+  health: "💗",
+  motherhood: "👶",
 };
 
 const communityNames: Record<string, string> = {
-  professional: "r/CareerWomen",
-  social: "r/WomenConnect",
-  daily: "r/DailyLife",
-  travel: "r/SafeTravels",
-  financial: "r/WomenFinance",
+  professional: "c/CareerWomen",
+  social: "c/WomenConnect",
+  daily: "c/DailyLife",
+  travel: "c/SafeTravels",
+  financial: "c/WomenFinance",
+  safety: "c/SafetyFirst",
+  health: "c/WellnessCircle",
+  motherhood: "c/MomSupport",
 };
 
 export function RedditPostCard({
@@ -203,9 +210,9 @@ export function RedditPostCard({
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-xs">
               {communityIcon}
             </div>
-            <span className="font-semibold text-[var(--color-aurora-purple)] hover:underline cursor-pointer">
+            <Link href="/circles" className="font-semibold text-[var(--color-aurora-purple)] hover:underline">
               {communityName}
-            </span>
+            </Link>
             <span className="text-[var(--muted-foreground)]">•</span>
             <span className="text-[var(--muted-foreground)]">
               Posted by u/{post.isAnonymous ? "anonymous" : (post.author.name || "user")}
@@ -223,7 +230,7 @@ export function RedditPostCard({
               <Button
                 size="sm"
                 onClick={() => setIsJoined(true)}
-                className="ml-auto h-7 px-4 text-xs bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-blue)]/90 text-white rounded-full font-semibold"
+                className="ml-auto h-7 px-4 text-xs bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 text-white rounded-full font-semibold shadow-sm"
               >
                 Join
               </Button>
