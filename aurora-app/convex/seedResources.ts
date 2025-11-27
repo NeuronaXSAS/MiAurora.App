@@ -2,7 +2,7 @@ import { mutation } from "./_generated/server";
 
 export const seedGlobalResources = mutation({
   handler: async (ctx) => {
-    // Delete existing resources to reseed with comprehensive data
+    // Delete existing resources to reseed
     const existing = await ctx.db.query("safetyResources").collect();
     for (const resource of existing) {
       await ctx.db.delete(resource._id);
@@ -57,15 +57,26 @@ export const seedGlobalResources = mutation({
         services: ["Shelter Network", "Advocacy", "Training"],
       },
       {
-        name: "Global Survivor Network",
-        category: "community" as const,
-        description: "Connects survivors of trafficking and violence across countries to lead advocacy efforts.",
-        website: "https://www.yoursite.org/",
+        name: "MSI Reproductive Choices",
+        category: "medical" as const,
+        description: "Operates in 36 countries providing contraception and safe abortion services.",
+        website: "https://www.msichoices.org/",
         isGlobal: true,
         isVerified: true,
         isActive: true,
-        priority: 3,
-        services: ["Peer Support", "Advocacy", "Leadership Training"],
+        priority: 2,
+        services: ["Reproductive Health", "Contraception", "Family Planning"],
+      },
+      {
+        name: "IPPF - International Planned Parenthood",
+        category: "medical" as const,
+        description: "Member associations in over 145 countries providing reproductive health services.",
+        website: "https://www.ippf.org/",
+        isGlobal: true,
+        isVerified: true,
+        isActive: true,
+        priority: 2,
+        services: ["Reproductive Health", "Family Planning", "Sexual Health"],
       },
 
       // ============ UNITED STATES ============
@@ -208,6 +219,17 @@ export const seedGlobalResources = mutation({
         priority: 3,
         services: ["Financial Recovery", "Credit Repair", "Banking Support"],
       },
+      {
+        name: "RBC Opt-In Women's Career Program",
+        category: "employment" as const,
+        description: "Return-to-work program for women who have taken prolonged leave, focusing on leadership and business acumen.",
+        website: "https://www.torontomu.ca/xed/rbc-opt-in/",
+        country: "Canada",
+        isVerified: true,
+        isActive: true,
+        priority: 3,
+        services: ["Career Reentry", "Leadership Training", "Business Skills"],
+      },
 
       // ============ UNITED KINGDOM ============
       {
@@ -330,6 +352,7 @@ export const seedGlobalResources = mutation({
         category: "hotline" as const,
         description: "Specialized toll-free line with psychologists and lawyers. WhatsApp with sign language interpretation.",
         phone: "01 8000 112 137",
+        website: "https://www.sdmujer.gov.co/lineapurpura",
         country: "Colombia",
         city: "Bogotá",
         isVerified: true,
@@ -366,6 +389,17 @@ export const seedGlobalResources = mutation({
         hours: "24/7",
         languages: ["Spanish"],
       },
+      {
+        name: "Fuerza Mujeres",
+        category: "employment" as const,
+        description: "Labor reintegration program for women over 40, addressing ageism and gender gaps.",
+        website: "https://www.fuerzamujeres.org/",
+        country: "Argentina",
+        isVerified: true,
+        isActive: true,
+        priority: 3,
+        services: ["Job Placement", "Career Counseling", "Skills Training"],
+      },
 
       // ============ PERU ============
       {
@@ -379,6 +413,47 @@ export const seedGlobalResources = mutation({
         priority: 1,
         services: ["Legal Aid", "Psychological Support", "Social Services"],
         languages: ["Spanish", "Quechua"],
+      },
+      {
+        name: "Línea 100 Peru",
+        category: "hotline" as const,
+        description: "Free national helpline for victims of family and sexual violence.",
+        phone: "100",
+        country: "Peru",
+        isVerified: true,
+        isActive: true,
+        priority: 1,
+        services: ["Crisis Support", "Referrals", "Legal Information"],
+        hours: "24/7",
+        languages: ["Spanish"],
+      },
+
+      // ============ CHILE ============
+      {
+        name: "SernamEG Helpline",
+        category: "hotline" as const,
+        description: "National Service for Women and Gender Equity helpline.",
+        phone: "1455",
+        country: "Chile",
+        isVerified: true,
+        isActive: true,
+        priority: 1,
+        services: ["Crisis Support", "Legal Information"],
+        hours: "24/7",
+        languages: ["Spanish"],
+      },
+      {
+        name: "Fono Familia - Carabineros",
+        category: "hotline" as const,
+        description: "Police family violence helpline operated by Carabineros de Chile.",
+        phone: "149",
+        country: "Chile",
+        isVerified: true,
+        isActive: true,
+        priority: 1,
+        services: ["Emergency Response", "Police Assistance"],
+        hours: "24/7",
+        languages: ["Spanish"],
       },
 
       // ============ INDIA ============
@@ -503,6 +578,17 @@ export const seedGlobalResources = mutation({
         priority: 2,
         services: ["Emergency Shelter", "Rehabilitation"],
       },
+      {
+        name: "Women's Consortium of Nigeria (WOCON)",
+        category: "community" as const,
+        description: "Supports victims of trafficking and gender-based violence.",
+        website: "https://www.womenconsortiumofnigeria.org/",
+        country: "Nigeria",
+        isVerified: true,
+        isActive: true,
+        priority: 2,
+        services: ["Anti-Trafficking", "Advocacy", "Support Services"],
+      },
 
       // ============ KENYA ============
       {
@@ -516,6 +602,17 @@ export const seedGlobalResources = mutation({
         isActive: true,
         priority: 1,
         services: ["Free Legal Aid", "Custody", "Inheritance", "Violence Cases"],
+      },
+      {
+        name: "MSI Kenya",
+        category: "medical" as const,
+        description: "Reproductive health services in underserved rural areas.",
+        website: "https://www.msichoices.org/",
+        country: "Kenya",
+        isVerified: true,
+        isActive: true,
+        priority: 2,
+        services: ["Reproductive Health", "Family Planning"],
       },
 
       // ============ AUSTRALIA ============
@@ -543,6 +640,17 @@ export const seedGlobalResources = mutation({
         isActive: true,
         priority: 2,
         services: ["Financial Coaching", "Economic Abuse Support"],
+      },
+      {
+        name: "Legal Aid NSW - Domestic Violence",
+        category: "legal" as const,
+        description: "Specialized domestic violence legal unit providing holistic assistance.",
+        website: "https://www.legalaid.nsw.gov.au/",
+        country: "Australia",
+        isVerified: true,
+        isActive: true,
+        priority: 2,
+        services: ["Legal Aid", "Protection Orders", "Tenancy Issues"],
       },
 
       // ============ SOUTH KOREA ============
@@ -598,9 +706,32 @@ export const seedGlobalResources = mutation({
         languages: ["English", "Japanese"],
       },
 
-      // ============ EUROPEAN HOTLINES (WAVE Network) ============
+      // ============ PHILIPPINES ============
       {
-        name: "Frauenhelpline gegen Gewalt (Austria)",
+        name: "Recovery and Reintegration Program for Trafficked Persons",
+        category: "shelter" as const,
+        description: "Comprehensive recovery packages including shelter and capital assistance for trafficking victims.",
+        country: "Philippines",
+        isVerified: true,
+        isActive: true,
+        priority: 1,
+        services: ["Shelter", "Recovery", "Capital Assistance"],
+      },
+      {
+        name: "Love146 Philippines",
+        category: "community" as const,
+        description: "Rehabilitation of survivors of the sex trade, offering education and safe housing.",
+        website: "https://love146.org/philippines-survivor-care/",
+        country: "Philippines",
+        isVerified: true,
+        isActive: true,
+        priority: 2,
+        services: ["Rehabilitation", "Education", "Safe Housing"],
+      },
+
+      // ============ EUROPEAN HOTLINES ============
+      {
+        name: "Frauenhelpline gegen Gewalt",
         category: "hotline" as const,
         description: "Austrian women's helpline against violence.",
         phone: "0800 222 555",
@@ -613,7 +744,7 @@ export const seedGlobalResources = mutation({
         languages: ["German"],
       },
       {
-        name: "Écoute Violences Conjugales (Belgium)",
+        name: "Écoute Violences Conjugales",
         category: "hotline" as const,
         description: "Belgian domestic violence helpline.",
         phone: "0800 30 030",
@@ -626,7 +757,7 @@ export const seedGlobalResources = mutation({
         languages: ["French", "Dutch"],
       },
       {
-        name: "Kvinnofridslinjen (Sweden)",
+        name: "Kvinnofridslinjen",
         category: "hotline" as const,
         description: "Swedish national women's helpline.",
         phone: "116 016",
@@ -639,7 +770,7 @@ export const seedGlobalResources = mutation({
         languages: ["Swedish", "English"],
       },
       {
-        name: "Línea 016 (Spain)",
+        name: "Línea 016",
         category: "hotline" as const,
         description: "Spanish GBV helpline. Leaves no trace on phone bills for safety.",
         phone: "016",
@@ -652,7 +783,7 @@ export const seedGlobalResources = mutation({
         languages: ["Spanish"],
       },
       {
-        name: "Antiviolenza e Stalking 1522 (Italy)",
+        name: "Antiviolenza e Stalking 1522",
         category: "hotline" as const,
         description: "Italian anti-violence and stalking helpline.",
         phone: "1522",
@@ -665,7 +796,7 @@ export const seedGlobalResources = mutation({
         languages: ["Italian"],
       },
       {
-        name: "Niebieska Linia - Blue Line (Poland)",
+        name: "Niebieska Linia - Blue Line",
         category: "hotline" as const,
         description: "Historic Polish service for victims of domestic violence.",
         phone: "800 120 002",
@@ -677,32 +808,41 @@ export const seedGlobalResources = mutation({
         hours: "24/7",
         languages: ["Polish"],
       },
-
-      // ============ PHILIPPINES ============
       {
-        name: "Recovery and Reintegration Program for Trafficked Persons",
-        category: "shelter" as const,
-        description: "Comprehensive recovery packages including shelter and capital assistance for trafficking victims.",
-        country: "Philippines",
-        isVerified: true,
-        isActive: true,
-        priority: 1,
-        services: ["Shelter", "Recovery", "Capital Assistance"],
-      },
-
-      // ============ CHILE ============
-      {
-        name: "SernamEG Helpline",
+        name: "NANE Helpline Hungary",
         category: "hotline" as const,
-        description: "National Service for Women and Gender Equity helpline.",
-        phone: "1455",
-        country: "Chile",
+        description: "Hungarian women's helpline for domestic violence.",
+        phone: "+36 80 505 101",
+        country: "Hungary",
         isVerified: true,
         isActive: true,
         priority: 1,
-        services: ["Crisis Support", "Legal Information"],
-        hours: "24/7",
-        languages: ["Spanish"],
+        services: ["Crisis Support", "Counseling"],
+        languages: ["Hungarian"],
+      },
+      {
+        name: "Viol-Secours Switzerland",
+        category: "hotline" as const,
+        description: "Swiss helpline for sexual violence survivors.",
+        phone: "+41 22 345 2020",
+        country: "Switzerland",
+        isVerified: true,
+        isActive: true,
+        priority: 1,
+        services: ["Sexual Violence Support", "Counseling"],
+        languages: ["French", "German"],
+      },
+      {
+        name: "National Counselling Line Albania",
+        category: "hotline" as const,
+        description: "Albanian national counselling line for women.",
+        phone: "116 117",
+        country: "Albania",
+        isVerified: true,
+        isActive: true,
+        priority: 1,
+        services: ["Crisis Support", "Counseling"],
+        languages: ["Albanian"],
       },
     ];
 
