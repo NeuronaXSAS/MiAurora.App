@@ -28,8 +28,6 @@ import {
   ChevronRight,
   Video,
   MessageSquare,
-  Bell,
-  Search,
   AlertTriangle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -60,6 +58,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
     safety: true,
     social: true,
     wellness: false,
+    account: false,
   });
 
   useEffect(() => {
@@ -98,7 +97,6 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
-
   // Navigation items organized by category
   const mainNav = [
     { href: "/feed", icon: Home, label: "Feed", badge: null },
@@ -123,6 +121,12 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
   const wellnessNav = [
     { href: "/health", icon: Heart, label: "Health Tracker", color: "text-[var(--color-aurora-pink)]" },
     { href: "/assistant", icon: MessageSquare, label: "AI Companion", color: null },
+  ];
+
+  const accountNav = [
+    { href: "/credits", icon: Coins, label: "Credits", badge: null },
+    { href: "/settings", icon: Settings, label: "Settings", badge: null },
+    { href: "/profile", icon: User, label: "Profile", badge: null },
   ];
 
   const NavItem = ({ href, icon: Icon, label, badge, color, compact = false }: {
@@ -173,9 +177,9 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
   );
 
   const sidebarContent = (
-    <>
-      {/* Logo & Brand */}
-      <div className="p-4 border-b border-[var(--border)]">
+    <div className="flex flex-col h-full overflow-y-auto">
+      {/* Logo & Brand - Sticky header */}
+      <div className="sticky top-0 z-10 p-4 border-b border-[var(--border)] bg-[var(--card)]">
         <div className="flex items-center justify-between">
           <Link href="/feed" className="flex items-center gap-3">
             <img src="/Au_Logo_1.png" alt="Aurora App" className="w-10 h-10 rounded-xl" />
@@ -198,43 +202,43 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
         </div>
       </div>
 
-      {/* User Profile Card */}
-      {user && (
-        <div className="p-4 border-b border-[var(--border)]">
-          <div className="flex items-center gap-3 mb-3">
-            <Avatar className="w-10 h-10 border-2 border-[var(--color-aurora-purple)]/50">
-              <AvatarImage src={user.avatarConfig ? generateAvatarUrl(user.avatarConfig as AvatarConfig) : user.profileImage} />
-              <AvatarFallback className="bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white">
-                {(user.name && user.name !== "null" ? user.name : "U").charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm truncate text-[var(--foreground)]">
-                {user.name && user.name !== "null" ? user.name : "User"}
-              </p>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-[var(--color-aurora-yellow)]/50 text-[var(--color-aurora-yellow)]">
-                  <Coins className="w-3 h-3 mr-1" />
-                  {user.credits}
-                </Badge>
-                <span className="text-xs text-[var(--muted-foreground)]">Trust: {user.trustScore}</span>
+      {/* Scrollable content - everything scrolls together */}
+      <div className="flex-1 p-3 space-y-1">
+        {/* User Profile Card */}
+        {user && (
+          <div className="pb-3 mb-3 border-b border-[var(--border)]">
+            <div className="flex items-center gap-3 mb-3">
+              <Avatar className="w-10 h-10 border-2 border-[var(--color-aurora-purple)]/50">
+                <AvatarImage src={user.avatarConfig ? generateAvatarUrl(user.avatarConfig as AvatarConfig) : user.profileImage} />
+                <AvatarFallback className="bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white">
+                  {(user.name && user.name !== "null" ? user.name : "U").charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate text-[var(--foreground)]">
+                  {user.name && user.name !== "null" ? user.name : "User"}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-[var(--color-aurora-yellow)]/50 text-[var(--color-aurora-yellow)]">
+                    <Coins className="w-3 h-3 mr-1" />
+                    {user.credits}
+                  </Badge>
+                  <span className="text-xs text-[var(--muted-foreground)]">Trust: {user.trustScore}</span>
+                </div>
               </div>
             </div>
+            
+            {/* Create Button */}
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className="w-full min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 text-white font-semibold rounded-xl"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create
+            </Button>
           </div>
-          
-          {/* Create Button */}
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="w-full min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 text-white font-semibold rounded-xl"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create
-          </Button>
-        </div>
-      )}
+        )}
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-3 space-y-1">
         {/* Main Navigation */}
         {mainNav.map(item => (
           <NavItem key={item.href} {...item} />
@@ -280,38 +284,54 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
         <div className="pt-3 border-t border-[var(--border)] mt-3">
           <NavItem href="/intelligence" icon={Database} label="Intelligence" badge="B2B" />
         </div>
-      </nav>
 
-      {/* Footer */}
-      <div className="p-3 border-t border-[var(--border)] space-y-1">
-        <div className="flex items-center justify-between px-3 py-2">
-          <span className="text-sm text-[var(--muted-foreground)]">Theme</span>
-          <ThemeToggle />
+        {/* Account Section - Now part of scrollable content */}
+        <div className="pt-2">
+          <SectionHeader id="account" label="Account" icon={User} expanded={expandedSections.account} />
+          {expandedSections.account && (
+            <div className="space-y-1 mt-1">
+              {/* Theme Toggle */}
+              <div className="flex items-center justify-between px-3 py-2.5 rounded-xl text-[var(--muted-foreground)]">
+                <span className="text-sm font-medium">Theme</span>
+                <ThemeToggle />
+              </div>
+              
+              {accountNav.map(item => (
+                <NavItem key={item.href} {...item} />
+              ))}
+            </div>
+          )}
         </div>
-        
-        <NavItem href="/credits" icon={Coins} label="Credits" />
-        <NavItem href="/settings" icon={Settings} label="Settings" />
-        <NavItem href="/profile" icon={User} label="Profile" />
-        
-        <div className="pt-2 border-t border-[var(--border)]">
-          <Link href="/legal/terms" className="block px-3 py-1.5 text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+
+        {/* Legal & Logout - Now part of scrollable content */}
+        <div className="pt-3 mt-3 border-t border-[var(--border)]">
+          <Link 
+            href="/legal/terms" 
+            className="block px-3 py-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)] rounded-xl transition-colors"
+          >
             Terms of Service
           </Link>
-          <Link href="/legal/privacy" className="block px-3 py-1.5 text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+          <Link 
+            href="/legal/privacy" 
+            className="block px-3 py-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)] rounded-xl transition-colors"
+          >
             Privacy Policy
           </Link>
+          
+          <Button
+            variant="ghost"
+            className="w-full min-h-[44px] justify-start mt-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)] rounded-xl"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-5 h-5 mr-3" />
+            Logout
+          </Button>
         </div>
-        
-        <Button
-          variant="ghost"
-          className="w-full min-h-[44px] justify-start text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
-          onClick={handleLogout}
-        >
-          <LogOut className="w-5 h-5 mr-3" />
-          Logout
-        </Button>
+
+        {/* Bottom padding for safe scrolling */}
+        <div className="h-4" />
       </div>
-    </>
+    </div>
   );
 
   return (
