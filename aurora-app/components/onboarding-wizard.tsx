@@ -174,21 +174,21 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-2xl backdrop-blur-xl bg-gradient-to-br from-[var(--color-aurora-violet)] via-[#231E35] to-[var(--color-aurora-purple)] border-[var(--color-aurora-pink)]/30 shadow-2xl">
+      <DialogContent className="w-[95vw] max-w-lg sm:max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-xl bg-gradient-to-br from-[var(--color-aurora-violet)] via-[#231E35] to-[var(--color-aurora-purple)] border-[var(--color-aurora-pink)]/30 shadow-2xl p-4 sm:p-6">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
             {/* Aurora App Logo */}
-            <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg shadow-[var(--color-aurora-purple)]/50">
+            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg shadow-[var(--color-aurora-purple)]/50 flex-shrink-0">
               <img 
                 src="/Au_Logo_1.png" 
                 alt="Aurora App Logo" 
                 className="w-full h-full object-cover"
               />
             </div>
-            <div>
-              <DialogTitle className="text-2xl text-white">Welcome to Aurora App!</DialogTitle>
-              <DialogDescription className="text-[var(--color-aurora-cream)]">
-                Let's personalize your experience (Step {step} of 3)
+            <div className="min-w-0">
+              <DialogTitle className="text-lg sm:text-2xl text-white">Welcome to Aurora App!</DialogTitle>
+              <DialogDescription className="text-[var(--color-aurora-cream)] text-sm">
+                Step {step} of 3
               </DialogDescription>
             </div>
           </div>
@@ -211,19 +211,19 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
             >
               <div className="space-y-4">
                 <div>
-                  <Label className="text-base font-semibold flex items-center gap-2 mb-3 text-white">
-                    <Briefcase className="w-5 h-5 text-purple-400" />
+                  <Label className="text-sm sm:text-base font-semibold flex items-center gap-2 mb-2 sm:mb-3 text-white">
+                    <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-aurora-pink)]" />
                     What's your current role?
                   </Label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     {ROLES.map((r) => (
                       <Badge
                         key={r}
                         variant={role === r ? "default" : "outline"}
-                        className={`cursor-pointer px-4 py-2 text-sm transition-all ${
+                        className={`cursor-pointer px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm transition-all min-h-[36px] sm:min-h-[40px] ${
                           role === r
-                            ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg shadow-purple-500/50"
-                            : "bg-white/5 border-white/20 text-gray-300 hover:bg-white/10 hover:border-purple-400"
+                            ? "bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white shadow-lg"
+                            : "bg-white/5 border-white/20 text-gray-300 hover:bg-white/10 hover:border-[var(--color-aurora-pink)]"
                         }`}
                         onClick={() => setRole(r)}
                       >
@@ -286,14 +286,14 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
               className="space-y-6 py-4"
             >
               <div>
-                <Label className="text-base font-semibold flex items-center gap-2 mb-3 text-white">
-                  <Sparkles className="w-5 h-5 text-purple-400" />
+                <Label className="text-sm sm:text-base font-semibold flex items-center gap-2 mb-2 sm:mb-3 text-white">
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-aurora-yellow)]" />
                   What are you interested in?
                 </Label>
-                <p className="text-sm text-gray-300 mb-4">
-                  Select all that apply to personalize your feed
+                <p className="text-xs sm:text-sm text-gray-300 mb-3">
+                  Select all that apply
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   {INTERESTS.map((interest) => (
                     <Badge
                       key={interest}

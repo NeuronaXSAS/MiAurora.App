@@ -88,25 +88,25 @@ export default function DiscoverRoutesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-[#1e1b4b] to-slate-900">
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Header */}
-      <div className="backdrop-blur-xl bg-gradient-to-r from-purple-600/90 to-pink-600/90 border-b border-white/10">
+      <div className="bg-gradient-to-r from-[var(--color-aurora-violet)] to-[var(--color-aurora-purple)] border-b border-[var(--color-aurora-pink)]/30">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="flex items-center gap-3 mb-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => router.push("/routes")}
-              className="text-white hover:bg-white/20"
+              className="text-white hover:bg-white/20 min-h-[44px]"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-purple-100">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-white">
             Discover Routes
           </h1>
-          <p className="text-sm sm:text-base text-purple-100">
+          <p className="text-sm sm:text-base text-[var(--color-aurora-cream)]/80">
             Find safe and inspiring routes shared by the community
           </p>
         </div>
@@ -118,41 +118,41 @@ export default function DiscoverRoutesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Filters Sidebar */}
             <div className="lg:col-span-1">
-              <Card className="sticky top-24 backdrop-blur-xl bg-white/10 border-white/20">
+              <Card className="sticky top-24 bg-[var(--card)] border-[var(--border)]">
                 <CardContent className="p-4 space-y-4">
                   <div>
-                    <h3 className="font-semibold mb-3 flex items-center gap-2 text-white">
-                      <Filter className="w-4 h-4 text-purple-400" />
+                    <h3 className="font-semibold mb-3 flex items-center gap-2 text-[var(--foreground)]">
+                      <Filter className="w-4 h-4 text-[var(--color-aurora-purple)]" />
                       Filters
                     </h3>
                   </div>
 
                   {/* Search */}
                   <div>
-                    <label className="text-sm font-medium mb-2 block text-gray-300">Search</label>
+                    <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">Search</label>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
                       <Input
                         placeholder="Search routes..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 bg-white/5 border-white/20 text-white placeholder:text-gray-500"
+                        className="pl-9 bg-[var(--background)] border-[var(--border)] min-h-[44px]"
                       />
                     </div>
                   </div>
 
                   {/* Route Type */}
                   <div>
-                    <label className="text-sm font-medium mb-2 block text-gray-300">Activity Type</label>
+                    <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">Activity Type</label>
                     <div className="space-y-2">
                       {(["all", "walking", "running", "cycling", "commuting"] as const).map((type) => (
                         <button
                           key={type}
                           onClick={() => setFilterType(type)}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors capitalize ${
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors capitalize min-h-[44px] ${
                             filterType === type
-                              ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium shadow-lg shadow-purple-500/30"
-                              : "text-gray-300 hover:bg-white/10"
+                              ? "bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white font-medium shadow-lg"
+                              : "text-[var(--foreground)] hover:bg-[var(--accent)]"
                           }`}
                         >
                           {type}
