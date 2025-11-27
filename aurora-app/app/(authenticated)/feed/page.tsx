@@ -3,13 +3,12 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { PostCard } from "@/components/post-card";
+import { RedditPostCard } from "@/components/reddit-post-card";
 import { PollCard } from "@/components/poll-card";
 import { AIChatCard } from "@/components/ai-chat-card";
 import { RouteFeedCard } from "@/components/route-feed-card";
 import { OpportunityFeedCard } from "@/components/opportunity-feed-card";
 import { FeedAd } from "@/components/ads/feed-ad";
-
 import { PostCardSkeleton } from "@/components/loading-skeleton";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { MobileFeed } from "./mobile-feed";
@@ -17,13 +16,27 @@ import { useIsMobile } from "@/hooks/use-is-mobile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Sparkles, CheckCircle2, MapPin, Users, Target, Share2, Copy, Mail } from "lucide-react";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { 
+  Sparkles, 
+  CheckCircle2, 
+  MapPin, 
+  Users, 
+  Target, 
+  Share2, 
+  Copy, 
+  Mail,
+  ChevronDown,
+  Flame,
+  TrendingUp,
+  Clock,
+  LayoutGrid,
+  List,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +49,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
+type SortOption = "best" | "hot" | "new" | "top";
+type ViewMode = "card" | "compact";
+
 export default function FeedPage() {
   const isMobile = useIsMobile();
   const [contentType, setContentType] = useState<string>("all");
@@ -44,14 +60,14 @@ export default function FeedPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [showQuests, setShowQuests] = useState(true);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>("best");
+  const [viewMode, setViewMode] = useState<ViewMode>("card");
   const router = useRouter();
 
-  // Prevent hydration mismatch
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Get user ID and check onboarding status
   useEffect(() => {
     const getUserId = async () => {
       try {
@@ -72,17 +88,13 @@ export default function FeedPage() {
 
   const user = useQuery(api.users.getUser, userId ? { userId } : "skip");
 
-  // Show onboarding if user has no industry set (first time)
   useEffect(() => {
     if (user && !user.industry) {
       setShowOnboarding(true);
     }
   }, [user]);
 
-  // Fetch unified feed
-  const feedItems = useQuery(api.feed.getUnifiedFeed, {
-    limit: 50,
-  });
+  const feedItems = useQuery(api.feed.getUnifiedFeed, { limit: 50 });
 
   const verifyPost = useMutation(api.posts.verify);
   const deletePost = useMutation(api.posts.deletePost);
@@ -92,10 +104,7 @@ export default function FeedPage() {
   const handleVerify = async (postId: Id<"posts">) => {
     if (!userId) return;
     try {
-      await verifyPost({
-        postId,
-        userId,
-      });
+      await verifyPost({ postId, userId });
     } catch (error) {
       console.error("Verification error:", error);
     }
@@ -104,12 +113,8 @@ export default function FeedPage() {
   const handleDelete = async (postId: Id<"posts">) => {
     if (!userId) return;
     if (!confirm("Are you sure you want to delete this post?")) return;
-    
     try {
-      await deletePost({
-        postId,
-        userId,
-      });
+      await deletePost({ postId, userId });
     } catch (error) {
       console.error("Delete error:", error);
       alert("Failed to delete post. " + (error as Error).message);
@@ -119,7 +124,6 @@ export default function FeedPage() {
   const handleRouteDelete = async (routeId: Id<"routes">) => {
     if (!userId) return;
     if (!confirm("Are you sure you want to delete this route?")) return;
-    
     try {
       await deleteRoute({ routeId, userId });
     } catch (error) {
@@ -131,7 +135,6 @@ export default function FeedPage() {
   const handleOpportunityDelete = async (opportunityId: Id<"opportunities">) => {
     if (!userId) return;
     if (!confirm("Are you sure you want to delete this opportunity?")) return;
-    
     try {
       await deleteOpportunity({ opportunityId, userId });
     } catch (error) {
@@ -140,48 +143,126 @@ export default function FeedPage() {
     }
   };
 
-  // Show mobile-optimized feed for mobile users (after all hooks)
+  // Sort items
+  const sortedItems = feedItems ? [...feedItems].sort((a: any, b: any) => {
+    switch (sortBy) {
+      case "hot":
+        const aScore = (a.upvotes || 0) - (a.downvotes || 0) + (a.commentCount || 0) * 2;
+        const bScore = (b.upvotes || 0) - (b.downvotes || 0) + (b.commentCount || 0) * 2;
+        return bScore - aScore;
+      case "new":
+        return b._creationTime - a._creationTime;
+      case "top":
+        return ((b.upvotes || 0) - (b.downvotes || 0)) - ((a.upvotes || 0) - (a.downvotes || 0));
+      case "best":
+      default:
+        const aEngagement = (a.upvotes || 0) + (a.commentCount || 0);
+        const bEngagement = (b.upvotes || 0) + (b.commentCount || 0);
+        const aRecency = 1 / (Date.now() - a._creationTime + 1);
+        const bRecency = 1 / (Date.now() - b._creationTime + 1);
+        return (bEngagement * bRecency) - (aEngagement * aRecency);
+    }
+  }) : [];
+
+  const sortOptions = [
+    { value: "best", label: "Best", icon: Sparkles },
+    { value: "hot", label: "Hot", icon: Flame },
+    { value: "new", label: "New", icon: Clock },
+    { value: "top", label: "Top", icon: TrendingUp },
+  ];
+
+  const currentSort = sortOptions.find(opt => opt.value === sortBy) || sortOptions[0];
+
   if (isMobile) {
     return <MobileFeed />;
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      {/* Header */}
-      <div className="bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-40">
-        <div className="max-w-3xl mx-auto px-4 py-4">
+    <div className="min-h-screen bg-[#0e1113]">
+      {/* Reddit-style Header */}
+      <div className="bg-[#1a1a1b] border-b border-[#343536] sticky top-0 z-40">
+        <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">
-                Your Feed
-              </h1>
-              <p className="text-sm text-[var(--muted-foreground)]">
-                Discover and share community intelligence
+              <h1 className="text-xl font-bold text-[#d7dadc]">Your Feed</h1>
+              <p className="text-sm text-[#818384]">
+                Community intelligence for women
               </p>
             </div>
 
-            {/* Filter */}
+            {/* Content Type Filter */}
             {isMounted && (
-              <Select value={contentType} onValueChange={setContentType}>
-                <SelectTrigger className="w-[140px] sm:w-[180px] bg-[var(--background)] border-[var(--border)]" suppressHydrationWarning>
-                  <SelectValue placeholder="All Content" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Content</SelectItem>
-                  <SelectItem value="post">Posts</SelectItem>
-                  <SelectItem value="poll">Polls</SelectItem>
-                  <SelectItem value="route">Routes</SelectItem>
-                  <SelectItem value="opportunity">Opportunities</SelectItem>
-                </SelectContent>
-              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 px-3 py-1.5 rounded bg-[#272729] hover:bg-[#343536] text-[#d7dadc] text-sm">
+                    {contentType === "all" ? "All" : contentType.charAt(0).toUpperCase() + contentType.slice(1)}
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-[#1a1a1b] border-[#343536]">
+                  {["all", "post", "poll", "route", "opportunity"].map((type) => (
+                    <DropdownMenuItem
+                      key={type}
+                      onClick={() => setContentType(type)}
+                      className={`text-[#d7dadc] hover:bg-[#272729] ${contentType === type ? "bg-[#272729]" : ""}`}
+                    >
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
+          </div>
+        </div>
+
+        {/* Sort Bar */}
+        <div className="max-w-3xl mx-auto px-4 py-2 border-t border-[#343536]">
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#272729] hover:bg-[#343536] text-[#d7dadc] text-sm font-medium">
+                  <currentSort.icon className="w-4 h-4" />
+                  {currentSort.label}
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="bg-[#1a1a1b] border-[#343536]">
+                {sortOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => setSortBy(option.value as SortOption)}
+                    className={`flex items-center gap-2 text-[#d7dadc] hover:bg-[#272729] ${
+                      sortBy === option.value ? "bg-[#272729]" : ""
+                    }`}
+                  >
+                    <option.icon className="w-4 h-4" />
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <div className="flex items-center gap-1 ml-auto">
+              <button
+                onClick={() => setViewMode("card")}
+                className={`p-1.5 rounded ${viewMode === "card" ? "bg-[#272729]" : "hover:bg-[#272729]"}`}
+              >
+                <LayoutGrid className="w-5 h-5 text-[#818384]" />
+              </button>
+              <button
+                onClick={() => setViewMode("compact")}
+                className={`p-1.5 rounded ${viewMode === "compact" ? "bg-[#272729]" : "hover:bg-[#272729]"}`}
+              >
+                <List className="w-5 h-5 text-[#818384]" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Feed Content */}
-      <div className="max-w-3xl mx-auto px-4 py-6">
-        <div className="space-y-4">
+      <div className="max-w-3xl mx-auto px-4 py-4">
+        <div className="space-y-3">
           {/* Loading State */}
           {feedItems === undefined && (
             <>
@@ -191,39 +272,38 @@ export default function FeedPage() {
             </>
           )}
 
-          {/* Gamified Empty State - Only when feed is empty AND quests are visible */}
-          {feedItems && feedItems.length === 0 && showQuests && (
+          {/* Gamified Empty State */}
+          {sortedItems.length === 0 && feedItems !== undefined && showQuests && (
             <div className="space-y-4">
               <div className="text-center mb-4">
                 <div className="w-14 h-14 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-2xl flex items-center justify-center mx-auto mb-3">
                   <Sparkles className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-1 text-[var(--foreground)]">
+                <h3 className="text-xl font-bold mb-1 text-[#d7dadc]">
                   Welcome to Your Feed!
                 </h3>
-                <p className="text-[var(--muted-foreground)] text-sm mb-2">
+                <p className="text-[#818384] text-sm mb-2">
                   Complete these steps to get started and earn credits
                 </p>
                 <button
                   onClick={() => setShowQuests(false)}
-                  className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors underline"
+                  className="text-xs text-[#818384] hover:text-[#d7dadc] transition-colors underline"
                 >
                   Hide quests
                 </button>
               </div>
 
               <div className="grid gap-3">
-                {/* Complete Profile */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                   <Link href="/settings">
-                    <div className="group bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--color-aurora-purple)]/50 hover:shadow-lg transition-all cursor-pointer">
+                    <div className="group bg-[#1a1a1b] border border-[#343536] rounded-lg p-4 hover:border-[var(--color-aurora-purple)]/50 transition-all cursor-pointer">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-[var(--color-aurora-purple)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
                           <Target className="w-5 h-5 text-[var(--color-aurora-purple)]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-[var(--foreground)]">Complete Your Profile</h4>
-                          <p className="text-[var(--muted-foreground)] text-sm truncate">Add bio, location, and goals</p>
+                          <h4 className="font-semibold text-[#d7dadc]">Complete Your Profile</h4>
+                          <p className="text-[#818384] text-sm truncate">Add bio, location, and goals</p>
                         </div>
                         <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">+10</Badge>
                       </div>
@@ -231,17 +311,16 @@ export default function FeedPage() {
                   </Link>
                 </motion.div>
 
-                {/* Share Location */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
                   <Link href="/map">
-                    <div className="group bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--color-aurora-blue)]/50 hover:shadow-lg transition-all cursor-pointer">
+                    <div className="group bg-[#1a1a1b] border border-[#343536] rounded-lg p-4 hover:border-[var(--color-aurora-blue)]/50 transition-all cursor-pointer">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-[var(--color-aurora-blue)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
                           <MapPin className="w-5 h-5 text-[var(--color-aurora-blue)]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-[var(--foreground)]">Share Your First Location</h4>
-                          <p className="text-[var(--muted-foreground)] text-sm truncate">Rate a place to help others</p>
+                          <h4 className="font-semibold text-[#d7dadc]">Share Your First Location</h4>
+                          <p className="text-[#818384] text-sm truncate">Rate a place to help others</p>
                         </div>
                         <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">+50</Badge>
                       </div>
@@ -249,41 +328,39 @@ export default function FeedPage() {
                   </Link>
                 </motion.div>
 
-                {/* Create Post */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                   <div
                     onClick={() => {
                       const createButton = document.querySelector('[data-create-button]') as HTMLButtonElement;
                       if (createButton) createButton.click();
                     }}
-                    className="group bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--color-aurora-mint)]/50 hover:shadow-lg transition-all cursor-pointer"
+                    className="group bg-[#1a1a1b] border border-[#343536] rounded-lg p-4 hover:border-[var(--color-aurora-mint)]/50 transition-all cursor-pointer"
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-[var(--color-aurora-mint)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
                         <Sparkles className="w-5 h-5 text-[var(--color-aurora-mint)]" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-[var(--foreground)]">Share Your First Experience</h4>
-                        <p className="text-[var(--muted-foreground)] text-sm truncate">Create a post for the community</p>
+                        <h4 className="font-semibold text-[#d7dadc]">Share Your First Experience</h4>
+                        <p className="text-[#818384] text-sm truncate">Create a post for the community</p>
                       </div>
                       <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">+25</Badge>
                     </div>
                   </div>
                 </motion.div>
 
-                {/* Invite Friend */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                   <div
                     onClick={() => setShowShareDialog(true)}
-                    className="group bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--color-aurora-pink)]/50 hover:shadow-lg transition-all cursor-pointer"
+                    className="group bg-[#1a1a1b] border border-[#343536] rounded-lg p-4 hover:border-[var(--color-aurora-pink)]/50 transition-all cursor-pointer"
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-[var(--color-aurora-pink)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
                         <Users className="w-5 h-5 text-[var(--color-aurora-pink)]" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-[var(--foreground)]">Invite a Friend</h4>
-                        <p className="text-[var(--muted-foreground)] text-sm truncate">Earn credits when they join</p>
+                        <h4 className="font-semibold text-[#d7dadc]">Invite a Friend</h4>
+                        <p className="text-[#818384] text-sm truncate">Earn credits when they join</p>
                       </div>
                       <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">+15</Badge>
                     </div>
@@ -294,11 +371,11 @@ export default function FeedPage() {
           )}
 
           {/* Show quests button when hidden */}
-          {feedItems && feedItems.length === 0 && !showQuests && (
+          {sortedItems.length === 0 && feedItems !== undefined && !showQuests && (
             <div className="text-center py-8">
               <button
                 onClick={() => setShowQuests(true)}
-                className="bg-[var(--card)] border border-[var(--border)] rounded-xl px-6 py-3 text-[var(--foreground)] hover:bg-[var(--accent)] transition-all"
+                className="bg-[#1a1a1b] border border-[#343536] rounded-lg px-6 py-3 text-[#d7dadc] hover:bg-[#272729] transition-all"
               >
                 <Sparkles className="w-4 h-4 inline mr-2" />
                 Show earning opportunities
@@ -306,81 +383,66 @@ export default function FeedPage() {
             </div>
           )}
 
-          {/* Empty state message when quests are hidden */}
-          {feedItems && feedItems.length === 0 && !showQuests && (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-[var(--accent)] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-8 h-8 text-[var(--muted-foreground)]" />
-              </div>
-              <h3 className="text-xl font-bold text-[var(--foreground)] mb-2">No posts yet</h3>
-              <p className="text-[var(--muted-foreground)] text-sm mb-4">
-                Be the first to share something with the community!
-              </p>
-            </div>
-          )}
-
           {/* Feed Items */}
-          {feedItems &&
-            feedItems
-              .filter((item: any) => {
-                if (contentType === "all") return true;
-                if (contentType === "poll") return item.type === "post" && item.postType === "poll";
-                if (contentType === "post") return item.type === "post" && item.postType !== "poll";
-                return item.type === contentType;
-              })
-              .map((item: any, index: number) => {
-                // Inject ad every 5th item
-                const showAd = index > 0 && index % 5 === 0;
-                
-                return (
-                  <div key={item._id}>
-                    {showAd && <FeedAd />}
-                    
-                    {item.type === "post" && item.postType === "poll" && (
-                      <PollCard
-                        post={item}
-                        currentUserId={userId || undefined}
-                        onDelete={() => handleDelete(item._id as Id<"posts">)}
-                      />
-                    )}
-                    
-                    {item.type === "post" && item.postType === "ai_chat" && (
-                      <AIChatCard
-                        post={item}
-                        currentUserId={userId || undefined}
-                        onDelete={() => handleDelete(item._id as Id<"posts">)}
-                      />
-                    )}
-                    
-                    {item.type === "post" && item.postType !== "poll" && item.postType !== "ai_chat" && (
-                      <PostCard
-                        post={item}
-                        currentUserId={userId || undefined}
-                        onVerify={() => handleVerify(item._id as Id<"posts">)}
-                        onDelete={() => handleDelete(item._id as Id<"posts">)}
-                        hasVerified={false}
-                        showActions={true}
-                      />
-                    )}
-                    
-                    {item.type === "route" && (
-                      <RouteFeedCard
-                        route={item as any}
-                        currentUserId={userId || undefined}
-                        onDelete={() => handleRouteDelete(item._id as Id<"routes">)}
-                      />
-                    )}
-                    
-                    {item.type === "opportunity" && (
-                      <OpportunityFeedCard
-                        opportunity={item as any}
-                        currentUserId={userId || undefined}
-                        onDelete={() => handleOpportunityDelete(item._id as Id<"opportunities">)}
-                      />
-                    )}
-                  </div>
-                );
-              })}
+          {sortedItems
+            .filter((item: any) => {
+              if (contentType === "all") return true;
+              if (contentType === "poll") return item.type === "post" && item.postType === "poll";
+              if (contentType === "post") return item.type === "post" && item.postType !== "poll";
+              return item.type === contentType;
+            })
+            .map((item: any, index: number) => {
+              const showAd = index > 0 && index % 5 === 0;
+
+              return (
+                <div key={item._id}>
+                  {showAd && <FeedAd />}
+
+                  {item.type === "post" && item.postType === "poll" && (
+                    <PollCard
+                      post={item}
+                      currentUserId={userId || undefined}
+                      onDelete={() => handleDelete(item._id as Id<"posts">)}
+                    />
+                  )}
+
+                  {item.type === "post" && item.postType === "ai_chat" && (
+                    <AIChatCard
+                      post={item}
+                      currentUserId={userId || undefined}
+                      onDelete={() => handleDelete(item._id as Id<"posts">)}
+                    />
+                  )}
+
+                  {item.type === "post" && item.postType !== "poll" && item.postType !== "ai_chat" && (
+                    <RedditPostCard
+                      post={item}
+                      currentUserId={userId || undefined}
+                      onVerify={() => handleVerify(item._id as Id<"posts">)}
+                      onDelete={() => handleDelete(item._id as Id<"posts">)}
+                      hasVerified={false}
+                      showActions={true}
+                    />
+                  )}
+
+                  {item.type === "route" && (
+                    <RouteFeedCard
+                      route={item as any}
+                      currentUserId={userId || undefined}
+                      onDelete={() => handleRouteDelete(item._id as Id<"routes">)}
+                    />
+                  )}
+
+                  {item.type === "opportunity" && (
+                    <OpportunityFeedCard
+                      opportunity={item as any}
+                      currentUserId={userId || undefined}
+                      onDelete={() => handleOpportunityDelete(item._id as Id<"opportunities">)}
+                    />
+                  )}
+                </div>
+              );
+            })}
         </div>
       </div>
 
@@ -395,36 +457,34 @@ export default function FeedPage() {
 
       {/* Share Dialog */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-[#1a1a1b] border-[#343536]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-[#d7dadc]">
               <Share2 className="w-5 h-5" />
               Invite Friends to Aurora
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-[#818384]">
               Share Aurora and earn 15 credits when your friends join!
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 py-4">
-            {/* Copy Link */}
             <Button
               onClick={() => {
                 const inviteLink = `${window.location.origin}?ref=${userId}`;
                 navigator.clipboard.writeText(inviteLink);
                 alert("✅ Link copied! Share it with your friends.");
               }}
-              className="w-full justify-start"
+              className="w-full justify-start bg-[#272729] hover:bg-[#343536] text-[#d7dadc] border-[#343536]"
               variant="outline"
             >
               <Copy className="w-4 h-4 mr-3" />
               Copy Invite Link
             </Button>
 
-            {/* WhatsApp */}
             <Button
               onClick={() => {
-                const text = encodeURIComponent("Join me on Aurora - a safe space for women to connect, share experiences, and thrive together! 💜");
+                const text = encodeURIComponent("Join me on Aurora - a safe space for women to connect and thrive! 💜");
                 const url = encodeURIComponent(`${window.location.origin}?ref=${userId}`);
                 window.open(`https://wa.me/?text=${text}%20${url}`, '_blank');
               }}
@@ -436,21 +496,19 @@ export default function FeedPage() {
               Share on WhatsApp
             </Button>
 
-            {/* Email */}
             <Button
               onClick={() => {
                 const subject = encodeURIComponent("Join me on Aurora!");
-                const body = encodeURIComponent(`Hi!\n\nI've been using Aurora - a safe space for women to connect, share experiences, and thrive together.\n\nJoin me here: ${window.location.origin}?ref=${userId}\n\n💜 Aurora App`);
+                const body = encodeURIComponent(`Hi!\n\nI've been using Aurora - a safe space for women to connect and thrive.\n\nJoin me here: ${window.location.origin}?ref=${userId}\n\n💜 Aurora App`);
                 window.location.href = `mailto:?subject=${subject}&body=${body}`;
               }}
-              className="w-full justify-start"
+              className="w-full justify-start bg-[#272729] hover:bg-[#343536] text-[#d7dadc] border-[#343536]"
               variant="outline"
             >
               <Mail className="w-4 h-4 mr-3" />
               Share via Email
             </Button>
 
-            {/* Twitter/X */}
             <Button
               onClick={() => {
                 const text = encodeURIComponent("Join me on Aurora - a safe space for women to connect and thrive! 💜");

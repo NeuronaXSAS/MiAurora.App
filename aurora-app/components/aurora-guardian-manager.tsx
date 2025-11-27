@@ -42,10 +42,13 @@ export function AuroraGuardianManager({ userId }: AuroraGuardianManagerProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [requestMessage, setRequestMessage] = useState("");
+  const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
+  const [sendingTo, setSendingTo] = useState<string | null>(null);
 
   // Queries
   const myGuardians = useQuery(api.guardians.getMyGuardians, { userId }) ?? [];
   const pendingRequests = useQuery(api.guardians.getPendingRequests, { userId }) ?? [];
+  const sentPendingRequests = useQuery(api.guardians.getSentPendingRequests, { userId }) ?? [];
   const searchResults = useQuery(
     api.guardians.searchUsers,
     searchTerm.length >= 2 ? { userId, searchTerm } : "skip"
@@ -57,15 +60,30 @@ export function AuroraGuardianManager({ userId }: AuroraGuardianManagerProps) {
   const removeGuardian = useMutation(api.guardians.removeGuardian);
   const updatePermissions = useMutation(api.guardians.updatePermissions);
 
+  // Check if request already sent
+  const isRequestPending = (guardianId: string) => {
+    return sentRequests.has(guardianId) || sentPendingRequests.some((r: any) => r.guardianId === guardianId);
+  };
+
   const handleSendRequest = async (guardianId: Id<"users">) => {
-    await sendRequest({
-      userId,
-      guardianId,
-      message: requestMessage || "I'd like you to be my Aurora Guardian 💜",
-    });
-    setSearchTerm("");
-    setRequestMessage("");
-    setShowAddDialog(false);
+    setSendingTo(guardianId);
+    try {
+      await sendRequest({
+        userId,
+        guardianId,
+        message: requestMessage || "I'd like you to be my Aurora Guardian 💜",
+      });
+      setSentRequests(prev => new Set(prev).add(guardianId));
+    } catch (error: any) {
+      // Request might already exist
+      if (error.message?.includes("pending") || error.message?.includes("Already")) {
+        setSentRequests(prev => new Set(prev).add(guardianId));
+      }
+    } finally {
+      setSendingTo(null);
+      setSearchTerm("");
+      setRequestMessage("");
+    }
   };
 
   const handleRespond = async (requestId: Id<"auroraGuardians">, accept: boolean) => {
@@ -123,38 +141,57 @@ export function AuroraGuardianManager({ userId }: AuroraGuardianManagerProps) {
               )}
 
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {searchResults.map((user) => (
-                  <div
-                    key={user._id}
-                    className="flex items-center justify-between p-3 rounded-xl border border-[var(--border)] bg-[var(--card)]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-white font-bold">
-                        {user.avatarConfig ? (
-                          <img
-                            src={generateAvatarUrl(user.avatarConfig as any)}
-                            alt={user.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          user.name.charAt(0)
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium text-[var(--foreground)]">{user.name}</p>
-                        <p className="text-xs text-[var(--muted-foreground)]">{user.email}</p>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => handleSendRequest(user._id)}
-                      className="min-h-[36px] bg-[var(--color-aurora-mint)] hover:bg-[var(--color-aurora-mint)]/80 text-[var(--color-aurora-violet)]"
+                {searchResults.map((user) => {
+                  const isPending = isRequestPending(user._id);
+                  const isSending = sendingTo === user._id;
+                  
+                  return (
+                    <div
+                      key={user._id}
+                      className="flex items-center justify-between p-3 rounded-xl border border-[var(--border)] bg-[var(--card)]"
                     >
-                      <Heart className="w-4 h-4 mr-1" />
-                      Request
-                    </Button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-white font-bold">
+                          {user.avatarConfig ? (
+                            <img
+                              src={generateAvatarUrl(user.avatarConfig as any)}
+                              alt={user.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            user.name.charAt(0)
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium text-[var(--foreground)]">{user.name}</p>
+                          <p className="text-xs text-[var(--muted-foreground)]">{user.email}</p>
+                        </div>
+                      </div>
+                      {isPending ? (
+                        <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-[var(--color-aurora-yellow)]/30">
+                          <Clock className="w-3 h-3 mr-1" />
+                          Pending
+                        </Badge>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => handleSendRequest(user._id)}
+                          disabled={isSending}
+                          className="min-h-[36px] bg-[var(--color-aurora-mint)] hover:bg-[var(--color-aurora-mint)]/80 text-[var(--color-aurora-violet)]"
+                        >
+                          {isSending ? (
+                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <>
+                              <Heart className="w-4 h-4 mr-1" />
+                              Request
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               {searchResults.length > 0 && (

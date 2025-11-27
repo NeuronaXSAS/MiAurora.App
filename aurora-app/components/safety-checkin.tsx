@@ -37,15 +37,19 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
   const [customMinutes, setCustomMinutes] = useState("");
   const [note, setNote] = useState("");
   const [isCheckinIn, setIsCheckinIn] = useState(false);
+  const [lastCheckinTime, setLastCheckinTime] = useState<number | null>(null);
 
   // Safe queries with null coalescing for error handling
   const pendingCheckins = useQuery(api.safetyCheckins.getPendingCheckins, { userId }) ?? [];
   const checkinHistory = useQuery(api.safetyCheckins.getCheckinHistory, { userId, limit: 5 }) ?? [];
+  const myGuardians = useQuery(api.guardians.getMyGuardians, { userId }) ?? [];
   
   const scheduleCheckin = useMutation(api.safetyCheckins.scheduleCheckin);
   const confirmCheckin = useMutation(api.safetyCheckins.confirmCheckin);
   const cancelCheckin = useMutation(api.safetyCheckins.cancelCheckin);
   const quickCheckin = useMutation(api.safetyCheckins.quickCheckin);
+
+  const hasGuardians = myGuardians.length > 0;
 
   const handleQuickCheckin = async () => {
     setIsCheckinIn(true);
@@ -64,6 +68,7 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
     }
 
     await quickCheckin({ userId, location });
+    setLastCheckinTime(Date.now());
     setIsCheckinIn(false);
   };
 
@@ -100,6 +105,23 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
 
   return (
     <div className="space-y-6">
+      {/* Guardian Status Alert */}
+      {!hasGuardians && (
+        <Card className="border-[var(--color-aurora-yellow)]/50 bg-[var(--color-aurora-yellow)]/10">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-[var(--color-aurora-yellow)] flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-[var(--foreground)]">No Aurora Guardians</p>
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  Add Aurora Guardians in the "Guardians" tab to receive alerts when you miss a check-in.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Quick Check-in Button */}
       <Card className="bg-[var(--color-aurora-mint)]/30 border-[var(--color-aurora-mint)]">
         <CardContent className="p-6">
@@ -110,26 +132,38 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
               </div>
               <div>
                 <h3 className="font-bold text-lg text-[var(--foreground)]">Quick Check-in</h3>
-                <p className="text-sm text-[var(--muted-foreground)]">Confirm you're safe right now</p>
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  {hasGuardians 
+                    ? `Notify your ${myGuardians.length} guardian${myGuardians.length > 1 ? 's' : ''} you're safe`
+                    : "Confirm you're safe right now"
+                  }
+                </p>
               </div>
             </div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                size="lg"
-                onClick={handleQuickCheckin}
-                disabled={isCheckinIn}
-                className="min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-mint)] to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-[var(--color-aurora-violet)] shadow-lg font-semibold"
-              >
-                {isCheckinIn ? (
-                  <div className="animate-spin w-5 h-5 border-2 border-current border-t-transparent rounded-full" />
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5 mr-2" />
-                    I'm OK
-                  </>
-                )}
-              </Button>
-            </motion.div>
+            <div className="flex flex-col items-end gap-2">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  size="lg"
+                  onClick={handleQuickCheckin}
+                  disabled={isCheckinIn}
+                  className="min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-mint)] to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-[var(--color-aurora-violet)] shadow-lg font-semibold"
+                >
+                  {isCheckinIn ? (
+                    <div className="animate-spin w-5 h-5 border-2 border-current border-t-transparent rounded-full" />
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      I'm OK
+                    </>
+                  )}
+                </Button>
+              </motion.div>
+              {lastCheckinTime && (
+                <p className="text-xs text-[var(--color-aurora-mint)]">
+                  ✓ Checked in {formatDistanceToNow(lastCheckinTime, { addSuffix: true })}
+                </p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -76,16 +76,16 @@ export default function ResourcesPage() {
   return (
     <div className="min-h-screen bg-[var(--background)]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[var(--color-aurora-purple)] via-[var(--color-aurora-pink)] to-[var(--color-aurora-orange)] text-white">
+      <div className="bg-gradient-to-br from-[var(--color-aurora-violet)] via-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white">
         <div className="container mx-auto px-4 py-6 sm:py-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-lg">
                 <Shield className="w-6 h-6 sm:w-8 sm:h-8" />
               </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold">Safety Resources</h1>
-                <p className="text-white/80 text-sm sm:text-base">Hotlines, shelters, legal aid & more</p>
+                <p className="text-white/90 text-sm sm:text-base">Hotlines, shelters, legal aid & more</p>
               </div>
             </div>
             

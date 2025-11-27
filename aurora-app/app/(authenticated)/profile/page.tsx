@@ -31,6 +31,9 @@ import {
   Target,
   Edit,
   Heart,
+  Bell,
+  BellOff,
+  Droplet,
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
@@ -38,6 +41,7 @@ import { HydrationTracker } from "@/components/health/hydration-tracker";
 import { EmotionalCheckin } from "@/components/health/emotional-checkin";
 import { MeditationSection } from "@/components/health/meditation-section";
 import { generateAvatarUrl, AvatarConfig } from "@/hooks/use-avatar";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 export default function ProfilePage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
@@ -53,6 +57,15 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
 
   const updateProfile = useMutation(api.users.completeOnboarding);
+  
+  // Push notifications
+  const { 
+    isSupported: pushSupported, 
+    isSubscribed: pushSubscribed, 
+    subscribe: subscribePush, 
+    unsubscribe: unsubscribePush,
+    isLoading: pushLoading 
+  } = usePushNotifications();
 
   // Fetch user data
   const user = useQuery(
@@ -259,23 +272,66 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Profile Completion Bar */}
+          {/* Profile Completion & Notifications */}
           <div className="container mx-auto px-4 sm:px-6 py-4">
-            <div className="bg-white/10 border border-white/20 rounded-xl p-4 max-w-2xl">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-white/80">Profile Completion</span>
-                <span className="text-sm font-bold text-white">{profileCompletion}%</span>
+            <div className="flex flex-col sm:flex-row gap-4 max-w-4xl">
+              {/* Profile Completion */}
+              <div className="flex-1 bg-white/10 border border-white/20 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-white/80">Profile Completion</span>
+                  <span className="text-sm font-bold text-white">{profileCompletion}%</span>
+                </div>
+                <div className="w-full bg-white/20 rounded-full h-3 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-[var(--color-aurora-yellow)] to-[var(--color-aurora-mint)] rounded-full transition-all duration-500"
+                    style={{ width: `${profileCompletion}%` }}
+                  />
+                </div>
+                {profileCompletion < 100 && (
+                  <p className="text-xs text-white/70 mt-2">
+                    Complete your profile to increase your Trust Score
+                  </p>
+                )}
               </div>
-              <div className="w-full bg-white/20 rounded-full h-3 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-[var(--color-aurora-yellow)] to-[var(--color-aurora-mint)] rounded-full transition-all duration-500"
-                  style={{ width: `${profileCompletion}%` }}
-                />
-              </div>
-              {profileCompletion < 100 && (
-                <p className="text-xs text-white/70 mt-2">
-                  Complete your profile to increase your Trust Score and unlock more features
-                </p>
+              
+              {/* Push Notifications */}
+              {pushSupported && (
+                <div className="bg-white/10 border border-white/20 rounded-xl p-4 flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${pushSubscribed ? 'bg-[var(--color-aurora-mint)]/30' : 'bg-white/20'}`}>
+                    {pushSubscribed ? (
+                      <Bell className="w-5 h-5 text-[var(--color-aurora-mint)]" />
+                    ) : (
+                      <BellOff className="w-5 h-5 text-white/60" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">
+                      {pushSubscribed ? "Notifications On" : "Enable Notifications"}
+                    </p>
+                    <p className="text-xs text-white/70">
+                      {pushSubscribed ? "You'll receive reminders" : "Get hydration & check-in reminders"}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={pushSubscribed ? "outline" : "default"}
+                    onClick={async () => {
+                      if (pushSubscribed) {
+                        await unsubscribePush();
+                      } else {
+                        // Request permission first, then subscribe
+                        const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+                        if (vapidKey) {
+                          await subscribePush(vapidKey);
+                        }
+                      }
+                    }}
+                    disabled={pushLoading}
+                    className={`min-h-[40px] ${pushSubscribed ? 'bg-white/10 border-white/30 text-white hover:bg-white/20' : 'bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] hover:bg-[var(--color-aurora-mint)]/90'}`}
+                  >
+                    {pushLoading ? "..." : pushSubscribed ? "Disable" : "Enable"}
+                  </Button>
+                </div>
               )}
             </div>
           </div>

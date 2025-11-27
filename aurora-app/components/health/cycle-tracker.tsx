@@ -310,6 +310,75 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
         </CardContent>
       </Card>
 
+      {/* Cycle Statistics */}
+      {cycleHistory.length > 0 && (
+        <Card className="bg-[var(--card)] border-[var(--border)]">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+              <Sparkles className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+              Cycle Statistics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-[var(--color-aurora-pink)]/10 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-[var(--color-aurora-pink)]">
+                  {cycleHistory.filter(l => l.type === "period").length}
+                </p>
+                <p className="text-xs text-[var(--muted-foreground)]">Period Days Logged</p>
+              </div>
+              <div className="bg-[var(--color-aurora-purple)]/10 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-[var(--color-aurora-purple)]">
+                  {predictions?.averageCycleLength || 28}
+                </p>
+                <p className="text-xs text-[var(--muted-foreground)]">Avg Cycle Length</p>
+              </div>
+              <div className="bg-[var(--color-aurora-lavender)]/20 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-[var(--color-aurora-violet)]">
+                  {cycleHistory.filter(l => l.symptoms && l.symptoms.length > 0).length}
+                </p>
+                <p className="text-xs text-[var(--muted-foreground)]">Symptom Logs</p>
+              </div>
+              <div className="bg-[var(--color-aurora-mint)]/10 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-[var(--color-aurora-mint)]">
+                  {predictions?.hasEnoughData ? "✓" : "..."}
+                </p>
+                <p className="text-xs text-[var(--muted-foreground)]">Predictions Ready</p>
+              </div>
+            </div>
+            
+            {/* Most Common Symptoms */}
+            {cycleHistory.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-[var(--border)]">
+                <p className="text-sm font-medium text-[var(--foreground)] mb-2">Most Common Symptoms</p>
+                <div className="flex flex-wrap gap-2">
+                  {(() => {
+                    const symptomCounts: Record<string, number> = {};
+                    cycleHistory.forEach(log => {
+                      log.symptoms?.forEach((s: string) => {
+                        symptomCounts[s] = (symptomCounts[s] || 0) + 1;
+                      });
+                    });
+                    const topSymptoms = Object.entries(symptomCounts)
+                      .sort((a, b) => b[1] - a[1])
+                      .slice(0, 5);
+                    
+                    return topSymptoms.map(([symptomId, count]) => {
+                      const symptom = SYMPTOMS.find(s => s.id === symptomId);
+                      return symptom ? (
+                        <Badge key={symptomId} variant="secondary" className="bg-[var(--accent)]">
+                          {symptom.emoji} {symptom.label} ({count})
+                        </Badge>
+                      ) : null;
+                    });
+                  })()}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Log Entry */}
       <Card className="bg-[var(--card)] border-[var(--border)]">
         <CardHeader>

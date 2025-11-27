@@ -310,7 +310,7 @@ export const getCirclePosts = query({
     const postsWithAuthors = await Promise.all(
       posts.map(async (post) => {
         if (post.isAnonymous) {
-          return { ...post, author: null };
+          return { ...post, author: { name: "Anonymous", avatarConfig: null } };
         }
         const author = await ctx.db.get(post.authorId);
         return {
@@ -319,6 +319,7 @@ export const getCirclePosts = query({
             _id: author._id,
             name: author.name,
             profileImage: author.profileImage,
+            avatarConfig: author.avatarConfig,
           } : null,
         };
       })
@@ -366,5 +367,295 @@ export const getCircleCategories = query({
     } catch {
       return [];
     }
+  },
+});
+
+// Get circle details with user's role
+export const getCircleDetails = query({
+  args: {
+    circleId: v.id("circles"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const circle = await ctx.db.get(args.circleId);
+    if (!circle) return null;
+
+    const membership = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle_and_user", (q) => 
+        q.eq("circleId", args.circleId).eq("userId", args.userId)
+      )
+      .first();
+
+    const creator = await ctx.db.get(circle.creatorId);
+
+    return {
+      ...circle,
+      role: membership?.role || null,
+      isMember: !!membership,
+      creator: creator ? {
+        _id: creator._id,
+        name: creator.name,
+        profileImage: creator.profileImage,
+      } : null,
+    };
+  },
+});
+
+// Get circle members
+export const getCircleMembers = query({
+  args: { circleId: v.id("circles") },
+  handler: async (ctx, args) => {
+    const members = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle", (q) => q.eq("circleId", args.circleId))
+      .collect();
+
+    const membersWithUsers = await Promise.all(
+      members.map(async (m) => {
+        const user = await ctx.db.get(m.userId);
+        return {
+          _id: m._id,
+          role: m.role,
+          joinedAt: m.joinedAt,
+          user: user ? {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            avatarConfig: user.avatarConfig,
+            profileImage: user.profileImage,
+          } : null,
+        };
+      })
+    );
+
+    return membersWithUsers.filter(m => m.user !== null);
+  },
+});
+
+// Search users to invite to circle
+export const searchUsersToInvite = query({
+  args: {
+    circleId: v.id("circles"),
+    searchTerm: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (args.searchTerm.length < 2) return [];
+
+    // Get current members
+    const currentMembers = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle", (q) => q.eq("circleId", args.circleId))
+      .collect();
+    
+    const memberIds = new Set(currentMembers.map(m => m.userId));
+
+    // Search users
+    const allUsers = await ctx.db.query("users").collect();
+    const searchLower = args.searchTerm.toLowerCase();
+    
+    const results = allUsers
+      .filter(user => 
+        !memberIds.has(user._id) &&
+        (user.name.toLowerCase().includes(searchLower) ||
+         user.email.toLowerCase().includes(searchLower))
+      )
+      .slice(0, 10)
+      .map(user => ({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        avatarConfig: user.avatarConfig,
+        profileImage: user.profileImage,
+      }));
+
+    return results;
+  },
+});
+
+// Get suggested members to connect with
+export const getSuggestedMembers = query({
+  args: {
+    userId: v.id("users"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 10;
+    
+    // Get user's circles
+    const userMemberships = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+    
+    const userCircleIds = new Set(userMemberships.map(m => m.circleId));
+    
+    // Get members from same circles
+    const potentialMembers: Map<string, { user: any; sharedCircles: number }> = new Map();
+    
+    for (const circleId of userCircleIds) {
+      const circleMembers = await ctx.db
+        .query("circleMembers")
+        .withIndex("by_circle", (q) => q.eq("circleId", circleId))
+        .collect();
+      
+      for (const member of circleMembers) {
+        if (member.userId !== args.userId) {
+          const existing = potentialMembers.get(member.userId);
+          if (existing) {
+            existing.sharedCircles++;
+          } else {
+            const user = await ctx.db.get(member.userId);
+            if (user) {
+              potentialMembers.set(member.userId, {
+                user: {
+                  _id: user._id,
+                  name: user.name,
+                  bio: user.bio,
+                  industry: user.industry,
+                  location: user.location,
+                  interests: user.interests,
+                  avatarConfig: user.avatarConfig,
+                  profileImage: user.profileImage,
+                  trustScore: user.trustScore,
+                },
+                sharedCircles: 1,
+              });
+            }
+          }
+        }
+      }
+    }
+    
+    // Sort by shared circles and return
+    const sorted = Array.from(potentialMembers.values())
+      .sort((a, b) => b.sharedCircles - a.sharedCircles)
+      .slice(0, limit)
+      .map(({ user, sharedCircles }) => ({ ...user, sharedCircles }));
+    
+    // If not enough from circles, add some random users
+    if (sorted.length < limit) {
+      const allUsers = await ctx.db.query("users").take(50);
+      const existingIds = new Set(sorted.map(u => u._id));
+      existingIds.add(args.userId);
+      
+      for (const user of allUsers) {
+        if (!existingIds.has(user._id) && sorted.length < limit) {
+          sorted.push({
+            _id: user._id,
+            name: user.name,
+            bio: user.bio,
+            industry: user.industry,
+            location: user.location,
+            interests: user.interests,
+            avatarConfig: user.avatarConfig,
+            profileImage: user.profileImage,
+            trustScore: user.trustScore,
+            sharedCircles: 0,
+          });
+        }
+      }
+    }
+    
+    return sorted;
+  },
+});
+
+// Search members
+export const searchMembers = query({
+  args: {
+    userId: v.id("users"),
+    searchTerm: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (args.searchTerm.length < 2) return [];
+    
+    const searchLower = args.searchTerm.toLowerCase();
+    const allUsers = await ctx.db.query("users").collect();
+    
+    const results = allUsers
+      .filter(user => 
+        user._id !== args.userId &&
+        (user.name.toLowerCase().includes(searchLower) ||
+         user.industry?.toLowerCase().includes(searchLower) ||
+         user.location?.toLowerCase().includes(searchLower) ||
+         user.interests?.some(i => i.toLowerCase().includes(searchLower)))
+      )
+      .slice(0, 20)
+      .map(user => ({
+        _id: user._id,
+        name: user.name,
+        bio: user.bio,
+        industry: user.industry,
+        location: user.location,
+        interests: user.interests,
+        avatarConfig: user.avatarConfig,
+        profileImage: user.profileImage,
+        trustScore: user.trustScore,
+        sharedCircles: 0,
+      }));
+    
+    return results;
+  },
+});
+
+// Invite user to circle
+export const inviteToCircle = mutation({
+  args: {
+    circleId: v.id("circles"),
+    inviterId: v.id("users"),
+    inviteeId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    // Verify inviter is admin
+    const inviterMembership = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle_and_user", (q) => 
+        q.eq("circleId", args.circleId).eq("userId", args.inviterId)
+      )
+      .first();
+
+    if (!inviterMembership || inviterMembership.role !== "admin") {
+      throw new Error("Only admins can invite members");
+    }
+
+    // Check if already a member
+    const existing = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle_and_user", (q) => 
+        q.eq("circleId", args.circleId).eq("userId", args.inviteeId)
+      )
+      .first();
+
+    if (existing) throw new Error("User is already a member");
+
+    const circle = await ctx.db.get(args.circleId);
+    if (!circle) throw new Error("Circle not found");
+
+    // Add as member
+    await ctx.db.insert("circleMembers", {
+      circleId: args.circleId,
+      userId: args.inviteeId,
+      role: "member",
+      joinedAt: Date.now(),
+    });
+
+    await ctx.db.patch(args.circleId, {
+      memberCount: circle.memberCount + 1,
+    });
+
+    // Create notification
+    const inviter = await ctx.db.get(args.inviterId);
+    await ctx.db.insert("notifications", {
+      userId: args.inviteeId,
+      type: "accompaniment_update",
+      title: "Circle Invitation",
+      message: `${inviter?.name || "Someone"} added you to "${circle.name}"`,
+      isRead: false,
+      fromUserId: args.inviterId,
+      relatedId: args.circleId,
+    });
+
+    return { success: true };
   },
 });

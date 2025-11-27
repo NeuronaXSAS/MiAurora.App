@@ -223,6 +223,27 @@ export const getPendingRequests = query({
 });
 
 /**
+ * Get sent pending guardian requests (to show "pending" status on UI)
+ */
+export const getSentPendingRequests = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const requests = await ctx.db
+      .query("auroraGuardians")
+      .withIndex("by_user_status", (q) => 
+        q.eq("userId", args.userId).eq("status", "pending")
+      )
+      .collect();
+
+    return requests.map(req => ({
+      _id: req._id,
+      guardianId: req.guardianId,
+      requestedAt: req.requestedAt,
+    }));
+  },
+});
+
+/**
  * Remove guardian connection
  */
 export const removeGuardian = mutation({

@@ -99,33 +99,40 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
     scrollToBottom();
   }, [messages]);
 
-  const simulateAIResponse = async (userMessage: string): Promise<string> => {
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-    
-    const lowerMessage = userMessage.toLowerCase();
-    
-    if (lowerMessage.includes('sad') || lowerMessage.includes('depressed') || lowerMessage.includes('down')) {
-      return "I hear you, and your feelings are completely valid. It's okay to not be okay sometimes. Would you like to talk about what's weighing on your heart? I'm here to listen without judgment. 💜";
+  const getAIResponse = async (userMessage: string): Promise<string> => {
+    try {
+      // Build conversation history for context
+      const conversationHistory = messages
+        .filter(m => !m.isTyping)
+        .map(m => ({ isUser: m.isUser, content: m.content }));
+
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          conversationHistory,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
+      return data.response;
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      // Fallback responses
+      const fallbacks = [
+        "I hear you, and your feelings are completely valid. Remember, you're stronger than you know. 💪✨",
+        "That sounds challenging. Would you like to talk about what's making you feel this way? I'm here to listen. 🤗",
+        "You're doing amazing by reaching out. What would help you feel better right now? 💜",
+      ];
+      return fallbacks[Math.floor(Math.random() * fallbacks.length)];
     }
-    if (lowerMessage.includes('anxious') || lowerMessage.includes('worried') || lowerMessage.includes('stress')) {
-      return "Anxiety can feel overwhelming, but you're not alone in this. Let's take a deep breath together. Would you like me to guide you through a quick calming exercise? 🌸";
-    }
-    if (lowerMessage.includes('happy') || lowerMessage.includes('good') || lowerMessage.includes('great')) {
-      return "That's wonderful to hear! Your joy is contagious ✨ What's bringing you happiness today? I'd love to celebrate with you!";
-    }
-    if (lowerMessage.includes('help') || lowerMessage.includes('emergency') || lowerMessage.includes('danger')) {
-      return "I'm here for you. If you're in immediate danger, please use the SOS button or call emergency services. If you need to talk, I'm listening. Your safety is my priority. 🛡️";
-    }
-    
-    const responses = [
-      "I hear you, and your feelings are completely valid. Remember, you're stronger than you know. 💪✨",
-      "That sounds challenging. Would you like to talk about what's making you feel this way? I'm here to listen. 🤗",
-      "You're doing amazing by reaching out. Taking care of your mental health is so important. What would help you feel better right now? 💜",
-      "I'm proud of you for sharing that with me. Your feelings matter, and so do you. 🌸",
-      "Thank you for trusting me with this. Together, we can work through anything. What's on your mind? ✨",
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)];
   };
 
   const handleSendMessage = async () => {
@@ -154,7 +161,7 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
     try {
       const response = onSendMessage 
         ? await onSendMessage(inputValue)
-        : await simulateAIResponse(inputValue);
+        : await getAIResponse(inputValue);
 
       setMessages(prev => {
         const filtered = prev.filter(m => m.id !== 'typing');

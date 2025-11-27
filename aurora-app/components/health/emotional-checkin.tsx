@@ -153,6 +153,28 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
                 );
               })}
             </div>
+            
+            {/* Weekly Stats */}
+            <div className="grid grid-cols-3 gap-2 mt-4">
+              <div className="bg-[var(--accent)] rounded-lg p-2 text-center">
+                <p className="text-lg font-bold text-[var(--color-aurora-pink)]">
+                  {moodHistory.length}
+                </p>
+                <p className="text-xs text-[var(--muted-foreground)]">Check-ins</p>
+              </div>
+              <div className="bg-[var(--accent)] rounded-lg p-2 text-center">
+                <p className="text-lg font-bold text-[var(--color-aurora-purple)]">
+                  {(moodHistory.reduce((sum, log) => sum + log.mood, 0) / moodHistory.length).toFixed(1)}
+                </p>
+                <p className="text-xs text-[var(--muted-foreground)]">Avg Mood</p>
+              </div>
+              <div className="bg-[var(--accent)] rounded-lg p-2 text-center">
+                <p className="text-lg font-bold text-[var(--color-aurora-mint)]">
+                  {moodHistory.filter(log => log.mood >= 4).length}
+                </p>
+                <p className="text-xs text-[var(--muted-foreground)]">Great Days</p>
+              </div>
+            </div>
           </div>
         )}
 

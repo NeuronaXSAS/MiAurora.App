@@ -38,9 +38,18 @@ import {
   Sun,
   Code,
   Rocket,
-  Activity
+  Activity,
+  Settings,
+  UserPlus,
+  LogOut,
+  Trash2,
+  Eye,
+  ArrowLeft,
+  Send
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { generateAvatarUrl } from "@/hooks/use-avatar";
+import { formatDistanceToNow } from "date-fns";
 
 interface CirclesHubProps {
   userId: Id<"users">;
@@ -76,6 +85,10 @@ export function CirclesHub({ userId }: CirclesHubProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [selectedCircle, setSelectedCircle] = useState<Id<"circles"> | null>(null);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [inviteSearch, setInviteSearch] = useState("");
+  const [newMessage, setNewMessage] = useState("");
   const [newCircle, setNewCircle] = useState({
     name: "",
     description: "",
@@ -92,13 +105,34 @@ export function CirclesHub({ userId }: CirclesHubProps) {
     limit: 20,
   }) ?? [];
 
+  // Circle detail queries
+  const circleDetails = useQuery(
+    api.circles.getCircleDetails,
+    selectedCircle ? { circleId: selectedCircle, userId } : "skip"
+  );
+  const circleMembers = useQuery(
+    api.circles.getCircleMembers,
+    selectedCircle ? { circleId: selectedCircle } : "skip"
+  ) ?? [];
+  const circlePosts = useQuery(
+    api.circles.getCirclePosts,
+    selectedCircle ? { circleId: selectedCircle, limit: 20 } : "skip"
+  ) ?? [];
+  const inviteSearchResults = useQuery(
+    api.circles.searchUsersToInvite,
+    inviteSearch.length >= 2 && selectedCircle ? { circleId: selectedCircle, searchTerm: inviteSearch } : "skip"
+  ) ?? [];
+
   const createCircle = useMutation(api.circles.createCircle);
   const joinCircle = useMutation(api.circles.joinCircle);
+  const leaveCircle = useMutation(api.circles.leaveCircle);
+  const inviteToCircle = useMutation(api.circles.inviteToCircle);
+  const createPost = useMutation(api.circles.createCirclePost);
 
   const handleCreateCircle = async () => {
     if (!newCircle.name || !newCircle.description) return;
     
-    await createCircle({
+    const result = await createCircle({
       creatorId: userId,
       ...newCircle,
     });
@@ -110,6 +144,11 @@ export function CirclesHub({ userId }: CirclesHubProps) {
       category: "general",
       isPrivate: false,
     });
+    
+    // Open the newly created circle
+    if (result) {
+      setSelectedCircle(result);
+    }
   };
 
   const handleJoinCircle = async (circleId: Id<"circles">) => {
@@ -120,9 +159,272 @@ export function CirclesHub({ userId }: CirclesHubProps) {
     }
   };
 
+  const handleLeaveCircle = async () => {
+    if (!selectedCircle) return;
+    if (confirm("Are you sure you want to leave this circle?")) {
+      await leaveCircle({ circleId: selectedCircle, userId });
+      setSelectedCircle(null);
+    }
+  };
+
+  const handleInvite = async (inviteeId: Id<"users">) => {
+    if (!selectedCircle) return;
+    try {
+      await inviteToCircle({ circleId: selectedCircle, inviterId: userId, inviteeId });
+      setInviteSearch("");
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const handlePostMessage = async () => {
+    if (!selectedCircle || !newMessage.trim()) return;
+    await createPost({ circleId: selectedCircle, userId, content: newMessage });
+    setNewMessage("");
+  };
+
   const isInCircle = (circleId: Id<"circles">) => {
     return myCircles?.some((c: any) => c._id === circleId);
   };
+
+  // If a circle is selected, show the detail view
+  if (selectedCircle && circleDetails) {
+    const Icon = CATEGORY_ICONS[circleDetails.category] || Users;
+    const gradient = CATEGORY_COLORS[circleDetails.category] || CATEGORY_COLORS.general;
+    const isAdmin = circleDetails.role === "admin";
+
+    return (
+      <div className="space-y-6">
+        {/* Circle Header */}
+        <div className="flex items-start gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedCircle(null)}
+            className="min-h-[44px]"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+        </div>
+
+        <Card className="bg-[var(--card)] border-[var(--border)] overflow-hidden">
+          <div className={`h-24 bg-gradient-to-r ${gradient}`} />
+          <CardContent className="p-6 -mt-12">
+            <div className="flex flex-col sm:flex-row items-start gap-4">
+              <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg border-4 border-[var(--card)]`}>
+                <Icon className="w-10 h-10 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-2xl font-bold text-[var(--foreground)]">{circleDetails.name}</h2>
+                  {circleDetails.isPrivate && <Lock className="w-4 h-4 text-[var(--muted-foreground)]" />}
+                </div>
+                <p className="text-[var(--muted-foreground)] mb-3">{circleDetails.description}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary" className="bg-[var(--accent)]">
+                    <Users className="w-3 h-3 mr-1" />
+                    {circleMembers.length} members
+                  </Badge>
+                  <Badge variant="secondary" className="bg-[var(--accent)]">
+                    <MessageCircle className="w-3 h-3 mr-1" />
+                    {circlePosts.length} posts
+                  </Badge>
+                  {isAdmin && (
+                    <Badge className="bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]">
+                      Admin
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {isAdmin && (
+                  <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="min-h-[44px]">
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Invite
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-[var(--card)] border-[var(--border)]">
+                      <DialogHeader>
+                        <DialogTitle className="text-[var(--foreground)]">Invite Members</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
+                          <Input
+                            placeholder="Search by name or email..."
+                            value={inviteSearch}
+                            onChange={(e) => setInviteSearch(e.target.value)}
+                            className="pl-10 min-h-[44px] bg-[var(--background)] border-[var(--border)]"
+                          />
+                        </div>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {inviteSearchResults.map((user: any) => (
+                            <div
+                              key={user._id}
+                              className="flex items-center justify-between p-3 rounded-xl border border-[var(--border)] bg-[var(--accent)]/30"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-white font-bold">
+                                  {user.avatarConfig ? (
+                                    <img
+                                      src={generateAvatarUrl(user.avatarConfig)}
+                                      alt={user.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    user.name.charAt(0)
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="font-medium text-[var(--foreground)]">{user.name}</p>
+                                  <p className="text-xs text-[var(--muted-foreground)]">{user.email}</p>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                onClick={() => handleInvite(user._id)}
+                                className="min-h-[36px] bg-[var(--color-aurora-mint)] hover:bg-[var(--color-aurora-mint)]/80 text-[var(--color-aurora-violet)]"
+                              >
+                                <UserPlus className="w-4 h-4 mr-1" />
+                                Invite
+                              </Button>
+                            </div>
+                          ))}
+                          {inviteSearch.length >= 2 && inviteSearchResults.length === 0 && (
+                            <p className="text-sm text-[var(--muted-foreground)] text-center py-4">
+                              No users found
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={handleLeaveCircle}
+                  className="min-h-[44px] text-[var(--color-aurora-salmon)] hover:text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Leave
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Members */}
+        <Card className="bg-[var(--card)] border-[var(--border)]">
+          <CardHeader>
+            <CardTitle className="text-[var(--foreground)] flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Members ({circleMembers.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              {circleMembers.map((member: any) => (
+                <div key={member._id} className="flex items-center gap-2 p-2 rounded-lg bg-[var(--accent)]/30">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-white text-sm font-bold">
+                    {member.user?.avatarConfig ? (
+                      <img
+                        src={generateAvatarUrl(member.user.avatarConfig)}
+                        alt={member.user.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      member.user?.name?.charAt(0) || "?"
+                    )}
+                  </div>
+                  <span className="text-sm text-[var(--foreground)]">{member.user?.name}</span>
+                  {member.role === "admin" && (
+                    <Badge className="text-xs bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]">
+                      Admin
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Posts / Discussion */}
+        <Card className="bg-[var(--card)] border-[var(--border)]">
+          <CardHeader>
+            <CardTitle className="text-[var(--foreground)] flex items-center gap-2">
+              <MessageCircle className="w-5 h-5" />
+              Discussion
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* New Post Input */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Share something with the circle..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handlePostMessage()}
+                className="flex-1 min-h-[44px] bg-[var(--background)] border-[var(--border)]"
+              />
+              <Button
+                onClick={handlePostMessage}
+                disabled={!newMessage.trim()}
+                className="min-h-[44px] bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Posts List */}
+            <div className="space-y-3">
+              {circlePosts.length === 0 && (
+                <div className="text-center py-8">
+                  <MessageCircle className="w-12 h-12 mx-auto mb-3 text-[var(--muted-foreground)]" />
+                  <p className="text-[var(--muted-foreground)]">No posts yet. Start the conversation!</p>
+                </div>
+              )}
+              <AnimatePresence>
+                {circlePosts.map((post: any) => (
+                  <motion.div
+                    key={post._id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-xl border border-[var(--border)] bg-[var(--accent)]/20"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-white font-bold flex-shrink-0">
+                        {post.author?.avatarConfig ? (
+                          <img
+                            src={generateAvatarUrl(post.author.avatarConfig)}
+                            alt={post.author.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          post.author?.name?.charAt(0) || "?"
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-[var(--foreground)]">{post.author?.name}</span>
+                          <span className="text-xs text-[var(--muted-foreground)]">
+                            {formatDistanceToNow(post._creationTime, { addSuffix: true })}
+                          </span>
+                        </div>
+                        <p className="text-[var(--foreground)]">{post.content}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -227,8 +529,9 @@ export function CirclesHub({ userId }: CirclesHubProps) {
                   key={circle._id}
                   whileHover={{ scale: 1.02 }}
                   className="cursor-pointer"
+                  onClick={() => setSelectedCircle(circle._id)}
                 >
-                  <Card className="overflow-hidden h-full bg-[var(--card)] border-[var(--border)]">
+                  <Card className="overflow-hidden h-full bg-[var(--card)] border-[var(--border)] hover:shadow-lg transition-shadow">
                     <div className={`h-2 bg-gradient-to-r ${gradient}`} />
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
@@ -391,6 +694,100 @@ export function CirclesHub({ userId }: CirclesHubProps) {
           </Card>
         )}
       </div>
+
+      {/* Discover Members Section */}
+      <DiscoverMembers userId={userId} />
+    </div>
+  );
+}
+
+// New component to discover other women
+function DiscoverMembers({ userId }: { userId: Id<"users"> }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  const suggestedMembers = useQuery(api.circles.getSuggestedMembers, { userId, limit: 6 }) ?? [];
+  const searchResults = useQuery(
+    api.circles.searchMembers,
+    searchTerm.length >= 2 ? { userId, searchTerm } : "skip"
+  ) ?? [];
+
+  const displayMembers = searchTerm.length >= 2 ? searchResults : suggestedMembers;
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">Connect with Women</h2>
+      </div>
+      
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
+        <Input
+          placeholder="Search by name, industry, or interests..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9 bg-[var(--background)] border-[var(--border)] min-h-[44px]"
+        />
+      </div>
+
+      {displayMembers.length === 0 ? (
+        <Card className="bg-[var(--card)] border-[var(--border)]">
+          <CardContent className="py-8 text-center">
+            <Users className="w-12 h-12 mx-auto mb-3 text-[var(--muted-foreground)]" />
+            <p className="text-[var(--muted-foreground)]">
+              {searchTerm ? "No members found" : "Join circles to discover more women!"}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {displayMembers.map((member: any) => (
+            <Card key={member._id} className="bg-[var(--card)] border-[var(--border)] hover:shadow-lg transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-white font-bold flex-shrink-0">
+                    {member.avatarConfig ? (
+                      <img
+                        src={generateAvatarUrl(member.avatarConfig)}
+                        alt={member.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      member.name?.charAt(0) || "?"
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-[var(--foreground)] truncate">{member.name}</h3>
+                    {member.industry && (
+                      <p className="text-xs text-[var(--muted-foreground)] truncate">{member.industry}</p>
+                    )}
+                    {member.location && (
+                      <p className="text-xs text-[var(--muted-foreground)] truncate">📍 {member.location}</p>
+                    )}
+                    {member.sharedCircles > 0 && (
+                      <Badge variant="secondary" className="mt-1 text-xs bg-[var(--color-aurora-lavender)]/20">
+                        {member.sharedCircles} shared circle{member.sharedCircles > 1 ? 's' : ''}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                {member.bio && (
+                  <p className="text-sm text-[var(--muted-foreground)] mt-2 line-clamp-2">{member.bio}</p>
+                )}
+                {member.interests && member.interests.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {member.interests.slice(0, 3).map((interest: string, i: number) => (
+                      <Badge key={i} variant="outline" className="text-xs border-[var(--border)]">
+                        {interest}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

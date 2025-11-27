@@ -5,8 +5,9 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Droplet, Plus, Minus, Sparkles } from "lucide-react";
+import { Droplet, Plus, Minus, Sparkles, TrendingUp, Bell, BellOff } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
+import { format, subDays } from "date-fns";
 
 interface HydrationTrackerProps {
   userId: Id<"users">;
@@ -14,6 +15,7 @@ interface HydrationTrackerProps {
 
 export function HydrationTracker({ userId }: HydrationTrackerProps) {
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   
   // Safe query with null coalescing for error handling
   const todayHydrationRaw = useQuery(
@@ -21,6 +23,13 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
     userId ? { userId } : "skip"
   );
   const todayHydration = todayHydrationRaw ?? { glasses: 0, goal: 8, completed: false };
+  
+  // Get hydration history for the last 7 days
+  const hydrationHistory = useQuery(
+    api.health.getHydrationHistory,
+    userId ? { userId, days: 7 } : "skip"
+  ) ?? [];
+  
   const logWater = useMutation(api.health.logWater);
 
   const glasses = todayHydration?.glasses || 0;
@@ -149,6 +158,63 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
             Add Glass
           </Button>
         </div>
+
+        {/* Toggle History */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowHistory(!showHistory)}
+          className="w-full mt-4 text-[var(--muted-foreground)]"
+        >
+          <TrendingUp className="w-4 h-4 mr-2" />
+          {showHistory ? "Hide History" : "Show 7-Day History"}
+        </Button>
+
+        {/* History Chart */}
+        {showHistory && hydrationHistory.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-[var(--border)]">
+            <p className="text-sm font-medium text-[var(--foreground)] mb-3">Last 7 Days</p>
+            <div className="flex items-end justify-between gap-1 h-20">
+              {Array.from({ length: 7 }, (_, i) => {
+                const date = format(subDays(new Date(), 6 - i), 'yyyy-MM-dd');
+                const dayData = hydrationHistory.find((h: any) => h.date === date);
+                const dayGlasses = dayData?.glasses || 0;
+                const dayGoal = dayData?.goal || 8;
+                const heightPercent = Math.min((dayGlasses / dayGoal) * 100, 100);
+                const dayLabel = format(subDays(new Date(), 6 - i), 'EEE');
+                
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div className="w-full h-16 bg-[var(--accent)] rounded-t relative overflow-hidden">
+                      <div
+                        className="absolute bottom-0 w-full bg-gradient-to-t from-[var(--color-aurora-blue)] to-[var(--color-aurora-mint)] transition-all duration-300"
+                        style={{ height: `${heightPercent}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-[var(--muted-foreground)]">{dayLabel}</span>
+                    <span className="text-xs font-medium text-[var(--foreground)]">{dayGlasses}</span>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Weekly Stats */}
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="bg-[var(--accent)] rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-[var(--color-aurora-blue)]">
+                  {hydrationHistory.reduce((sum: number, h: any) => sum + (h.glasses || 0), 0)}
+                </p>
+                <p className="text-xs text-[var(--muted-foreground)]">Total glasses</p>
+              </div>
+              <div className="bg-[var(--accent)] rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-[var(--color-aurora-mint)]">
+                  {hydrationHistory.filter((h: any) => h.completed).length}
+                </p>
+                <p className="text-xs text-[var(--muted-foreground)]">Goals reached</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Celebration Animation */}
         {showCelebration && (
