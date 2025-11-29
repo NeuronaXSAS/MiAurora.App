@@ -91,9 +91,9 @@ export const createReel = mutation({
       throw new Error('Caption must be 500 characters or less');
     }
 
-    // Validate duration (15-90 seconds)
-    if (args.duration < 15 || args.duration > 90) {
-      throw new Error('Reel duration must be between 15 and 90 seconds');
+    // Validate duration (5-90 seconds)
+    if (args.duration < 5 || args.duration > 90) {
+      throw new Error('El video debe durar entre 5 y 90 segundos');
     }
 
     // Create reel with pending moderation status
