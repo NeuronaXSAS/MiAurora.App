@@ -228,18 +228,23 @@ export const getPendingRequests = query({
 export const getSentPendingRequests = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    const requests = await ctx.db
-      .query("auroraGuardians")
-      .withIndex("by_user_status", (q) => 
-        q.eq("userId", args.userId).eq("status", "pending")
-      )
-      .collect();
+    try {
+      const requests = await ctx.db
+        .query("auroraGuardians")
+        .withIndex("by_user_status", (q) => 
+          q.eq("userId", args.userId).eq("status", "pending")
+        )
+        .collect();
 
-    return requests.map(req => ({
-      _id: req._id,
-      guardianId: req.guardianId,
-      requestedAt: req.requestedAt,
-    }));
+      return requests.map(req => ({
+        _id: req._id,
+        guardianId: req.guardianId,
+        requestedAt: req.requestedAt,
+      }));
+    } catch (error) {
+      console.error("Error in getSentPendingRequests:", error);
+      return [];
+    }
   },
 });
 

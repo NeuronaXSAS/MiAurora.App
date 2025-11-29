@@ -2,11 +2,11 @@
  * useVideoUpload Hook
  * 
  * Manages video upload to Cloudinary with progress tracking.
- * Provider-agnostic design allows easy migration to AWS or other services.
+ * Uses unsigned uploads for client-side simplicity.
  */
 
 import { useState } from 'react';
-import { useMutation, useQuery, useAction } from 'convex/react';
+import { useMutation, useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 
@@ -17,7 +17,7 @@ interface UploadProgress {
 }
 
 interface UseVideoUploadReturn {
-  upload: (file: File, metadata: UploadMetadata) => Promise<{ success: boolean; reelId?: Id<'reels'>; error?: string }>;
+  upload: (file: File, metadata: UploadMetadata, userId: Id<'users'>) => Promise<{ success: boolean; reelId?: Id<'reels'>; error?: string }>;
   progress: UploadProgress | null;
   isUploading: boolean;
   error: string | null;
@@ -35,51 +35,52 @@ interface UploadMetadata {
   safetyTags?: string[];
 }
 
+// Cloudinary configuration from environment variables
+const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_UPLOAD_PRESET = 'aurora_reels'; // Must be created as unsigned preset in Cloudinary dashboard
+
 export function useVideoUpload(): UseVideoUploadReturn {
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generateCredentials = useQuery(api.reels.generateUploadCredentials, {
-    userId: 'temp' as Id<'users'>,
-  }) as any;
   const createReel = useMutation(api.reels.createReel);
   const analyzeReel = useAction(api.actions.analyzeReel.analyzeReelContent);
 
-  const upload = async (file: File, metadata: UploadMetadata) => {
+  const upload = async (file: File, metadata: UploadMetadata, userId: Id<'users'>) => {
     setIsUploading(true);
     setError(null);
     setProgress({ loaded: 0, total: file.size, percentage: 0 });
 
     try {
+      // Validate Cloudinary configuration
+      if (!CLOUDINARY_CLOUD_NAME) {
+        throw new Error('Cloudinary no está configurado. Contacta al administrador.');
+      }
+
       // Validate file
       if (!file.type.startsWith('video/')) {
-        throw new Error('File must be a video');
+        throw new Error('El archivo debe ser un video');
       }
 
       const maxSize = 100 * 1024 * 1024; // 100MB
       if (file.size > maxSize) {
-        throw new Error('Video must be less than 100MB');
+        throw new Error('El video debe ser menor a 100MB');
       }
 
       // Get video duration
       const duration = await getVideoDuration(file);
-      if (duration < 15 || duration > 90) {
-        throw new Error('Video must be between 15 and 90 seconds');
+      if (duration < 5 || duration > 90) {
+        throw new Error('El video debe durar entre 5 y 90 segundos');
       }
 
-      // Step 1: Get Cloudinary configuration
-      if (!generateCredentials || !generateCredentials.success) {
-        throw new Error('Video upload is coming soon! We\'re working on bringing you this feature. 🚀');
-      }
-
-      const { credentials } = generateCredentials;
-
-      // Step 2: Upload to Cloudinary using unsigned upload
+      // Step 1: Upload to Cloudinary using unsigned upload
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', 'aurora_reels'); // Must be created in Cloudinary dashboard
-      formData.append('folder', `aurora/reels`);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      formData.append('folder', 'aurora/reels');
+
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`;
 
       const xhr = new XMLHttpRequest();
 
@@ -99,15 +100,20 @@ export function useVideoUpload(): UseVideoUploadReturn {
           if (xhr.status === 200) {
             resolve(JSON.parse(xhr.responseText));
           } else {
-            reject(new Error(`Upload failed: ${xhr.statusText}`));
+            try {
+              const errorResponse = JSON.parse(xhr.responseText);
+              reject(new Error(errorResponse.error?.message || `Error al subir: ${xhr.status}`));
+            } catch {
+              reject(new Error(`Error al subir el video: ${xhr.statusText || xhr.status}`));
+            }
           }
         });
 
         xhr.addEventListener('error', () => {
-          reject(new Error('Upload failed'));
+          reject(new Error('Error de conexión al subir el video'));
         });
 
-        xhr.open('POST', credentials.uploadUrl);
+        xhr.open('POST', uploadUrl);
         xhr.send(formData);
       });
 
@@ -122,9 +128,9 @@ export function useVideoUpload(): UseVideoUploadReturn {
 
       const dimensions = await getVideoDimensions(file);
 
-      // Step 4: Save to Convex database
+      // Step 2: Save to Convex database
       const result = await createReel({
-        authorId: 'temp' as Id<'users'>, // Will be replaced by actual user ID
+        authorId: userId,
         provider: 'cloudinary',
         externalId: cloudinaryResponse.public_id,
         videoUrl,

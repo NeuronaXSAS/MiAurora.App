@@ -7,21 +7,44 @@
  * Flow: Record → Preview → Add Details → Upload
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { VideoRecorder } from '@/components/reels/video-recorder';
 import { UploadForm } from '@/components/reels/upload-form';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { Loader2 } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
 
-type FlowState = 'recording' | 'form' | 'success';
+type FlowState = 'loading' | 'recording' | 'form' | 'success';
 
 function CreateReelContent() {
   const router = useRouter();
-  const [flowState, setFlowState] = useState<FlowState>('recording');
+  const [flowState, setFlowState] = useState<FlowState>('loading');
+  const [userId, setUserId] = useState<Id<'users'> | null>(null);
   const [recordedVideo, setRecordedVideo] = useState<{
     blob: Blob;
     previewUrl: string;
   } | null>(null);
+
+  // Get current user ID
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        const data = await response.json();
+        if (data.userId) {
+          setUserId(data.userId as Id<'users'>);
+          setFlowState('recording');
+        } else {
+          router.push('/');
+        }
+      } catch (error) {
+        console.error('Error getting user:', error);
+        router.push('/');
+      }
+    };
+    getUserId();
+  }, [router]);
 
   const handleRecordingComplete = (videoBlob: Blob) => {
     const previewUrl = URL.createObjectURL(videoBlob);
@@ -58,6 +81,12 @@ function CreateReelContent() {
 
   return (
     <>
+      {flowState === 'loading' && (
+        <div className="fixed inset-0 z-50 bg-[var(--background)] flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--color-aurora-purple)]" />
+        </div>
+      )}
+
       {flowState === 'recording' && (
         <VideoRecorder
           onRecordingComplete={handleRecordingComplete}
@@ -66,10 +95,11 @@ function CreateReelContent() {
         />
       )}
 
-      {flowState === 'form' && recordedVideo && (
+      {flowState === 'form' && recordedVideo && userId && (
         <UploadForm
           videoBlob={recordedVideo.blob}
           videoPreviewUrl={recordedVideo.previewUrl}
+          userId={userId}
           onSuccess={handleUploadSuccess}
           onCancel={handleFormCancel}
         />

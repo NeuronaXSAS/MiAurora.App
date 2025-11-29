@@ -480,84 +480,89 @@ export const getSuggestedMembers = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const limit = args.limit || 10;
-    
-    // Get user's circles
-    const userMemberships = await ctx.db
-      .query("circleMembers")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .collect();
-    
-    const userCircleIds = new Set(userMemberships.map(m => m.circleId));
-    
-    // Get members from same circles
-    const potentialMembers: Map<string, { user: any; sharedCircles: number }> = new Map();
-    
-    for (const circleId of userCircleIds) {
-      const circleMembers = await ctx.db
+    try {
+      const limit = args.limit || 10;
+      
+      // Get user's circles
+      const userMemberships = await ctx.db
         .query("circleMembers")
-        .withIndex("by_circle", (q) => q.eq("circleId", circleId))
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
         .collect();
       
-      for (const member of circleMembers) {
-        if (member.userId !== args.userId) {
-          const existing = potentialMembers.get(member.userId);
-          if (existing) {
-            existing.sharedCircles++;
-          } else {
-            const user = await ctx.db.get(member.userId);
-            if (user) {
-              potentialMembers.set(member.userId, {
-                user: {
-                  _id: user._id,
-                  name: user.name,
-                  bio: user.bio,
-                  industry: user.industry,
-                  location: user.location,
-                  interests: user.interests,
-                  avatarConfig: user.avatarConfig,
-                  profileImage: user.profileImage,
-                  trustScore: user.trustScore,
-                },
-                sharedCircles: 1,
-              });
+      const userCircleIds = userMemberships.map(m => m.circleId);
+      
+      // Get members from same circles
+      const potentialMembers: Record<string, { user: any; sharedCircles: number }> = {};
+      
+      for (const circleId of userCircleIds) {
+        const circleMembers = await ctx.db
+          .query("circleMembers")
+          .withIndex("by_circle", (q) => q.eq("circleId", circleId))
+          .collect();
+        
+        for (const member of circleMembers) {
+          const memberIdStr = String(member.userId);
+          if (memberIdStr !== String(args.userId)) {
+            if (potentialMembers[memberIdStr]) {
+              potentialMembers[memberIdStr].sharedCircles++;
+            } else {
+              const user = await ctx.db.get(member.userId);
+              if (user) {
+                potentialMembers[memberIdStr] = {
+                  user: {
+                    _id: user._id,
+                    name: user.name,
+                    bio: user.bio || null,
+                    industry: user.industry || null,
+                    location: user.location || null,
+                    interests: user.interests || [],
+                    avatarConfig: user.avatarConfig || null,
+                    profileImage: user.profileImage || null,
+                    trustScore: user.trustScore || 0,
+                  },
+                  sharedCircles: 1,
+                };
+              }
             }
           }
         }
       }
-    }
-    
-    // Sort by shared circles and return
-    const sorted = Array.from(potentialMembers.values())
-      .sort((a, b) => b.sharedCircles - a.sharedCircles)
-      .slice(0, limit)
-      .map(({ user, sharedCircles }) => ({ ...user, sharedCircles }));
-    
-    // If not enough from circles, add some random users
-    if (sorted.length < limit) {
-      const allUsers = await ctx.db.query("users").take(50);
-      const existingIds = new Set(sorted.map(u => u._id));
-      existingIds.add(args.userId);
       
-      for (const user of allUsers) {
-        if (!existingIds.has(user._id) && sorted.length < limit) {
-          sorted.push({
-            _id: user._id,
-            name: user.name,
-            bio: user.bio,
-            industry: user.industry,
-            location: user.location,
-            interests: user.interests,
-            avatarConfig: user.avatarConfig,
-            profileImage: user.profileImage,
-            trustScore: user.trustScore,
-            sharedCircles: 0,
-          });
+      // Sort by shared circles and return
+      const sorted = Object.values(potentialMembers)
+        .sort((a, b) => b.sharedCircles - a.sharedCircles)
+        .slice(0, limit)
+        .map(({ user, sharedCircles }) => ({ ...user, sharedCircles }));
+      
+      // If not enough from circles, add some random users
+      if (sorted.length < limit) {
+        const allUsers = await ctx.db.query("users").take(50);
+        const existingIds = new Set(sorted.map(u => String(u._id)));
+        existingIds.add(String(args.userId));
+        
+        for (const user of allUsers) {
+          if (!existingIds.has(String(user._id)) && sorted.length < limit) {
+            sorted.push({
+              _id: user._id,
+              name: user.name,
+              bio: user.bio || null,
+              industry: user.industry || null,
+              location: user.location || null,
+              interests: user.interests || [],
+              avatarConfig: user.avatarConfig || null,
+              profileImage: user.profileImage || null,
+              trustScore: user.trustScore || 0,
+              sharedCircles: 0,
+            });
+          }
         }
       }
+      
+      return sorted;
+    } catch (error) {
+      console.error("Error in getSuggestedMembers:", error);
+      return [];
     }
-    
-    return sorted;
   },
 });
 

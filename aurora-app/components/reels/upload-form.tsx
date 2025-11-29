@@ -15,10 +15,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { useVideoUpload } from '@/hooks/useVideoUpload';
+import type { Id } from '@/convex/_generated/dataModel';
 
 interface UploadFormProps {
   videoBlob: Blob;
   videoPreviewUrl: string;
+  userId: Id<'users'>;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -35,6 +37,7 @@ const SAFETY_TAGS = [
 export function UploadForm({
   videoBlob,
   videoPreviewUrl,
+  userId,
   onSuccess,
   onCancel,
 }: UploadFormProps) {
@@ -56,7 +59,7 @@ export function UploadForm({
       hashtags,
       isAnonymous,
       safetyTags: selectedTags,
-    });
+    }, userId);
 
     if (result.success) {
       onSuccess();
