@@ -314,7 +314,7 @@ These seemingly incompatible technologies (real-time DB + video streaming + AI +
 - B2B revenue funds free access for users
 
 **Scalable Architecture:**
-- Built on serverless infrastructure (Convex, Cloudflare)
+- Built on serverless infrastructure (Convex, Vercel)
 - Free tier services minimize operational costs
 - Designed for global scale from day one
 

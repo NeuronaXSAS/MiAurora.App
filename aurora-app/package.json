@@ -7,12 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "type-check": "tsc --noEmit",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy"
   },
   "dependencies": {
     "@dicebear/collection": "^9.2.4",
@@ -51,7 +51,6 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
-    "@opennextjs/cloudflare": "^1.13.1",
     "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4",
     "@types/mapbox-gl": "^3.4.1",
@@ -63,7 +62,6 @@
     "eslint-config-next": "16.0.3",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.4.0",
-    "typescript": "^5",
-    "wrangler": "^4.50.0"
+    "typescript": "^5"
   }
 }

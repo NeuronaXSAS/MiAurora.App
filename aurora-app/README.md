@@ -54,7 +54,7 @@ Aurora is a production-ready web application combining community engagement, saf
 - **AI**: Google AI Studio (Gemini 1.5 Flash)
 - **Maps**: Mapbox GL JS
 - **Analytics**: PostHog
-- **Deployment**: Cloudflare Pages
+- **Deployment**: Vercel
 
 ## 🚀 Getting Started
 
