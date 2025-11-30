@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit, getRateLimitStatus } from '@/lib/rate-limit';
 
+// Mental health metrics tracking
+interface MentalHealthMetrics {
+  sentiment: 'positive' | 'neutral' | 'negative' | 'crisis';
+  topics: string[];
+  emotionalState?: string;
+  needsFollowUp: boolean;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { message, userId, conversationHistory, isPremium } = await request.json();
@@ -38,29 +46,30 @@ export async function POST(request: NextRequest) {
     
     if (!apiKey) {
       console.error('GEMINI_API_KEY not configured');
-      // Return a fallback response instead of error
       return NextResponse.json({
         response: getFallbackResponse(message),
         userId,
+        metrics: analyzeMentalHealthLocally(message),
       });
     }
 
-    // Build conversation context
+    // Build conversation context with mental health focus
     const systemPrompt = getSystemPrompt();
     
-    // Build conversation history for context
+    // Build conversation history for context (limit to save tokens)
     let conversationContext = systemPrompt + "\n\n";
     if (conversationHistory && conversationHistory.length > 0) {
-      const recentHistory = conversationHistory.slice(-6); // Last 6 messages for context
+      const recentHistory = conversationHistory.slice(-4); // Last 4 messages to save tokens
       recentHistory.forEach((msg: { isUser: boolean; content: string }) => {
         conversationContext += msg.isUser ? `User: ${msg.content}\n` : `Aurora: ${msg.content}\n`;
       });
     }
     conversationContext += `User: ${message}\nAurora:`;
 
-    // Call Gemini API (using gemini-2.5-flash for cost efficiency)
+    // Use gemini-2.0-flash-lite - MOST ECONOMICAL for Free Tier
+    // Rate limits: 30 RPM, 1,000,000 TPM, 200 RPD
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
@@ -80,7 +89,7 @@ export async function POST(request: NextRequest) {
             temperature: 0.8,
             topK: 40,
             topP: 0.95,
-            maxOutputTokens: 512,
+            maxOutputTokens: 300, // Reduced to save tokens
           },
           safetySettings: [
             {
@@ -109,23 +118,95 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         response: getFallbackResponse(message),
         userId,
+        metrics: analyzeMentalHealthLocally(message),
       });
     }
 
     const data = await response.json();
     const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || getFallbackResponse(message);
 
+    // Analyze mental health metrics from conversation
+    const metrics = analyzeMentalHealthLocally(message);
+
     return NextResponse.json({
       response: aiResponse.trim(),
       userId,
+      metrics, // Return mental health metrics for tracking
     });
   } catch (error) {
     console.error('Error in AI chat endpoint:', error);
     return NextResponse.json({
       response: "I'm having a moment, but I'm still here for you. Could you try again? 💜",
       userId: null,
+      metrics: { sentiment: 'neutral', topics: [], needsFollowUp: false },
     });
   }
+}
+
+// Local mental health analysis (no API cost)
+function analyzeMentalHealthLocally(message: string): MentalHealthMetrics {
+  const lowerMessage = message.toLowerCase();
+  const topics: string[] = [];
+  let sentiment: 'positive' | 'neutral' | 'negative' | 'crisis' = 'neutral';
+  let emotionalState: string | undefined;
+  let needsFollowUp = false;
+
+  // Crisis detection (highest priority)
+  const crisisKeywords = ['suicide', 'kill myself', 'end it all', 'want to die', 'self harm', 'hurt myself'];
+  if (crisisKeywords.some(k => lowerMessage.includes(k))) {
+    sentiment = 'crisis';
+    topics.push('crisis');
+    needsFollowUp = true;
+    emotionalState = 'crisis';
+    return { sentiment, topics, emotionalState, needsFollowUp };
+  }
+
+  // Negative sentiment detection
+  const negativeKeywords = ['sad', 'depressed', 'anxious', 'worried', 'stressed', 'lonely', 'scared', 'angry', 'frustrated', 'hopeless', 'overwhelmed', 'tired', 'exhausted'];
+  const positiveKeywords = ['happy', 'good', 'great', 'excited', 'grateful', 'thankful', 'proud', 'confident', 'hopeful', 'peaceful', 'calm'];
+
+  const negativeCount = negativeKeywords.filter(k => lowerMessage.includes(k)).length;
+  const positiveCount = positiveKeywords.filter(k => lowerMessage.includes(k)).length;
+
+  if (negativeCount > positiveCount) {
+    sentiment = 'negative';
+    needsFollowUp = negativeCount >= 2;
+  } else if (positiveCount > negativeCount) {
+    sentiment = 'positive';
+  }
+
+  // Topic detection
+  if (lowerMessage.includes('work') || lowerMessage.includes('job') || lowerMessage.includes('career')) {
+    topics.push('career');
+  }
+  if (lowerMessage.includes('relationship') || lowerMessage.includes('partner') || lowerMessage.includes('boyfriend') || lowerMessage.includes('husband')) {
+    topics.push('relationships');
+  }
+  if (lowerMessage.includes('family') || lowerMessage.includes('mom') || lowerMessage.includes('dad') || lowerMessage.includes('parent')) {
+    topics.push('family');
+  }
+  if (lowerMessage.includes('health') || lowerMessage.includes('sick') || lowerMessage.includes('pain')) {
+    topics.push('health');
+  }
+  if (lowerMessage.includes('money') || lowerMessage.includes('financial') || lowerMessage.includes('debt')) {
+    topics.push('financial');
+  }
+  if (lowerMessage.includes('sleep') || lowerMessage.includes('insomnia') || lowerMessage.includes('tired')) {
+    topics.push('sleep');
+  }
+  if (lowerMessage.includes('safe') || lowerMessage.includes('danger') || lowerMessage.includes('afraid') || lowerMessage.includes('threat')) {
+    topics.push('safety');
+    needsFollowUp = true;
+  }
+
+  // Emotional state detection
+  if (lowerMessage.includes('anxious') || lowerMessage.includes('anxiety')) emotionalState = 'anxious';
+  else if (lowerMessage.includes('sad') || lowerMessage.includes('depressed')) emotionalState = 'sad';
+  else if (lowerMessage.includes('angry') || lowerMessage.includes('frustrated')) emotionalState = 'angry';
+  else if (lowerMessage.includes('happy') || lowerMessage.includes('excited')) emotionalState = 'happy';
+  else if (lowerMessage.includes('stressed') || lowerMessage.includes('overwhelmed')) emotionalState = 'stressed';
+
+  return { sentiment, topics, emotionalState, needsFollowUp };
 }
 
 function getSystemPrompt(): string {
