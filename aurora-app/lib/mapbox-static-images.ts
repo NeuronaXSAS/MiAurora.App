@@ -22,6 +22,32 @@ export interface StaticMapOptions {
 }
 
 /**
+ * Simplify coordinates array by keeping every Nth point
+ * This prevents URL length issues with Mapbox Static API
+ */
+function simplifyCoordinates(coordinates: RouteCoordinate[], maxPoints: number = 50): RouteCoordinate[] {
+  if (coordinates.length <= maxPoints) return coordinates;
+  
+  const step = Math.ceil(coordinates.length / maxPoints);
+  const simplified: RouteCoordinate[] = [];
+  
+  // Always include first point
+  simplified.push(coordinates[0]);
+  
+  // Sample intermediate points
+  for (let i = step; i < coordinates.length - 1; i += step) {
+    simplified.push(coordinates[i]);
+  }
+  
+  // Always include last point
+  if (coordinates.length > 1) {
+    simplified.push(coordinates[coordinates.length - 1]);
+  }
+  
+  return simplified;
+}
+
+/**
  * Generate a static map image URL for a route
  * Uses Mapbox Static Images API with polyline overlay
  */
@@ -32,33 +58,40 @@ export function generateRouteStaticImage(
   const {
     width = 400,
     height = 300,
-    zoom = 14,
+    zoom,
     bearing = 0,
     pitch = 0,
     retina = true,
   } = options;
 
   if (!coordinates || coordinates.length === 0) {
-    throw new Error("Coordinates array cannot be empty");
+    // Return a fallback placeholder
+    return `https://api.mapbox.com/styles/v1/${MAPBOX_STYLE}/static/0,0,1/${width}x${height}?access_token=${MAPBOX_TOKEN}`;
   }
 
+  // Simplify coordinates to prevent URL length issues
+  const simplifiedCoords = simplifyCoordinates(coordinates, 40);
+
   // Encode coordinates as polyline for Mapbox API
-  const polyline = encodePolyline(coordinates);
+  const polyline = encodePolyline(simplifiedCoords);
 
   // Calculate center point (middle of route)
   const center = calculateCenter(coordinates);
 
+  // Calculate optimal zoom if not provided
+  const optimalZoom = zoom ?? calculateOptimalZoom(coordinates, width, height);
+
   // Build overlay string for route line
   // Format: path-{strokeWidth}+{strokeColor}-{opacity}({polyline})
-  const overlay = `path-3+2e2ad6-0.8(${polyline})`;
+  const overlay = `path-4+2e2ad6-0.9(${encodeURIComponent(polyline)})`;
 
   // Add start and end markers
-  const startMarker = `pin-s-a+22c55e(${coordinates[0].lng},${coordinates[0].lat})`;
-  const endMarker = `pin-s-b+ef4444(${coordinates[coordinates.length - 1].lng},${coordinates[coordinates.length - 1].lat})`;
+  const startMarker = `pin-s-a+22c55e(${simplifiedCoords[0].lng.toFixed(5)},${simplifiedCoords[0].lat.toFixed(5)})`;
+  const endMarker = `pin-s-b+ef4444(${simplifiedCoords[simplifiedCoords.length - 1].lng.toFixed(5)},${simplifiedCoords[simplifiedCoords.length - 1].lat.toFixed(5)})`;
 
   // Construct Static Images API URL
   const retinaStr = retina ? "@2x" : "";
-  const url = `https://api.mapbox.com/styles/v1/${MAPBOX_STYLE}/static/${startMarker},${endMarker},${overlay}/${center.lng},${center.lat},${zoom},${bearing},${pitch}/${width}x${height}${retinaStr}?access_token=${MAPBOX_TOKEN}`;
+  const url = `https://api.mapbox.com/styles/v1/${MAPBOX_STYLE}/static/${startMarker},${endMarker},${overlay}/${center.lng.toFixed(5)},${center.lat.toFixed(5)},${optimalZoom},${bearing},${pitch}/${width}x${height}${retinaStr}?access_token=${MAPBOX_TOKEN}`;
 
   return url;
 }

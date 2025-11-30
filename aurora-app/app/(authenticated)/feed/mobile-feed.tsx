@@ -27,11 +27,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 type SortOption = "best" | "hot" | "new" | "top";
+type ContentFilter = "all" | "posts" | "routes" | "polls" | "reels" | "opportunities";
 
 export function MobileFeed() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("new");
+  const [contentFilter, setContentFilter] = useState<ContentFilter>("all");
   const [isPremium, setIsPremium] = useState(false);
 
   // Get user ID and premium status
@@ -118,19 +120,41 @@ export function MobileFeed() {
     { value: "top", label: "Top", icon: TrendingUp },
   ];
 
+  const contentFilterOptions: { value: ContentFilter; label: string }[] = [
+    { value: "all", label: "All" },
+    { value: "posts", label: "Posts" },
+    { value: "routes", label: "Routes" },
+    { value: "polls", label: "Polls" },
+    { value: "reels", label: "Reels" },
+    { value: "opportunities", label: "Jobs" },
+  ];
+
   const currentSort = sortOptions.find(opt => opt.value === sortBy) || sortOptions[0];
+  const currentFilter = contentFilterOptions.find(opt => opt.value === contentFilter) || contentFilterOptions[0];
+
+  // Filter items based on content type
+  const filteredItems = sortedItems.filter((item: any) => {
+    if (contentFilter === "all") return true;
+    if (contentFilter === "posts") return item.type === "post" && !item.route && !item.reel && item.postType !== "poll";
+    if (contentFilter === "routes") return item.type === "route" || (item.type === "post" && item.route);
+    if (contentFilter === "polls") return item.type === "post" && item.postType === "poll";
+    if (contentFilter === "reels") return item.type === "post" && item.reel;
+    if (contentFilter === "opportunities") return item.type === "opportunity";
+    return true;
+  });
 
   return (
     <div className="bg-[var(--background)] min-h-screen">
-      {/* Sort Bar - Header is now provided by layout */}
+      {/* Sort & Filter Bar */}
       <div className="sticky top-0 z-30 bg-[var(--card)] border-b border-[var(--border)] shadow-sm">
-        <div className="flex items-center gap-2 px-4 py-2">
+        <div className="flex items-center gap-2 px-3 py-2 overflow-x-auto">
+          {/* Sort Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--foreground)] text-sm font-medium transition-colors min-h-[40px]">
+              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--foreground)] text-sm font-medium transition-colors min-h-[36px] whitespace-nowrap">
                 <currentSort.icon className="w-4 h-4 text-[var(--color-aurora-purple)]" />
                 {currentSort.label}
-                <ChevronDown className="w-4 h-4 text-[var(--muted-foreground)]" />
+                <ChevronDown className="w-3 h-3 text-[var(--muted-foreground)]" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="bg-[var(--card)] border-[var(--border)]">
@@ -149,7 +173,28 @@ export function MobileFeed() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-
+          {/* Content Type Filter Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--color-aurora-purple)]/10 hover:bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)] text-sm font-medium transition-colors min-h-[36px] whitespace-nowrap border border-[var(--color-aurora-purple)]/30">
+                {currentFilter.label}
+                <ChevronDown className="w-3 h-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-[var(--card)] border-[var(--border)]">
+              {contentFilterOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => setContentFilter(option.value)}
+                  className={`text-[var(--foreground)] hover:bg-[var(--accent)] ${
+                    contentFilter === option.value ? "bg-[var(--accent)] font-medium" : ""
+                  }`}
+                >
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -185,7 +230,7 @@ export function MobileFeed() {
         )}
 
         {/* Feed Items */}
-        {sortedItems.map((item: any, index: number) => {
+        {filteredItems.map((item: any, index: number) => {
           const showSuggested = index === 3;
           // Show ad every 5 posts for free users
           const showAd = !isPremium && index > 0 && index % 5 === 0;
