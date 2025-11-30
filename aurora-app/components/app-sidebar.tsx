@@ -75,6 +75,15 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
     getUserId();
   }, []);
 
+  // Listen for toggle-sidebar event from other components
+  useEffect(() => {
+    const handleToggleSidebar = () => {
+      setMobileOpen(prev => !prev);
+    };
+    window.addEventListener('toggle-sidebar', handleToggleSidebar);
+    return () => window.removeEventListener('toggle-sidebar', handleToggleSidebar);
+  }, []);
+
   const user = useQuery(api.users.getUser, userId ? { userId } : "skip");
 
   useEffect(() => {
@@ -336,14 +345,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
 
   return (
     <>
-      {/* Mobile Menu Button - Fixed top left */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 min-w-[44px] min-h-[44px] p-2 rounded-xl bg-[var(--card)] border border-[var(--border)] shadow-lg flex items-center justify-center"
-        aria-label="Open menu"
-      >
-        <Menu className="w-5 h-5 text-[var(--foreground)]" />
-      </button>
+      {/* Mobile Menu Button - Removed floating button, now controlled by parent components */}
 
       {/* Mobile Overlay */}
       {mobileOpen && (

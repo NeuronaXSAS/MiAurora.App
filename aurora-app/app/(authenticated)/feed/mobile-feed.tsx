@@ -20,7 +20,6 @@ import {
   Bell,
   Search,
   User,
-  MessageCircle,
   Shield,
   Menu,
   Plus,
@@ -115,66 +114,68 @@ export function MobileFeed() {
       {/* Aurora-styled Header */}
       <div className="sticky top-0 z-30 bg-[var(--card)] border-b border-[var(--border)] shadow-sm">
         <div className="flex items-center justify-between px-4 py-3">
-          {/* Left: Menu + Logo */}
-          <div className="flex items-center gap-3">
-            <button className="p-1.5 -ml-1 rounded-lg hover:bg-[var(--accent)] transition-colors">
+          {/* Left: Menu + AI Chat */}
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => {
+                // Dispatch custom event to open sidebar
+                window.dispatchEvent(new CustomEvent('toggle-sidebar'));
+              }}
+              className="p-2 -ml-1 rounded-xl hover:bg-[var(--accent)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              aria-label="Open menu"
+            >
               <Menu className="w-5 h-5 text-[var(--foreground)]" />
             </button>
-            <Link href="/feed" className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-0.5">
-                <div className="w-full h-full rounded-[10px] bg-[var(--card)] flex items-center justify-center overflow-hidden">
-                  <Image 
-                    src="/Au_Logo_1.png" 
-                    alt="Aurora" 
-                    width={28} 
-                    height={28}
-                    className="object-contain"
-                  />
-                </div>
+            
+            {/* AI Chat Button with Aurora Logo */}
+            <button 
+              onClick={() => setShowAIChat(true)}
+              className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-0.5 hover:opacity-90 transition-opacity"
+              aria-label="AI Companion"
+            >
+              <div className="w-full h-full rounded-[10px] bg-[var(--card)] flex items-center justify-center overflow-hidden">
+                <Image 
+                  src="/Au_Logo_1.png" 
+                  alt="Aurora AI" 
+                  width={28} 
+                  height={28}
+                  className="object-contain"
+                />
               </div>
-            </Link>
+            </button>
           </div>
 
-          {/* Right: Create + AI Chat + Panic + Search + Notifications + Profile */}
+          {/* Right: Create + Panic + Search + Notifications + Profile */}
           <div className="flex items-center gap-1">
             {/* Create Post Button */}
             <button 
               onClick={() => setShowCreateModal(true)}
-              className="p-2 rounded-xl bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 transition-all shadow-md"
+              className="p-2 rounded-xl bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 transition-all shadow-md min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label="Create Post"
             >
               <Plus className="w-5 h-5 text-white" />
             </button>
 
-            {/* AI Companion Button */}
-            <button 
-              onClick={() => setShowAIChat(true)}
-              className="p-2 rounded-xl hover:bg-[var(--accent)] transition-colors group"
-              aria-label="AI Companion"
-            >
-              <MessageCircle className="w-5 h-5 text-[var(--color-aurora-purple)] group-hover:text-[var(--color-aurora-pink)] transition-colors" />
-            </button>
-
-            {/* Panic/Emergency Button */}
+            {/* Panic/Emergency Button - EXCLUSIVE Orange color */}
             <Link 
               href="/emergency"
-              className="p-2 rounded-xl bg-[var(--color-aurora-orange)] hover:bg-[var(--color-aurora-orange)]/90 transition-colors shadow-lg"
+              className="p-2 rounded-xl bg-[var(--color-aurora-orange)] hover:bg-[var(--color-aurora-orange)]/90 transition-colors shadow-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label="Emergency"
             >
               <Shield className="w-5 h-5 text-white" />
             </Link>
 
-            <button className="p-2 rounded-xl hover:bg-[var(--accent)] transition-colors">
+            <button className="p-2 rounded-xl hover:bg-[var(--accent)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
               <Search className="w-5 h-5 text-[var(--muted-foreground)]" />
             </button>
             
-            <button className="p-2 rounded-xl hover:bg-[var(--accent)] transition-colors">
+            <button className="p-2 rounded-xl hover:bg-[var(--accent)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
               <Bell className="w-5 h-5 text-[var(--muted-foreground)]" />
             </button>
             
             <Link href="/profile" className="ml-1">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center min-w-[44px] min-h-[44px]">
+                <User className="w-5 h-5 text-white" />
               </div>
             </Link>
           </div>
