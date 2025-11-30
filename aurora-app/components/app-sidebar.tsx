@@ -51,6 +51,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
   const pathname = usePathname();
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPostDialog, setShowPostDialog] = useState(false);
   const [showPollDialog, setShowPollDialog] = useState(false);
@@ -78,7 +79,13 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
   // Listen for toggle-sidebar event from other components
   useEffect(() => {
     const handleToggleSidebar = () => {
-      setMobileOpen(prev => !prev);
+      // Check if we're on mobile or desktop
+      const isMobile = window.innerWidth < 1024;
+      if (isMobile) {
+        setMobileOpen(prev => !prev);
+      } else {
+        setDesktopCollapsed(prev => !prev);
+      }
     };
     window.addEventListener('toggle-sidebar', handleToggleSidebar);
     return () => window.removeEventListener('toggle-sidebar', handleToggleSidebar);
@@ -360,8 +367,12 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
         className={cn(
           "fixed lg:static inset-y-0 left-0 z-50 flex flex-col h-screen bg-[var(--card)] border-r border-[var(--border)]",
           "w-72 lg:w-64 xl:w-72",
-          "transform transition-transform duration-300 ease-out",
-          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "transform transition-all duration-300 ease-out",
+          // Mobile: slide in/out
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
+          // Desktop: show/hide based on desktopCollapsed state
+          "lg:translate-x-0",
+          desktopCollapsed && "lg:-translate-x-full lg:w-0 lg:border-0"
         )}
       >
         {sidebarContent}

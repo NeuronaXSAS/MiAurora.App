@@ -401,3 +401,73 @@ export const getUserLivestreams = query({
     return livestreams;
   },
 });
+
+/**
+ * Delete a livestream (host only)
+ * Removes the livestream and all associated data
+ */
+export const deleteLivestream = mutation({
+  args: {
+    livestreamId: v.id('livestreams'),
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const livestream = await ctx.db.get(args.livestreamId);
+    if (!livestream) {
+      throw new Error('Livestream not found');
+    }
+
+    // Verify ownership
+    if (livestream.hostId !== args.userId) {
+      throw new Error('Unauthorized: You can only delete your own livestreams');
+    }
+
+    // If livestream is still live, end it first
+    if (livestream.status === 'live') {
+      await ctx.db.patch(args.livestreamId, {
+        status: 'ended',
+        endedAt: Date.now(),
+      });
+    }
+
+    // Delete all viewer records
+    const viewers = await ctx.db
+      .query('livestreamViewers')
+      .withIndex('by_livestream_and_active', (q) =>
+        q.eq('livestreamId', args.livestreamId)
+      )
+      .collect();
+
+    for (const viewer of viewers) {
+      await ctx.db.delete(viewer._id);
+    }
+
+    // Delete all likes
+    const likes = await ctx.db
+      .query('livestreamLikes')
+      .filter((q) => q.eq(q.field('livestreamId'), args.livestreamId))
+      .collect();
+
+    for (const like of likes) {
+      await ctx.db.delete(like._id);
+    }
+
+    // Note: Chat messages table may not exist in all deployments
+    // If livestreamMessages table exists, delete those too
+
+    // Delete related transactions
+    const transactions = await ctx.db
+      .query('transactions')
+      .filter((q) => q.eq(q.field('relatedId'), args.livestreamId))
+      .collect();
+
+    for (const transaction of transactions) {
+      await ctx.db.delete(transaction._id);
+    }
+
+    // Finally, delete the livestream
+    await ctx.db.delete(args.livestreamId);
+
+    return { success: true };
+  },
+});

@@ -1,23 +1,42 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Route, Play, TrendingUp, Award, Calendar, Filter, Download } from "lucide-react";
+import { Route, Play, TrendingUp, Award, Calendar, Filter, Download, Trash2, MoreVertical } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
 import { formatDistance, formatDuration } from "@/lib/gps-tracker";
 import { formatDistanceToNow } from "date-fns";
 import { RoutesCalendar } from "@/components/routes-calendar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function RoutesPage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [filterType, setFilterType] = useState<"all" | "walking" | "running" | "cycling" | "commuting">("all");
   const [filterTag, setFilterTag] = useState<string | null>(null);
+  const [deleteRouteId, setDeleteRouteId] = useState<Id<"routes"> | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
+  const deleteRoute = useMutation(api.routes.deleteRoute);
 
   useEffect(() => {
     const getUserId = async () => {
@@ -321,17 +340,40 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
                               <span className="text-sm font-semibold">+{route.creditsEarned}</span>
                             </div>
                           )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-[var(--border)]"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              exportToGPX(route);
-                            }}
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-[var(--border)] min-w-[36px] min-h-[36px]"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-[var(--card)] border-[var(--border)]">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  exportToGPX(route);
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                Export GPX
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteRouteId(route._id);
+                                }}
+                                className="cursor-pointer text-[var(--color-aurora-salmon)] focus:text-[var(--color-aurora-salmon)]"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete Route
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </CardContent>
@@ -342,6 +384,44 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteRouteId} onOpenChange={() => setDeleteRouteId(null)}>
+        <AlertDialogContent className="bg-[var(--card)] border-[var(--border)]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[var(--foreground)]">Delete Route?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[var(--muted-foreground)]">
+              This action cannot be undone. This will permanently delete your route and all associated data including journal entries and voice notes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              className="border-[var(--border)]"
+              disabled={isDeleting}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/90 text-white"
+              disabled={isDeleting}
+              onClick={async () => {
+                if (!deleteRouteId || !userId) return;
+                setIsDeleting(true);
+                try {
+                  await deleteRoute({ routeId: deleteRouteId, userId });
+                  setDeleteRouteId(null);
+                } catch (error) {
+                  console.error("Error deleting route:", error);
+                } finally {
+                  setIsDeleting(false);
+                }
+              }}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
