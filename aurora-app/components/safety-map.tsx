@@ -40,6 +40,9 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
     lifeDimension: lifeDimension as any,
   });
 
+  // Fetch workplace reports with location
+  const workplaceReports = useQuery(api.workplaceReports.getReportsForMap, {});
+
   // Filter posts by rating - MUST be defined before useEffect that uses it
   const filteredPosts = posts?.filter((post) => {
     if (ratingFilter && post.rating < ratingFilter) {
@@ -166,86 +169,162 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
     };
   }, [isSelectingLocation, onLocationSelect]);
 
-  // Update markers when posts change
+  // Update markers when posts or workplace reports change
   useEffect(() => {
-    if (!map.current || !mapLoaded || !filteredPosts) return;
+    if (!map.current || !mapLoaded) return;
 
     // Remove existing markers
     markers.current.forEach((marker) => marker.remove());
     markers.current = [];
 
-    // Add new markers
-    filteredPosts.forEach((post) => {
-      if (!post.location || !map.current) return;
+    // Add post markers
+    if (filteredPosts) {
+      filteredPosts.forEach((post) => {
+        if (!post.location || !map.current) return;
 
-      // Determine marker color based on rating
-      const color =
-        post.rating >= 4
-          ? "#22c55e" // Green for safe (4-5)
-          : post.rating >= 3
-          ? "#eab308" // Yellow for neutral (3)
-          : "#ef4444"; // Red for unsafe (1-2)
+        // Determine marker color based on rating
+        const color =
+          post.rating >= 4
+            ? "#22c55e" // Green for safe (4-5)
+            : post.rating >= 3
+            ? "#eab308" // Yellow for neutral (3)
+            : "#ef4444"; // Red for unsafe (1-2)
 
-      // Create marker element
-      const el = document.createElement("div");
-      el.className = "custom-marker";
-      el.style.width = "30px";
-      el.style.height = "30px";
-      el.style.borderRadius = "50%";
-      el.style.backgroundColor = color;
-      el.style.border = "3px solid white";
-      el.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
-      el.style.cursor = "pointer";
-      el.style.display = "flex";
-      el.style.alignItems = "center";
-      el.style.justifyContent = "center";
-      el.style.fontSize = "14px";
-      el.style.fontWeight = "bold";
-      el.style.color = "white";
-      el.textContent = post.rating.toString();
+        // Create marker element
+        const el = document.createElement("div");
+        el.className = "custom-marker";
+        el.style.width = "30px";
+        el.style.height = "30px";
+        el.style.borderRadius = "50%";
+        el.style.backgroundColor = color;
+        el.style.border = "3px solid white";
+        el.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
+        el.style.cursor = "pointer";
+        el.style.display = "flex";
+        el.style.alignItems = "center";
+        el.style.justifyContent = "center";
+        el.style.fontSize = "14px";
+        el.style.fontWeight = "bold";
+        el.style.color = "white";
+        el.textContent = post.rating.toString();
 
-      // Create popup
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <div style="padding: 8px; min-width: 200px;">
-          <h3 style="font-weight: bold; margin-bottom: 4px;">${post.title}</h3>
-          <p style="font-size: 12px; color: #666; margin-bottom: 8px;">${post.location.name}</p>
-          <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
-            <span style="font-size: 12px;">Rating: ${post.rating}/5</span>
+        // Create popup
+        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+          <div style="padding: 8px; min-width: 200px;">
+            <h3 style="font-weight: bold; margin-bottom: 4px;">${post.title}</h3>
+            <p style="font-size: 12px; color: #666; margin-bottom: 8px;">${post.location.name}</p>
+            <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+              <span style="font-size: 12px;">Rating: ${post.rating}/5</span>
+            </div>
+            <div style="font-size: 12px; color: #666;">
+              ${post.verificationCount} verification${post.verificationCount !== 1 ? "s" : ""}
+              ${post.isVerified ? ' • <span style="color: #22c55e;">✓ Verified</span>' : ""}
+            </div>
           </div>
-          <div style="font-size: 12px; color: #666;">
-            ${post.verificationCount} verification${post.verificationCount !== 1 ? "s" : ""}
-            ${post.isVerified ? ' • <span style="color: #22c55e;">✓ Verified</span>' : ""}
-          </div>
-        </div>
-      `);
+        `);
 
-      // Create and add marker
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat(post.location.coordinates as [number, number])
-        .setPopup(popup)
-        .addTo(map.current);
+        // Create and add marker
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat(post.location.coordinates as [number, number])
+          .setPopup(popup)
+          .addTo(map.current);
 
-      // Add click handler
-      el.addEventListener("click", () => {
-        if (onMarkerClick) {
-          onMarkerClick(post._id);
-        }
+        // Add click handler
+        el.addEventListener("click", () => {
+          if (onMarkerClick) {
+            onMarkerClick(post._id);
+          }
+        });
+
+        markers.current.push(marker);
       });
+    }
 
-      markers.current.push(marker);
-    });
+    // Add workplace report markers (warning triangles)
+    if (workplaceReports) {
+      const incidentLabels: Record<string, string> = {
+        harassment: "Sexual Harassment",
+        discrimination: "Discrimination",
+        pay_inequality: "Pay Inequality",
+        hostile_environment: "Hostile Environment",
+        retaliation: "Retaliation",
+        other: "Workplace Issue",
+      };
+
+      workplaceReports.forEach((report) => {
+        if (!report.location || !map.current) return;
+
+        // Create warning marker element
+        const el = document.createElement("div");
+        el.className = "workplace-marker";
+        el.style.width = "32px";
+        el.style.height = "32px";
+        el.style.backgroundColor = "#ec4c28"; // Aurora orange for warnings
+        el.style.border = "3px solid white";
+        el.style.boxShadow = "0 2px 6px rgba(236, 76, 40, 0.5)";
+        el.style.cursor = "pointer";
+        el.style.display = "flex";
+        el.style.alignItems = "center";
+        el.style.justifyContent = "center";
+        el.style.fontSize = "16px";
+        el.style.borderRadius = "4px";
+        el.style.transform = "rotate(45deg)";
+        el.innerHTML = '<span style="transform: rotate(-45deg);">⚠️</span>';
+
+        // Create popup
+        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+          <div style="padding: 10px; min-width: 220px;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+              <span style="font-size: 16px;">⚠️</span>
+              <span style="font-weight: bold; color: #ec4c28;">Workplace Report</span>
+            </div>
+            <h3 style="font-weight: bold; margin-bottom: 4px;">${report.companyName}</h3>
+            <p style="font-size: 12px; color: #666; margin-bottom: 6px;">${report.location.name}</p>
+            <div style="background: #fff3f0; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">
+              <span style="font-size: 12px; color: #ec4c28; font-weight: 500;">
+                ${incidentLabels[report.incidentType] || report.incidentType}
+              </span>
+            </div>
+            <div style="font-size: 11px; color: #666;">
+              ${report.verificationCount} verification${report.verificationCount !== 1 ? "s" : ""}
+              ${report.status === "verified" ? ' • <span style="color: #ec4c28;">⚠️ Verified</span>' : ""}
+            </div>
+          </div>
+        `);
+
+        // Create and add marker
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat(report.location.coordinates as [number, number])
+          .setPopup(popup)
+          .addTo(map.current);
+
+        markers.current.push(marker);
+      });
+    }
 
     // Only fit map to markers on initial load (when no map state exists)
-    if (filteredPosts.length > 0 && map.current && !mapState) {
-      const bounds = new mapboxgl.LngLatBounds();
+    const allLocations: [number, number][] = [];
+    if (filteredPosts) {
       filteredPosts.forEach((post) => {
         if (post.location) {
-          bounds.extend(post.location.coordinates as [number, number]);
+          allLocations.push(post.location.coordinates as [number, number]);
         }
       });
+    }
+    if (workplaceReports) {
+      workplaceReports.forEach((report) => {
+        if (report.location) {
+          allLocations.push(report.location.coordinates as [number, number]);
+        }
+      });
+    }
+
+    if (allLocations.length > 0 && map.current && !mapState) {
+      const bounds = new mapboxgl.LngLatBounds();
+      allLocations.forEach((coords) => bounds.extend(coords));
       map.current.fitBounds(bounds, { padding: 50, maxZoom: 12 });
     }
-  }, [filteredPosts, mapLoaded, onMarkerClick, mapState]);
+  }, [filteredPosts, workplaceReports, mapLoaded, onMarkerClick, mapState]);
 
   // Restore user location marker when map loads
   useEffect(() => {
@@ -532,18 +611,26 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
       {/* Legend - Always visible, responsive positioning */}
       <div className="absolute bottom-24 sm:bottom-6 md:bottom-6 lg:bottom-6 left-4 bg-[var(--card)] backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg p-3 z-20">
         <p className="text-[10px] sm:text-xs font-semibold text-[var(--foreground)] mb-2">Safety Legend</p>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-full bg-[#22c55e] border-2 border-white shadow-sm" />
-            <span className="text-xs text-[var(--foreground)]">Safe (4-5★)</span>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <div className="w-4 h-4 rounded-full bg-[#22c55e] border-2 border-white shadow-sm" />
+              <span className="text-xs text-[var(--foreground)]">Safe (4-5★)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-4 h-4 rounded-full bg-[#eab308] border-2 border-white shadow-sm" />
+              <span className="text-xs text-[var(--foreground)]">Neutral (3★)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-4 h-4 rounded-full bg-[#ef4444] border-2 border-white shadow-sm" />
+              <span className="text-xs text-[var(--foreground)]">Unsafe (1-2★)</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-full bg-[#eab308] border-2 border-white shadow-sm" />
-            <span className="text-xs text-[var(--foreground)]">Neutral (3★)</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-full bg-[#ef4444] border-2 border-white shadow-sm" />
-            <span className="text-xs text-[var(--foreground)]">Unsafe (1-2★)</span>
+          <div className="flex items-center gap-1.5 pt-1 border-t border-[var(--border)]">
+            <div className="w-4 h-4 bg-[#ec4c28] border-2 border-white shadow-sm rounded-sm rotate-45 flex items-center justify-center">
+              <span className="text-[8px] -rotate-45">⚠️</span>
+            </div>
+            <span className="text-xs text-[var(--foreground)]">Workplace Report</span>
           </div>
         </div>
       </div>

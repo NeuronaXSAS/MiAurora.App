@@ -1056,6 +1056,11 @@ export default defineSchema({
       v.literal("resolved")
     ),
     verificationCount: v.optional(v.number()),
+    // Location for safety map integration
+    location: v.optional(v.object({
+      name: v.string(),
+      coordinates: v.array(v.number()), // [lng, lat]
+    })),
   })
     .index("by_reporter", ["reporterId"])
     .index("by_company", ["companyName"])

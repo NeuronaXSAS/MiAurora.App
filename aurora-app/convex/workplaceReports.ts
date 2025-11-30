@@ -18,14 +18,21 @@ export const submitReport = mutation({
     date: v.optional(v.string()),
     isAnonymous: v.boolean(),
     isPublic: v.boolean(),
+    shareToFeed: v.optional(v.boolean()),
+    showOnMap: v.optional(v.boolean()),
+    location: v.optional(v.object({
+      name: v.string(),
+      coordinates: v.array(v.number()),
+    })),
     supportNeeded: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const { reporterId, ...reportData } = args;
+    const { reporterId, shareToFeed, showOnMap, location, ...reportData } = args;
 
     const reportId = await ctx.db.insert("workplaceReports", {
       reporterId,
       ...reportData,
+      location,
       status: "submitted",
       verificationCount: 0,
     });
@@ -46,12 +53,42 @@ export const submitReport = mutation({
       });
     }
 
+    // Share to main feed if requested
+    if (shareToFeed) {
+      const incidentLabels: Record<string, string> = {
+        harassment: "Sexual Harassment",
+        discrimination: "Discrimination",
+        pay_inequality: "Pay Inequality",
+        hostile_environment: "Hostile Environment",
+        retaliation: "Retaliation",
+        other: "Workplace Issue",
+      };
+
+      await ctx.db.insert("posts", {
+        authorId: reporterId,
+        title: `⚠️ Workplace Report: ${args.companyName}`,
+        description: `${incidentLabels[args.incidentType] || "Workplace Issue"} reported at ${args.companyName}. ${args.description.substring(0, 200)}${args.description.length > 200 ? "..." : ""}`,
+        lifeDimension: "professional",
+        location: showOnMap && location ? location : undefined,
+        verificationCount: 0,
+        isVerified: false,
+        isAnonymous: args.isAnonymous,
+        upvotes: 0,
+        downvotes: 0,
+        commentCount: 0,
+        postType: "standard",
+        rating: 1, // Low rating for workplace issues
+      });
+    }
+
     // Create notification
     await ctx.db.insert("notifications", {
       userId: reporterId,
       type: "verification",
       title: "Report Submitted",
-      message: "Thank you for your courage. Your report helps protect other women.",
+      message: shareToFeed 
+        ? "Thank you for your courage. Your report has been shared with the community."
+        : "Thank you for your courage. Your report helps protect other women.",
       isRead: false,
     });
 
@@ -196,5 +233,32 @@ export const deleteReport = mutation({
     }
     await ctx.db.delete(args.reportId);
     return { success: true };
+  },
+});
+
+// Get workplace reports with location for safety map
+export const getReportsForMap = query({
+  args: {},
+  handler: async (ctx) => {
+    const reports = await ctx.db
+      .query("workplaceReports")
+      .filter((q) => q.eq(q.field("isPublic"), true))
+      .order("desc")
+      .take(100);
+
+    // Filter reports that have location data
+    const reportsWithLocation = reports.filter(
+      (report) => report.location !== undefined && report.location !== null
+    );
+
+    return reportsWithLocation.map((report) => ({
+      _id: report._id,
+      _creationTime: report._creationTime,
+      companyName: report.companyName,
+      incidentType: report.incidentType,
+      location: report.location,
+      verificationCount: report.verificationCount || 0,
+      status: report.status,
+    }));
   },
 });

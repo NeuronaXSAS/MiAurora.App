@@ -168,11 +168,36 @@ export function SisterAccompaniment({ userId }: SisterAccompanimentProps) {
             </div>
 
             {activeSession.lastLocation && (
-              <div className="p-3 bg-[var(--card)] rounded-lg text-sm">
-                <p className="text-[var(--muted-foreground)]">Last update:</p>
-                <p className="font-mono text-[var(--foreground)]">
-                  {activeSession.lastLocation.lat.toFixed(6)}, {activeSession.lastLocation.lng.toFixed(6)}
-                </p>
+              <div className="space-y-2">
+                {/* Live Location Map */}
+                <div className="relative h-48 sm:h-56 rounded-xl overflow-hidden border-2 border-[var(--color-aurora-mint)]">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || 'AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8'}&q=${activeSession.lastLocation.lat},${activeSession.lastLocation.lng}&zoom=16`}
+                  />
+                  {/* Live indicator */}
+                  <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] px-2 py-1 rounded-full text-xs font-medium">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                    En Vivo
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-[var(--card)] rounded-lg">
+                  <p className="text-xs text-[var(--muted-foreground)]">
+                    📍 {activeSession.lastLocation.lat.toFixed(4)}, {activeSession.lastLocation.lng.toFixed(4)}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs h-8"
+                    onClick={() => window.open(`https://www.google.com/maps?q=${activeSession.lastLocation?.lat},${activeSession.lastLocation?.lng}`, '_blank')}
+                  >
+                    <Navigation className="w-3 h-3 mr-1" />
+                    Abrir en Maps
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -307,10 +332,36 @@ export function SisterAccompaniment({ userId }: SisterAccompanimentProps) {
                   </div>
 
                   {session.lastLocation && (
-                    <div className="mt-3 p-2 bg-[var(--card)] rounded-lg">
-                      <p className="text-xs text-[var(--muted-foreground)]">
-                        Last seen: {session.lastLocation.lat.toFixed(4)}, {session.lastLocation.lng.toFixed(4)}
-                      </p>
+                    <div className="mt-3 space-y-2">
+                      {/* Live Map for watched session */}
+                      <div className="relative h-40 sm:h-48 rounded-lg overflow-hidden border-2 border-[var(--color-aurora-mint)]">
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          style={{ border: 0 }}
+                          loading="lazy"
+                          src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || 'AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8'}&q=${session.lastLocation.lat},${session.lastLocation.lng}&zoom=16`}
+                        />
+                        {/* Live indicator */}
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] px-2 py-1 rounded-full text-xs font-medium">
+                          <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                          En Vivo
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-[var(--muted-foreground)]">
+                          📍 {session.lastLocation.lat.toFixed(4)}, {session.lastLocation.lng.toFixed(4)}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs h-7"
+                          onClick={() => window.open(`https://www.google.com/maps?q=${session.lastLocation?.lat},${session.lastLocation?.lng}`, '_blank')}
+                        >
+                          <Navigation className="w-3 h-3 mr-1" />
+                          Abrir
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </motion.div>

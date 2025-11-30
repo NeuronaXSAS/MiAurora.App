@@ -47,6 +47,7 @@ interface PostCardProps {
     media?: Array<{
       type: "image" | "video";
       url: string;
+      thumbnailUrl?: string;
     }>;
     verificationCount: number;
     isVerified: boolean;
@@ -276,11 +277,13 @@ export function PostCard({
 
         {/* Media */}
         {post.media && post.media.length > 0 && (
-          <div className="grid grid-cols-2 gap-2">
+          <div className={`grid gap-2 ${post.media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
             {post.media.slice(0, 4).map((item, index) => (
               <div
                 key={index}
-                className="relative aspect-square rounded-lg overflow-hidden bg-gray-100"
+                className={`relative rounded-lg overflow-hidden bg-gray-100 ${
+                  post.media?.length === 1 ? 'aspect-video' : 'aspect-square'
+                }`}
               >
                 {item.type === "image" ? (
                   <img
@@ -289,8 +292,22 @@ export function PostCard({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Video className="w-8 h-8 text-gray-400" />
+                  <div className="relative w-full h-full">
+                    <video
+                      src={item.url}
+                      className="w-full h-full object-cover"
+                      controls
+                      preload="metadata"
+                      playsInline
+                      poster={item.url + '#t=0.5'}
+                    >
+                      Your browser does not support video playback.
+                    </video>
+                    {/* Video overlay indicator */}
+                    <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                      <Video className="w-3 h-3" />
+                      Video
+                    </div>
                   </div>
                 )}
                 {index === 3 && post.media && post.media.length > 4 && (

@@ -19,6 +19,7 @@ import {
 import { Sparkles, Briefcase, Shield, ArrowRight, ArrowLeft, Check } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { AvatarCreator, AvatarConfig } from "@/components/avatar-creator";
+import { OnboardingTutorial } from "@/components/onboarding-tutorial";
 
 interface OnboardingWizardProps {
   open: boolean;
@@ -49,6 +50,7 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
   const [error, setError] = useState<string>("");
   const [avatarConfig, setAvatarConfig] = useState<AvatarConfig | null>(null);
   const [showAvatarCreator, setShowAvatarCreator] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [location, setLocation] = useState("");
 
   const completeOnboarding = useMutation(api.users.completeOnboarding);
@@ -146,8 +148,9 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
         console.warn("⚠️ Privacy settings update failed (non-critical):", privacyError);
       }
 
-      console.log("🎉 Onboarding complete! Calling onComplete()");
-      onComplete();
+      console.log("🎉 Onboarding complete! Showing tutorial...");
+      // Show tutorial after profile setup
+      setShowTutorial(true);
     } catch (error) {
       console.error("❌ Onboarding error:", error);
       // Show the actual error message from the backend
@@ -175,6 +178,16 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
     setShowAvatarCreator(false);
     setStep(1);
   };
+
+  // Show tutorial after profile setup
+  if (showTutorial) {
+    return (
+      <OnboardingTutorial
+        open={open}
+        onComplete={onComplete}
+      />
+    );
+  }
 
   // Show avatar creator first
   if (showAvatarCreator) {

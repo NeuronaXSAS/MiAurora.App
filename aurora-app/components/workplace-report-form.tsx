@@ -24,7 +24,10 @@ import {
   Lock, 
   Globe, 
   Heart,
-  CheckCircle
+  CheckCircle,
+  MapPin,
+  Navigation,
+  Share2
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -57,9 +60,13 @@ export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormPr
   const [date, setDate] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [isPublic, setIsPublic] = useState(false);
+  const [shareToFeed, setShareToFeed] = useState(false);
+  const [showOnMap, setShowOnMap] = useState(false);
+  const [location, setLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
   const [supportNeeded, setSupportNeeded] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   const submitReport = useMutation(api.workplaceReports.submitReport);
 
@@ -87,6 +94,12 @@ export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormPr
         date: date || undefined,
         isAnonymous,
         isPublic,
+        shareToFeed,
+        showOnMap,
+        location: location ? {
+          name: location.name,
+          coordinates: [location.lng, location.lat],
+        } : undefined,
         supportNeeded: supportNeeded.length > 0 ? supportNeeded : undefined,
       });
       setSubmitted(true);
@@ -239,6 +252,109 @@ export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormPr
               onCheckedChange={setIsPublic}
             />
           </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="shareToFeed" className="text-[var(--foreground)] flex items-center gap-2">
+                <Share2 className="w-4 h-4" />
+                Share to Main Feed
+              </Label>
+              <p className="text-xs text-[var(--muted-foreground)]">Post this report to the main feed for visibility</p>
+            </div>
+            <Switch
+              id="shareToFeed"
+              checked={shareToFeed}
+              onCheckedChange={setShareToFeed}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="showOnMap" className="text-[var(--foreground)] flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                Show on Safety Map
+              </Label>
+              <p className="text-xs text-[var(--muted-foreground)]">Mark this location on the community safety map</p>
+            </div>
+            <Switch
+              id="showOnMap"
+              checked={showOnMap}
+              onCheckedChange={setShowOnMap}
+            />
+          </div>
+
+          {/* Location Picker (when showOnMap is enabled) */}
+          {showOnMap && (
+            <div className="p-3 bg-[var(--card)] rounded-lg space-y-2">
+              {location ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-[var(--color-aurora-mint)]" />
+                    <span className="text-sm text-[var(--foreground)]">{location.name}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLocation(null)}
+                    className="text-[var(--muted-foreground)]"
+                  >
+                    Change
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    setIsGettingLocation(true);
+                    try {
+                      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                          enableHighAccuracy: true,
+                          timeout: 10000,
+                        });
+                      });
+                      const { latitude, longitude } = position.coords;
+                      
+                      // Reverse geocode
+                      let name = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                      try {
+                        const response = await fetch(
+                          `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&limit=1`
+                        );
+                        const data = await response.json();
+                        if (data.features?.[0]?.place_name) {
+                          name = data.features[0].place_name;
+                        }
+                      } catch (e) {
+                        console.warn('Geocoding failed:', e);
+                      }
+                      
+                      setLocation({ lat: latitude, lng: longitude, name });
+                    } catch (error) {
+                      console.error('Error getting location:', error);
+                      alert('Could not get your location. Please check permissions.');
+                    } finally {
+                      setIsGettingLocation(false);
+                    }
+                  }}
+                  disabled={isGettingLocation}
+                  className="w-full min-h-[44px]"
+                >
+                  {isGettingLocation ? (
+                    <>
+                      <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                      Getting location...
+                    </>
+                  ) : (
+                    <>
+                      <Navigation className="w-4 h-4 mr-2" />
+                      Use Current Location
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Support Needed */}

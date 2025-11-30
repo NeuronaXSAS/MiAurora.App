@@ -59,8 +59,83 @@ export function NotificationsDropdown() {
     if (!notification.isRead) {
       await markAsRead({ notificationId: notification._id });
     }
-    if (notification.actionUrl) {
-      router.push(notification.actionUrl);
+    
+    // Navigate to the appropriate section based on notification type
+    let targetUrl = notification.actionUrl;
+    
+    if (!targetUrl) {
+      // Generate URL based on notification type and relatedId
+      switch (notification.type) {
+        case "message":
+          targetUrl = notification.relatedId ? `/messages/${notification.relatedId}` : "/messages";
+          break;
+        case "comment":
+        case "upvote":
+        case "verification":
+          targetUrl = notification.relatedId ? `/feed?post=${notification.relatedId}` : "/feed";
+          break;
+        case "route_completion":
+          targetUrl = notification.relatedId ? `/routes/${notification.relatedId}` : "/routes";
+          break;
+        case "opportunity_unlock":
+          targetUrl = notification.relatedId ? `/opportunities?id=${notification.relatedId}` : "/opportunities";
+          break;
+        case "mention":
+          targetUrl = notification.relatedId ? `/feed?post=${notification.relatedId}` : "/feed";
+          break;
+        case "tip":
+        case "credit_earned":
+          targetUrl = "/credits";
+          break;
+        case "accompaniment_request":
+        case "accompaniment_update":
+        case "location_share":
+          targetUrl = "/circles?tab=accompaniment";
+          break;
+        case "guardian_request":
+        case "guardian_accepted":
+        case "guardian_alert":
+          targetUrl = "/circles?tab=guardians";
+          break;
+        case "circle_invite":
+        case "circle_message":
+        case "circle_join":
+          targetUrl = notification.relatedId ? `/circles/${notification.relatedId}` : "/circles";
+          break;
+        case "emergency":
+        case "panic_alert":
+          targetUrl = "/map";
+          break;
+        case "checkin_reminder":
+        case "checkin_missed":
+          targetUrl = "/health?tab=checkin";
+          break;
+        case "hydration_reminder":
+          targetUrl = "/health?tab=hydration";
+          break;
+        case "cycle_reminder":
+          targetUrl = "/health?tab=cycle";
+          break;
+        case "workplace_report":
+          targetUrl = "/intelligence?tab=workplace";
+          break;
+        case "reel_like":
+        case "reel_comment":
+          targetUrl = notification.relatedId ? `/reels?id=${notification.relatedId}` : "/reels";
+          break;
+        case "live_started":
+          targetUrl = notification.relatedId ? `/live/${notification.relatedId}` : "/live";
+          break;
+        case "poll_vote":
+          targetUrl = notification.relatedId ? `/feed?post=${notification.relatedId}` : "/feed";
+          break;
+        default:
+          targetUrl = "/feed";
+      }
+    }
+    
+    if (targetUrl) {
+      router.push(targetUrl);
     }
     setIsOpen(false);
   };

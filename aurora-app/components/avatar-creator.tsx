@@ -149,7 +149,7 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
             {/* Avatar Preview - Sticky on mobile */}
             <div className="space-y-3 sm:space-y-4">
               <div 
-                className="border-2 border-[var(--color-aurora-pink)]/30 rounded-2xl sm:rounded-3xl p-6 sm:p-8 flex items-center justify-center min-h-[200px] sm:min-h-[280px] transition-colors overflow-hidden"
+                className="border-2 border-[var(--color-aurora-pink)]/30 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex items-center justify-center min-h-[220px] sm:min-h-[300px] transition-colors"
                 style={{ backgroundColor: `#${config.backgroundColor}` }}
               >
                 <AvatarPreview config={config} />
@@ -340,7 +340,7 @@ function AvatarPreview({ config }: { config: AvatarConfig }) {
       mouth: [config.mouthStyle] as any,
       earrings: [config.earrings] as any,
       freckles: config.freckles ? ['variant01'] : [] as any,
-      size: 200,
+      size: 256,
     });
 
     return avatar.toString();
@@ -352,9 +352,14 @@ function AvatarPreview({ config }: { config: AvatarConfig }) {
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
-      className="relative w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 mx-auto rounded-full overflow-hidden shadow-2xl shadow-[var(--color-aurora-pink)]/20 flex-shrink-0"
-      dangerouslySetInnerHTML={{ __html: avatarSvg }}
-    />
+      className="relative w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 mx-auto rounded-full shadow-2xl shadow-[var(--color-aurora-pink)]/20 flex-shrink-0 flex items-center justify-center bg-white/10"
+      style={{ backgroundColor: `#${config.backgroundColor}` }}
+    >
+      <div 
+        className="w-[90%] h-[90%] flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
+        dangerouslySetInnerHTML={{ __html: avatarSvg }}
+      />
+    </motion.div>
   );
 }
 
