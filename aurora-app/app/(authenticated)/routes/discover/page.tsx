@@ -14,8 +14,10 @@ import {
   TrendingUp,
   Users,
   ArrowLeft,
-  Play
+  Play,
+  Loader2
 } from "lucide-react";
+import { generateRouteStaticImage, calculateOptimalZoom } from "@/lib/mapbox-static-images";
 import { Id } from "@/convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
 import { formatDistance, formatDuration } from "@/lib/gps-tracker";
@@ -277,9 +279,29 @@ export default function DiscoverRoutesPage() {
                       onClick={() => router.push(`/routes/discover/${route._id}`)}
                     >
                       <CardContent className="p-4">
-                        {/* Route Preview Map Placeholder */}
-                        <div className="w-full h-32 bg-gradient-to-br from-[var(--color-aurora-pink)]/20 to-[var(--color-aurora-lavender)]/30 border border-[var(--color-aurora-purple)]/30 rounded-lg mb-3 flex items-center justify-center">
-                          <MapPin className="w-8 h-8 text-[var(--color-aurora-purple)]" />
+                        {/* Route Preview Map with Static Image */}
+                        <div className="w-full h-32 bg-gradient-to-br from-[var(--color-aurora-pink)]/20 to-[var(--color-aurora-lavender)]/30 border border-[var(--color-aurora-purple)]/30 rounded-lg mb-3 overflow-hidden relative">
+                          {route.coordinates && route.coordinates.length > 1 ? (
+                            <img
+                              src={generateRouteStaticImage(route.coordinates, {
+                                width: 400,
+                                height: 200,
+                                zoom: calculateOptimalZoom(route.coordinates, 400, 200),
+                                retina: true,
+                              })}
+                              alt={route.title}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              onError={(e) => {
+                                // Fallback to placeholder on error
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <div className={`absolute inset-0 flex items-center justify-center ${route.coordinates && route.coordinates.length > 1 ? 'hidden' : ''}`}>
+                            <MapPin className="w-8 h-8 text-[var(--color-aurora-purple)]" />
+                          </div>
                         </div>
 
                         <h3 className="font-semibold text-lg mb-2 text-[var(--foreground)]">{route.title}</h3>

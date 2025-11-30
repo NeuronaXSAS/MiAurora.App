@@ -1366,3 +1366,249 @@ export const updateAvatarsToFeminine = mutation({
     return { success: true, updated };
   },
 });
+
+
+// ============================================
+// SEED COMPREHENSIVE SAFETY RESOURCES (FROM MD FILE)
+// ============================================
+
+export const seedComprehensiveSafetyResources = mutation({
+  args: {},
+  handler: async (ctx) => {
+    console.log("Creating comprehensive safety resources from global database...");
+    
+    const resourceIds: Id<"safetyResources">[] = [];
+    
+    // Global Resources
+    const globalResources = [
+      { name: "Global Network of Women's Shelters (GNWS)", category: "shelter" as const, website: "https://gnws.org", desc: "Primary unifying body for the women's shelter movement globally, promoting social change to end violence against women.", isGlobal: true },
+      { name: "Lila.help", category: "community" as const, website: "https://lila.help", desc: "Vetted directory of feminist organizations providing survivor-centered services with safety features.", isGlobal: true },
+      { name: "Hot Peach Pages", category: "community" as const, website: "https://hotpeachpages.net", desc: "Searchable list of abuse hotlines, shelters, and crisis centers for every country in 110+ languages.", isGlobal: true },
+      { name: "NO MORE Global Directory", category: "community" as const, website: "https://nomoredirectory.org", desc: "Created with UN and World Bank, comprehensive hub for almost every UN-recognized country.", isGlobal: true },
+      { name: "UN Women", category: "community" as const, website: "https://www.unwomen.org", desc: "Global champion for gender equality and women's empowerment.", isGlobal: true },
+      { name: "Global Fund for Women", category: "financial" as const, website: "https://www.globalfundforwomen.org", desc: "Funding women-led organizations worldwide for gender justice.", isGlobal: true },
+      { name: "Global Survivors Fund", category: "financial" as const, website: "https://www.globalsurvivorsfund.org", desc: "Supports survivors of conflict-related sexual violence through reparative measures.", isGlobal: true },
+    ];
+    
+    // USA Resources
+    const usaResources = [
+      { name: "National Domestic Violence Hotline", category: "hotline" as const, phone: "1-800-799-7233", country: "USA", desc: "24/7 confidential crisis intervention, safety planning, and referrals. Text START to 88788.", hours: "24/7" },
+      { name: "RAINN - Sexual Assault Hotline", category: "hotline" as const, phone: "1-800-656-4673", country: "USA", desc: "National Sexual Assault Hotline offering specialized trauma support.", hours: "24/7" },
+      { name: "Love is Respect - Teen Dating Abuse", category: "hotline" as const, phone: "1-866-331-9474", country: "USA", desc: "Targeted support for adolescents addressing dating violence dynamics.", hours: "24/7" },
+      { name: "StrongHearts Native Helpline", category: "hotline" as const, phone: "1-844-762-8483", country: "USA", desc: "Addresses specific cultural and jurisdictional complexities faced by Indigenous women.", hours: "24/7" },
+      { name: "National Network to End Domestic Violence", category: "legal" as const, website: "https://nnedv.org", country: "USA", desc: "Coordinates state coalitions ensuring policy advocacy translates into local resources." },
+      { name: "WomensLaw.org", category: "legal" as const, website: "https://womenslaw.org", country: "USA", desc: "State-by-state legal directory with plain-language explanations of protection orders and custody." },
+      { name: "Her Justice", category: "legal" as const, phone: "212-695-1101", country: "USA", city: "New York", desc: "Pro bono legal model recruiting volunteer lawyers for family, matrimonial, and immigration law." },
+      { name: "Women's Independence Scholarship Program", category: "education" as const, website: "https://wispinc.org", country: "USA", desc: "Grants up to $6,000 for survivors of intimate partner abuse to access higher education." },
+      { name: "Sanctuary for Families", category: "employment" as const, website: "https://sanctuaryforfamilies.org", country: "USA", city: "New York", desc: "Economic Empowerment Program with career readiness workshops and IT training." },
+    ];
+    
+    // UK Resources
+    const ukResources = [
+      { name: "Women's Aid UK", category: "hotline" as const, phone: "0808 2000 247", country: "UK", desc: "Support for women and children experiencing domestic abuse. Free 24-hour helpline.", hours: "24/7" },
+      { name: "Refuge UK", category: "shelter" as const, phone: "0808 2000 247", country: "UK", desc: "Leading charity providing emergency accommodation and support services.", hours: "24/7" },
+      { name: "National Domestic Abuse Helpline", category: "hotline" as const, phone: "0808 2000 247", country: "UK", desc: "Run by Refuge, offering confidential support and information.", hours: "24/7" },
+      { name: "Rights of Women", category: "legal" as const, phone: "020 7251 6577", country: "UK", desc: "Free legal advice for women on family law, immigration, and criminal law." },
+      { name: "WAVE (Women Against Violence Europe)", category: "community" as const, website: "https://wave-network.org", country: "UK", desc: "Trans-national network standardizing data across 46 European countries." },
+    ];
+    
+    // Canada Resources
+    const canadaResources = [
+      { name: "ShelterSafe Canada", category: "shelter" as const, website: "https://sheltersafe.ca", country: "Canada", desc: "Centralized clickable map connecting women to nearest shelter with 24/7 crisis counseling." },
+      { name: "Women's Shelters Canada", category: "shelter" as const, phone: "1-800-363-9010", country: "Canada", desc: "Network of shelters across Canada with translation services." },
+      { name: "Victim Services Directory", category: "legal" as const, website: "https://justice.gc.ca", country: "Canada", desc: "Facilitates access to protection orders and non-criminal protection orders." },
+      { name: "EASE Project (WomanACT)", category: "financial" as const, website: "https://womanact.ca", country: "Canada", desc: "Economic Abuse Support Empowerment - repairs credit scores and financial health of survivors." },
+      { name: "Acces Employment", category: "employment" as const, website: "https://accesemployment.ca", country: "Canada", desc: "Career Pathways for newcomer women and women in technology." },
+    ];
+    
+    // Latin America Resources
+    const latamResources = [
+      { name: "Red Nacional de Refugios", category: "shelter" as const, phone: "55 5674 9695", country: "Mexico", desc: "National Network of Shelters providing protection, medical care, and psychological support." },
+      { name: "SAPTEL (Cruz Roja)", category: "hotline" as const, phone: "55 5259 8121", country: "Mexico", desc: "24/7 psychological crisis intervention.", hours: "24/7" },
+      { name: "Consejo Ciudadano", category: "hotline" as const, phone: "55 5533 5533", country: "Mexico", desc: "Legal and psychological advice for women in crisis." },
+      { name: "Línea 155", category: "hotline" as const, phone: "155", country: "Colombia", desc: "National orientation line for domestic violence and rights under Ley 1257.", hours: "24/7" },
+      { name: "Línea Púrpura Bogotá", category: "hotline" as const, phone: "01 8000 112 137", country: "Colombia", city: "Bogotá", desc: "24/7 psychologists and lawyers, WhatsApp with sign language interpretation.", hours: "24/7" },
+      { name: "Fundación Ana Bella", category: "community" as const, website: "https://fundacionanabella.org", country: "Colombia", desc: "Peer-to-peer mentoring to help women exit abusive relationships." },
+      { name: "Línea 144", category: "hotline" as const, phone: "144", country: "Argentina", desc: "Omni-channel platform via WhatsApp, email, and app. 365 days/year.", hours: "24/7" },
+      { name: "Fuerza Mujeres", category: "employment" as const, country: "Argentina", desc: "Labor reintegration for women over 40, addressing ageism and gender gaps." },
+      { name: "Centros de Emergencia Mujer (CEM)", category: "shelter" as const, phone: "084-240108", country: "Peru", desc: "Multidisciplinary centers with legal, psychological, and social support." },
+      { name: "Programa Nacional Aurora", category: "community" as const, country: "Peru", desc: "Manages network of CEMs, many in police stations for immediate protection." },
+      { name: "Linha da Mulher", category: "hotline" as const, phone: "180", country: "Brazil", desc: "Central de Atendimento à Mulher - 24/7 support.", hours: "24/7" },
+      { name: "SernamEG Chile", category: "hotline" as const, phone: "1455", country: "Chile", desc: "National Service for Women and Gender Equity helpline." },
+    ];
+    
+    // Europe Resources
+    const europeResources = [
+      { name: "Frauenhaus Koordinierung", category: "shelter" as const, country: "Germany", desc: "Coordination of women's shelters across Germany." },
+      { name: "Hilfetelefon", category: "hotline" as const, phone: "08000 116 016", country: "Germany", desc: "Violence against women helpline, free and anonymous.", hours: "24/7" },
+      { name: "3919 Violences Femmes Info", category: "hotline" as const, phone: "3919", country: "France", desc: "National helpline for women victims of violence.", hours: "24/7" },
+      { name: "Telefono Rosa", category: "hotline" as const, phone: "06 3751 8282", country: "Italy", desc: "Anti-violence helpline and support services." },
+      { name: "016 Violencia de Género", category: "hotline" as const, phone: "016", country: "Spain", desc: "National helpline for gender violence victims.", hours: "24/7" },
+      { name: "Vrouwenopvang", category: "shelter" as const, country: "Netherlands", desc: "Women's shelter network in the Netherlands." },
+    ];
+    
+    // Asia-Pacific Resources
+    const apacResources = [
+      { name: "Women Helpline India", category: "hotline" as const, phone: "181", country: "India", desc: "24/7 helpline for women in distress.", hours: "24/7" },
+      { name: "National Commission for Women", category: "legal" as const, phone: "7827-170-170", country: "India", desc: "Statutory body for women's rights and legal support." },
+      { name: "One Stop Centre Scheme", category: "shelter" as const, country: "India", desc: "Integrated support for women affected by violence - medical, legal, psychological." },
+      { name: "DV Hotline Japan", category: "hotline" as const, phone: "0570-0-55210", country: "Japan", desc: "Domestic violence consultation hotline." },
+      { name: "1366 Women's Emergency Call", category: "hotline" as const, phone: "1366", country: "South Korea", desc: "24/7 emergency support for women.", hours: "24/7" },
+      { name: "AWARE Singapore", category: "community" as const, phone: "1800 774 5935", country: "Singapore", desc: "Women's helpline for support and information." },
+      { name: "1800RESPECT", category: "hotline" as const, phone: "1800 737 732", country: "Australia", desc: "National sexual assault and domestic violence counselling.", hours: "24/7" },
+      { name: "Women's Refuge NZ", category: "shelter" as const, phone: "0800 733 843", country: "New Zealand", desc: "Crisis line and safe houses for women and children.", hours: "24/7" },
+    ];
+    
+    // Africa Resources
+    const africaResources = [
+      { name: "People Opposing Women Abuse (POWA)", category: "hotline" as const, phone: "011 642 4345", country: "South Africa", desc: "Counselling, legal advice, and shelter referrals." },
+      { name: "Thuthuzela Care Centres", category: "medical" as const, country: "South Africa", desc: "One-stop facilities for survivors of sexual violence." },
+      { name: "FIDA Kenya", category: "legal" as const, phone: "+254 20 271 5790", country: "Kenya", desc: "Federation of Women Lawyers providing legal aid." },
+      { name: "Gender Violence Recovery Centre", category: "medical" as const, country: "Kenya", city: "Nairobi", desc: "Medical and psychosocial support for GBV survivors." },
+      { name: "Women's Aid Collective (WACOL)", category: "legal" as const, country: "Nigeria", desc: "Legal aid and advocacy for women's rights." },
+      { name: "Mirabel Centre", category: "medical" as const, country: "Nigeria", city: "Lagos", desc: "Sexual assault referral centre providing comprehensive care." },
+    ];
+    
+    // Insert all resources
+    const allResources = [
+      ...globalResources.map(r => ({ ...r, isGlobal: true })),
+      ...usaResources.map(r => ({ ...r, isGlobal: false })),
+      ...ukResources.map(r => ({ ...r, isGlobal: false })),
+      ...canadaResources.map(r => ({ ...r, isGlobal: false })),
+      ...latamResources.map(r => ({ ...r, isGlobal: false })),
+      ...europeResources.map(r => ({ ...r, isGlobal: false })),
+      ...apacResources.map(r => ({ ...r, isGlobal: false })),
+      ...africaResources.map(r => ({ ...r, isGlobal: false })),
+    ];
+    
+    for (const resource of allResources) {
+      const resourceId = await ctx.db.insert("safetyResources", {
+        name: resource.name,
+        category: resource.category,
+        description: resource.desc,
+        phone: (resource as any).phone,
+        website: (resource as any).website,
+        country: (resource as any).country,
+        city: (resource as any).city,
+        isGlobal: resource.isGlobal || false,
+        services: ["Support", "Information", "Referrals"],
+        hours: (resource as any).hours || "Contact for hours",
+        languages: ["English"],
+        isVerified: true,
+        isActive: true,
+        priority: randomInt(1, 10),
+        verificationCount: randomInt(20, 150),
+      });
+      resourceIds.push(resourceId);
+    }
+    
+    console.log(`Created ${resourceIds.length} comprehensive safety resources`);
+    return { success: true, count: resourceIds.length };
+  },
+});
+
+// ============================================
+// SEED MORE STANDARD POSTS (NOT ROUTE-RELATED)
+// ============================================
+
+export const seedMoreStandardPosts = mutation({
+  args: { count: v.number() },
+  handler: async (ctx, { count }) => {
+    console.log(`Creating ${count} additional standard posts...`);
+    
+    const users = await ctx.db.query("users").collect();
+    if (users.length === 0) throw new Error("No users found");
+    
+    const postIds: Id<"posts">[] = [];
+    const dimensions: Array<"professional" | "social" | "daily" | "travel" | "financial"> = ["professional", "social", "daily", "travel", "financial"];
+    
+    for (let i = 0; i < count; i++) {
+      const user = randomElement(users);
+      const dimension = randomElement(dimensions);
+      const city = randomElement(CITIES);
+      const templates = POST_TEMPLATES[dimension];
+      const template = randomElement(templates);
+      const company = randomElement(COMPANIES);
+      
+      const title = fillTemplate(template.title, city, company);
+      const description = fillTemplate(template.desc, city, company);
+      
+      const hasLocation = Math.random() > 0.3;
+      const isAnonymous = Math.random() > 0.85;
+      
+      const postId = await ctx.db.insert("posts", {
+        authorId: user._id,
+        lifeDimension: dimension,
+        title,
+        description,
+        rating: randomInt(3, 5),
+        location: hasLocation ? {
+          name: `${city.name}, ${city.country}`,
+          coordinates: [city.lng + (Math.random() - 0.5) * 0.1, city.lat + (Math.random() - 0.5) * 0.1],
+        } : undefined,
+        verificationCount: randomInt(0, 25),
+        isVerified: Math.random() > 0.6,
+        isAnonymous,
+        upvotes: randomInt(5, 200),
+        downvotes: randomInt(0, 15),
+        commentCount: randomInt(2, 40),
+        postType: "standard",
+        moderationStatus: "approved",
+      });
+      
+      postIds.push(postId);
+    }
+    
+    console.log(`Created ${postIds.length} standard posts`);
+    return { success: true, count: postIds.length };
+  },
+});
+
+// ============================================
+// SEED MORE OPPORTUNITIES
+// ============================================
+
+export const seedMoreOpportunities = mutation({
+  args: { count: v.number() },
+  handler: async (ctx, { count }) => {
+    console.log(`Creating ${count} additional opportunities...`);
+    
+    const users = await ctx.db.query("users").collect();
+    if (users.length === 0) throw new Error("No users found");
+    
+    const oppIds: Id<"opportunities">[] = [];
+    const categories: Array<"job" | "mentorship" | "resource" | "event" | "funding"> = ["job", "mentorship", "resource", "event", "funding"];
+    
+    for (let i = 0; i < count; i++) {
+      const user = randomElement(users);
+      const city = randomElement(CITIES);
+      const category = randomElement(categories);
+      const templates = OPPORTUNITY_TEMPLATES[category];
+      const template = randomElement(templates) as { title: string; desc: string; salary?: string; company?: string };
+      const company = randomElement(COMPANIES);
+      
+      const oppId = await ctx.db.insert("opportunities", {
+        creatorId: user._id,
+        title: template.title,
+        description: template.desc,
+        category,
+        company: category === "job" ? company : undefined,
+        location: `${city.name}, ${city.country}`,
+        creditCost: randomInt(5, 50),
+        salary: (template as any).salary,
+        safetyRating: category === "job" ? randomInt(3, 5) : undefined,
+        requirements: category === "job" ? [
+          `${randomInt(2, 5)}+ years experience`,
+          randomElement(["Bachelor's degree", "Master's preferred", "Relevant certification"]),
+          randomElement(["Strong communication", "Team player", "Leadership skills"]),
+        ] : undefined,
+        isActive: true,
+      });
+      
+      oppIds.push(oppId);
+    }
+    
+    console.log(`Created ${oppIds.length} opportunities`);
+    return { success: true, count: oppIds.length };
+  },
+});

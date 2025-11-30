@@ -8,6 +8,7 @@ import { MobileRouteCard } from "@/components/mobile-route-card";
 import { ReelFeedCard } from "@/components/reel-feed-card";
 import { PollCard } from "@/components/poll-card";
 import { AIChatCard } from "@/components/ai-chat-card";
+import { OpportunityFeedCard } from "@/components/opportunity-feed-card";
 import { PostCardSkeleton } from "@/components/loading-skeleton";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { FeedAd } from "@/components/ads/feed-ad";
@@ -301,6 +302,13 @@ export function MobileFeed() {
                   currentUserId={userId || undefined}
                   onDelete={() => handleDelete(item._id as Id<"posts">)}
                   isMobile={true}
+                />
+              )}
+
+              {item.type === "opportunity" && (
+                <OpportunityFeedCard
+                  opportunity={item as any}
+                  currentUserId={userId || undefined}
                 />
               )}
             </div>
