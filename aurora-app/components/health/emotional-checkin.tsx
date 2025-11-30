@@ -82,19 +82,19 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
         {/* Mood Selector */}
         <div>
           <p className="text-sm text-[var(--muted-foreground)] mb-3">How are you feeling today?</p>
-          <div className="flex justify-between gap-2">
+          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
             {moodEmojis.map((mood) => (
               <button
                 key={mood.value}
                 onClick={() => setSelectedMood(mood.value)}
-                className={`flex flex-col items-center p-3 rounded-xl transition-all min-w-[56px] min-h-[72px] ${
+                className={`flex flex-col items-center p-2 sm:p-3 rounded-xl transition-all min-h-[64px] sm:min-h-[72px] ${
                   selectedMood === mood.value
-                    ? "bg-[var(--color-aurora-pink)]/30 border-2 border-[var(--color-aurora-pink)] scale-110"
+                    ? "bg-[var(--color-aurora-pink)]/30 border-2 border-[var(--color-aurora-pink)] scale-105"
                     : "bg-[var(--accent)] border border-[var(--border)] hover:bg-[var(--accent)]/80"
                 }`}
               >
-                <span className="text-2xl sm:text-3xl mb-1">{mood.emoji}</span>
-                <span className="text-xs font-medium text-[var(--foreground)]">
+                <span className="text-xl sm:text-2xl mb-0.5 sm:mb-1">{mood.emoji}</span>
+                <span className="text-[10px] sm:text-xs font-medium text-[var(--foreground)] truncate w-full text-center">
                   {mood.label}
                 </span>
               </button>
