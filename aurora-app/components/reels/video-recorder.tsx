@@ -54,21 +54,34 @@ export function VideoRecorder({
         throw new Error('Camera not supported on this device');
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode,
-          width: { ideal: 1080 },
-          height: { ideal: 1920 },
-        },
-        audio: true,
-      });
+      // Stop any existing stream first
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+      }
 
+      // Request camera with specific constraints for better compatibility
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 1080, max: 1920 },
+          height: { ideal: 1920, max: 1920 },
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       mediaStreamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        // Ensure video plays
-        videoRef.current.play().catch(e => console.warn('Video play failed:', e));
+        // Wait for video to be ready before playing
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(e => console.warn('Video play failed:', e));
+        };
       }
 
       setError(null);
@@ -77,13 +90,30 @@ export function VideoRecorder({
       
       // Provide specific error messages
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setError('Camera permission denied. Please enable camera access in your browser settings.');
+        setError('Permiso de cámara denegado. Habilita el acceso en la configuración del navegador.');
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        setError('No camera found on this device.');
+        setError('No se encontró cámara en este dispositivo.');
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        setError('Camera is already in use by another application.');
+        setError('La cámara está siendo usada por otra aplicación.');
+      } else if (err.name === 'OverconstrainedError') {
+        // Try again with simpler constraints
+        try {
+          const simpleStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode },
+            audio: true,
+          });
+          mediaStreamRef.current = simpleStream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = simpleStream;
+            videoRef.current.play().catch(e => console.warn('Video play failed:', e));
+          }
+          setError(null);
+          return;
+        } catch {
+          setError('No se pudo acceder a la cámara.');
+        }
       } else {
-        setError(err.message || 'Failed to access camera. Please check permissions.');
+        setError(err.message || 'No se pudo acceder a la cámara. Verifica los permisos.');
       }
     }
   };
@@ -209,12 +239,14 @@ export function VideoRecorder({
       )}
 
       {/* Preview View */}
-      {state === 'preview' && (
+      {state === 'preview' && recordedBlob && (
         <video
           ref={previewRef}
+          src={URL.createObjectURL(recordedBlob)}
           autoPlay
           loop
           playsInline
+          muted={false}
           className="absolute inset-0 w-full h-full object-cover"
         />
       )}

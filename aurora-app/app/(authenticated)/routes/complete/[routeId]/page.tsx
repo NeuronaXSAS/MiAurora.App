@@ -86,12 +86,12 @@ export default function CompleteRoutePage() {
     if (!userId || !route) return;
 
     if (rating === 0) {
-      setError("Please select a rating");
+      setError("Por favor selecciona una calificación");
       return;
     }
 
     if (selectedTags.length === 0) {
-      setError("Please select at least one tag");
+      setError("Por favor selecciona al menos una etiqueta");
       return;
     }
 
@@ -114,9 +114,9 @@ export default function CompleteRoutePage() {
         setUploadingVoice(false);
       }
 
-      // Geocode start and end locations
+      // Check if we have coordinates
       if (!route.coordinates || route.coordinates.length === 0) {
-        setError("Route has no GPS data. Please track a route first.");
+        setError("La ruta no tiene datos GPS. Por favor rastrea una ruta primero.");
         return;
       }
 
@@ -124,8 +124,35 @@ export default function CompleteRoutePage() {
       const endCoord = route.coordinates[route.coordinates.length - 1];
 
       if (!startCoord || !endCoord) {
-        setError("Invalid route coordinates");
+        setError("Coordenadas de ruta inválidas");
         return;
+      }
+
+      // Calculate distance from coordinates if route.distance is 0
+      let finalDistance = route.distance;
+      if (finalDistance === 0 && route.coordinates.length > 1) {
+        finalDistance = route.coordinates.reduce((total: number, coord: any, i: number, arr: any[]) => {
+          if (i === 0) return 0;
+          const prev = arr[i - 1];
+          const R = 6371e3;
+          const φ1 = (prev.lat * Math.PI) / 180;
+          const φ2 = (coord.lat * Math.PI) / 180;
+          const Δφ = ((coord.lat - prev.lat) * Math.PI) / 180;
+          const Δλ = ((coord.lng - prev.lng) * Math.PI) / 180;
+          const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return total + R * c;
+        }, 0);
+      }
+
+      // Calculate duration from timestamps if route.duration is 0
+      let finalDuration = route.duration;
+      if (finalDuration === 0 && route.coordinates.length > 1) {
+        const firstTimestamp = route.coordinates[0]?.timestamp;
+        const lastTimestamp = route.coordinates[route.coordinates.length - 1]?.timestamp;
+        if (firstTimestamp && lastTimestamp) {
+          finalDuration = Math.floor((lastTimestamp - firstTimestamp) / 1000);
+        }
       }
 
       const startLocationName = await reverseGeocode(startCoord.lat, startCoord.lng);
@@ -135,9 +162,9 @@ export default function CompleteRoutePage() {
         routeId,
         userId,
         title: title || `${route.routeType.charAt(0).toUpperCase() + route.routeType.slice(1)} Route`,
-        distance: route.distance,
-        duration: route.duration,
-        elevationGain: route.elevationGain,
+        distance: finalDistance,
+        duration: finalDuration,
+        elevationGain: route.elevationGain || 0,
         startLocation: {
           lat: startCoord.lat,
           lng: startCoord.lng,
@@ -157,7 +184,7 @@ export default function CompleteRoutePage() {
 
       router.push("/routes");
     } catch (err: any) {
-      setError(err.message || "Failed to save route");
+      setError(err.message || "Error al guardar la ruta");
     } finally {
       setLoading(false);
       setUploadingVoice(false);
@@ -219,20 +246,21 @@ export default function CompleteRoutePage() {
           {/* Route Summary with Map Preview */}
           <Card className="mb-6 bg-[var(--card)] border-[var(--border)]">
             <CardContent className="p-6">
-              {/* Mini Map Preview */}
+              {/* Mini Map Preview with Route Line */}
               {route.coordinates && route.coordinates.length > 1 && process.env.NEXT_PUBLIC_MAPBOX_TOKEN && (
-                <div className="w-full h-40 rounded-xl overflow-hidden mb-4 border border-[var(--border)]">
+                <div className="w-full h-48 rounded-xl overflow-hidden mb-4 border-2 border-[var(--color-aurora-purple)]/30 relative">
                   <Map
                     mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
                     initialViewState={{
                       longitude: route.coordinates[Math.floor(route.coordinates.length / 2)]?.lng || 0,
                       latitude: route.coordinates[Math.floor(route.coordinates.length / 2)]?.lat || 0,
-                      zoom: 13,
+                      zoom: 14,
                     }}
                     style={{ width: "100%", height: "100%" }}
                     mapStyle="mapbox://styles/malunao/cm84u5ecf000x01qled5j8bvl"
-                    interactive={false}
+                    interactive={true}
                   >
+                    {/* Route glow */}
                     <Source
                       type="geojson"
                       data={{
@@ -245,16 +273,89 @@ export default function CompleteRoutePage() {
                       }}
                     >
                       <Layer
+                        id="route-glow"
+                        type="line"
+                        paint={{
+                          "line-color": "#5537a7",
+                          "line-width": 8,
+                          "line-opacity": 0.4,
+                          "line-blur": 4,
+                        }}
+                      />
+                      <Layer
                         id="route-preview"
                         type="line"
                         paint={{
                           "line-color": "#f29de5",
-                          "line-width": 4,
-                          "line-opacity": 0.9,
+                          "line-width": 5,
+                          "line-opacity": 1,
+                        }}
+                      />
+                    </Source>
+                    
+                    {/* Start point */}
+                    <Source
+                      type="geojson"
+                      data={{
+                        type: "Feature",
+                        properties: {},
+                        geometry: {
+                          type: "Point",
+                          coordinates: [route.coordinates[0].lng, route.coordinates[0].lat],
+                        },
+                      }}
+                    >
+                      <Layer
+                        id="start-marker"
+                        type="circle"
+                        paint={{
+                          "circle-radius": 6,
+                          "circle-color": "#22c55e",
+                          "circle-stroke-width": 2,
+                          "circle-stroke-color": "#ffffff",
+                        }}
+                      />
+                    </Source>
+                    
+                    {/* End point */}
+                    <Source
+                      type="geojson"
+                      data={{
+                        type: "Feature",
+                        properties: {},
+                        geometry: {
+                          type: "Point",
+                          coordinates: [route.coordinates[route.coordinates.length - 1].lng, route.coordinates[route.coordinates.length - 1].lat],
+                        },
+                      }}
+                    >
+                      <Layer
+                        id="end-marker"
+                        type="circle"
+                        paint={{
+                          "circle-radius": 6,
+                          "circle-color": "#ef4444",
+                          "circle-stroke-width": 2,
+                          "circle-stroke-color": "#ffffff",
                         }}
                       />
                     </Source>
                   </Map>
+                  
+                  {/* Route info overlay */}
+                  <div className="absolute top-2 left-2 bg-[var(--card)]/90 backdrop-blur-sm rounded-lg px-2 py-1 text-xs flex items-center gap-2">
+                    <span className="text-[var(--color-aurora-mint)]">●</span>
+                    <span className="text-[var(--foreground)]">{route.coordinates.length} puntos GPS</span>
+                  </div>
+                </div>
+              )}
+              
+              {/* No GPS data message */}
+              {(!route.coordinates || route.coordinates.length < 2) && (
+                <div className="w-full h-32 rounded-xl bg-[var(--color-aurora-yellow)]/10 border border-[var(--color-aurora-yellow)]/30 flex items-center justify-center mb-4">
+                  <p className="text-[var(--color-aurora-yellow)] text-sm text-center px-4">
+                    ⚠️ No se registraron suficientes puntos GPS. La ruta puede no mostrarse correctamente.
+                  </p>
                 </div>
               )}
               

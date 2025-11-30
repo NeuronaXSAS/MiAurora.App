@@ -19,14 +19,29 @@ import { Id } from "@/convex/_generated/dataModel";
 import Map, { Source, Layer } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-// Mini Route Map Preview
+// Mini Route Map Preview with visible route line
 function MiniRouteMap({ coordinates }: { coordinates: Array<{ lat: number; lng: number }> }) {
   if (!coordinates || coordinates.length < 2 || !process.env.NEXT_PUBLIC_MAPBOX_TOKEN) return null;
   
   const lngs = coordinates.map(c => c.lng);
   const lats = coordinates.map(c => c.lat);
-  const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
-  const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const centerLng = (minLng + maxLng) / 2;
+  const centerLat = (minLat + maxLat) / 2;
+  
+  // Calculate zoom based on route extent
+  const latDiff = maxLat - minLat;
+  const lngDiff = maxLng - minLng;
+  const maxDiff = Math.max(latDiff, lngDiff);
+  let zoom = 13;
+  if (maxDiff > 0.1) zoom = 10;
+  else if (maxDiff > 0.05) zoom = 11;
+  else if (maxDiff > 0.02) zoom = 12;
+  else if (maxDiff > 0.01) zoom = 13;
+  else zoom = 14;
   
   return (
     <Map
@@ -34,13 +49,14 @@ function MiniRouteMap({ coordinates }: { coordinates: Array<{ lat: number; lng: 
       initialViewState={{
         longitude: centerLng,
         latitude: centerLat,
-        zoom: 12,
+        zoom: zoom,
       }}
       style={{ width: "100%", height: "100%" }}
       mapStyle="mapbox://styles/malunao/cm84u5ecf000x01qled5j8bvl"
       interactive={false}
       attributionControl={false}
     >
+      {/* Route glow effect */}
       <Source
         type="geojson"
         data={{
@@ -53,12 +69,70 @@ function MiniRouteMap({ coordinates }: { coordinates: Array<{ lat: number; lng: 
         }}
       >
         <Layer
+          id="route-glow"
+          type="line"
+          paint={{
+            "line-color": "#5537a7",
+            "line-width": 8,
+            "line-opacity": 0.4,
+            "line-blur": 4,
+          }}
+        />
+        <Layer
           id="route-line"
           type="line"
           paint={{
             "line-color": "#f29de5",
-            "line-width": 3,
-            "line-opacity": 0.9,
+            "line-width": 4,
+            "line-opacity": 1,
+          }}
+        />
+      </Source>
+      
+      {/* Start marker */}
+      <Source
+        type="geojson"
+        data={{
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "Point",
+            coordinates: [coordinates[0].lng, coordinates[0].lat],
+          },
+        }}
+      >
+        <Layer
+          id="start-point"
+          type="circle"
+          paint={{
+            "circle-radius": 5,
+            "circle-color": "#22c55e",
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#ffffff",
+          }}
+        />
+      </Source>
+      
+      {/* End marker */}
+      <Source
+        type="geojson"
+        data={{
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "Point",
+            coordinates: [coordinates[coordinates.length - 1].lng, coordinates[coordinates.length - 1].lat],
+          },
+        }}
+      >
+        <Layer
+          id="end-point"
+          type="circle"
+          paint={{
+            "circle-radius": 5,
+            "circle-color": "#ef4444",
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#ffffff",
           }}
         />
       </Source>

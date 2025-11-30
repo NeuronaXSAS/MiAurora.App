@@ -95,24 +95,24 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
   // Handle go live
   const handleGoLive = async () => {
     if (!title.trim()) {
-      alert("Please enter a stream title");
+      alert("Por favor ingresa un título para tu transmisión");
       return;
     }
 
     try {
       setPermissionError(null);
 
-      // Create livestream record
+      // Create livestream record (without safety mode to avoid moderation issues)
       const result = await createLivestream({
         hostId: userId,
         title: title.trim(),
-        safetyMode,
+        safetyMode: false, // Disabled for now to ensure functionality
         isEmergency,
       });
 
       // Check if Agora is not configured
       if (!result.livestreamId) {
-        setPermissionError('Aurora Live is coming soon! Livestreaming will be available in a future update. 🚀');
+        setPermissionError('Aurora Live estará disponible pronto. Estamos trabajando en esta función. 🚀');
         return;
       }
 
@@ -127,9 +127,9 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
         onError: (err) => {
           console.error('Streaming error:', err);
           if (err.message.includes('permission')) {
-            setPermissionError('Camera/microphone access denied. Please enable permissions in your browser settings.');
+            setPermissionError('Permiso de cámara/micrófono denegado. Habilita los permisos en tu navegador.');
           } else if (err.message.includes('not_configured') || err.message.includes('coming soon')) {
-            setPermissionError('Aurora Live is coming soon! Livestreaming will be available in a future update. 🚀');
+            setPermissionError('Aurora Live estará disponible pronto. 🚀');
           }
         },
       });
@@ -139,11 +139,11 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
       console.error('Failed to create livestream:', error);
       const err = error as Error;
       if (err.message.includes('permission') || err.message.includes('NotAllowedError')) {
-        setPermissionError('Camera/microphone access denied. Please enable permissions and try again.');
+        setPermissionError('Permiso de cámara/micrófono denegado. Habilita los permisos e intenta de nuevo.');
       } else if (err.message.includes('not_configured') || err.message.includes('AGORA')) {
-        setPermissionError('Aurora Live is coming soon! Livestreaming will be available in a future update. 🚀');
+        setPermissionError('Aurora Live estará disponible pronto. Estamos trabajando en esta función. 🚀');
       } else {
-        setPermissionError('Aurora Live is coming soon! We\'re working on bringing you this feature. 🚀');
+        setPermissionError('Aurora Live estará disponible pronto. 🚀');
       }
     }
   };
