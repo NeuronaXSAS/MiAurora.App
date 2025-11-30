@@ -201,19 +201,53 @@ export function useVideoUpload(): UseVideoUploadReturn {
   };
 }
 
-// Helper: Get video duration
+// Helper: Get video duration with fallback for videos without proper metadata
 function getVideoDuration(file: File): Promise<number> {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
     video.preload = 'metadata';
+    
+    // Timeout fallback - if metadata doesn't load in 10 seconds, estimate from file size
+    const timeout = setTimeout(() => {
+      window.URL.revokeObjectURL(video.src);
+      // Estimate duration based on file size (rough estimate: 1MB ≈ 8 seconds for compressed video)
+      const estimatedDuration = Math.max(1, Math.min(180, file.size / (1024 * 1024) * 8));
+      console.warn('Video duration timeout, using estimate:', estimatedDuration);
+      resolve(estimatedDuration);
+    }, 10000);
 
     video.onloadedmetadata = () => {
+      clearTimeout(timeout);
       window.URL.revokeObjectURL(video.src);
-      resolve(video.duration);
+      
+      // Check for Infinity or NaN duration (common with webm from MediaRecorder)
+      if (!isFinite(video.duration) || isNaN(video.duration)) {
+        // Try to get duration by seeking to the end
+        video.currentTime = Number.MAX_SAFE_INTEGER;
+        video.ontimeupdate = () => {
+          video.ontimeupdate = null;
+          const duration = video.currentTime;
+          if (isFinite(duration) && duration > 0) {
+            resolve(duration);
+          } else {
+            // Fallback: estimate from file size
+            const estimatedDuration = Math.max(1, Math.min(180, file.size / (1024 * 1024) * 8));
+            console.warn('Video duration is Infinity, using estimate:', estimatedDuration);
+            resolve(estimatedDuration);
+          }
+        };
+      } else {
+        resolve(video.duration);
+      }
     };
 
     video.onerror = () => {
-      reject(new Error('Failed to load video metadata'));
+      clearTimeout(timeout);
+      window.URL.revokeObjectURL(video.src);
+      // Fallback: estimate from file size
+      const estimatedDuration = Math.max(1, Math.min(180, file.size / (1024 * 1024) * 8));
+      console.warn('Video load error, using estimate:', estimatedDuration);
+      resolve(estimatedDuration);
     };
 
     video.src = URL.createObjectURL(file);

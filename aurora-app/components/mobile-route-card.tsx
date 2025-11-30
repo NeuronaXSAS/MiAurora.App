@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, TrendingUp, MapPin, Shield, Users, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, MapPin, Shield, ThumbsUp, ThumbsDown, MessageCircle, Share2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { generateRouteStaticImage, calculateOptimalZoom } from "@/lib/mapbox-static-images";
@@ -28,15 +30,24 @@ interface MobileRouteCardProps {
       name: string;
     };
     completionCount: number;
+    upvotes?: number;
+    downvotes?: number;
+    commentCount?: number;
     coordinates: Array<{
       lat: number;
       lng: number;
     }>;
   };
   safetyInsight?: string;
+  onVote?: (voteType: "upvote" | "downvote") => void;
 }
 
-export function MobileRouteCard({ route, safetyInsight }: MobileRouteCardProps) {
+export function MobileRouteCard({ route, safetyInsight, onVote }: MobileRouteCardProps) {
+  const [liked, setLiked] = useState(false);
+  const [disliked, setDisliked] = useState(false);
+  const [localUpvotes, setLocalUpvotes] = useState(route.upvotes || route.completionCount || 0);
+  const [showCopied, setShowCopied] = useState(false);
+
   const distanceKm = (route.distance / 1000).toFixed(1);
   const durationMin = Math.round(route.duration / 60);
   const safetyScore = Math.round(route.rating * 20); // Convert 1-5 to 0-100
@@ -48,6 +59,43 @@ export function MobileRouteCard({ route, safetyInsight }: MobileRouteCardProps) 
     zoom: calculateOptimalZoom(route.coordinates, 600, 300),
     retina: true,
   });
+
+  const handleUpvote = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (liked) {
+      setLiked(false);
+      setLocalUpvotes(prev => prev - 1);
+    } else {
+      setLiked(true);
+      setDisliked(false);
+      setLocalUpvotes(prev => prev + 1);
+    }
+    onVote?.("upvote");
+  };
+
+  const handleDownvote = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (disliked) {
+      setDisliked(false);
+    } else {
+      setDisliked(true);
+      if (liked) {
+        setLiked(false);
+        setLocalUpvotes(prev => prev - 1);
+      }
+    }
+    onVote?.("downvote");
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText(`${window.location.origin}/routes/discover/${route._id}`);
+    setShowCopied(true);
+    setTimeout(() => setShowCopied(false), 2000);
+  };
 
   return (
     <Link href={`/routes/discover/${route._id}`}>
@@ -136,41 +184,50 @@ export function MobileRouteCard({ route, safetyInsight }: MobileRouteCardProps) 
             <div className="flex items-center gap-1">
               {/* Upvote */}
               <button
-                className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-purple-50 transition-colors min-h-[40px]"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all min-h-[44px] ${
+                  liked 
+                    ? 'bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-purple)]' 
+                    : 'hover:bg-[var(--color-aurora-mint)]/10 text-gray-500'
+                }`}
+                onClick={handleUpvote}
               >
-                <TrendingUp className="w-4 h-4 text-gray-500" />
-                <span className="text-sm text-gray-600">{route.completionCount}</span>
+                <ThumbsUp className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
+                <span className="text-sm font-medium">{localUpvotes}</span>
+              </button>
+              
+              {/* Downvote */}
+              <button
+                className={`flex items-center gap-1 px-2 py-2 rounded-lg transition-all min-h-[44px] ${
+                  disliked 
+                    ? 'bg-[var(--color-aurora-salmon)]/20 text-[var(--color-aurora-salmon)]' 
+                    : 'hover:bg-gray-100 text-gray-400'
+                }`}
+                onClick={handleDownvote}
+              >
+                <ThumbsDown className={`w-4 h-4 ${disliked ? 'fill-current' : ''}`} />
               </button>
               
               {/* Comments */}
-              <button
-                className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-purple-50 transition-colors min-h-[40px]"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
+              <Link 
+                href={`/routes/discover/${route._id}#comments`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-[var(--color-aurora-lavender)]/20 transition-colors min-h-[44px] text-gray-500"
               >
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </button>
+                <MessageCircle className="w-4 h-4" />
+                <span className="text-sm">{route.commentCount || 0}</span>
+              </Link>
               
               {/* Share */}
               <button
-                className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-purple-50 transition-colors min-h-[40px]"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  navigator.clipboard.writeText(`${window.location.origin}/routes/discover/${route._id}`);
-                }}
+                className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-[var(--color-aurora-pink)]/10 transition-colors min-h-[44px] text-gray-500 relative"
+                onClick={handleShare}
               >
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
+                <Share2 className="w-4 h-4" />
+                {showCopied && (
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[var(--color-aurora-violet)] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                    Link copied!
+                  </span>
+                )}
               </button>
             </div>
           </div>

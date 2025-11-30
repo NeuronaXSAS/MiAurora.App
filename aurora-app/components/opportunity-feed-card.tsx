@@ -134,16 +134,75 @@ export function OpportunityFeedCard({ opportunity, currentUserId, onDelete }: Op
         {/* Description */}
         <p className="text-[var(--foreground)]/80 line-clamp-2">{opportunity.description}</p>
 
-        {/* Credit Cost and Action */}
-        <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
-            <span className="font-medium text-[var(--color-aurora-yellow)]">{opportunity.creditCost} credits</span>
+        {/* Engagement Actions - Requires credits to interact */}
+        <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
+          <div className="flex items-center gap-1">
+            {/* Like - costs 1 credit */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="min-h-[40px] min-w-[40px] p-2 hover:bg-[var(--color-aurora-mint)]/20 hover:text-[var(--color-aurora-purple)] group"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // TODO: Implement opportunity like with credit cost
+                alert("Liking opportunities costs 1 credit. Feature coming soon!");
+              }}
+              title="Like (1 credit)"
+            >
+              <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </Button>
+            
+            {/* Comment - costs 2 credits */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="min-h-[40px] min-w-[40px] p-2 hover:bg-[var(--color-aurora-lavender)]/30 group"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // TODO: Implement opportunity comments with credit cost
+                alert("Commenting on opportunities costs 2 credits. Feature coming soon!");
+              }}
+              title="Comment (2 credits)"
+            >
+              <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </Button>
+            
+            {/* Share - free */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="min-h-[40px] min-w-[40px] p-2 hover:bg-[var(--color-aurora-pink)]/20 group"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                navigator.clipboard.writeText(`${window.location.origin}/opportunities`);
+                alert("Link copied!");
+              }}
+              title="Share (free)"
+            >
+              <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+            </Button>
           </div>
 
-          <Link href="/opportunities">
-            <Button size="sm" className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white min-h-[44px]">View Details</Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <Sparkles className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
+              <span className="text-sm font-medium text-[var(--color-aurora-yellow)]">{opportunity.creditCost}</span>
+            </div>
+            <Link href="/opportunities">
+              <Button size="sm" className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white min-h-[44px]">
+                View
+              </Button>
+            </Link>
+          </div>
         </div>
       </CardContent>
     </Card>
