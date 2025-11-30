@@ -34,20 +34,20 @@ interface AIChatCompanionProps {
 function AuroraAvatar({ isTyping = false }: { isTyping?: boolean }) {
   return (
     <motion.div 
-      className="relative w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6B7A] via-[#8B5CF6] to-[#FFC285] p-0.5"
+      className="relative w-12 h-12 rounded-full bg-gradient-to-br from-[var(--color-aurora-pink)] via-[var(--color-aurora-purple)] to-[var(--color-aurora-yellow)] p-0.5"
       animate={isTyping ? { scale: [1, 1.05, 1] } : {}}
       transition={{ repeat: Infinity, duration: 1.5 }}
     >
-      <div className="w-full h-full rounded-full bg-[#150F22] flex items-center justify-center overflow-hidden">
+      <div className="w-full h-full rounded-full bg-[var(--card)] flex items-center justify-center overflow-hidden">
         <motion.div
           animate={isTyping ? { y: [0, -2, 0] } : {}}
           transition={{ repeat: Infinity, duration: 0.8 }}
         >
-          <Sparkles className="w-6 h-6 text-[#FF6B7A]" />
+          <Sparkles className="w-6 h-6 text-[var(--color-aurora-pink)]" />
         </motion.div>
       </div>
       {/* Glow effect */}
-      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#FF6B7A] to-[#8B5CF6] opacity-30 blur-md -z-10" />
+      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] opacity-30 blur-md -z-10" />
     </motion.div>
   );
 }
@@ -55,11 +55,11 @@ function AuroraAvatar({ isTyping = false }: { isTyping?: boolean }) {
 // User Avatar Component
 function UserAvatar({ avatarUrl }: { avatarUrl?: string | null }) {
   return (
-    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FFE8E8] to-[#FFC285] flex items-center justify-center overflow-hidden">
+    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-aurora-lavender)] to-[var(--color-aurora-pink)] flex items-center justify-center overflow-hidden">
       {avatarUrl ? (
         <img src={avatarUrl} alt="You" className="w-full h-full object-cover" />
       ) : (
-        <Heart className="w-5 h-5 text-[#150F22]" />
+        <Heart className="w-5 h-5 text-[var(--foreground)]" />
       )}
     </div>
   );
@@ -72,7 +72,7 @@ function TypingIndicator() {
       {[0, 1, 2].map((i) => (
         <motion.div
           key={i}
-          className="w-2 h-2 rounded-full bg-[#FF6B7A]"
+          className="w-2 h-2 rounded-full bg-[var(--color-aurora-pink)]"
           animate={{ y: [0, -6, 0], opacity: [0.5, 1, 0.5] }}
           transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.2 }}
         />

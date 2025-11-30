@@ -46,37 +46,37 @@ export default function PremiumPage() {
       icon: Sparkles,
       title: "Ad-Free Experience",
       description: "Enjoy Aurora without any advertisements or sponsored content",
-      color: "text-aurora-lavender",
+      color: "text-[var(--color-aurora-lavender)]",
     },
     {
       icon: MessageSquare,
       title: "Unlimited AI Companion",
       description: "1000 daily messages vs 10 for free users - talk to Aurora anytime",
-      color: "text-aurora-pink",
+      color: "text-[var(--color-aurora-pink)]",
     },
     {
       icon: Zap,
       title: "Higher Limits",
       description: "50 posts/hour, 20 reels/day, 10 livestreams/day vs free limits",
-      color: "text-aurora-blue",
+      color: "text-[var(--color-aurora-blue)]",
     },
     {
       icon: Crown,
       title: "Premium Badge",
       description: "Stand out with a verified Premium badge on your profile",
-      color: "text-aurora-yellow",
+      color: "text-[var(--color-aurora-yellow)]",
     },
     {
       icon: Shield,
       title: "Priority Support",
       description: "Get faster response times and dedicated support",
-      color: "text-aurora-mint",
+      color: "text-[var(--color-aurora-mint)]",
     },
     {
       icon: TrendingUp,
       title: "Enhanced Analytics",
       description: "Get deeper insights into your wellness journey and mental health",
-      color: "text-aurora-orange",
+      color: "text-[var(--color-aurora-orange)]",
     },
   ];
 
@@ -213,7 +213,7 @@ export default function PremiumPage() {
               <div className="pt-4">
                 <Button
                   size="lg"
-                  className="w-full bg-gradient-to-r from-aurora-yellow to-aurora-orange hover:from-aurora-yellow/90 hover:to-aurora-orange/90 text-slate-900 font-bold text-lg h-14 shadow-lg shadow-aurora-yellow/30"
+                  className="w-full bg-gradient-to-r from-[var(--color-aurora-yellow)] to-[var(--color-aurora-orange)] hover:opacity-90 text-slate-900 font-bold text-lg h-14 shadow-lg"
                   onClick={async () => {
                     if (!userId || !user?.email) return;
                     try {
@@ -237,18 +237,18 @@ export default function PremiumPage() {
                   <Crown className="w-5 h-5 mr-2" />
                   Subscribe for $5/month
                 </Button>
-                <p className="text-center text-xs text-gray-400 mt-3">
+                <p className="text-center text-xs text-[var(--muted-foreground)] mt-3">
                   Secure payment via Stripe • Cancel anytime
                 </p>
               </div>
 
               {/* Trust Indicators */}
-              <div className="flex items-center justify-center gap-6 pt-4 border-t border-white/10">
-                <div className="flex items-center gap-2 text-gray-400 text-sm">
+              <div className="flex items-center justify-center gap-6 pt-4 border-t border-[var(--border)]">
+                <div className="flex items-center gap-2 text-[var(--muted-foreground)] text-sm">
                   <Shield className="w-4 h-4" />
                   <span>Secure Payment</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-400 text-sm">
+                <div className="flex items-center gap-2 text-[var(--muted-foreground)] text-sm">
                   <Check className="w-4 h-4" />
                   <span>Cancel Anytime</span>
                 </div>
