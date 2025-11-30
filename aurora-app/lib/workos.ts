@@ -8,12 +8,13 @@ export const WORKOS_REDIRECT_URI = process.env.NEXT_PUBLIC_WORKOS_REDIRECT_URI!;
 
 /**
  * Generate authorization URL for OAuth login
- * @param provider - OAuth provider (GoogleOAuth or MicrosoftOAuth)
+ * @param provider - OAuth provider (authkit for full box, or specific provider)
  * @returns Authorization URL to redirect user to
  */
-export async function getAuthorizationUrl(provider: 'GoogleOAuth' | 'MicrosoftOAuth' = 'GoogleOAuth') {
+export async function getAuthorizationUrl(provider?: 'GoogleOAuth' | 'MicrosoftOAuth' | 'authkit') {
+  // Use 'authkit' to show the full AuthKit box with all configured providers
   const authorizationUrl = workos.userManagement.getAuthorizationUrl({
-    provider,
+    provider: provider || 'authkit',
     clientId: WORKOS_CLIENT_ID,
     redirectUri: WORKOS_REDIRECT_URI,
   });
