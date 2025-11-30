@@ -29,7 +29,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const root = window.document.documentElement;
     
     // Determine resolved theme
-    let resolved: 'light' | 'dark' = 'dark';
+    let resolved: 'light' | 'dark' = 'light';
     if (theme === 'system') {
       resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     } else {
