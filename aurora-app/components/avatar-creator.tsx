@@ -44,14 +44,23 @@ const SKIN_TONES = [
   { id: "5c3836", color: "#5C3836", name: "Deep" },
 ];
 
-// Lorelei-compatible hair styles (feminine)
+// Lorelei-compatible hair styles (feminine - selected from 48 variants)
 const HAIR_STYLES = [
-  { id: "variant01", name: "Elegant Waves", emoji: "💁‍♀️" },
-  { id: "variant02", name: "Soft Curls", emoji: "👩‍🦱" },
-  { id: "variant03", name: "Long & Flowing", emoji: "👱‍♀️" },
-  { id: "variant04", name: "Chic Bob", emoji: "💇‍♀️" },
-  { id: "variant05", name: "Natural", emoji: "🌸" },
-  { id: "variant06", name: "Romantic", emoji: "💕" },
+  { id: "variant14", name: "Long Wavy", emoji: "💁‍♀️" },
+  { id: "variant15", name: "Elegant Curls", emoji: "👩‍🦱" },
+  { id: "variant16", name: "Side Swept", emoji: "💇‍♀️" },
+  { id: "variant17", name: "Flowing", emoji: "👱‍♀️" },
+  { id: "variant20", name: "Romantic", emoji: "💕" },
+  { id: "variant21", name: "Classic Bob", emoji: "✨" },
+  { id: "variant23", name: "Soft Layers", emoji: "🌸" },
+  { id: "variant26", name: "Long Straight", emoji: "🌺" },
+  { id: "variant29", name: "Ponytail", emoji: "🎀" },
+  { id: "variant32", name: "Braided", emoji: "🌷" },
+  { id: "variant35", name: "Natural Curls", emoji: "🌻" },
+  { id: "variant38", name: "Pixie Cut", emoji: "⭐" },
+  { id: "variant41", name: "Afro", emoji: "👸" },
+  { id: "variant44", name: "Bun", emoji: "🌙" },
+  { id: "variant47", name: "Messy Waves", emoji: "🦋" },
 ];
 
 // Hair colors
@@ -73,12 +82,14 @@ const EYE_STYLES = [
   { id: "variant05", name: "Wise", emoji: "🔮" },
 ];
 
-// Mouth styles
+// Mouth styles (Lorelei uses happy01-happy18, sad01-sad09)
 const MOUTH_STYLES = [
-  { id: "happy", name: "Happy", emoji: "😊" },
-  { id: "sad", name: "Thoughtful", emoji: "🤔" },
-  { id: "surprised", name: "Surprised", emoji: "😮" },
-  { id: "serious", name: "Confident", emoji: "😌" },
+  { id: "happy01", name: "Smile", emoji: "😊" },
+  { id: "happy02", name: "Grin", emoji: "😄" },
+  { id: "happy05", name: "Soft", emoji: "🙂" },
+  { id: "happy08", name: "Joy", emoji: "😁" },
+  { id: "happy11", name: "Sweet", emoji: "☺️" },
+  { id: "sad01", name: "Thoughtful", emoji: "🤔" },
 ];
 
 // Earrings
@@ -102,11 +113,11 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
   const [config, setConfig] = useState<AvatarConfig>({
     seed: `aurora-${Date.now()}`,
     backgroundColor: "ffe8e8",
-    hairStyle: "variant01",
+    hairStyle: "variant14", // Long Wavy - feminine default
     hairColor: "6f4e37",
     skinColor: "eac4a8",
     eyesStyle: "variant01",
-    mouthStyle: "happy",
+    mouthStyle: "happy01",
     earrings: "variant01",
     freckles: false,
   });
@@ -209,19 +220,19 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
               {/* Hair Style */}
               <div>
                 <Label className="text-[var(--color-aurora-cream)] font-semibold mb-2 sm:mb-3 block text-sm">Hair Style</Label>
-                <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2 max-h-[180px] overflow-y-auto pr-1">
                   {HAIR_STYLES.map((style) => (
                     <Badge
                       key={style.id}
                       onClick={() => setConfig({ ...config, hairStyle: style.id })}
-                      className={`cursor-pointer px-2 sm:px-3 py-2 text-xs transition-all justify-center min-h-[40px] ${
+                      className={`cursor-pointer px-1.5 sm:px-2 py-2 text-xs transition-all justify-center min-h-[40px] ${
                         config.hairStyle === style.id
                           ? "bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white shadow-lg shadow-[var(--color-aurora-pink)]/30 border-0"
                           : "bg-white/5 border-white/20 text-[var(--color-aurora-cream)] hover:bg-[var(--color-aurora-pink)]/10"
                       }`}
                     >
-                      <span className="mr-1">{style.emoji}</span>
-                      <span className="truncate">{style.name}</span>
+                      <span className="mr-0.5">{style.emoji}</span>
+                      <span className="truncate text-[10px] sm:text-xs">{style.name}</span>
                     </Badge>
                   ))}
                 </div>

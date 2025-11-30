@@ -119,13 +119,14 @@ const COMPANIES = [
   "Local Startup", "Community Organization", "Small Business", "Freelance",
 ];
 
-const HAIR_STYLES = ["variant01", "variant02", "variant03", "variant04", "variant05", "variant06", "variant07", "variant08"];
-const HAIR_COLORS = ["0e0e0e", "3a1a00", "71472d", "b5651d", "e6be8a", "c41e3a", "ff69b4", "4a0080"];
-const SKIN_COLORS = ["f5d0c5", "d4a574", "c68642", "8d5524", "5c3317", "3b2219"];
-const EYES_STYLES = ["variant01", "variant02", "variant03", "variant04", "variant05"];
-const MOUTH_STYLES = ["happy01", "happy02", "happy03", "happy04", "happy05", "happy06"];
-const EARRINGS = ["variant01", "variant02", "variant03", "variant04", "variant05", "variant06"];
-const BG_COLORS = ["f29de5", "c9cef4", "d6f4ec", "e5e093", "fffaf1", "ffd1dc", "b5e7a0", "aec6cf"];
+// Feminine hair styles from Lorelei (selected from 48 variants)
+const HAIR_STYLES = ["variant14", "variant15", "variant16", "variant17", "variant20", "variant21", "variant23", "variant26", "variant29", "variant32", "variant35", "variant38", "variant41", "variant44", "variant47"];
+const HAIR_COLORS = ["2c1b18", "6f4e37", "b5651d", "f5deb3", "e84d5f", "8b5cf6", "0e0e0e", "71472d"];
+const SKIN_COLORS = ["f5d0c5", "eac4a8", "d4a574", "c68642", "8d5524", "5c3836"];
+const EYES_STYLES = ["variant01", "variant02", "variant03", "variant04", "variant05", "variant06", "variant07", "variant08"];
+const MOUTH_STYLES = ["happy01", "happy02", "happy05", "happy08", "happy11", "happy14"];
+const EARRINGS = ["variant01", "variant02", "variant03"];
+const BG_COLORS = ["ffe8e8", "fff0f5", "ffefd9", "e8e4ff", "ffe4e6", "f0fdf4"];
 
 // Post content templates
 const POST_TEMPLATES = {
@@ -1326,5 +1327,42 @@ export const countAllData = mutation({
              workplaceReports.length + safetyResources.length + guardians.length + 
              emergencyContacts.length + corporateIndex.length + urbanIndex.length,
     };
+  },
+});
+
+
+// ============================================
+// UPDATE EXISTING AVATARS TO FEMININE STYLES
+// ============================================
+
+export const updateAvatarsToFeminine = mutation({
+  args: {},
+  handler: async (ctx) => {
+    console.log("Updating avatars to feminine styles...");
+    
+    const users = await ctx.db.query("users").collect();
+    let updated = 0;
+    
+    for (const user of users) {
+      const newAvatarConfig = {
+        seed: user.avatarConfig?.seed || `${user.name}${user._id}`,
+        backgroundColor: randomElement(BG_COLORS),
+        hairStyle: randomElement(HAIR_STYLES),
+        hairColor: randomElement(HAIR_COLORS),
+        skinColor: randomElement(SKIN_COLORS),
+        eyesStyle: randomElement(EYES_STYLES),
+        mouthStyle: randomElement(MOUTH_STYLES),
+        earrings: randomElement(EARRINGS),
+        freckles: Math.random() > 0.7,
+      };
+      
+      await ctx.db.patch(user._id, {
+        avatarConfig: newAvatarConfig,
+      });
+      updated++;
+    }
+    
+    console.log(`Updated ${updated} avatars to feminine styles`);
+    return { success: true, updated };
   },
 });
