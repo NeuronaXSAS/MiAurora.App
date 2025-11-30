@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
-import { FloatingSOSButton } from "@/components/floating-sos-button";
+import { GlobalHeader } from "@/components/global-header";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { useCreditsCelebration } from "@/hooks/use-credits-celebration";
 import { Id } from "@/convex/_generated/dataModel";
@@ -15,11 +15,6 @@ export default function AuthenticatedLayout({
 }) {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const pathname = usePathname();
-
-  // Pages where the SOS button is already in the header
-  const pagesWithIntegratedSOS = ["/feed"];
-  const showFloatingSOS = !pagesWithIntegratedSOS.includes(pathname);
 
   // Get user ID for credit celebrations
   useEffect(() => {
@@ -46,22 +41,25 @@ export default function AuthenticatedLayout({
         Skip to main content
       </a>
       
-      {/* Sidebar - Always visible, collapsible on mobile */}
+      {/* Sidebar - Always visible on desktop, collapsible on mobile */}
       <AppSidebar 
         collapsed={sidebarCollapsed} 
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
       />
       
       {/* Main Content Area */}
-      <main 
-        id="main-content" 
-        className="flex-1 overflow-auto transition-all duration-300"
-      >
-        {children}
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Global Header - Now shown on ALL pages for consistent navigation */}
+        <GlobalHeader userId={userId} />
+        
+        <main 
+          id="main-content" 
+          className="flex-1 overflow-auto"
+        >
+          {children}
+        </main>
+      </div>
       
-      {/* Floating SOS Button - Hidden on pages with integrated SOS */}
-      {showFloatingSOS && <FloatingSOSButton />}
       <PWAInstallPrompt />
     </div>
   );

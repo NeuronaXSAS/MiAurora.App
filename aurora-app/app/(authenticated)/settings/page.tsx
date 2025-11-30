@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,16 +10,65 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationSettings } from "@/components/notification-settings";
 import { useServiceWorker } from "@/hooks/use-service-worker";
 import { useTheme } from "@/lib/theme-context";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import {
   Settings, Bell, Palette, Shield, Download, Trash2,
   Globe, Lock, Eye, EyeOff, Smartphone, Wifi, WifiOff,
-  RefreshCw, HardDrive, User, Heart
+  RefreshCw, HardDrive, User, Heart, Loader2, AlertTriangle
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function SettingsPage() {
   const { isOnline, isRegistered, updateAvailable, skipWaiting } = useServiceWorker();
   const { theme } = useTheme();
   const [activeSection, setActiveSection] = useState("appearance");
+  const [userId, setUserId] = useState<Id<"users"> | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  const deleteAccount = useMutation(api.users.deleteAccount);
+
+  // Get user ID
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        const response = await fetch("/api/auth/me");
+        const data = await response.json();
+        if (data.userId) {
+          setUserId(data.userId as Id<"users">);
+        }
+      } catch (error) {
+        console.error("Error getting user:", error);
+      }
+    };
+    getUserId();
+  }, []);
+
+  const handleDeleteAccount = async () => {
+    if (!userId || deleteConfirmText !== "DELETE") return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteAccount({ userId });
+      // Logout and redirect
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/?deleted=true";
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      alert("Error al eliminar la cuenta. Por favor intenta de nuevo.");
+      setIsDeleting(false);
+    }
+  };
 
   const sections = [
     { id: "appearance", label: "Appearance", icon: Palette },
@@ -175,7 +224,11 @@ export default function SettingsPage() {
                   <Download className="w-4 h-4 mr-2" />
                   Export My Data
                 </Button>
-                <Button variant="outline" className="w-full min-h-[44px] border-[var(--color-aurora-salmon)]/30 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10">
+                <Button 
+                  variant="outline" 
+                  className="w-full min-h-[44px] border-[var(--color-aurora-salmon)]/30 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete Account
                 </Button>
@@ -226,6 +279,72 @@ export default function SettingsPage() {
           <p className="text-[var(--muted-foreground)] opacity-60 text-xs mt-1">Aurora App v1.0.0</p>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="bg-[var(--card)] border-[var(--border)] max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-[var(--color-aurora-salmon)] flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Eliminar Cuenta
+            </DialogTitle>
+            <DialogDescription className="text-[var(--muted-foreground)]">
+              Esta acción es <strong>permanente e irreversible</strong>. Se eliminarán todos tus datos:
+              <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                <li>Posts y comentarios</li>
+                <li>Rutas compartidas</li>
+                <li>Créditos acumulados</li>
+                <li>Historial de actividad</li>
+                <li>Configuración de perfil</li>
+              </ul>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <label className="text-sm text-[var(--foreground)] font-medium">
+              Escribe <span className="text-[var(--color-aurora-salmon)] font-bold">DELETE</span> para confirmar:
+            </label>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="DELETE"
+              className="w-full mt-2 px-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--color-aurora-salmon)]/50"
+            />
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteDialog(false);
+                setDeleteConfirmText("");
+              }}
+              className="min-h-[44px] border-[var(--border)]"
+              disabled={isDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleDeleteAccount}
+              disabled={deleteConfirmText !== "DELETE" || isDeleting}
+              className="min-h-[44px] bg-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/90 text-white disabled:opacity-50"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Eliminar Cuenta
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

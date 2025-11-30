@@ -127,195 +127,199 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-3xl bg-gradient-to-br from-[var(--color-aurora-violet)] via-[#231E35] to-[var(--color-aurora-purple)] border-[var(--color-aurora-pink)]/30 shadow-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] rounded-2xl flex items-center justify-center shadow-lg shadow-[var(--color-aurora-pink)]/30">
-              <Heart className="w-6 h-6 text-white" />
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-2xl lg:max-w-3xl bg-gradient-to-br from-[var(--color-aurora-violet)] via-[#231E35] to-[var(--color-aurora-purple)] border-[var(--color-aurora-pink)]/30 shadow-2xl max-h-[90vh] overflow-hidden p-0">
+        {/* Header - Fixed */}
+        <DialogHeader className="p-4 sm:p-6 pb-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-[var(--color-aurora-pink)]/30 flex-shrink-0">
+              <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <div>
-              <DialogTitle className="text-2xl text-white">Create Your Aurora App Avatar</DialogTitle>
-              <DialogDescription className="text-[var(--color-aurora-cream)]">
+            <div className="min-w-0">
+              <DialogTitle className="text-lg sm:text-xl lg:text-2xl text-white truncate">Create Your Avatar</DialogTitle>
+              <DialogDescription className="text-[var(--color-aurora-cream)] text-sm">
                 Design your unique digital identity ✨
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="grid md:grid-cols-2 gap-6 py-4">
-          {/* Avatar Preview */}
-          <div className="space-y-4">
-            <div 
-              className="border-2 border-[#FF6B7A]/30 rounded-3xl p-8 flex items-center justify-center min-h-[300px] transition-colors"
-              style={{ backgroundColor: `#${config.backgroundColor}` }}
-            >
-              <AvatarPreview config={config} />
-            </div>
-            <Button
-              onClick={randomize}
-              variant="outline"
-              className="w-full bg-white/5 border-[#FF6B7A]/30 text-white hover:bg-[#FF6B7A]/10 hover:border-[#FF6B7A]/50"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Surprise Me ✨
-            </Button>
-          </div>
-
-          {/* Customization Options */}
-          <div className="space-y-5 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin">
-            {/* Background */}
-            <div>
-              <Label className="text-[#FFE8E8] font-semibold mb-3 block text-sm">Background</Label>
-              <div className="flex flex-wrap gap-2">
-                {BACKGROUNDS.map((bg) => (
-                  <button
-                    key={bg.id}
-                    onClick={() => setConfig({ ...config, backgroundColor: bg.id })}
-                    className={`w-10 h-10 rounded-xl border-2 transition-all ${
-                      config.backgroundColor === bg.id
-                        ? "border-[#FF6B7A] scale-110 shadow-lg shadow-[#FF6B7A]/30"
-                        : "border-white/20 hover:border-[#FF6B7A]/50"
-                    }`}
-                    style={{ backgroundColor: bg.color }}
-                    title={bg.name}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Skin Tone */}
-            <div>
-              <Label className="text-[#FFE8E8] font-semibold mb-3 block text-sm">Skin Tone</Label>
-              <div className="flex flex-wrap gap-2">
-                {SKIN_TONES.map((tone) => (
-                  <button
-                    key={tone.id}
-                    onClick={() => setConfig({ ...config, skinColor: tone.id })}
-                    className={`w-10 h-10 rounded-full border-2 transition-all ${
-                      config.skinColor === tone.id
-                        ? "border-[#FF6B7A] scale-110 shadow-lg shadow-[#FF6B7A]/30"
-                        : "border-white/20 hover:border-[#FF6B7A]/50"
-                    }`}
-                    style={{ backgroundColor: tone.color }}
-                    title={tone.name}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Hair Style */}
-            <div>
-              <Label className="text-[#FFE8E8] font-semibold mb-3 block text-sm">Hair Style</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {HAIR_STYLES.map((style) => (
-                  <Badge
-                    key={style.id}
-                    onClick={() => setConfig({ ...config, hairStyle: style.id })}
-                    className={`cursor-pointer px-3 py-2 text-xs transition-all justify-center ${
-                      config.hairStyle === style.id
-                        ? "bg-gradient-to-r from-[#FF6B7A] to-[#E84D5F] text-white shadow-lg shadow-[#FF6B7A]/30 border-0"
-                        : "bg-white/5 border-white/20 text-[#FFE8E8] hover:bg-[#FF6B7A]/10"
-                    }`}
-                  >
-                    <span className="mr-1">{style.emoji}</span>
-                    {style.name}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            {/* Hair Color */}
-            <div>
-              <Label className="text-[#FFE8E8] font-semibold mb-3 block text-sm">Hair Color</Label>
-              <div className="flex flex-wrap gap-2">
-                {HAIR_COLORS.map((color) => (
-                  <button
-                    key={color.id}
-                    onClick={() => setConfig({ ...config, hairColor: color.id })}
-                    className={`w-10 h-10 rounded-full border-2 transition-all ${
-                      config.hairColor === color.id
-                        ? "border-[#FF6B7A] scale-110 shadow-lg shadow-[#FF6B7A]/30"
-                        : "border-white/20 hover:border-[#FF6B7A]/50"
-                    }`}
-                    style={{ backgroundColor: color.color }}
-                    title={color.name}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Eyes */}
-            <div>
-              <Label className="text-[#FFE8E8] font-semibold mb-3 block text-sm">Eyes</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {EYE_STYLES.map((style) => (
-                  <Badge
-                    key={style.id}
-                    onClick={() => setConfig({ ...config, eyesStyle: style.id })}
-                    className={`cursor-pointer px-2 py-2 text-xs transition-all justify-center ${
-                      config.eyesStyle === style.id
-                        ? "bg-gradient-to-r from-[#FF6B7A] to-[#E84D5F] text-white shadow-lg shadow-[#FF6B7A]/30 border-0"
-                        : "bg-white/5 border-white/20 text-[#FFE8E8] hover:bg-[#FF6B7A]/10"
-                    }`}
-                  >
-                    {style.emoji} {style.name}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            {/* Earrings */}
-            <div>
-              <Label className="text-[#FFE8E8] font-semibold mb-3 block text-sm">Earrings</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {EARRINGS.map((earring) => (
-                  <Badge
-                    key={earring.id}
-                    onClick={() => setConfig({ ...config, earrings: earring.id })}
-                    className={`cursor-pointer px-2 py-2 text-xs transition-all justify-center ${
-                      config.earrings === earring.id
-                        ? "bg-gradient-to-r from-[#FF6B7A] to-[#E84D5F] text-white shadow-lg shadow-[#FF6B7A]/30 border-0"
-                        : "bg-white/5 border-white/20 text-[#FFE8E8] hover:bg-[#FF6B7A]/10"
-                    }`}
-                  >
-                    {earring.emoji} {earring.name}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            {/* Freckles Toggle */}
-            <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
-              <Label className="text-[#FFE8E8] text-sm">Add Freckles</Label>
-              <button
-                onClick={() => setConfig({ ...config, freckles: !config.freckles })}
-                className={`w-12 h-6 rounded-full transition-all ${
-                  config.freckles ? "bg-[#FF6B7A]" : "bg-white/20"
-                }`}
+        {/* Scrollable Content */}
+        <div className="overflow-y-auto max-h-[calc(90vh-180px)] px-4 sm:px-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 py-4">
+            {/* Avatar Preview - Sticky on mobile */}
+            <div className="space-y-3 sm:space-y-4">
+              <div 
+                className="border-2 border-[var(--color-aurora-pink)]/30 rounded-2xl sm:rounded-3xl p-4 sm:p-8 flex items-center justify-center min-h-[180px] sm:min-h-[280px] transition-colors"
+                style={{ backgroundColor: `#${config.backgroundColor}` }}
               >
-                <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
-                  config.freckles ? "translate-x-6" : "translate-x-0.5"
-                }`} />
-              </button>
+                <AvatarPreview config={config} />
+              </div>
+              <Button
+                onClick={randomize}
+                variant="outline"
+                className="w-full min-h-[44px] bg-white/5 border-[var(--color-aurora-pink)]/30 text-white hover:bg-[var(--color-aurora-pink)]/10 hover:border-[var(--color-aurora-pink)]/50"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Surprise Me ✨
+              </Button>
+            </div>
+
+            {/* Customization Options */}
+            <div className="space-y-4 sm:space-y-5">
+              {/* Background */}
+              <div>
+                <Label className="text-[var(--color-aurora-cream)] font-semibold mb-2 sm:mb-3 block text-sm">Background</Label>
+                <div className="flex flex-wrap gap-2">
+                  {BACKGROUNDS.map((bg) => (
+                    <button
+                      key={bg.id}
+                      onClick={() => setConfig({ ...config, backgroundColor: bg.id })}
+                      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl border-2 transition-all min-w-[36px] min-h-[36px] ${
+                        config.backgroundColor === bg.id
+                          ? "border-[var(--color-aurora-pink)] scale-110 shadow-lg shadow-[var(--color-aurora-pink)]/30"
+                          : "border-white/20 hover:border-[var(--color-aurora-pink)]/50"
+                      }`}
+                      style={{ backgroundColor: bg.color }}
+                      title={bg.name}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Skin Tone */}
+              <div>
+                <Label className="text-[var(--color-aurora-cream)] font-semibold mb-2 sm:mb-3 block text-sm">Skin Tone</Label>
+                <div className="flex flex-wrap gap-2">
+                  {SKIN_TONES.map((tone) => (
+                    <button
+                      key={tone.id}
+                      onClick={() => setConfig({ ...config, skinColor: tone.id })}
+                      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 transition-all min-w-[36px] min-h-[36px] ${
+                        config.skinColor === tone.id
+                          ? "border-[var(--color-aurora-pink)] scale-110 shadow-lg shadow-[var(--color-aurora-pink)]/30"
+                          : "border-white/20 hover:border-[var(--color-aurora-pink)]/50"
+                      }`}
+                      style={{ backgroundColor: tone.color }}
+                      title={tone.name}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Hair Style */}
+              <div>
+                <Label className="text-[var(--color-aurora-cream)] font-semibold mb-2 sm:mb-3 block text-sm">Hair Style</Label>
+                <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                  {HAIR_STYLES.map((style) => (
+                    <Badge
+                      key={style.id}
+                      onClick={() => setConfig({ ...config, hairStyle: style.id })}
+                      className={`cursor-pointer px-2 sm:px-3 py-2 text-xs transition-all justify-center min-h-[40px] ${
+                        config.hairStyle === style.id
+                          ? "bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white shadow-lg shadow-[var(--color-aurora-pink)]/30 border-0"
+                          : "bg-white/5 border-white/20 text-[var(--color-aurora-cream)] hover:bg-[var(--color-aurora-pink)]/10"
+                      }`}
+                    >
+                      <span className="mr-1">{style.emoji}</span>
+                      <span className="truncate">{style.name}</span>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Hair Color */}
+              <div>
+                <Label className="text-[var(--color-aurora-cream)] font-semibold mb-2 sm:mb-3 block text-sm">Hair Color</Label>
+                <div className="flex flex-wrap gap-2">
+                  {HAIR_COLORS.map((color) => (
+                    <button
+                      key={color.id}
+                      onClick={() => setConfig({ ...config, hairColor: color.id })}
+                      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 transition-all min-w-[36px] min-h-[36px] ${
+                        config.hairColor === color.id
+                          ? "border-[var(--color-aurora-pink)] scale-110 shadow-lg shadow-[var(--color-aurora-pink)]/30"
+                          : "border-white/20 hover:border-[var(--color-aurora-pink)]/50"
+                      }`}
+                      style={{ backgroundColor: color.color }}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Eyes */}
+              <div>
+                <Label className="text-[var(--color-aurora-cream)] font-semibold mb-2 sm:mb-3 block text-sm">Eyes</Label>
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                  {EYE_STYLES.map((style) => (
+                    <Badge
+                      key={style.id}
+                      onClick={() => setConfig({ ...config, eyesStyle: style.id })}
+                      className={`cursor-pointer px-1.5 sm:px-2 py-2 text-xs transition-all justify-center min-h-[40px] ${
+                        config.eyesStyle === style.id
+                          ? "bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white shadow-lg shadow-[var(--color-aurora-pink)]/30 border-0"
+                          : "bg-white/5 border-white/20 text-[var(--color-aurora-cream)] hover:bg-[var(--color-aurora-pink)]/10"
+                      }`}
+                    >
+                      {style.emoji} <span className="hidden sm:inline ml-1">{style.name}</span>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Earrings */}
+              <div>
+                <Label className="text-[var(--color-aurora-cream)] font-semibold mb-2 sm:mb-3 block text-sm">Earrings</Label>
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                  {EARRINGS.map((earring) => (
+                    <Badge
+                      key={earring.id}
+                      onClick={() => setConfig({ ...config, earrings: earring.id })}
+                      className={`cursor-pointer px-1.5 sm:px-2 py-2 text-xs transition-all justify-center min-h-[40px] ${
+                        config.earrings === earring.id
+                          ? "bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white shadow-lg shadow-[var(--color-aurora-pink)]/30 border-0"
+                          : "bg-white/5 border-white/20 text-[var(--color-aurora-cream)] hover:bg-[var(--color-aurora-pink)]/10"
+                      }`}
+                    >
+                      {earring.emoji} <span className="hidden sm:inline ml-1">{earring.name}</span>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Freckles Toggle */}
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+                <Label className="text-[var(--color-aurora-cream)] text-sm">Add Freckles</Label>
+                <button
+                  onClick={() => setConfig({ ...config, freckles: !config.freckles })}
+                  className={`w-12 h-6 rounded-full transition-all min-w-[48px] ${
+                    config.freckles ? "bg-[var(--color-aurora-pink)]" : "bg-white/20"
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                    config.freckles ? "translate-x-6" : "translate-x-0.5"
+                  }`} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex justify-between pt-4 border-t border-white/10">
+        {/* Actions - Fixed at bottom */}
+        <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-4 p-4 sm:p-6 pt-4 border-t border-white/10 bg-[var(--color-aurora-violet)]/50">
           <Button
             variant="outline"
             onClick={onSkip}
-            className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+            className="w-full sm:w-auto min-h-[48px] bg-white/5 border-white/20 text-white hover:bg-white/10 order-2 sm:order-1"
           >
             Skip for now
           </Button>
           <Button
             onClick={() => onComplete(config)}
-            className="bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-pink)]/30"
+            className="w-full sm:w-auto min-h-[48px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-pink)]/30 order-1 sm:order-2"
           >
             <Heart className="w-4 h-4 mr-2" />
-            Create My Aurora App Avatar
+            Create Avatar
           </Button>
         </div>
       </DialogContent>
@@ -348,7 +352,7 @@ function AvatarPreview({ config }: { config: AvatarConfig }) {
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
-      className="relative w-48 h-48 mx-auto rounded-full overflow-hidden shadow-2xl shadow-[#FF6B7A]/20"
+      className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 mx-auto rounded-full overflow-hidden shadow-2xl shadow-[var(--color-aurora-pink)]/20"
       dangerouslySetInnerHTML={{ __html: avatarSvg }}
     />
   );

@@ -79,26 +79,26 @@ export function NotificationsDropdown() {
   const getIcon = (type: string) => {
     switch (type) {
       case "message":
-        return <MessageSquare className="w-4 h-4 text-blue-600" />;
+        return <MessageSquare className="w-4 h-4 text-[var(--color-aurora-blue)]" />;
       case "comment":
-        return <MessageSquare className="w-4 h-4 text-green-600" />;
+        return <MessageSquare className="w-4 h-4 text-[var(--color-aurora-mint)]" />;
       case "upvote":
-        return <ThumbsUp className="w-4 h-4 text-purple-600" />;
+        return <ThumbsUp className="w-4 h-4 text-[var(--color-aurora-purple)]" />;
       case "verification":
-        return <Shield className="w-4 h-4 text-orange-600" />;
+        return <Shield className="w-4 h-4 text-[var(--color-aurora-orange)]" />;
       case "route_completion":
-        return <MapPin className="w-4 h-4 text-blue-600" />;
+        return <MapPin className="w-4 h-4 text-[var(--color-aurora-blue)]" />;
       case "opportunity_unlock":
-        return <Briefcase className="w-4 h-4 text-pink-600" />;
+        return <Briefcase className="w-4 h-4 text-[var(--color-aurora-pink)]" />;
       default:
-        return <Bell className="w-4 h-4 text-gray-600" />;
+        return <Bell className="w-4 h-4 text-[var(--muted-foreground)]" />;
     }
   };
 
   // Prevent hydration mismatch by only rendering on client
   if (!isMounted) {
     return (
-      <Button variant="ghost" size="icon" className="relative" suppressHydrationWarning>
+      <Button variant="ghost" size="icon" className="relative min-w-[44px] min-h-[44px]" suppressHydrationWarning>
         <Bell className="w-5 h-5" />
       </Button>
     );
@@ -107,24 +107,29 @@ export function NotificationsDropdown() {
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative" suppressHydrationWarning>
-          <Bell className="w-5 h-5" />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="relative min-w-[44px] min-h-[44px] hover:bg-[var(--accent)] rounded-lg" 
+          suppressHydrationWarning
+        >
+          <Bell className="w-5 h-5 text-[var(--muted-foreground)]" />
           {unreadCount && unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+            <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-[var(--color-aurora-pink)] text-white text-xs rounded-full flex items-center justify-center font-medium shadow-md">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 max-h-[500px] overflow-y-auto">
-        <div className="flex items-center justify-between p-2 border-b">
-          <h3 className="font-semibold">Notifications</h3>
+      <DropdownMenuContent align="end" className="w-80 max-h-[500px] overflow-y-auto bg-[var(--card)] border-[var(--border)]">
+        <div className="flex items-center justify-between p-3 border-b border-[var(--border)]">
+          <h3 className="font-semibold text-[var(--foreground)]">Notifications</h3>
           {unreadCount && unreadCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
               onClick={handleMarkAllAsRead}
-              className="text-xs"
+              className="text-xs text-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-purple)]/10"
             >
               <Check className="w-3 h-3 mr-1" />
               Mark all read
@@ -133,15 +138,18 @@ export function NotificationsDropdown() {
         </div>
 
         {!notifications && (
-          <div className="p-4 text-center text-sm text-gray-500">
+          <div className="p-4 text-center text-sm text-[var(--muted-foreground)]">
             Loading...
           </div>
         )}
 
         {notifications && notifications.length === 0 && (
           <div className="p-8 text-center">
-            <Bell className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">No notifications yet</p>
+            <div className="w-14 h-14 rounded-2xl bg-[var(--color-aurora-purple)]/10 flex items-center justify-center mx-auto mb-3">
+              <Bell className="w-7 h-7 text-[var(--color-aurora-purple)]" />
+            </div>
+            <p className="text-sm text-[var(--muted-foreground)]">No notifications yet</p>
+            <p className="text-xs text-[var(--muted-foreground)]/70 mt-1">We'll notify you when something happens</p>
           </div>
         )}
 
@@ -150,8 +158,8 @@ export function NotificationsDropdown() {
             {notifications.map((notification) => (
               <DropdownMenuItem
                 key={notification._id}
-                className={`p-3 cursor-pointer ${
-                  !notification.isRead ? "bg-purple-50" : ""
+                className={`p-3 cursor-pointer hover:bg-[var(--accent)] ${
+                  !notification.isRead ? "bg-[var(--color-aurora-purple)]/5" : ""
                 }`}
                 onClick={() => handleNotificationClick(notification)}
               >
@@ -161,26 +169,26 @@ export function NotificationsDropdown() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-medium">{notification.title}</p>
+                      <p className="text-sm font-medium text-[var(--foreground)]">{notification.title}</p>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 flex-shrink-0"
+                        className="h-6 w-6 flex-shrink-0 hover:bg-[var(--accent)]"
                         onClick={(e) => handleDelete(e, notification._id)}
                       >
-                        <X className="w-3 h-3" />
+                        <X className="w-3 h-3 text-[var(--muted-foreground)]" />
                       </Button>
                     </div>
-                    <p className="text-xs text-gray-600 mt-0.5">
+                    <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
                       {notification.message}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       {notification.fromUser && (
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-[var(--color-aurora-purple)]">
                           from {notification.fromUser.name}
                         </span>
                       )}
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-[var(--muted-foreground)]/70">
                         {formatDistanceToNow(notification._creationTime, {
                           addSuffix: true,
                         })}

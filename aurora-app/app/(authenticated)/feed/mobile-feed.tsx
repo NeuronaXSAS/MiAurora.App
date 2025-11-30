@@ -9,7 +9,6 @@ import { PollCard } from "@/components/poll-card";
 import { AIChatCard } from "@/components/ai-chat-card";
 import { PostCardSkeleton } from "@/components/loading-skeleton";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
-import { AIChatCompanion } from "@/components/ai-chat-companion";
 import { 
   Sparkles, 
   ChevronDown, 
@@ -17,16 +16,7 @@ import {
   TrendingUp, 
   Clock,
   LayoutGrid,
-  Bell,
-  Search,
-  User,
-  Shield,
-  Menu,
-  Plus,
 } from "lucide-react";
-import { CreateOptionsModal } from "@/components/create-options-modal";
-import { PostCreateDialog } from "@/components/post-create-dialog";
-import { PollCreateDialog } from "@/components/poll-create-dialog";
 import { Id } from "@/convex/_generated/dataModel";
 import {
   DropdownMenu,
@@ -34,8 +24,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Image from "next/image";
-import Link from "next/link";
 
 type SortOption = "best" | "hot" | "new" | "top";
 
@@ -43,10 +31,6 @@ export function MobileFeed() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("best");
-  const [showAIChat, setShowAIChat] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showPostDialog, setShowPostDialog] = useState(false);
-  const [showPollDialog, setShowPollDialog] = useState(false);
 
   // Get user ID
   useEffect(() => {
@@ -111,73 +95,12 @@ export function MobileFeed() {
 
   return (
     <div className="bg-[var(--background)] min-h-screen">
-      {/* Aurora-styled Header - Compact & Elegant */}
+      {/* Sort Bar - Header is now provided by layout */}
       <div className="sticky top-0 z-30 bg-[var(--card)] border-b border-[var(--border)] shadow-sm">
-        <div className="flex items-center justify-between px-3 py-2">
-          {/* Left: Menu + AI Chat (Aurora Logo) */}
-          <div className="flex items-center gap-1.5">
-            <button 
-              onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
-              className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors"
-              aria-label="Open menu"
-            >
-              <Menu className="w-5 h-5 text-[var(--foreground)]" />
-            </button>
-            
-            {/* AI Chat - Aurora Logo */}
-            <button 
-              onClick={() => setShowAIChat(true)}
-              className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-0.5 hover:scale-105 transition-transform"
-              aria-label="Aurora AI Chat"
-            >
-              <div className="w-full h-full rounded-[9px] bg-[var(--card)] flex items-center justify-center">
-                <Image src="/Au_Logo_1.png" alt="Aurora AI" width={24} height={24} className="object-contain" />
-              </div>
-            </button>
-          </div>
-
-          {/* Center: Create Button */}
-          <button 
-            onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 rounded-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 transition-all shadow-md flex items-center gap-1.5"
-            aria-label="Create"
-          >
-            <Plus className="w-4 h-4 text-white" />
-            <span className="text-white text-sm font-medium hidden xs:inline">Create</span>
-          </button>
-
-          {/* Right: Emergency + Search + Notifications + Profile */}
-          <div className="flex items-center gap-1">
-            {/* Emergency - Orange EXCLUSIVE */}
-            <Link 
-              href="/emergency"
-              className="p-2 rounded-lg bg-[var(--color-aurora-orange)] hover:bg-[var(--color-aurora-orange)]/90 transition-colors shadow-md"
-              aria-label="Emergency"
-            >
-              <Shield className="w-5 h-5 text-white" />
-            </Link>
-
-            <button className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors">
-              <Search className="w-5 h-5 text-[var(--muted-foreground)]" />
-            </button>
-            
-            <button className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors">
-              <Bell className="w-5 h-5 text-[var(--muted-foreground)]" />
-            </button>
-            
-            <Link href="/profile">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
-              </div>
-            </Link>
-          </div>
-        </div>
-
-        {/* Sort Bar */}
-        <div className="flex items-center gap-2 px-4 py-2 border-t border-[var(--border)]">
+        <div className="flex items-center gap-2 px-4 py-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--foreground)] text-sm font-medium transition-colors">
+              <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--foreground)] text-sm font-medium transition-colors min-h-[40px]">
                 <currentSort.icon className="w-4 h-4 text-[var(--color-aurora-purple)]" />
                 {currentSort.label}
                 <ChevronDown className="w-4 h-4 text-[var(--muted-foreground)]" />
@@ -199,7 +122,7 @@ export function MobileFeed() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <button className="p-1.5 rounded-lg hover:bg-[var(--accent)] transition-colors ml-auto">
+          <button className="p-1.5 rounded-lg hover:bg-[var(--accent)] transition-colors ml-auto min-w-[40px] min-h-[40px] flex items-center justify-center">
             <LayoutGrid className="w-5 h-5 text-[var(--muted-foreground)]" />
           </button>
         </div>
@@ -295,29 +218,6 @@ export function MobileFeed() {
           onComplete={() => setShowOnboarding(false)}
           userId={userId}
         />
-      )}
-
-      {/* AI Chat Companion Modal */}
-      {showAIChat && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center" onClick={() => setShowAIChat(false)}>
-          <div className="w-full sm:max-w-lg sm:p-4" onClick={(e) => e.stopPropagation()}>
-            <AIChatCompanion className="h-[85vh] sm:h-[600px] rounded-t-3xl sm:rounded-2xl" />
-          </div>
-        </div>
-      )}
-
-      {/* Create Modals */}
-      <CreateOptionsModal
-        open={showCreateModal}
-        onOpenChange={setShowCreateModal}
-        onSelectPost={() => setShowPostDialog(true)}
-        onSelectPoll={() => setShowPollDialog(true)}
-      />
-      {userId && (
-        <>
-          <PostCreateDialog open={showPostDialog} onOpenChange={setShowPostDialog} userId={userId} />
-          <PollCreateDialog open={showPollDialog} onOpenChange={setShowPollDialog} userId={userId} />
-        </>
       )}
     </div>
   );

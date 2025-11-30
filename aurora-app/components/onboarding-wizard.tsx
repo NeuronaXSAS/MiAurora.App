@@ -189,11 +189,11 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="w-[95vw] max-w-lg sm:max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-xl bg-gradient-to-br from-[var(--color-aurora-violet)] via-[#231E35] to-[var(--color-aurora-purple)] border-[var(--color-aurora-pink)]/30 shadow-2xl p-4 sm:p-6">
-        <DialogHeader>
-          <div className="flex items-center gap-3 mb-2">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-lg lg:max-w-2xl max-h-[90vh] overflow-hidden backdrop-blur-xl bg-gradient-to-br from-[var(--color-aurora-violet)] via-[#231E35] to-[var(--color-aurora-purple)] border-[var(--color-aurora-pink)]/30 shadow-2xl p-0">
+        <DialogHeader className="p-4 sm:p-6 pb-0">
+          <div className="flex items-center gap-3">
             {/* Aurora App Logo */}
-            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg shadow-[var(--color-aurora-purple)]/50 flex-shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg shadow-[var(--color-aurora-purple)]/50 flex-shrink-0">
               <img 
                 src="/Au_Logo_1.png" 
                 alt="Aurora App Logo" 
@@ -201,256 +201,257 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
               />
             </div>
             <div className="min-w-0">
-              <DialogTitle className="text-lg sm:text-2xl text-white">Welcome to Aurora App!</DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl lg:text-2xl text-white">Welcome to Aurora App!</DialogTitle>
               <DialogDescription className="text-[var(--color-aurora-cream)] text-sm">
                 Step {step} of 3
               </DialogDescription>
             </div>
           </div>
           {error && (
-            <div className="mt-3 p-3 bg-[var(--color-aurora-salmon)]/20 border border-[var(--color-aurora-salmon)]/50 rounded-lg">
+            <div className="mt-3 p-3 bg-[var(--color-aurora-salmon)]/20 border border-[var(--color-aurora-salmon)]/50 rounded-xl">
               <p className="text-sm text-[var(--color-aurora-cream)]">{error}</p>
             </div>
           )}
         </DialogHeader>
 
-        <AnimatePresence mode="wait">
-          {/* Step 1: Profile */}
-          {step === 1 && (
-            <motion.div
-              key="step1"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6 py-4"
-            >
-              <div className="space-y-4">
+        {/* Scrollable Content */}
+        <div className="overflow-y-auto max-h-[calc(90vh-200px)] px-4 sm:px-6">
+          <AnimatePresence mode="wait">
+            {/* Step 1: Profile */}
+            {step === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-4 sm:space-y-6 py-4"
+              >
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm sm:text-base font-semibold flex items-center gap-2 mb-2 sm:mb-3 text-white">
+                      <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-aurora-pink)]" />
+                      What's your current role?
+                    </Label>
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                      {ROLES.map((r) => (
+                        <Badge
+                          key={r}
+                          variant={role === r ? "default" : "outline"}
+                          className={`cursor-pointer px-3 py-2 text-xs sm:text-sm transition-all min-h-[40px] ${
+                            role === r
+                              ? "bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white shadow-lg"
+                              : "bg-white/5 border-white/20 text-[var(--color-aurora-cream)] hover:bg-white/10 hover:border-[var(--color-aurora-pink)]"
+                          }`}
+                          onClick={() => setRole(r)}
+                        >
+                          {r}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="location" className="text-sm sm:text-base font-semibold mb-2 sm:mb-3 block text-white">
+                      📍 Where are you located?
+                    </Label>
+                    <Input
+                      id="location"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder="e.g., San Francisco, CA"
+                      className="min-h-[48px] bg-white/5 border-white/20 text-white placeholder:text-[var(--color-aurora-cream)]/50 rounded-xl"
+                    />
+                    <p className="text-xs text-[var(--color-aurora-cream)]/70 mt-1">
+                      This helps you connect with local Aurora communities
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="bio" className="text-sm sm:text-base font-semibold mb-2 sm:mb-3 block text-white">
+                      Tell us a bit about yourself (optional)
+                    </Label>
+                    <Textarea
+                      id="bio"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      placeholder="I'm passionate about..."
+                      className="min-h-[80px] bg-white/5 border-white/20 text-white placeholder:text-[var(--color-aurora-cream)]/50 rounded-xl"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 2: Interests */}
+            {step === 2 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-4 sm:space-y-6 py-4"
+              >
                 <div>
                   <Label className="text-sm sm:text-base font-semibold flex items-center gap-2 mb-2 sm:mb-3 text-white">
-                    <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-aurora-pink)]" />
-                    What's your current role?
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-aurora-yellow)]" />
+                    What are you interested in?
                   </Label>
+                  <p className="text-xs sm:text-sm text-[var(--color-aurora-cream)]/70 mb-3">
+                    Select all that apply
+                  </p>
                   <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                    {ROLES.map((r) => (
+                    {INTERESTS.map((interest) => (
                       <Badge
-                        key={r}
-                        variant={role === r ? "default" : "outline"}
-                        className={`cursor-pointer px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm transition-all min-h-[36px] sm:min-h-[40px] ${
-                          role === r
-                            ? "bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white shadow-lg"
-                            : "bg-white/5 border-white/20 text-gray-300 hover:bg-white/10 hover:border-[var(--color-aurora-pink)]"
+                        key={interest}
+                        variant={selectedInterests.includes(interest) ? "default" : "outline"}
+                        className={`cursor-pointer px-3 py-2 text-xs sm:text-sm transition-all min-h-[40px] ${
+                          selectedInterests.includes(interest)
+                            ? "bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white shadow-lg shadow-[var(--color-aurora-purple)]/50"
+                            : "bg-white/5 border-white/20 text-[var(--color-aurora-cream)] hover:bg-white/10 hover:border-[var(--color-aurora-pink)]"
                         }`}
-                        onClick={() => setRole(r)}
+                        onClick={() => handleInterestToggle(interest)}
                       >
-                        {r}
+                        {selectedInterests.includes(interest) && (
+                          <Check className="w-3 h-3 mr-1" />
+                        )}
+                        {interest}
                       </Badge>
                     ))}
                   </div>
                 </div>
+              </motion.div>
+            )}
 
+            {/* Step 3: Privacy */}
+            {step === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-4 sm:space-y-6 py-4"
+              >
                 <div>
-                  <Label htmlFor="location" className="text-base font-semibold mb-3 block text-white">
-                    📍 Where are you located?
+                  <Label className="text-sm sm:text-base font-semibold flex items-center gap-2 mb-2 sm:mb-3 text-white">
+                    <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-aurora-purple)]" />
+                    How visible do you want to be?
                   </Label>
-                  <Input
-                    id="location"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="e.g., San Francisco, CA"
-                    className="bg-white/5 border-white/20 text-white placeholder:text-gray-500"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    This helps you connect with local Aurora communities
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="bio" className="text-base font-semibold mb-3 block text-white">
-                    Tell us a bit about yourself (optional)
-                  </Label>
-                  <Textarea
-                    id="bio"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    placeholder="I'm passionate about..."
-                    className="min-h-[80px] bg-white/5 border-white/20 text-white placeholder:text-gray-500"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => setStep(2)}
-                  disabled={!role}
-                  className="min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50"
-                >
-                  Next
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Step 2: Interests */}
-          {step === 2 && (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6 py-4"
-            >
-              <div>
-                <Label className="text-sm sm:text-base font-semibold flex items-center gap-2 mb-2 sm:mb-3 text-white">
-                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-aurora-yellow)]" />
-                  What are you interested in?
-                </Label>
-                <p className="text-xs sm:text-sm text-gray-300 mb-3">
-                  Select all that apply
-                </p>
-                <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                  {INTERESTS.map((interest) => (
-                    <Badge
-                      key={interest}
-                      variant={selectedInterests.includes(interest) ? "default" : "outline"}
-                      className={`cursor-pointer px-4 py-2 text-sm transition-all ${
-                        selectedInterests.includes(interest)
-                          ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg shadow-purple-500/50"
-                          : "bg-white/5 border-white/20 text-gray-300 hover:bg-white/10 hover:border-purple-400"
-                      }`}
-                      onClick={() => handleInterestToggle(interest)}
-                    >
-                      {selectedInterests.includes(interest) && (
-                        <Check className="w-3 h-3 mr-1" />
-                      )}
-                      {interest}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(1)} className="min-h-[44px] bg-white/5 border-white/20 text-white hover:bg-white/10">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
-                </Button>
-                <Button
-                  onClick={() => setStep(3)}
-                  disabled={selectedInterests.length === 0}
-                  className="min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50"
-                >
-                  Next
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Step 3: Privacy */}
-          {step === 3 && (
-            <motion.div
-              key="step3"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6 py-4"
-            >
-              <div>
-                <Label className="text-base font-semibold flex items-center gap-2 mb-3 text-white">
-                  <Shield className="w-5 h-5 text-purple-400" />
-                  How visible do you want to be?
-                </Label>
-                <div className="space-y-3">
-                  {[
-                    {
-                      value: "public" as const,
-                      title: "Public",
-                      desc: "Your profile and activity are visible to everyone",
-                    },
-                    {
-                      value: "anonymous" as const,
-                      title: "Anonymous",
-                      desc: "Share content without revealing your identity",
-                    },
-                    {
-                      value: "private" as const,
-                      title: "Private",
-                      desc: "Only you can see your profile and activity",
-                    },
-                  ].map((option) => (
-                    <div
-                      key={option.value}
-                      onClick={() => setVisibility(option.value)}
-                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                        visibility === option.value
-                          ? "border-purple-500 bg-purple-500/20 shadow-lg shadow-purple-500/30"
-                          : "border-white/20 bg-white/5 hover:border-purple-400 hover:bg-white/10"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
-                            visibility === option.value
-                              ? "border-purple-400 bg-purple-600"
-                              : "border-gray-500"
-                          }`}
-                        >
-                          {visibility === option.value && (
-                            <Check className="w-3 h-3 text-white" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-white">{option.title}</p>
-                          <p className="text-sm text-gray-300">{option.desc}</p>
+                  <div className="space-y-2 sm:space-y-3">
+                    {[
+                      {
+                        value: "public" as const,
+                        title: "Public",
+                        desc: "Your profile and activity are visible to everyone",
+                      },
+                      {
+                        value: "anonymous" as const,
+                        title: "Anonymous",
+                        desc: "Share content without revealing your identity",
+                      },
+                      {
+                        value: "private" as const,
+                        title: "Private",
+                        desc: "Only you can see your profile and activity",
+                      },
+                    ].map((option) => (
+                      <div
+                        key={option.value}
+                        onClick={() => setVisibility(option.value)}
+                        className={`p-3 sm:p-4 rounded-xl border-2 cursor-pointer transition-all min-h-[60px] ${
+                          visibility === option.value
+                            ? "border-[var(--color-aurora-pink)] bg-[var(--color-aurora-purple)]/20 shadow-lg shadow-[var(--color-aurora-purple)]/30"
+                            : "border-white/20 bg-white/5 hover:border-[var(--color-aurora-pink)]/50 hover:bg-white/10"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 flex-shrink-0 ${
+                              visibility === option.value
+                                ? "border-[var(--color-aurora-pink)] bg-[var(--color-aurora-purple)]"
+                                : "border-white/40"
+                            }`}
+                          >
+                            {visibility === option.value && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-white text-sm sm:text-base">{option.title}</p>
+                            <p className="text-xs sm:text-sm text-[var(--color-aurora-cream)]/70">{option.desc}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(2)} className="min-h-[44px] bg-white/5 border-white/20 text-white hover:bg-white/10">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
-                </Button>
-                <Button
-                  onClick={handleComplete}
-                  disabled={isSubmitting}
-                  className="min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50 disabled:opacity-50"
-                >
-                  {isSubmitting ? "Saving..." : "Complete Setup"}
-                  <Check className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Progress Indicator */}
-        <div className="flex gap-2 justify-center mt-4">
-          {[1, 2, 3].map((s) => (
-            <div
-              key={s}
-              className={`h-2 rounded-full transition-all ${
-                s === step
-                  ? "w-8 bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)]"
-                  : s < step
-                  ? "w-2 bg-[var(--color-aurora-purple)]"
-                  : "w-2 bg-gray-500"
-              }`}
-            />
-          ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Avatar Preview (if created) */}
-        {avatarConfig && (
-          <div className="text-center mt-4">
-            <p className="text-xs text-gray-400">
-              ✨ Your avatar has been created! You can change it later in your profile.
-            </p>
+        {/* Fixed Footer with Actions */}
+        <div className="p-4 sm:p-6 pt-4 border-t border-white/10 bg-[var(--color-aurora-violet)]/50">
+          {/* Progress Indicator */}
+          <div className="flex gap-2 justify-center mb-4">
+            {[1, 2, 3].map((s) => (
+              <div
+                key={s}
+                className={`h-2 rounded-full transition-all ${
+                  s === step
+                    ? "w-8 bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)]"
+                    : s < step
+                    ? "w-2 bg-[var(--color-aurora-purple)]"
+                    : "w-2 bg-white/20"
+                }`}
+              />
+            ))}
           </div>
-        )}
+
+          {/* Navigation Buttons */}
+          <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-4">
+            {step > 1 ? (
+              <Button 
+                variant="outline" 
+                onClick={() => setStep(step - 1)} 
+                className="w-full sm:w-auto min-h-[48px] bg-white/5 border-white/20 text-white hover:bg-white/10 order-2 sm:order-1"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+            ) : (
+              <div className="hidden sm:block" />
+            )}
+            
+            {step < 3 ? (
+              <Button
+                onClick={() => setStep(step + 1)}
+                disabled={step === 1 ? !role : selectedInterests.length === 0}
+                className="w-full sm:w-auto min-h-[48px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50 order-1 sm:order-2"
+              >
+                Next
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleComplete}
+                disabled={isSubmitting}
+                className="w-full sm:w-auto min-h-[48px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50 disabled:opacity-50 order-1 sm:order-2"
+              >
+                {isSubmitting ? "Saving..." : "Complete Setup"}
+                <Check className="w-4 h-4 ml-2" />
+              </Button>
+            )}
+          </div>
+
+          {/* Avatar Preview (if created) */}
+          {avatarConfig && (
+            <div className="text-center mt-3">
+              <p className="text-xs text-[var(--color-aurora-cream)]/70">
+                ✨ Your avatar has been created! You can change it later in your profile.
+              </p>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
