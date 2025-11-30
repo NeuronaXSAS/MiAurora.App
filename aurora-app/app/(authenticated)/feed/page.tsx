@@ -92,7 +92,11 @@ export default function FeedPage() {
     }
   }, [user]);
 
-  const feedItems = useQuery(api.feed.getUnifiedFeed, { limit: 50 });
+  // Fetch unified feed with personalization based on user preferences
+  const feedItems = useQuery(api.feed.getUnifiedFeed, { 
+    limit: 50,
+    userId: userId || undefined,
+  });
 
   const verifyPost = useMutation(api.posts.verify);
   const deletePost = useMutation(api.posts.deletePost);

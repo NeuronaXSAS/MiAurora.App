@@ -64,9 +64,10 @@ export function MobileFeed() {
     }
   }, [user]);
 
-  // Fetch unified feed
+  // Fetch unified feed with personalization based on user preferences
   const feedItems = useQuery(api.feed.getUnifiedFeed, {
     limit: 50,
+    userId: userId || undefined,
   });
 
   // Mutations for post actions
