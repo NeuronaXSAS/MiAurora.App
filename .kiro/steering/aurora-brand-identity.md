@@ -142,6 +142,24 @@ className="min-h-[44px] min-w-[44px]" // Minimum for accessibility
 ### Reduced Motion
 Always respect `prefers-reduced-motion` for accessibility.
 
+## 🌍 Global Audience & Language
+
+### Primary Language
+- **English is the default language** for all UI text, labels, buttons, and content
+- Aurora App targets a global audience of women worldwide
+- All hardcoded strings must be in English
+
+### Content Guidelines
+- Use clear, simple English accessible to non-native speakers
+- Avoid idioms, slang, or culturally-specific references
+- Keep safety-critical messages short and universally understandable
+- Use internationally recognized icons alongside text labels
+
+### Future i18n Considerations
+- Structure code to support future localization (avoid hardcoded strings in logic)
+- Use consistent terminology across the app
+- Consider RTL layout support for future Arabic/Hebrew localization
+
 ## 🔒 Brand Protection Checklist
 
 Before shipping any UI:
@@ -153,4 +171,5 @@ Before shipping any UI:
 - [ ] Touch targets meet 44px minimum
 - [ ] Accessible color contrast ratios
 - [ ] Consistent with existing Aurora App UI
+- [ ] All UI text is in English (global audience)
 

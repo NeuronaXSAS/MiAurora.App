@@ -21,75 +21,75 @@ interface OnboardingTutorialProps {
 const TUTORIAL_STEPS = [
   {
     icon: Shield,
-    title: "Tu Seguridad Primero",
-    description: "Aurora App es tu compañera de seguridad. El Botón de Pánico funciona incluso sin internet y alerta a tus contactos de emergencia.",
+    title: "Your Safety First",
+    description: "Aurora App is your safety companion. The Panic Button works even offline and alerts your emergency contacts instantly.",
     color: "var(--color-aurora-orange)",
     bgColor: "var(--color-aurora-orange)",
-    features: ["Botón de Pánico", "Contactos de Emergencia", "Check-ins de Seguridad"],
-    tip: "💡 Configura tus contactos de emergencia en Ajustes",
+    features: ["Panic Button", "Emergency Contacts", "Safety Check-ins"],
+    tip: "💡 Set up your emergency contacts in Settings",
   },
   {
     icon: Users,
     title: "Aurora Guardians",
-    description: "Conecta con otras mujeres de confianza. Tus Guardians pueden ver tu ubicación en tiempo real cuando la compartes.",
+    description: "Connect with trusted women. Your Guardians can see your real-time location when you choose to share it.",
     color: "var(--color-aurora-purple)",
     bgColor: "var(--color-aurora-purple)",
-    features: ["Acompañamiento Virtual", "Alertas de Emergencia", "Ubicación en Tiempo Real"],
-    tip: "💡 Invita a amigas o familiares como tus Guardians",
+    features: ["Virtual Accompaniment", "Emergency Alerts", "Real-time Location"],
+    tip: "💡 Invite friends or family as your Guardians",
   },
   {
     icon: MapPin,
-    title: "Mapa de Seguridad",
-    description: "Descubre y comparte lugares seguros. Reporta incidentes laborales y ayuda a otras mujeres a estar informadas.",
+    title: "Safety Map",
+    description: "Discover and share safe places. Report workplace incidents and help other women stay informed.",
     color: "var(--color-aurora-mint)",
     bgColor: "var(--color-aurora-mint)",
-    features: ["Califica Lugares", "Reportes Laborales", "Verificado por la Comunidad"],
-    tip: "💡 Los reportes de workplace aparecen en el mapa",
+    features: ["Rate Places", "Workplace Reports", "Community Verified"],
+    tip: "💡 Workplace reports appear on the safety map",
   },
   {
     icon: Route,
-    title: "Rutas Seguras",
-    description: "Rastrea tus viajes y comparte rutas seguras. Usa Sister Accompaniment para que tus Guardians te acompañen virtualmente.",
+    title: "Safe Routes",
+    description: "Track your journeys and share safe routes. Use Sister Accompaniment so your Guardians can virtually walk with you.",
     color: "var(--color-aurora-blue)",
     bgColor: "var(--color-aurora-blue)",
-    features: ["GPS en Tiempo Real", "Compartir Rutas", "Sister Accompaniment"],
-    tip: "💡 Gana créditos por cada ruta que compartas",
+    features: ["Real-time GPS", "Share Routes", "Sister Accompaniment"],
+    tip: "💡 Earn credits for every route you share",
   },
   {
     icon: Heart,
     title: "Soul Sanctuary",
-    description: "Tu espacio de bienestar. Hidratación, estado de ánimo, ciclo menstrual y meditación guiada - todo en un lugar.",
+    description: "Your wellness space. Hydration, mood tracking, menstrual cycle, and guided meditation - all in one place.",
     color: "var(--color-aurora-pink)",
     bgColor: "var(--color-aurora-pink)",
-    features: ["Hidratación", "Diario de Ánimo", "Ciclo Menstrual", "Meditación"],
-    tip: "💡 Completa tu check-in diario para ganar créditos",
+    features: ["Hydration", "Mood Journal", "Cycle Tracking", "Meditation"],
+    tip: "💡 Complete your daily check-in to earn credits",
   },
   {
     icon: Briefcase,
-    title: "Oportunidades",
-    description: "Descubre empleos, mentorías y recursos verificados por la comunidad. Usa tus créditos para desbloquear oportunidades.",
+    title: "Opportunities",
+    description: "Discover jobs, mentorships, and community-verified resources. Use your credits to unlock opportunities.",
     color: "var(--color-aurora-yellow)",
     bgColor: "var(--color-aurora-yellow)",
-    features: ["Empleos", "Mentorías", "Recursos de Carrera"],
-    tip: "💡 Las empresas con buenos reportes aparecen destacadas",
+    features: ["Jobs", "Mentorships", "Career Resources"],
+    tip: "💡 Companies with good reports are highlighted",
   },
   {
     icon: Video,
-    title: "Reels y Lives",
-    description: "Comparte experiencias en video. Publica reels de seguridad o transmite en vivo para conectar con la comunidad.",
+    title: "Reels & Lives",
+    description: "Share video experiences. Post safety reels or go live to connect with the community.",
     color: "var(--color-aurora-lavender)",
     bgColor: "var(--color-aurora-lavender)",
-    features: ["Reels de Seguridad", "Transmisiones en Vivo", "Videos en Posts"],
-    tip: "💡 Los videos ayudan a otras mujeres a conocer lugares",
+    features: ["Safety Reels", "Live Broadcasts", "Video Posts"],
+    tip: "💡 Videos help other women discover safe places",
   },
   {
     icon: Coins,
-    title: "Economía de Créditos",
-    description: "Gana créditos ayudando a otras. Publica, verifica lugares, completa rutas y contribuye a la comunidad.",
+    title: "Credit Economy",
+    description: "Earn credits by helping others. Post, verify places, complete routes, and contribute to the community.",
     color: "var(--color-aurora-yellow)",
     bgColor: "var(--color-aurora-yellow)",
-    features: ["Gana Compartiendo", "Desbloquea Funciones", "Ayuda a Otras"],
-    tip: "💡 Empiezas con 25 créditos de bienvenida 🎉",
+    features: ["Earn by Sharing", "Unlock Features", "Help Others"],
+    tip: "💡 You start with 25 welcome credits 🎉",
   },
 ];
 
@@ -205,7 +205,7 @@ export function OnboardingTutorial({ open, onComplete }: OnboardingTutorialProps
                 className="flex-1 min-h-[48px] bg-white/5 border-white/20 text-white hover:bg-white/10"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Atrás
+                Back
               </Button>
             ) : (
               <Button
@@ -213,7 +213,7 @@ export function OnboardingTutorial({ open, onComplete }: OnboardingTutorialProps
                 onClick={handleSkip}
                 className="flex-1 min-h-[48px] bg-white/5 border-white/20 text-white hover:bg-white/10"
               >
-                Saltar Tutorial
+                Skip Tutorial
               </Button>
             )}
             
@@ -223,12 +223,12 @@ export function OnboardingTutorial({ open, onComplete }: OnboardingTutorialProps
             >
               {isLastStep ? (
                 <>
-                  ¡Comenzar!
+                  Get Started!
                   <Sparkles className="w-4 h-4 ml-2" />
                 </>
               ) : (
                 <>
-                  Siguiente
+                  Next
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </>
               )}

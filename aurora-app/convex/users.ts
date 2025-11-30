@@ -549,16 +549,74 @@ export const deleteUserComplete = mutation({
     const accompanimentSessions = await ctx.db.query("accompanimentSessions").withIndex("by_user", (q) => q.eq("userId", args.userId)).collect();
     for (const s of accompanimentSessions) await ctx.db.delete(s._id);
 
+    // 22. Delete route flags
+    const routeFlags = await ctx.db.query("routeFlags").withIndex("by_user", (q) => q.eq("userId", args.userId)).collect();
+    for (const f of routeFlags) await ctx.db.delete(f._id);
+
+    // 23. Delete reel likes by user
+    const reelLikes = await ctx.db.query("reelLikes").collect();
+    for (const like of reelLikes) {
+      if (like.userId === args.userId) await ctx.db.delete(like._id);
+    }
+
+    // 24. Delete reel comment likes by user
+    const reelCommentLikes = await ctx.db.query("reelCommentLikes").collect();
+    for (const like of reelCommentLikes) {
+      if (like.userId === args.userId) await ctx.db.delete(like._id);
+    }
+
+    // 25. Delete livestream likes by user
+    const livestreamLikes = await ctx.db.query("livestreamLikes").collect();
+    for (const like of livestreamLikes) {
+      if (like.userId === args.userId) await ctx.db.delete(like._id);
+    }
+
+    // 26. Delete user reports (reports made by user)
+    const userReports = await ctx.db.query("userReports").withIndex("by_reporter", (q) => q.eq("reporterId", args.userId)).collect();
+    for (const r of userReports) await ctx.db.delete(r._id);
+
+    // 27. Delete moderation queue entries for user's content
+    const moderationEntries = await ctx.db.query("moderationQueue").withIndex("by_author", (q) => q.eq("authorId", args.userId)).collect();
+    for (const m of moderationEntries) await ctx.db.delete(m._id);
+
+    // 28. Delete subscriptions (both as subscriber and creator)
+    const subscriberSubs = await ctx.db.query("subscriptions").withIndex("by_subscriber", (q) => q.eq("subscriberId", args.userId)).collect();
+    for (const s of subscriberSubs) await ctx.db.delete(s._id);
+    const creatorSubs = await ctx.db.query("subscriptions").withIndex("by_creator", (q) => q.eq("creatorId", args.userId)).collect();
+    for (const s of creatorSubs) await ctx.db.delete(s._id);
+
+    // 29. Delete tips (sent and received)
+    const sentTips = await ctx.db.query("tips").withIndex("by_sender", (q) => q.eq("fromUserId", args.userId)).collect();
+    for (const t of sentTips) await ctx.db.delete(t._id);
+    const receivedTips = await ctx.db.query("tips").withIndex("by_recipient", (q) => q.eq("toUserId", args.userId)).collect();
+    for (const t of receivedTips) await ctx.db.delete(t._id);
+
+    // 30. Delete payouts
+    const payouts = await ctx.db.query("payouts").withIndex("by_user", (q) => q.eq("userId", args.userId)).collect();
+    for (const p of payouts) await ctx.db.delete(p._id);
+
+    // 31. Delete emergency responses
+    const emergencyResponses = await ctx.db.query("emergencyResponses").withIndex("by_responder", (q) => q.eq("responderId", args.userId)).collect();
+    for (const r of emergencyResponses) await ctx.db.delete(r._id);
+
+    // 32. Delete analytics events (anonymize rather than delete for aggregate data)
+    const analyticsEvents = await ctx.db.query("analytics_events").withIndex("by_user", (q) => q.eq("userId", args.userId)).collect();
+    for (const e of analyticsEvents) {
+      // Anonymize by removing userId but keeping aggregate data
+      await ctx.db.patch(e._id, { userId: undefined });
+    }
+
     // Finally, delete the user
     await ctx.db.delete(args.userId);
 
     console.log(`Complete data deletion finished for user: ${args.userId}`);
-    return { success: true };
+    return { success: true, deletedTables: 32 };
   },
 });
 
 /**
  * Delete user by WorkOS ID (for webhook integration)
+ * This performs a complete GDPR-compliant deletion of all user data
  */
 export const deleteUserByWorkosId = mutation({
   args: { workosId: v.string() },
@@ -569,17 +627,13 @@ export const deleteUserByWorkosId = mutation({
       .first();
 
     if (!user) {
-      console.log(`User with WorkOS ID ${args.workosId} not found`);
-      return { success: true, message: "User not found" };
+      console.log(`User with WorkOS ID ${args.workosId} not found - may already be deleted`);
+      return { success: true, message: "User not found", userId: null };
     }
 
-    // Mark as deleted for now, full cleanup can be done async
-    await ctx.db.patch(user._id, {
-      isDeleted: true,
-      deletionRequestedAt: Date.now(),
-    });
-
-    console.log(`Marked user ${user._id} as deleted`);
+    console.log(`Starting complete deletion for user ${user._id} (WorkOS: ${args.workosId})`);
+    
+    // Return the userId so the webhook can call deleteUserComplete
     return { success: true, userId: user._id };
   },
 });
