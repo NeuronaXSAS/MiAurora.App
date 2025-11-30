@@ -103,7 +103,7 @@ export default function LandingPage() {
               <span className="text-sm">{post.commentCount || 0}</span>
             </div>
             <div className="flex-1" />
-            <Link href="/api/auth/login?provider=GoogleOAuth">
+            <Link href="/api/auth/login">
               <Button size="sm" variant="ghost" className="text-[#5537a7] hover:bg-[#5537a7]/10 text-xs font-medium">
                 Join to interact →
               </Button>
@@ -175,7 +175,7 @@ export default function LandingPage() {
               <span className="text-lg font-bold text-[#3d0d73] hidden sm:block">Aurora App</span>
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/api/auth/login?provider=GoogleOAuth">
+              <Link href="/api/auth/login">
                 <Button className="bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-xl px-5 min-h-[44px] font-semibold">
                   <span className="hidden sm:inline">Sign in with Google</span>
                   <span className="sm:hidden">Sign in</span>
@@ -244,7 +244,7 @@ export default function LandingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                <Link href="/api/auth/login?provider=GoogleOAuth">
+                <Link href="/api/auth/login">
                   <Button size="lg" className="bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-xl px-8 min-h-[52px] font-semibold shadow-lg shadow-[#5537a7]/30 w-full sm:w-auto">
                     Get Started Free
                     <ArrowRight className="w-5 h-5 ml-2" />
