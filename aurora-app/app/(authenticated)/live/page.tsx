@@ -103,8 +103,62 @@ export default function LivePage() {
           </div>
         )}
 
-        {/* Empty State */}
-        {livestreams && livestreams.length === 0 && (
+        {/* Live Streams Grid - Show real streams */}
+        {livestreams !== undefined && livestreams.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {livestreams.map((stream) => (
+              <button
+                key={stream._id}
+                onClick={() => setSelectedLivestream(stream._id)}
+                className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden hover:border-[var(--color-aurora-purple)]/50 transition-all text-left group"
+              >
+                {/* Thumbnail/Preview */}
+                <div className="aspect-video bg-gradient-to-br from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20 relative">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Play className="w-12 h-12 text-[var(--color-aurora-purple)] opacity-50 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  {/* Live Badge */}
+                  <Badge className="absolute top-3 left-3 bg-red-500 text-white border-0 animate-pulse">
+                    🔴 LIVE
+                  </Badge>
+                  {/* Viewer Count */}
+                  <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
+                    <Users className="w-3 h-3 text-white" />
+                    <span className="text-xs text-white font-medium">{stream.viewerCount}</span>
+                  </div>
+                  {/* Emergency Badge */}
+                  {stream.isEmergency && (
+                    <Badge className="absolute top-3 right-3 bg-[var(--color-aurora-orange)] text-white border-0">
+                      🆘 Emergency
+                    </Badge>
+                  )}
+                </div>
+                {/* Stream Info */}
+                <div className="p-4">
+                  <h3 className="font-semibold text-[var(--foreground)] line-clamp-1 mb-1">
+                    {stream.title}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-white text-xs">
+                      {stream.host?.name?.charAt(0) || "?"}
+                    </div>
+                    <span className="text-sm text-[var(--muted-foreground)]">
+                      {stream.host?.name || "Anonymous"}
+                    </span>
+                  </div>
+                  {stream.location && (
+                    <p className="text-xs text-[var(--muted-foreground)] mt-2 truncate">
+                      📍 {stream.location.name}
+                    </p>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Empty State - Show when no REAL live streams */}
+        {livestreams !== undefined && livestreams.length === 0 && (
           <div className="text-center py-20">
             <div className="w-24 h-24 bg-[var(--color-aurora-purple)]/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
               <Video className="w-12 h-12 text-[var(--color-aurora-purple)]" />
@@ -122,90 +176,7 @@ export default function LivePage() {
           </div>
         )}
 
-        {/* Livestreams Grid */}
-        {livestreams && livestreams.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {livestreams.map((livestream) => (
-              <button
-                key={livestream._id}
-                onClick={() => setSelectedLivestream(livestream._id)}
-                className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden hover:shadow-xl transition-shadow text-left"
-              >
-                {/* Thumbnail */}
-                <div className="relative aspect-video bg-gradient-to-br from-purple-900 to-pink-900">
-                  {/* Live Indicator */}
-                  <div className="absolute top-3 left-3 z-10">
-                    <div className="bg-red-600 px-3 py-1 rounded-full flex items-center gap-2 animate-pulse">
-                      <div className="w-2 h-2 bg-white rounded-full" />
-                      <span className="text-white font-bold text-xs">LIVE</span>
-                    </div>
-                  </div>
 
-                  {/* Viewer Count */}
-                  <div className="absolute top-3 right-3 z-10">
-                    <div className="bg-black/70 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1">
-                      <Users className="w-3 h-3 text-white" />
-                      <span className="text-white font-medium text-xs">
-                        {livestream.viewerCount}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Play Button Overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors">
-                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
-                      <Play className="w-8 h-8 text-purple-600 ml-1" />
-                    </div>
-                  </div>
-
-                  {/* Emergency Badge */}
-                  {livestream.isEmergency && (
-                    <div className="absolute bottom-3 left-3 z-10">
-                      <Badge className="bg-red-600 text-white">
-                        🚨 Emergency
-                      </Badge>
-                    </div>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2 line-clamp-2 text-[var(--foreground)]">
-                    {livestream.title}
-                  </h3>
-
-                  {livestream.host && (
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-8 h-8 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-full flex items-center justify-center text-white text-xs font-bold">
-                        {livestream.host.name[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-[var(--foreground)]">{livestream.host.name}</p>
-                        <p className="text-xs text-[var(--muted-foreground)]">
-                          Trust Score: {livestream.host.trustScore}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
-                    <Users className="w-4 h-4" />
-                    <span>{livestream.viewerCount} watching</span>
-                    {livestream.safetyMode && (
-                      <>
-                        <span>•</span>
-                        <span className="flex items-center gap-1 text-[var(--color-aurora-mint)]">
-                          <Sparkles className="w-3 h-3" />
-                          Safety Mode
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

@@ -58,7 +58,7 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
     <Card className="bg-[var(--card)] border-[var(--border)] relative overflow-hidden">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
-          <Droplet className="w-5 h-5 text-[var(--color-aurora-blue)]" />
+          <Droplet className="w-5 h-5 text-[var(--color-aurora-pink)]" />
           Hydration Tracker
         </CardTitle>
       </CardHeader>
@@ -152,7 +152,7 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
 
           <Button
             onClick={handleAddGlass}
-            className="bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-purple)] text-white font-semibold px-6 min-h-[44px]"
+            className="bg-[var(--color-aurora-pink)] hover:bg-[var(--color-aurora-purple)] text-white font-semibold px-6 min-h-[44px]"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Glass
@@ -187,7 +187,7 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
                   <div key={i} className="flex-1 flex flex-col items-center gap-1">
                     <div className="w-full h-16 bg-[var(--accent)] rounded-t relative overflow-hidden">
                       <div
-                        className="absolute bottom-0 w-full bg-gradient-to-t from-[var(--color-aurora-blue)] to-[var(--color-aurora-mint)] transition-all duration-300"
+                        className="absolute bottom-0 w-full bg-gradient-to-t from-[var(--color-aurora-pink)] to-[var(--color-aurora-mint)] transition-all duration-300"
                         style={{ height: `${heightPercent}%` }}
                       />
                     </div>
@@ -201,7 +201,7 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
             {/* Weekly Stats */}
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div className="bg-[var(--accent)] rounded-lg p-3 text-center">
-                <p className="text-2xl font-bold text-[var(--color-aurora-blue)]">
+                <p className="text-2xl font-bold text-[var(--color-aurora-pink)]">
                   {hydrationHistory.reduce((sum: number, h: any) => sum + (h.glasses || 0), 0)}
                 </p>
                 <p className="text-xs text-[var(--muted-foreground)]">Total glasses</p>

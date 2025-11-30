@@ -127,20 +127,21 @@ export default function OpportunitiesPage() {
               </SelectContent>
             </Select>
 
-            <div className="flex gap-2">
-              <Link href="/opportunities/my-opportunities">
-                <Button variant="outline" className="border-[var(--border)]">
-                  <Settings className="w-4 h-4 mr-2" />
-                  My Opportunities
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Link href="/opportunities/my-opportunities" className="flex-1 sm:flex-none">
+                <Button variant="outline" className="border-[var(--border)] w-full sm:w-auto min-h-[44px]">
+                  <Settings className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">My Opportunities</span>
                 </Button>
               </Link>
 
               <Button
                 onClick={() => setCreateDialogOpen(true)}
-                className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
+                className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] flex-1 sm:flex-none min-h-[44px]"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Opportunity
+                <Plus className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Create Opportunity</span>
+                <span className="sm:hidden">Create</span>
               </Button>
             </div>
           </div>
@@ -148,7 +149,7 @@ export default function OpportunitiesPage() {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="max-w-5xl mx-auto">
           {/* Loading State */}
           {opportunities === undefined && (
@@ -175,7 +176,7 @@ export default function OpportunitiesPage() {
 
           {/* Opportunities Grid */}
           {opportunities && opportunities.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {opportunities.map((opportunity) => (
                 <OpportunityCard
                   key={opportunity._id}

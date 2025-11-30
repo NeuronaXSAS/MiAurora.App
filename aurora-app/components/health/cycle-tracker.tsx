@@ -13,13 +13,11 @@ import {
   Droplets, 
   Heart, 
   Moon, 
-  Sun, 
   Sparkles,
   ChevronLeft,
-  ChevronRight,
-  Check
+  ChevronRight
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 interface CycleTrackerProps {
   userId: Id<"users">;
@@ -159,45 +157,85 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
         </CardHeader>
         <CardContent>
           {predictions?.hasEnoughData ? (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-[var(--color-aurora-pink)]/10 rounded-xl">
-                <p className="text-3xl font-bold text-[var(--color-aurora-pink)]">
-                  Day {predictions.cycleDay}
-                </p>
-                <p className="text-sm text-[var(--muted-foreground)]">of your cycle</p>
-              </div>
-              <div className="text-center p-4 bg-[var(--color-aurora-purple)]/10 rounded-xl">
-                <p className="text-3xl font-bold text-[var(--color-aurora-purple)]">
-                  {predictions.averageCycleLength}
-                </p>
-                <p className="text-sm text-[var(--muted-foreground)]">day avg cycle</p>
-              </div>
-              
-              {predictions.nextPeriodDate && (
-                <div className="col-span-2 p-4 bg-[var(--color-aurora-pink)]/20 rounded-xl">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Droplets className="w-4 h-4 text-[var(--color-aurora-pink)]" />
-                    <span className="font-semibold text-[var(--foreground)]">Next Period</span>
+            <div className="space-y-4">
+              {/* Cycle Day Progress */}
+              <div className="relative p-4 bg-gradient-to-r from-[var(--color-aurora-pink)]/20 to-[var(--color-aurora-purple)]/20 rounded-xl overflow-hidden">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-4xl font-bold text-[var(--color-aurora-pink)]">
+                      Day {predictions.cycleDay || 1}
+                    </p>
+                    <p className="text-sm text-[var(--muted-foreground)]">of {predictions.averageCycleLength} day cycle</p>
                   </div>
-                  <p className="text-lg text-[var(--foreground)]">
-                    {new Date(predictions.nextPeriodDate).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'short',
-                      day: 'numeric'
-                    })}
-                  </p>
+                  <Badge variant="secondary" className="bg-white/10 text-[var(--muted-foreground)] text-xs">
+                    {cycleHistory.filter(l => l.type === "period").length} days logged
+                  </Badge>
                 </div>
-              )}
+                {/* Progress bar */}
+                <div className="w-full bg-white/20 rounded-full h-2">
+                  <div 
+                    className="h-full bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] rounded-full transition-all"
+                    style={{ width: `${Math.min(((predictions.cycleDay || 1) / predictions.averageCycleLength) * 100, 100)}%` }}
+                  />
+                </div>
+                {/* Phase indicator */}
+                <p className="text-xs text-[var(--muted-foreground)] mt-2">
+                  {(predictions.cycleDay || 1) <= 5 ? "🩸 Menstrual Phase" : 
+                   (predictions.cycleDay || 1) <= 13 ? "🌱 Follicular Phase" :
+                   (predictions.cycleDay || 1) <= 16 ? "✨ Ovulation Phase" : "🌙 Luteal Phase"}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {predictions.nextPeriodDate && (
+                  <div className="p-3 bg-[var(--color-aurora-pink)]/10 rounded-xl border border-[var(--color-aurora-pink)]/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Droplets className="w-4 h-4 text-[var(--color-aurora-pink)]" />
+                      <span className="font-medium text-sm text-[var(--foreground)]">Next Period</span>
+                    </div>
+                    <p className="text-sm text-[var(--foreground)]">
+                      {new Date(predictions.nextPeriodDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </p>
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      in {Math.max(0, Math.ceil((new Date(predictions.nextPeriodDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days
+                    </p>
+                  </div>
+                )}
+                
+                {predictions.ovulationDate && (
+                  <div className="p-3 bg-[var(--color-aurora-mint)]/10 rounded-xl border border-[var(--color-aurora-mint)]/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Sparkles className="w-4 h-4 text-[var(--color-aurora-mint)]" />
+                      <span className="font-medium text-sm text-[var(--foreground)]">Ovulation</span>
+                    </div>
+                    <p className="text-sm text-[var(--foreground)]">
+                      {new Date(predictions.ovulationDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </p>
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      {(() => {
+                        const days = Math.ceil((new Date(predictions.ovulationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                        return days > 0 ? `in ${days} days` : days === 0 ? "today" : `${Math.abs(days)} days ago`;
+                      })()}
+                    </p>
+                  </div>
+                )}
+              </div>
               
               {predictions.fertileWindowStart && (
-                <div className="col-span-2 p-4 bg-[var(--color-aurora-lavender)]/20 rounded-xl">
+                <div className="p-3 bg-[var(--color-aurora-lavender)]/10 rounded-xl border border-[var(--color-aurora-lavender)]/20">
                   <div className="flex items-center gap-2 mb-1">
-                    <Sparkles className="w-4 h-4 text-[var(--color-aurora-purple)]" />
-                    <span className="font-semibold text-[var(--foreground)]">Fertile Window</span>
+                    <Heart className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                    <span className="font-medium text-sm text-[var(--foreground)]">Fertile Window</span>
                   </div>
                   <p className="text-sm text-[var(--foreground)]">
                     {new Date(predictions.fertileWindowStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    {' - '}
+                    {' → '}
                     {new Date(predictions.fertileWindowEnd!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </p>
                 </div>

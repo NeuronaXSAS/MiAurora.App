@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -62,7 +61,6 @@ interface RedditPostCardProps {
   currentUserId?: Id<"users">;
   onVerify?: () => void;
   onDelete?: () => void;
-  hasVerified?: boolean;
   showActions?: boolean;
 }
 
@@ -93,13 +91,32 @@ export function RedditPostCard({
   currentUserId,
   onVerify,
   onDelete,
-  hasVerified = false,
   showActions = true,
 }: RedditPostCardProps) {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
+
+  // Check if post is saved using Convex (real backend)
+  const savedStatus = useQuery(
+    api.savedPosts.isPostSaved,
+    currentUserId ? { userId: currentUserId, postId: post._id as Id<"posts"> } : "skip"
+  );
+  const toggleSave = useMutation(api.savedPosts.toggleSave);
+  
+  const isSaved = savedStatus ?? false;
+
+  // Handle save/unsave post with real backend
+  const handleSave = async () => {
+    if (!currentUserId) return;
+    try {
+      await toggleSave({ userId: currentUserId, postId: post._id as Id<"posts"> });
+    } catch (error) {
+      console.error("Save error:", error);
+    }
+  };
+
   const [userVote, setUserVote] = useState<"upvote" | "downvote" | null>(null);
-  const [isJoined, setIsJoined] = useState(false);
+
 
   const isAuthor = currentUserId === post.authorId;
   const communityName = communityNames[post.lifeDimension] || "r/Aurora";
@@ -226,15 +243,7 @@ export function RedditPostCard({
                 Verified
               </Badge>
             )}
-            {!isJoined && (
-              <Button
-                size="sm"
-                onClick={() => setIsJoined(true)}
-                className="ml-auto h-7 px-4 text-xs bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 text-white rounded-full font-semibold shadow-sm"
-              >
-                Join
-              </Button>
-            )}
+
           </div>
 
           {/* Title */}
@@ -304,9 +313,14 @@ export function RedditPostCard({
               Share
             </button>
 
-            <button className="flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-[var(--accent)] text-xs font-medium transition-colors">
-              <Bookmark className="w-4 h-4" />
-              Save
+            <button 
+              onClick={handleSave}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-[var(--accent)] text-xs font-medium transition-colors ${
+                isSaved ? "text-[var(--color-aurora-purple)]" : ""
+              }`}
+            >
+              <Bookmark className="w-4 h-4" fill={isSaved ? "currentColor" : "none"} />
+              {isSaved ? "Saved" : "Save"}
             </button>
 
             <DropdownMenu>

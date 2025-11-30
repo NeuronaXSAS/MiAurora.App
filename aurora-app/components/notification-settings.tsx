@@ -20,7 +20,7 @@ const notificationTypes = [
     label: 'Safety Alerts',
     description: 'Critical safety notifications',
     icon: Shield,
-    color: 'text-red-400',
+    color: 'text-[var(--color-aurora-orange)]',
     critical: true,
   },
   {
@@ -28,7 +28,7 @@ const notificationTypes = [
     label: 'Check-in Reminders',
     description: 'Scheduled safety check-ins',
     icon: AlertTriangle,
-    color: 'text-orange-400',
+    color: 'text-[var(--color-aurora-yellow)]',
     critical: true,
   },
   {
@@ -36,7 +36,7 @@ const notificationTypes = [
     label: 'Emergency Alerts',
     description: 'When contacts need help',
     icon: Bell,
-    color: 'text-red-500',
+    color: 'text-[var(--color-aurora-orange)]',
     critical: true,
   },
   {
@@ -44,21 +44,21 @@ const notificationTypes = [
     label: 'Credits & Rewards',
     description: 'When you earn credits',
     icon: Sparkles,
-    color: 'text-[#FFC285]',
+    color: 'text-[var(--color-aurora-yellow)]',
   },
   {
     key: 'circleActivity',
     label: 'Circle Activity',
     description: 'Updates from your circles',
     icon: Users,
-    color: 'text-[#8B5CF6]',
+    color: 'text-[var(--color-aurora-purple)]',
   },
   {
     key: 'messages',
     label: 'Messages',
     description: 'New direct messages',
     icon: MessageSquare,
-    color: 'text-[#FF6B7A]',
+    color: 'text-[var(--color-aurora-pink)]',
   },
 ];
 
@@ -90,11 +90,11 @@ export function NotificationSettings() {
 
   if (!isSupported) {
     return (
-      <Card className="p-6 bg-white/5 border-white/10">
-        <div className="flex items-center gap-3 text-white/60">
+      <Card className="p-6 bg-[var(--card)] border-[var(--border)]">
+        <div className="flex items-center gap-3 text-[var(--muted-foreground)]">
           <BellOff className="w-6 h-6" />
           <div>
-            <p className="font-medium">Notifications Not Supported</p>
+            <p className="font-medium text-[var(--foreground)]">Notifications Not Supported</p>
             <p className="text-sm">Your browser doesn't support push notifications.</p>
           </div>
         </div>
@@ -105,24 +105,24 @@ export function NotificationSettings() {
   return (
     <div className="space-y-6">
       {/* Permission Status */}
-      <Card className="p-6 bg-gradient-to-br from-white/5 to-white/10 border-white/10">
+      <Card className="p-6 bg-[var(--card)] border-[var(--border)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className={cn(
               "w-12 h-12 rounded-xl flex items-center justify-center",
               permission === 'granted' 
-                ? "bg-green-500/20" 
-                : "bg-[#FF6B7A]/20"
+                ? "bg-[var(--color-aurora-mint)]/20" 
+                : "bg-[var(--color-aurora-salmon)]/20"
             )}>
               {permission === 'granted' ? (
-                <Bell className="w-6 h-6 text-green-400" />
+                <Bell className="w-6 h-6 text-[var(--color-aurora-mint)]" />
               ) : (
-                <BellOff className="w-6 h-6 text-[#FF6B7A]" />
+                <BellOff className="w-6 h-6 text-[var(--color-aurora-salmon)]" />
               )}
             </div>
             <div>
-              <h3 className="text-white font-semibold">Push Notifications</h3>
-              <p className="text-white/60 text-sm">
+              <h3 className="text-[var(--foreground)] font-semibold">Push Notifications</h3>
+              <p className="text-[var(--muted-foreground)] text-sm">
                 {permission === 'granted' 
                   ? 'Notifications are enabled' 
                   : permission === 'denied'
@@ -136,14 +136,14 @@ export function NotificationSettings() {
             <Button
               onClick={requestPermission}
               disabled={isLoading}
-              className="bg-gradient-to-r from-[#FF6B7A] to-[#E84D5F]"
+              className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] min-h-[44px]"
             >
               {isLoading ? 'Enabling...' : 'Enable'}
             </Button>
           )}
           
           {permission === 'granted' && (
-            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+            <Badge className="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] border-[var(--color-aurora-mint)]/30">
               <Check className="w-3 h-3 mr-1" /> Enabled
             </Badge>
           )}
@@ -152,8 +152,8 @@ export function NotificationSettings() {
 
       {/* Notification Types */}
       {permission === 'granted' && (
-        <Card className="p-6 bg-white/5 border-white/10">
-          <h3 className="text-white font-semibold mb-4">Notification Preferences</h3>
+        <Card className="p-6 bg-[var(--card)] border-[var(--border)]">
+          <h3 className="text-[var(--foreground)] font-semibold mb-4">Notification Preferences</h3>
           <div className="space-y-4">
             {notificationTypes.map((type) => {
               const Icon = type.icon;
@@ -162,23 +162,23 @@ export function NotificationSettings() {
               return (
                 <motion.div
                   key={type.key}
-                  className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent)]/80 transition-colors"
                   whileHover={{ x: 4 }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center bg-white/10")}>
+                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center bg-[var(--background)]")}>
                       <Icon className={cn("w-5 h-5", type.color)} />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="text-white font-medium">{type.label}</p>
+                        <p className="text-[var(--foreground)] font-medium">{type.label}</p>
                         {type.critical && (
-                          <Badge variant="outline" className="text-xs border-red-500/30 text-red-400">
+                          <Badge variant="outline" className="text-xs border-[var(--color-aurora-orange)]/30 text-[var(--color-aurora-orange)]">
                             Critical
                           </Badge>
                         )}
                       </div>
-                      <p className="text-white/50 text-sm">{type.description}</p>
+                      <p className="text-[var(--muted-foreground)] text-sm">{type.description}</p>
                     </div>
                   </div>
                   <Switch
@@ -192,11 +192,11 @@ export function NotificationSettings() {
           </div>
           
           {/* Test Button */}
-          <div className="mt-6 pt-4 border-t border-white/10">
+          <div className="mt-6 pt-4 border-t border-[var(--border)]">
             <Button
               variant="outline"
               onClick={handleTestNotification}
-              className="w-full border-white/20 text-white hover:bg-white/10"
+              className="w-full border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--accent)] min-h-[44px]"
             >
               <Bell className="w-4 h-4 mr-2" />
               Send Test Notification

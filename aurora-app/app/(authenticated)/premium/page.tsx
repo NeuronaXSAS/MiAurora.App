@@ -50,32 +50,32 @@ export default function PremiumPage() {
     },
     {
       icon: MessageSquare,
-      title: "Unlimited AI Assistant",
-      description: "No limits on conversations with your Digital Therapist",
+      title: "Unlimited AI Companion",
+      description: "1000 daily messages vs 10 for free users - talk to Aurora anytime",
       color: "text-aurora-pink",
+    },
+    {
+      icon: Zap,
+      title: "Higher Limits",
+      description: "50 posts/hour, 20 reels/day, 10 livestreams/day vs free limits",
+      color: "text-aurora-blue",
+    },
+    {
+      icon: Crown,
+      title: "Premium Badge",
+      description: "Stand out with a verified Premium badge on your profile",
+      color: "text-aurora-yellow",
     },
     {
       icon: Shield,
       title: "Priority Support",
       description: "Get faster response times and dedicated support",
-      color: "text-aurora-blue",
-    },
-    {
-      icon: Crown,
-      title: "Exclusive Badge",
-      description: "Stand out with a Premium badge on your profile",
-      color: "text-aurora-yellow",
-    },
-    {
-      icon: Zap,
-      title: "Early Access",
-      description: "Be the first to try new features and updates",
       color: "text-aurora-mint",
     },
     {
       icon: TrendingUp,
       title: "Enhanced Analytics",
-      description: "Get deeper insights into your wellness and activity",
+      description: "Get deeper insights into your wellness journey and mental health",
       color: "text-aurora-orange",
     },
   ];
@@ -181,10 +181,13 @@ export default function PremiumPage() {
                 Aurora Premium
               </CardTitle>
               <div className="flex items-baseline justify-center gap-2">
-                <span className="text-5xl font-black text-aurora-yellow">$7</span>
+                <span className="text-5xl font-black text-aurora-yellow">$5</span>
                 <span className="text-xl text-gray-300">/month</span>
               </div>
               <p className="text-sm text-gray-400 mt-2">Cancel anytime • No commitments</p>
+              <Badge className="mt-3 bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] border-[var(--color-aurora-mint)]/30">
+                🌍 Affordable for women worldwide
+              </Badge>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Benefits Grid */}
@@ -211,13 +214,31 @@ export default function PremiumPage() {
                 <Button
                   size="lg"
                   className="w-full bg-gradient-to-r from-aurora-yellow to-aurora-orange hover:from-aurora-yellow/90 hover:to-aurora-orange/90 text-slate-900 font-bold text-lg h-14 shadow-lg shadow-aurora-yellow/30"
-                  disabled
+                  onClick={async () => {
+                    if (!userId || !user?.email) return;
+                    try {
+                      const response = await fetch('/api/stripe/checkout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId, email: user.email }),
+                      });
+                      const data = await response.json();
+                      if (data.url) {
+                        window.location.href = data.url;
+                      } else if (data.message) {
+                        alert(data.message);
+                      }
+                    } catch (error) {
+                      console.error('Checkout error:', error);
+                      alert('Unable to start checkout. Please try again.');
+                    }
+                  }}
                 >
                   <Crown className="w-5 h-5 mr-2" />
-                  Coming Soon - Stripe Integration
+                  Subscribe for $5/month
                 </Button>
                 <p className="text-center text-xs text-gray-400 mt-3">
-                  Premium subscriptions will be available soon via Stripe
+                  Secure payment via Stripe • Cancel anytime
                 </p>
               </div>
 
@@ -243,15 +264,15 @@ export default function PremiumPage() {
             <CardContent>
               <div className="space-y-3">
                 {[
-                  { feature: "Community Feed & Posts", free: true, premium: true },
-                  { feature: "Safety Map & Routes", free: true, premium: true },
-                  { feature: "AI Assistant (Limited)", free: true, premium: false },
-                  { feature: "AI Assistant (Unlimited)", free: false, premium: true },
-                  { feature: "Advertisements", free: true, premium: false },
-                  { feature: "Ad-Free Experience", free: false, premium: true },
-                  { feature: "Premium Badge", free: false, premium: true },
-                  { feature: "Priority Support", free: false, premium: true },
-                  { feature: "Early Access to Features", free: false, premium: true },
+                  { feature: "Community Feed & Posts", free: "5/hour", premium: "50/hour" },
+                  { feature: "Safety Map & Routes", free: "✓", premium: "✓" },
+                  { feature: "AI Companion Messages", free: "10/day", premium: "1000/day" },
+                  { feature: "Reel Uploads", free: "3/day", premium: "20/day" },
+                  { feature: "Livestreams", free: "2/day", premium: "10/day" },
+                  { feature: "Advertisements", free: "Yes", premium: "No ads ✨" },
+                  { feature: "Premium Badge", free: "—", premium: "✓" },
+                  { feature: "Priority Support", free: "—", premium: "✓" },
+                  { feature: "Bonus Credits", free: "—", premium: "100 credits" },
                 ].map((row, index) => (
                   <div
                     key={index}
@@ -260,19 +281,11 @@ export default function PremiumPage() {
                     <div className="col-span-1 text-white text-sm font-medium">
                       {row.feature}
                     </div>
-                    <div className="text-center">
-                      {row.free ? (
-                        <Check className="w-5 h-5 text-green-400 mx-auto" />
-                      ) : (
-                        <span className="text-gray-600">—</span>
-                      )}
+                    <div className="text-center text-sm text-gray-400">
+                      {row.free}
                     </div>
-                    <div className="text-center">
-                      {row.premium ? (
-                        <Check className="w-5 h-5 text-aurora-yellow mx-auto" />
-                      ) : (
-                        <span className="text-gray-600">—</span>
-                      )}
+                    <div className="text-center text-sm text-aurora-yellow font-medium">
+                      {row.premium}
                     </div>
                   </div>
                 ))}

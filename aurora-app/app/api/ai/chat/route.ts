@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, getRateLimitStatus } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, userId, conversationHistory } = await request.json();
+    const { message, userId, conversationHistory, isPremium } = await request.json();
 
     if (!message) {
       return NextResponse.json(
@@ -11,8 +12,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check rate limit for AI chat
+    if (userId) {
+      const rateLimitResult = checkRateLimit(userId, 'aiChat', isPremium || false);
+      
+      if (!rateLimitResult.success) {
+        const resetMinutes = Math.ceil(rateLimitResult.resetIn / 60000);
+        return NextResponse.json(
+          { 
+            error: 'Rate limit exceeded',
+            message: isPremium 
+              ? `You've reached your daily limit. Resets in ${resetMinutes} minutes.`
+              : `You've used your 10 free messages today. Upgrade to Premium for 1000 daily messages! Resets in ${resetMinutes} minutes.`,
+            remaining: rateLimitResult.remaining,
+            resetIn: rateLimitResult.resetIn,
+            upgradeToPremium: !isPremium,
+          },
+          { status: 429 }
+        );
+      }
+    }
+
     // Get Gemini API key from environment
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
     
     if (!apiKey) {
       console.error('GEMINI_API_KEY not configured');

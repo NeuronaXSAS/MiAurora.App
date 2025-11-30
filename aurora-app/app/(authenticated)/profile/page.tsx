@@ -19,7 +19,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  User,
   Sparkles,
   TrendingUp,
   FileText,
@@ -33,8 +32,10 @@ import {
   Heart,
   Bell,
   BellOff,
-  Droplet,
+  Bookmark,
+  Crown,
 } from "lucide-react";
+import Link from "next/link";
 import { Id } from "@/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 import { HydrationTracker } from "@/components/health/hydration-tracker";
@@ -42,11 +43,13 @@ import { EmotionalCheckin } from "@/components/health/emotional-checkin";
 import { MeditationSection } from "@/components/health/meditation-section";
 import { generateAvatarUrl, AvatarConfig } from "@/hooks/use-avatar";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { AvatarCreator } from "@/components/avatar-creator";
 
 export default function ProfilePage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [workosId, setWorkosId] = useState<string>("");
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showAvatarCreator, setShowAvatarCreator] = useState(false);
   const [editForm, setEditForm] = useState({
     name: "",
     bio: "",
@@ -55,6 +58,9 @@ export default function ProfilePage() {
     careerGoals: "",
   });
   const [isSaving, setIsSaving] = useState(false);
+
+  // Mutation to update avatar
+  const updateAvatar = useMutation(api.users.updateAvatar);
 
   const updateProfile = useMutation(api.users.completeOnboarding);
   
@@ -89,6 +95,12 @@ export default function ProfilePage() {
   const recentPosts = useQuery(
     api.posts.getUserRecent,
     userId ? { userId, limit: 5 } : "skip"
+  );
+
+  // Fetch saved posts
+  const savedPosts = useQuery(
+    api.savedPosts.getSavedPosts,
+    userId ? { userId, limit: 10 } : "skip"
   );
 
   // Get user ID and WorkOS ID
@@ -209,17 +221,41 @@ export default function ProfilePage() {
       <div className="bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
           <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
-            <Avatar className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 border-4 border-white/50">
-              <AvatarImage src={user.avatarConfig ? generateAvatarUrl(user.avatarConfig as AvatarConfig) : user.profileImage} />
-              <AvatarFallback className="text-2xl sm:text-3xl bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white">
-                {(user.name && user.name !== 'null' ? user.name : 'U').charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            {/* Avatar with Edit Button */}
+            <div className="relative group">
+              <Avatar className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 border-4 border-white/50">
+                <AvatarImage src={user.avatarConfig ? generateAvatarUrl(user.avatarConfig as AvatarConfig) : user.profileImage} />
+                <AvatarFallback className="text-2xl sm:text-3xl bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white">
+                  {(user.name && user.name !== 'null' ? user.name : 'U').charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <button
+                onClick={() => setShowAvatarCreator(true)}
+                className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+                title="Edit Avatar"
+              >
+                <Heart className="w-4 h-4 text-[var(--color-aurora-pink)]" />
+              </button>
+            </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
                 <h1 className="text-2xl sm:text-3xl font-bold">
                   {user.name && user.name !== 'null' ? user.name : 'User'}
                 </h1>
+                {/* Premium Badge */}
+                {user.isPremium ? (
+                  <Badge className="bg-gradient-to-r from-[var(--color-aurora-yellow)] to-[var(--color-aurora-orange)] text-slate-900 border-0 font-semibold">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Premium
+                  </Badge>
+                ) : (
+                  <Link href="/premium">
+                    <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 cursor-pointer">
+                      <Crown className="w-3 h-3 mr-1" />
+                      Upgrade
+                    </Badge>
+                  </Link>
+                )}
                 <Button
                   onClick={() => setShowEditDialog(true)}
                   variant="outline"
@@ -588,6 +624,41 @@ export default function ProfilePage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Saved Posts */}
+            <Card className="bg-[var(--card)] border-[var(--border)]">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+                  <Bookmark className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+                  Saved Posts
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {savedPosts && savedPosts.length > 0 ? (
+                    savedPosts.map((post: any) => (
+                      <div key={post._id} className="border-b border-[var(--border)] last:border-0 pb-3 last:pb-0">
+                        <p className="font-medium text-sm line-clamp-1 text-[var(--foreground)]">{post.title}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]">
+                            {post.lifeDimension}
+                          </Badge>
+                          <span className="text-xs text-[var(--muted-foreground)]">
+                            by {post.author?.name || "Anonymous"}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4">
+                      <Bookmark className="w-8 h-8 text-[var(--muted-foreground)] mx-auto mb-2 opacity-50" />
+                      <p className="text-[var(--muted-foreground)] text-sm">No saved posts yet</p>
+                      <p className="text-[var(--muted-foreground)] text-xs mt-1">Tap the bookmark icon on posts to save them</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
@@ -665,6 +736,22 @@ export default function ProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Avatar Creator Dialog */}
+      {userId && (
+        <AvatarCreator
+          open={showAvatarCreator}
+          onComplete={async (avatarConfig) => {
+            try {
+              await updateAvatar({ userId, avatarConfig });
+              setShowAvatarCreator(false);
+            } catch (error) {
+              console.error("Error updating avatar:", error);
+            }
+          }}
+          onSkip={() => setShowAvatarCreator(false)}
+        />
+      )}
     </div>
   );
 }

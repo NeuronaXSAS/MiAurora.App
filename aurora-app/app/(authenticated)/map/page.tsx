@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { MapPin, Plus, Menu } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 
 export default function MapPage() {
@@ -25,7 +25,6 @@ export default function MapPage() {
     address: string;
   } | null>(null);
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
-  const [showControls, setShowControls] = useState(false);
 
   // Get user ID
   useEffect(() => {
@@ -49,68 +48,48 @@ export default function MapPage() {
   };
 
   return (
-    <div className="h-[100dvh] w-full relative overflow-hidden bg-[var(--background)]">
+    <div className="h-[calc(100dvh-60px)] w-full relative overflow-hidden bg-[var(--background)]">
       {/* Full-screen Map */}
       <SafetyMap 
         lifeDimension={lifeDimension}
         onLocationSelect={handleLocationSelect}
       />
 
-      {/* Floating Header Controls */}
-      <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
-        {/* Toggle Controls Button */}
-        <Button
-          onClick={() => setShowControls(!showControls)}
-          className="bg-[var(--card)] text-[var(--foreground)] hover:bg-[var(--accent)] shadow-lg border border-[var(--border)] min-w-[44px] min-h-[44px]"
-          size="icon"
-          title="Toggle controls"
-        >
-          <Menu className="w-5 h-5" />
-        </Button>
+      {/* Bottom Controls - Clean and organized */}
+      <div className="absolute bottom-6 left-4 right-4 z-20">
+        <div className="bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-2xl shadow-lg p-3">
+          <div className="flex items-center gap-2">
+            {/* Filter Dropdown */}
+            <Select
+              value={lifeDimension || "all"}
+              onValueChange={(value) =>
+                setLifeDimension(value === "all" ? undefined : value)
+              }
+            >
+              <SelectTrigger className="flex-1 bg-[var(--background)] border-[var(--border)] min-h-[44px] rounded-xl">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent className="bg-[var(--card)] border-[var(--border)]">
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="professional">💼 Professional</SelectItem>
+                <SelectItem value="social">👥 Social</SelectItem>
+                <SelectItem value="daily">🏠 Daily Life</SelectItem>
+                <SelectItem value="travel">✈️ Travel</SelectItem>
+                <SelectItem value="financial">💰 Financial</SelectItem>
+              </SelectContent>
+            </Select>
 
-        {/* Title Badge */}
-        <div className="bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg px-3 py-2 flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-[var(--color-aurora-purple)]" />
-          <span className="font-semibold text-sm text-[var(--foreground)]">Safety Map</span>
+            {/* Mark Location Button */}
+            <Button 
+              onClick={() => setShowCreateDialog(true)} 
+              className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] min-h-[44px] rounded-xl px-4"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Mark</span>
+            </Button>
+          </div>
         </div>
       </div>
-
-      {/* Expandable Controls Panel */}
-      {showControls && (
-        <div className="absolute top-16 left-4 z-20 bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg p-3 flex flex-col gap-3 min-w-[200px]">
-          {/* Filter */}
-          <Select
-            value={lifeDimension || "all"}
-            onValueChange={(value) =>
-              setLifeDimension(value === "all" ? undefined : value)
-            }
-          >
-            <SelectTrigger className="w-full bg-[var(--background)] border-[var(--border)]">
-              <SelectValue placeholder="All Dimensions" />
-            </SelectTrigger>
-            <SelectContent className="bg-[var(--card)] border-[var(--border)]">
-              <SelectItem value="all">All Dimensions</SelectItem>
-              <SelectItem value="professional">Professional</SelectItem>
-              <SelectItem value="social">Social</SelectItem>
-              <SelectItem value="daily">Daily Life</SelectItem>
-              <SelectItem value="travel">Travel</SelectItem>
-              <SelectItem value="financial">Financial</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Create Post Button */}
-          <Button 
-            onClick={() => {
-              setShowCreateDialog(true);
-              setShowControls(false);
-            }} 
-            className="w-full bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Mark Location
-          </Button>
-        </div>
-      )}
 
       {/* Create Post Dialog */}
       {userId && (

@@ -187,7 +187,7 @@ export function ReelPlayer({ reel, isActive, currentUserId, onLike }: ReelPlayer
   };
 
   return (
-    <div className="relative w-full h-screen bg-black snap-start snap-always">
+    <div className="relative w-full h-[calc(100vh-60px)] bg-black snap-start snap-always">
       <video
         ref={videoRef}
         src={reel.videoUrl}

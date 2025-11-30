@@ -51,11 +51,11 @@ const categoryIcons = {
 };
 
 const categoryColors = {
-  job: "bg-blue-100 text-blue-800",
-  mentorship: "bg-purple-100 text-purple-800",
-  resource: "bg-green-100 text-green-800",
-  event: "bg-orange-100 text-orange-800",
-  funding: "bg-pink-100 text-pink-800",
+  job: "bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]",
+  mentorship: "bg-[var(--color-aurora-lavender)]/30 text-[var(--color-aurora-violet)]",
+  resource: "bg-[var(--color-aurora-mint)]/30 text-green-700",
+  event: "bg-[var(--color-aurora-yellow)]/30 text-yellow-800",
+  funding: "bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)]",
 };
 
 export function OpportunityCard({
@@ -108,7 +108,7 @@ export function OpportunityCard({
   const externalUrl = opportunity.externalLink || opportunity.externalUrl;
 
   return (
-    <Card className={`hover-lift animate-fade-in-up ${!isUnlocked && !canAfford ? 'opacity-75' : ''}`}>
+    <Card className={`hover-lift animate-fade-in-up bg-[var(--card)] border-[var(--border)] ${!isUnlocked && !canAfford ? 'opacity-75' : ''}`}>
       {/* Thumbnail Image */}
       {thumbnailUrl && (
         <div className="w-full h-48 overflow-hidden rounded-t-lg">
@@ -129,12 +129,12 @@ export function OpportunityCard({
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-lg truncate">{opportunity.title}</h3>
+              <h3 className="font-semibold text-lg truncate text-[var(--foreground)]">{opportunity.title}</h3>
               {companyName && (
-                <p className="text-sm text-gray-600">{companyName}</p>
+                <p className="text-sm text-[var(--muted-foreground)]">{companyName}</p>
               )}
               {opportunity.location && (
-                <p className="text-xs text-gray-500">{opportunity.location}</p>
+                <p className="text-xs text-[var(--muted-foreground)]">{opportunity.location}</p>
               )}
             </div>
           </div>
@@ -166,24 +166,24 @@ export function OpportunityCard({
 
       <CardContent className="space-y-4">
         {/* Description */}
-        <p className={`text-gray-700 ${!isUnlocked ? 'line-clamp-2' : ''}`}>
+        <p className={`text-[var(--foreground)]/80 ${!isUnlocked ? 'line-clamp-2' : ''}`}>
           {opportunity.description}
         </p>
 
         {/* Details (only if unlocked) */}
         {isUnlocked && (
-          <div className="space-y-2 pt-2 border-t">
+          <div className="space-y-2 pt-2 border-t border-[var(--border)]">
             {salaryInfo && (
               <div className="flex items-center gap-2 text-sm">
-                <DollarSign className="w-4 h-4 text-gray-500" />
-                <span className="font-medium">Salary:</span>
-                <span className="text-gray-600">{salaryInfo}</span>
+                <DollarSign className="w-4 h-4 text-[var(--muted-foreground)]" />
+                <span className="font-medium text-[var(--foreground)]">Salary:</span>
+                <span className="text-[var(--muted-foreground)]">{salaryInfo}</span>
               </div>
             )}
             {opportunity.requirements && opportunity.requirements.length > 0 && (
               <div className="text-sm">
-                <span className="font-medium">Requirements:</span>
-                <ul className="list-disc list-inside text-gray-600 mt-1 space-y-1">
+                <span className="font-medium text-[var(--foreground)]">Requirements:</span>
+                <ul className="list-disc list-inside text-[var(--muted-foreground)] mt-1 space-y-1">
                   {opportunity.requirements.map((req, idx) => (
                     <li key={idx}>{req}</li>
                   ))}
@@ -192,17 +192,17 @@ export function OpportunityCard({
             )}
             {opportunity.safetyRating && (
               <div className="flex items-center gap-2 text-sm">
-                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                <span className="font-medium">Safety Rating:</span>
-                <span className="text-gray-600">{opportunity.safetyRating}/5</span>
+                <Star className="w-4 h-4 text-[var(--color-aurora-yellow)] fill-[var(--color-aurora-yellow)]" />
+                <span className="font-medium text-[var(--foreground)]">Safety Rating:</span>
+                <span className="text-[var(--muted-foreground)]">{opportunity.safetyRating}/5</span>
               </div>
             )}
             {opportunity.contactEmail && (
-              <div className="text-sm">
+              <div className="text-sm text-[var(--foreground)]">
                 <span className="font-medium">Contact:</span>{" "}
                 <a
                   href={`mailto:${opportunity.contactEmail}`}
-                  className="text-purple-600 hover:text-purple-700 underline"
+                  className="text-[var(--color-aurora-purple)] hover:text-[var(--color-aurora-violet)] underline"
                 >
                   {opportunity.contactEmail}
                 </a>
@@ -213,7 +213,7 @@ export function OpportunityCard({
                 href={externalUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-purple-600 hover:text-purple-700 underline inline-block"
+                className="text-sm text-[var(--color-aurora-purple)] hover:text-[var(--color-aurora-violet)] underline inline-block"
               >
                 View full details →
               </a>
@@ -222,17 +222,17 @@ export function OpportunityCard({
         )}
 
         {/* Action */}
-        <div className="flex items-center justify-between pt-2 border-t">
+        <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
           <div className="flex items-center gap-2">
             {isUnlocked ? (
-              <Badge variant="outline" className="text-green-600 border-green-600">
+              <Badge variant="outline" className="text-[var(--color-aurora-mint)] border-[var(--color-aurora-mint)]">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
                 Unlocked
               </Badge>
             ) : (
               <div className="flex items-center gap-2 text-sm">
-                <Lock className="w-4 h-4 text-gray-500" />
-                <span className="font-medium">{opportunity.creditCost} credits</span>
+                <Lock className="w-4 h-4 text-[var(--muted-foreground)]" />
+                <span className="font-medium text-[var(--foreground)]">{opportunity.creditCost} credits</span>
               </div>
             )}
           </div>
@@ -242,6 +242,10 @@ export function OpportunityCard({
               onClick={onUnlock}
               disabled={!canAfford}
               size="sm"
+              className={canAfford 
+                ? "bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white min-h-[44px]" 
+                : "bg-[var(--muted-foreground)]/20 text-[var(--muted-foreground)] min-h-[44px]"
+              }
             >
               {canAfford ? `Unlock (${opportunity.creditCost} credits)` : 'Insufficient Credits'}
             </Button>
@@ -250,7 +254,7 @@ export function OpportunityCard({
 
         {/* Insufficient credits warning */}
         {!isUnlocked && !canAfford && (
-          <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+          <div className="text-xs text-[var(--color-aurora-orange)] bg-[var(--color-aurora-orange)]/10 p-2 rounded-lg">
             You need {opportunity.creditCost - userCredits} more credits to unlock this
           </div>
         )}

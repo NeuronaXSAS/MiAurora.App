@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { RedditPostCard } from "@/components/reddit-post-card";
 import { MobileRouteCard } from "@/components/mobile-route-card";
@@ -9,13 +9,13 @@ import { PollCard } from "@/components/poll-card";
 import { AIChatCard } from "@/components/ai-chat-card";
 import { PostCardSkeleton } from "@/components/loading-skeleton";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
+import { FeedAd } from "@/components/ads/feed-ad";
 import { 
   Sparkles, 
   ChevronDown, 
   Flame, 
   TrendingUp, 
   Clock,
-  LayoutGrid,
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import {
@@ -31,8 +31,9 @@ export function MobileFeed() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("best");
+  const [isPremium, setIsPremium] = useState(false);
 
-  // Get user ID
+  // Get user ID and premium status
   useEffect(() => {
     const getUserId = async () => {
       try {
@@ -40,6 +41,7 @@ export function MobileFeed() {
         const data = await response.json();
         if (data.userId) {
           setUserId(data.userId as Id<"users">);
+          setIsPremium(data.isPremium || false);
         }
       } catch (error) {
         console.error("Error getting user:", error);
@@ -62,6 +64,30 @@ export function MobileFeed() {
   const feedItems = useQuery(api.feed.getUnifiedFeed, {
     limit: 50,
   });
+
+  // Mutations for post actions
+  const verifyPost = useMutation(api.posts.verify);
+  const deletePost = useMutation(api.posts.deletePost);
+
+  // Handle verify post
+  const handleVerify = async (postId: Id<"posts">) => {
+    if (!userId) return;
+    try {
+      await verifyPost({ postId, userId });
+    } catch (error) {
+      console.error("Verify error:", error);
+    }
+  };
+
+  // Handle delete post
+  const handleDelete = async (postId: Id<"posts">) => {
+    if (!userId) return;
+    try {
+      await deletePost({ postId, userId });
+    } catch (error) {
+      console.error("Delete error:", error);
+    }
+  };
 
   // Sort items based on selection
   const sortedItems = feedItems ? [...feedItems].sort((a: any, b: any) => {
@@ -122,9 +148,7 @@ export function MobileFeed() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <button className="p-1.5 rounded-lg hover:bg-[var(--accent)] transition-colors ml-auto min-w-[40px] min-h-[40px] flex items-center justify-center">
-            <LayoutGrid className="w-5 h-5 text-[var(--muted-foreground)]" />
-          </button>
+
         </div>
       </div>
 
@@ -162,9 +186,14 @@ export function MobileFeed() {
         {/* Feed Items */}
         {sortedItems.map((item: any, index: number) => {
           const showSuggested = index === 3;
+          // Show ad every 5 posts for free users
+          const showAd = !isPremium && index > 0 && index % 5 === 0;
 
           return (
             <div key={item._id}>
+              {/* Show ad before certain posts */}
+              {showAd && <FeedAd isPremium={isPremium} />}
+
               {showSuggested && (
                 <div className="px-1 py-2 flex items-center gap-2">
                   <div className="flex-1 h-px bg-[var(--border)]" />
@@ -200,9 +229,8 @@ export function MobileFeed() {
                 <RedditPostCard
                   post={item}
                   currentUserId={userId || undefined}
-                  onVerify={() => {}}
-                  onDelete={() => {}}
-                  hasVerified={false}
+                  onVerify={() => handleVerify(item._id as Id<"posts">)}
+                  onDelete={() => handleDelete(item._id as Id<"posts">)}
                   showActions={true}
                 />
               )}

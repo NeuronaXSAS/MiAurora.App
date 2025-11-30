@@ -7,8 +7,14 @@ import { Input } from '@/components/ui/input';
 import { useAvatar } from '@/hooks/use-avatar';
 import { 
   Send, Sparkles, Heart, Mic, MicOff, Volume2, VolumeX,
-  MoreHorizontal, Smile
+  MoreHorizontal, Smile, Trash2
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
 interface Message {
@@ -106,6 +112,18 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
         .filter(m => !m.isTyping)
         .map(m => ({ isUser: m.isUser, content: m.content }));
 
+      // Get user info for rate limiting
+      let userId = null;
+      let isPremium = false;
+      try {
+        const authRes = await fetch('/api/auth/me');
+        const authData = await authRes.json();
+        userId = authData.userId;
+        isPremium = authData.isPremium || false;
+      } catch (e) {
+        // Continue without auth
+      }
+
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: {
@@ -114,14 +132,25 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
         body: JSON.stringify({
           message: userMessage,
           conversationHistory,
+          userId,
+          isPremium,
         }),
       });
+
+      const data = await response.json();
+
+      // Handle rate limit error
+      if (response.status === 429) {
+        if (data.upgradeToPremium) {
+          return `💜 ${data.message}\n\n✨ [Upgrade to Aurora Premium](/premium) for unlimited conversations with me!`;
+        }
+        return `💜 ${data.message}`;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to get AI response');
       }
 
-      const data = await response.json();
       return data.response;
     } catch (error) {
       console.error('Error getting AI response:', error);
@@ -210,13 +239,35 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
           >
             {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="min-w-[44px] min-h-[44px] text-white/60 hover:text-white hover:bg-white/10"
-          >
-            <MoreHorizontal className="w-5 h-5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="min-w-[44px] min-h-[44px] text-white/60 hover:text-white hover:bg-white/10"
+              >
+                <MoreHorizontal className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[#1E1535] border-white/20">
+              <DropdownMenuItem 
+                onClick={() => {
+                  if (confirm('Are you sure you want to clear the chat history?')) {
+                    setMessages([{
+                      id: Date.now().toString(),
+                      content: "Hi beautiful! I'm Aurora, your AI companion. I'm here to support you, listen to you, and help you navigate life safely. How are you feeling today? 💜",
+                      isUser: false,
+                      timestamp: new Date(),
+                    }]);
+                  }
+                }}
+                className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4 mr-2 text-[#f05a6b]" />
+                Clear Chat History
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

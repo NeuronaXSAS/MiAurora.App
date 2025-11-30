@@ -401,7 +401,6 @@ export default function FeedPage() {
                       currentUserId={userId || undefined}
                       onVerify={() => handleVerify(item._id as Id<"posts">)}
                       onDelete={() => handleDelete(item._id as Id<"posts">)}
-                      hasVerified={false}
                       showActions={true}
                     />
                   )}

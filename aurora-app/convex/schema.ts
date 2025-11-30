@@ -1142,4 +1142,13 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_status", ["status"])
     .index("by_user_status", ["userId", "status"]),
+
+  // Saved Posts - Bookmarked content for users
+  savedPosts: defineTable({
+    userId: v.id("users"),
+    postId: v.id("posts"),
+  })
+    .index("by_user", ["userId"])
+    .index("by_post", ["postId"])
+    .index("by_user_and_post", ["userId", "postId"]),
 });

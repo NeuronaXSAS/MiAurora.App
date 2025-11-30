@@ -33,7 +33,6 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
   const [mapState, setMapState] = useState<{ center: [number, number]; zoom: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [nearbyPosts, setNearbyPosts] = useState<any[]>([]);
 
   // Fetch posts with location data
@@ -80,11 +79,8 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
         }
       });
 
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-      // Add fullscreen control
-      map.current.addControl(new mapboxgl.FullscreenControl(), "top-right");
+      // Note: We use custom controls instead of Mapbox defaults to avoid overlap
+      // and provide a cleaner mobile experience
 
       map.current.on("load", () => {
         setMapLoaded(true);
@@ -283,7 +279,6 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
 
-    setIsSearching(true);
     try {
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${mapboxgl.accessToken}&limit=5`
@@ -292,8 +287,6 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
       setSearchResults(data.features || []);
     } catch (error) {
       console.error("Search error:", error);
-    } finally {
-      setIsSearching(false);
     }
   };
 
@@ -459,8 +452,8 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
         className={`w-full h-full ${isSelectingLocation ? 'cursor-crosshair' : ''}`}
       />
 
-      {/* Search Bar - Positioned to not overlap with page controls */}
-      <div className="absolute top-4 left-[180px] sm:left-[220px] right-16 z-10 max-w-sm">
+      {/* Search Bar - Clean positioning for mobile */}
+      <div className="absolute top-4 left-4 right-4 z-10 max-w-md mx-auto">
         <div className="relative">
           <Input
             type="text"
@@ -500,31 +493,31 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
         )}
       </div>
       
-      {/* Control Buttons - Right side, below Mapbox controls */}
-      <div className="absolute top-[120px] right-[10px] flex flex-col gap-2 z-10">
+      {/* Control Buttons - Right side, clean positioning */}
+      <div className="absolute top-20 right-4 flex flex-col gap-2 z-10">
         {/* GPS Location Button */}
         <Button
           onClick={handleGetUserLocation}
-          className="bg-[var(--card)] text-[var(--foreground)] hover:bg-[var(--accent)] shadow-lg border border-[var(--border)] min-w-[44px] min-h-[44px]"
+          className="bg-[var(--card)]/95 backdrop-blur-sm text-[var(--foreground)] hover:bg-[var(--accent)] shadow-lg border border-[var(--border)] min-w-[48px] min-h-[48px] rounded-xl"
           size="icon"
           title="Go to my location"
         >
-          <Navigation className="w-5 h-5" />
+          <Navigation className="w-5 h-5 text-[var(--color-aurora-purple)]" />
         </Button>
 
         {/* Select Location Button */}
         {onLocationSelect && (
           <Button
             onClick={() => setIsSelectingLocation(!isSelectingLocation)}
-            className={`shadow-lg min-w-[44px] min-h-[44px] ${
+            className={`shadow-lg min-w-[48px] min-h-[48px] rounded-xl ${
               isSelectingLocation
                 ? "bg-[var(--color-aurora-purple)] text-white hover:bg-[var(--color-aurora-violet)]"
-                : "bg-[var(--card)] text-[var(--foreground)] hover:bg-[var(--accent)] border border-[var(--border)]"
+                : "bg-[var(--card)]/95 backdrop-blur-sm text-[var(--foreground)] hover:bg-[var(--accent)] border border-[var(--border)]"
             }`}
             size="icon"
             title="Click map to mark location"
           >
-            {isSelectingLocation ? <Crosshair className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+            {isSelectingLocation ? <Crosshair className="w-5 h-5" /> : <Plus className="w-5 h-5 text-[var(--color-aurora-purple)]" />}
           </Button>
         )}
       </div>

@@ -35,7 +35,8 @@ export function ReelsFeed({ currentUserId, sortBy = "recent" }: ReelsFeedProps) 
     const handleScroll = () => {
       setHasScrolled(true);
       const scrollTop = container.scrollTop;
-      const itemHeight = window.innerHeight;
+      // Account for global header (60px)
+      const itemHeight = window.innerHeight - 60;
       const newIndex = Math.round(scrollTop / itemHeight);
       
       if (newIndex !== activeIndex && newIndex >= 0 && newIndex < reels.length) {
@@ -89,7 +90,7 @@ export function ReelsFeed({ currentUserId, sortBy = "recent" }: ReelsFeedProps) 
 
   if (isLoading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-black">
+      <div className="h-full w-full flex items-center justify-center bg-black">
         <Loader2 className="w-8 h-8 animate-spin text-white" />
       </div>
     );
@@ -97,7 +98,7 @@ export function ReelsFeed({ currentUserId, sortBy = "recent" }: ReelsFeedProps) 
 
   if (reels.length === 0) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-[var(--color-aurora-violet)] to-black text-white p-8">
+      <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-b from-[var(--color-aurora-violet)] to-black text-white p-8">
         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center mb-6 animate-pulse">
           <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -124,7 +125,7 @@ export function ReelsFeed({ currentUserId, sortBy = "recent" }: ReelsFeedProps) 
   return (
     <div
       ref={containerRef}
-      className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth"
+      className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth"
       style={{
         scrollbarWidth: "none",
         msOverflowStyle: "none",

@@ -43,38 +43,15 @@ export default function ReelsPage() {
   }
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
-      {/* Reels Feed */}
-      <ReelsFeed 
-        currentUserId={userId} 
-        sortBy={activeTab === "trending" ? "trending" : "recent"}
-      />
-
-      {/* Floating Create Button */}
-      <Link href="/reels/create">
-        <Button
-          size="lg"
-          className="fixed bottom-24 right-6 h-14 w-14 rounded-full shadow-2xl bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:from-[var(--color-aurora-violet)] hover:to-[var(--color-aurora-purple)] z-50 transition-all hover:scale-110"
-        >
-          <Camera className="w-6 h-6" />
-        </Button>
-      </Link>
-
-      {/* Top Navigation Bar */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/70 via-black/40 to-transparent pt-4 pb-8 px-4 safe-area-inset-top">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <img src="/Au_Logo_1.png" alt="Aurora App" className="w-8 h-8" />
-            <span className="text-white font-bold text-lg">Reels</span>
-          </div>
-
-          {/* Tabs */}
+    <div className="relative h-[calc(100vh-60px)] w-full overflow-hidden bg-black">
+      {/* Tab Selector - Compact bar below global header */}
+      <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/80 to-transparent py-3 px-4">
+        <div className="flex items-center justify-center">
           <div className="flex bg-white/10 backdrop-blur-sm rounded-full p-1">
             <button
               onClick={() => setActiveTab("forYou")}
               className={cn(
-                "flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all",
+                "flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all min-h-[40px]",
                 activeTab === "forYou"
                   ? "bg-white text-[var(--color-aurora-violet)]"
                   : "text-white/80 hover:text-white"
@@ -86,7 +63,7 @@ export default function ReelsPage() {
             <button
               onClick={() => setActiveTab("trending")}
               className={cn(
-                "flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all",
+                "flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all min-h-[40px]",
                 activeTab === "trending"
                   ? "bg-white text-[var(--color-aurora-violet)]"
                   : "text-white/80 hover:text-white"
@@ -96,11 +73,24 @@ export default function ReelsPage() {
               Trending
             </button>
           </div>
-
-          {/* Spacer for balance */}
-          <div className="w-8" />
         </div>
       </div>
+
+      {/* Reels Feed */}
+      <ReelsFeed 
+        currentUserId={userId} 
+        sortBy={activeTab === "trending" ? "trending" : "recent"}
+      />
+
+      {/* Floating Create Button */}
+      <Link href="/reels/create">
+        <Button
+          size="lg"
+          className="fixed bottom-8 right-4 h-14 w-14 rounded-full shadow-2xl bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:from-[var(--color-aurora-violet)] hover:to-[var(--color-aurora-purple)] z-40 transition-all hover:scale-110"
+        >
+          <Camera className="w-6 h-6" />
+        </Button>
+      </Link>
 
       {/* Safety Tip Overlay (shows occasionally) */}
       <SafetyTip />
