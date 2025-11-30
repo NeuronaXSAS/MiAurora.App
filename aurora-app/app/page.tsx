@@ -130,38 +130,36 @@ export default function LandingPage() {
         </div>
       )}
 
-      {/* Floating Signup Prompt */}
+      {/* Floating Signup Prompt - Only show on scroll, dismissible, non-intrusive */}
       <AnimatePresence>
         {showSignupPrompt && !dismissedPrompt && (
           <motion.div
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
-            className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50"
+            className="fixed bottom-4 left-4 right-4 z-50 md:hidden"
           >
-            <Card className="bg-gradient-to-r from-[#5537a7] to-[#3d0d73] border-0 p-5 shadow-2xl rounded-2xl">
+            <Card className="bg-gradient-to-r from-[#5537a7] to-[#3d0d73] border-0 p-4 shadow-2xl rounded-2xl">
               <button
                 onClick={() => setDismissedPrompt(true)}
-                className="absolute top-3 right-3 text-white/60 hover:text-white"
+                className="absolute top-2 right-2 text-white/60 hover:text-white p-1"
+                aria-label="Dismiss"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-6 h-6 text-white" />
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-5 h-5 text-white" />
                 </div>
-                <div className="flex-1">
-                  <h4 className="font-bold text-white mb-1">Join Aurora App</h4>
-                  <p className="text-white/80 text-sm mb-4">
-                    Get 25 free credits and connect with the community.
-                  </p>
-                  <Link href="/api/auth/login?provider=GoogleOAuth">
-                    <Button className="w-full bg-white text-[#5537a7] hover:bg-white/90 font-semibold rounded-xl min-h-[44px]">
-                      Sign up free
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-white text-sm">Join Aurora App</h4>
+                  <p className="text-white/80 text-xs">Get 25 free credits</p>
                 </div>
+                <Link href="/api/auth/login">
+                  <Button size="sm" className="bg-white text-[#5537a7] hover:bg-white/90 font-semibold rounded-xl min-h-[40px] px-4">
+                    Join
+                  </Button>
+                </Link>
               </div>
             </Card>
           </motion.div>
@@ -315,8 +313,101 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-16 bg-white">
+      {/* Live Feed Preview Section - Right after hero */}
+      <section className="py-12 bg-white border-y border-gray-100">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 bg-[#d6f4ec]/50 text-[#3d0d73] px-4 py-2 rounded-full mb-4">
+              <span className="w-2 h-2 bg-[#22c55e] rounded-full animate-pulse" />
+              <span className="text-sm font-medium">Live Community Feed</span>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-[#3d0d73] mb-2">
+              See what women are sharing
+            </h2>
+            <p className="text-[#3d0d73]/60 text-sm">Real experiences from our community</p>
+          </div>
+
+          {/* Feed Preview - Horizontal scroll on mobile, grid on desktop */}
+          <div className="relative" ref={feedRef}>
+            {!publicFeed && (
+              <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide md:grid md:grid-cols-3 md:overflow-visible">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="bg-[#fffaf1] border-gray-100 p-5 animate-pulse rounded-2xl min-w-[300px] md:min-w-0 snap-center">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-gray-200" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-24" />
+                        <div className="h-3 bg-gray-200 rounded w-16" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-full" />
+                      <div className="h-4 bg-gray-200 rounded w-3/4" />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {publicFeed && publicFeed.length > 0 && (
+              <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide md:grid md:grid-cols-3 md:overflow-visible">
+                {publicFeed.slice(0, 6).map((post: any, index: number) => (
+                  <motion.div
+                    key={post._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="min-w-[300px] md:min-w-0 snap-center"
+                  >
+                    <Card className="bg-[#fffaf1] border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg transition-all h-full">
+                      <div className="p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#f29de5] to-[#c9cef4] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                            {(post.authorName || "A")[0].toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 text-sm truncate">
+                              {post.isAnonymous ? "Anonymous" : post.authorName || "Aurora User"}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatDistanceToNow(post._creationTime, { addSuffix: true })}
+                            </p>
+                          </div>
+                        </div>
+                        {post.title && (
+                          <h3 className="font-semibold text-gray-900 mb-2 text-sm line-clamp-1">{post.title}</h3>
+                        )}
+                        <p className="text-gray-600 text-sm line-clamp-2 mb-3">{post.content}</p>
+                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <ThumbsUp className="w-3.5 h-3.5" /> {post.upvotes || 0}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MessageSquare className="w-3.5 h-3.5" /> {post.commentCount || 0}
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {/* Join CTA below feed */}
+            <div className="mt-8 text-center">
+              <Link href="/api/auth/login">
+                <Button size="lg" className="bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-xl px-8 min-h-[52px] font-semibold shadow-lg shadow-[#5537a7]/20">
+                  Join to see more & interact
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section - After feed */}
+      <section id="features" className="py-16 bg-[#fffaf1]">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12">
             <Badge className="bg-[#c9cef4]/30 text-[#5537a7] border-0 mb-4">Features</Badge>
@@ -328,179 +419,91 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {[
               { icon: Shield, title: "Safety Intelligence", desc: "Rate workplaces, neighborhoods & routes", color: "#f29de5" },
               { icon: Route, title: "Safe Routes", desc: "GPS-tracked community-verified routes", color: "#2e2ad6" },
               { icon: Briefcase, title: "Opportunities", desc: "Jobs, mentorship & career resources", color: "#e5e093" },
               { icon: Users, title: "Support Circles", desc: "Connect with women who understand", color: "#d6f4ec" },
+              { icon: Heart, title: "Wellness Tracking", desc: "Health, hydration & emotional check-ins", color: "#f29de5" },
+              { icon: MessageSquare, title: "AI Companion", desc: "24/7 supportive AI assistant", color: "#c9cef4" },
+              { icon: Zap, title: "Credit Economy", desc: "Earn credits by helping others", color: "#e5e093" },
+              { icon: Globe, title: "Global Community", desc: "Women supporting women worldwide", color: "#d6f4ec" },
             ].map((feature) => (
               <motion.div
                 key={feature.title}
-                whileHover={{ y: -5 }}
-                className="bg-[#fffaf1] rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all"
+                whileHover={{ y: -3 }}
+                className="bg-white rounded-2xl p-4 md:p-6 border border-gray-100 hover:shadow-lg transition-all"
               >
                 <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                  className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center mb-3 md:mb-4"
                   style={{ backgroundColor: feature.color + "30" }}
                 >
-                  <feature.icon className="w-6 h-6" style={{ color: feature.color === "#e5e093" || feature.color === "#d6f4ec" ? "#3d0d73" : feature.color }} />
+                  <feature.icon className="w-5 h-5 md:w-6 md:h-6" style={{ color: feature.color === "#e5e093" || feature.color === "#d6f4ec" ? "#3d0d73" : feature.color }} />
                 </div>
-                <h3 className="font-bold text-[#3d0d73] mb-2">{feature.title}</h3>
-                <p className="text-sm text-[#3d0d73]/60">{feature.desc}</p>
+                <h3 className="font-bold text-[#3d0d73] mb-1 md:mb-2 text-sm md:text-base">{feature.title}</h3>
+                <p className="text-xs md:text-sm text-[#3d0d73]/60">{feature.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Scroll indicator */}
-      <div className="bg-[#fffaf1] py-6 text-center border-y border-gray-100">
-        <motion.div
-          animate={{ y: [0, 5, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-          className="inline-flex items-center gap-2 text-[#3d0d73]/50 text-sm"
-        >
-          <ChevronDown className="w-4 h-4" />
-          <span>Explore community posts</span>
-          <ChevronDown className="w-4 h-4" />
-        </motion.div>
-      </div>
-
-      {/* Feed Section */}
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Feed Column */}
-          <div className="lg:col-span-2 space-y-5" ref={feedRef}>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-[#3d0d73]">Community Feed</h2>
-              <Badge className="bg-[#d6f4ec]/50 text-[#3d0d73] border-0">
-                <span className="w-2 h-2 bg-[#22c55e] rounded-full mr-2 animate-pulse" />
-                Live
-              </Badge>
-            </div>
-
-            {/* Loading State */}
-            {!publicFeed && (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <Card key={i} className="bg-white border-gray-100 p-5 animate-pulse rounded-2xl">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-11 h-11 rounded-full bg-gray-100" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-100 rounded w-24" />
-                        <div className="h-3 bg-gray-100 rounded w-16" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-4 bg-gray-100 rounded w-full" />
-                      <div className="h-4 bg-gray-100 rounded w-3/4" />
-                    </div>
-                  </Card>
-                ))}
+      {/* Stats & Social Proof Section */}
+      <section className="py-16 bg-gradient-to-br from-[#5537a7] to-[#3d0d73] text-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-12">
+            {[
+              { value: "10K+", label: "Women" },
+              { value: "50K+", label: "Posts" },
+              { value: "25K+", label: "Safe Routes" },
+              { value: "4.9★", label: "App Rating" },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center">
+                <p className="text-3xl md:text-4xl font-black">{stat.value}</p>
+                <p className="text-white/70 text-sm">{stat.label}</p>
               </div>
-            )}
-
-            {/* Feed Items */}
-            {publicFeed && publicFeed.length > 0 && (
-              <div className="space-y-5">
-                {publicFeed.map((post: any, index: number) => (
-                  <PublicPostCard key={post._id} post={post} index={index} />
-                ))}
-
-                {/* Join CTA */}
-                <Card className="bg-gradient-to-br from-[#c9cef4]/30 to-[#f29de5]/20 border-[#5537a7]/20 p-8 text-center rounded-2xl">
-                  <Sparkles className="w-12 h-12 text-[#5537a7] mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-[#3d0d73] mb-2">
-                    Want to see more?
-                  </h3>
-                  <p className="text-[#3d0d73]/60 text-sm mb-6 max-w-md mx-auto">
-                    Join Aurora App to access the full feed, share your experiences, and earn credits.
-                  </p>
-                  <Link href="/api/auth/login?provider=GoogleOAuth">
-                    <Button className="bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-xl px-8 min-h-[48px] font-semibold">
-                      Join the Community
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
-                </Card>
-              </div>
-            )}
-
-            {/* Empty State */}
-            {publicFeed && publicFeed.length === 0 && (
-              <Card className="bg-white border-gray-100 p-10 text-center rounded-2xl">
-                <Users className="w-14 h-14 text-[#c9cef4] mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-[#3d0d73] mb-2">
-                  Be the first to share
-                </h3>
-                <p className="text-[#3d0d73]/60 text-sm mb-6">
-                  Join Aurora App and start sharing your experiences.
-                </p>
-                <Link href="/api/auth/login?provider=GoogleOAuth">
-                  <Button className="bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-xl min-h-[44px]">
-                    Get Started
-                  </Button>
-                </Link>
-              </Card>
-            )}
+            ))}
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Sign Up Card */}
-            <Card className="bg-white border-gray-100 p-6 sticky top-20 rounded-2xl shadow-sm">
-              <h3 className="font-bold text-[#3d0d73] mb-3 text-lg">Join Aurora App</h3>
-              <p className="text-[#3d0d73]/60 text-sm mb-5">
-                Get 25 free credits when you sign up. Share experiences, earn more, unlock opportunities.
-              </p>
-              <div className="space-y-3">
-                <Link href="/api/auth/login?provider=GoogleOAuth" className="block">
-                  <Button className="w-full bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-xl min-h-[48px] font-semibold">
-                    Sign up with Google
-                  </Button>
-                </Link>
-                <Link href="/api/auth/login?provider=MicrosoftOAuth" className="block">
-                  <Button variant="outline" className="w-full border-gray-200 text-[#3d0d73] hover:bg-gray-50 rounded-xl min-h-[48px]">
-                    Sign up with Microsoft
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-
-            {/* Stats */}
-            <Card className="bg-gradient-to-br from-[#5537a7] to-[#3d0d73] p-6 rounded-2xl text-white">
-              <h3 className="font-bold mb-4">Community Impact</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { value: "10K+", label: "Women" },
-                  { value: "50K+", label: "Posts" },
-                  { value: "25K+", label: "Routes" },
-                  { value: "4.9★", label: "Rating" },
-                ].map((stat) => (
-                  <div key={stat.label} className="text-center">
-                    <p className="text-2xl font-bold">{stat.value}</p>
-                    <p className="text-white/70 text-xs">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            {/* Testimonial */}
-            <Card className="bg-white border-gray-100 p-6 rounded-2xl">
-              <div className="flex gap-1 mb-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star key={i} className="w-4 h-4 fill-[#e5e093] text-[#e5e093]" />
-                ))}
-              </div>
-              <p className="text-[#3d0d73] text-sm mb-4 italic leading-relaxed">
-                "Aurora helped me find a safe route to my new job. The community verification gives me peace of mind."
-              </p>
-              <p className="text-[#3d0d73]/50 text-xs">— Sarah M., Software Engineer</p>
-            </Card>
+          {/* Testimonial */}
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="flex justify-center gap-1 mb-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Star key={i} className="w-5 h-5 fill-[#e5e093] text-[#e5e093]" />
+              ))}
+            </div>
+            <p className="text-lg md:text-xl mb-4 italic leading-relaxed">
+              "Aurora helped me find a safe route to my new job. The community verification gives me peace of mind every day."
+            </p>
+            <p className="text-white/70 text-sm">— Sarah M., Software Engineer</p>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-2xl mx-auto px-4 text-center">
+          <Image src="/Au_Logo_1.png" alt="Aurora App" width={64} height={64} className="rounded-2xl mx-auto mb-6" />
+          <h2 className="text-2xl md:text-3xl font-bold text-[#3d0d73] mb-4">
+            Ready to join Aurora App?
+          </h2>
+          <p className="text-[#3d0d73]/60 mb-8">
+            Get 25 free credits when you sign up. Share experiences, earn more, unlock opportunities.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
+            <Link href="/api/auth/login" className="flex-1">
+              <Button size="lg" className="w-full bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-xl min-h-[52px] font-semibold">
+                Get Started Free
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+          </div>
+          <p className="text-xs text-[#3d0d73]/50 mt-4">
+            Sign in with Google, Microsoft, or email
+          </p>
+        </div>
+      </section>
 
       {/* Footer */}
       <footer className="border-t border-gray-100 py-10 bg-white">

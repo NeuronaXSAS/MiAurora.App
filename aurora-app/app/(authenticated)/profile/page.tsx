@@ -309,8 +309,8 @@ export default function ProfilePage() {
           </div>
 
           {/* Profile Completion & Notifications */}
-          <div className="container mx-auto px-4 sm:px-6 py-4">
-            <div className="flex flex-col sm:flex-row gap-4 max-w-4xl">
+          <div className="mt-4 sm:mt-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               {/* Profile Completion */}
               <div className="flex-1 bg-white/10 border border-white/20 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
