@@ -261,7 +261,7 @@ export default function IntelligenceDashboard() {
                     ref={mapRef}
                     {...viewport}
                     onMove={(evt) => setViewport(evt.viewState)}
-                    mapStyle="mapbox://styles/mapbox/light-v11"
+                    mapStyle="mapbox://styles/malunao/cm84u5ecf000x01qled5j8bvl"
                     mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
                   >
                     {heatmapData && (

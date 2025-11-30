@@ -529,20 +529,21 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
         </div>
       )}
 
-      {/* Legend - Compact bottom-left positioning */}
-      <div className="absolute bottom-24 sm:bottom-6 left-4 bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg p-2 sm:p-3 z-10">
-        <div className="flex items-center gap-3 sm:gap-4">
+      {/* Legend - Always visible, responsive positioning */}
+      <div className="absolute bottom-24 sm:bottom-6 md:bottom-6 lg:bottom-6 left-4 bg-[var(--card)] backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg p-3 z-20">
+        <p className="text-[10px] sm:text-xs font-semibold text-[var(--foreground)] mb-2">Safety Legend</p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#22c55e]" />
-            <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Safe</span>
+            <div className="w-4 h-4 rounded-full bg-[#22c55e] border-2 border-white shadow-sm" />
+            <span className="text-xs text-[var(--foreground)]">Safe (4-5★)</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#eab308]" />
-            <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Neutral</span>
+            <div className="w-4 h-4 rounded-full bg-[#eab308] border-2 border-white shadow-sm" />
+            <span className="text-xs text-[var(--foreground)]">Neutral (3★)</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#ef4444]" />
-            <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Unsafe</span>
+            <div className="w-4 h-4 rounded-full bg-[#ef4444] border-2 border-white shadow-sm" />
+            <span className="text-xs text-[var(--foreground)]">Unsafe (1-2★)</span>
           </div>
         </div>
       </div>

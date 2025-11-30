@@ -282,13 +282,9 @@ export const createCirclePost = mutation({
       });
     }
 
-    // Award credits
-    const user = await ctx.db.get(args.userId);
-    if (user) {
-      await ctx.db.patch(args.userId, {
-        credits: (user.credits || 0) + 5,
-      });
-    }
+    // Note: Credits are NOT awarded for circle posts
+    // Credits are reserved for public community contributions
+    // that help all women (public posts, routes, verifications, etc.)
 
     return postId;
   },

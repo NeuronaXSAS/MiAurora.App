@@ -54,7 +54,7 @@ export default function FeedPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [showQuests, setShowQuests] = useState(true);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const [sortBy, setSortBy] = useState<SortOption>("best");
+  const [sortBy, setSortBy] = useState<SortOption>("new");
   const [viewMode, setViewMode] = useState<ViewMode>("card");
   const [showAIChat, setShowAIChat] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -209,13 +209,21 @@ export default function FeedPage() {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-[var(--card)] border-[var(--border)]">
-                  {["all", "post", "poll", "route", "opportunity"].map((type) => (
+                  {[
+                    { value: "all", label: "All" },
+                    { value: "post", label: "Posts" },
+                    { value: "poll", label: "Polls" },
+                    { value: "reel", label: "Reels" },
+                    { value: "route", label: "Routes" },
+                    { value: "opportunity", label: "Opportunities" },
+                    { value: "ai_chat", label: "AI Chats" },
+                  ].map((type) => (
                     <DropdownMenuItem
-                      key={type}
-                      onClick={() => setContentType(type)}
-                      className={`text-[var(--foreground)] hover:bg-[var(--accent)] ${contentType === type ? "bg-[var(--accent)]" : ""}`}
+                      key={type.value}
+                      onClick={() => setContentType(type.value)}
+                      className={`text-[var(--foreground)] hover:bg-[var(--accent)] ${contentType === type.value ? "bg-[var(--accent)]" : ""}`}
                     >
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                      {type.label}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -334,7 +342,9 @@ export default function FeedPage() {
             .filter((item: any) => {
               if (contentType === "all") return true;
               if (contentType === "poll") return item.type === "post" && item.postType === "poll";
-              if (contentType === "post") return item.type === "post" && item.postType !== "poll";
+              if (contentType === "reel") return item.type === "post" && (item.postType === "reel" || item.reel);
+              if (contentType === "ai_chat") return item.type === "post" && item.postType === "ai_chat";
+              if (contentType === "post") return item.type === "post" && !item.postType && !item.route && !item.reel;
               return item.type === contentType;
             })
             .map((item: any, index: number) => {

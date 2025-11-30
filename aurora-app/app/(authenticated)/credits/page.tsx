@@ -153,21 +153,24 @@ export default function CreditsPage() {
                       You have {stats.monthlyRemaining} credits remaining this
                       month.
                     </p>
-                    <div className="flex items-center gap-4 text-sm">
-                      <div className="flex items-center gap-2 text-[var(--muted-foreground)]">
-                        <Calendar className="w-4 h-4" />
-                        <span>
-                          Resets in {stats.daysUntilReset} day
-                          {stats.daysUntilReset !== 1 ? "s" : ""}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2 text-[var(--muted-foreground)]">
+                          <Calendar className="w-4 h-4" />
+                          <span>
+                            Resets in {stats.daysUntilReset} day
+                            {stats.daysUntilReset !== 1 ? "s" : ""}
+                          </span>
+                        </div>
+                        <span className="text-[var(--color-aurora-yellow)] font-semibold">
+                          {Math.round((stats.monthlyEarned / stats.monthlyLimit) * 100)}%
                         </span>
                       </div>
-                      <div className="flex-1 bg-[var(--accent)] rounded-full h-2">
+                      <div className="w-full bg-[var(--accent)] rounded-full h-3 overflow-hidden">
                         <div
-                          className="bg-[var(--color-aurora-yellow)] h-2 rounded-full transition-all"
+                          className="bg-gradient-to-r from-[var(--color-aurora-yellow)] to-[var(--color-aurora-mint)] h-3 rounded-full transition-all duration-500"
                           style={{
-                            width: `${
-                              (stats.monthlyEarned / stats.monthlyLimit) * 100
-                            }%`,
+                            width: `${Math.min(100, Math.max(5, (stats.monthlyEarned / stats.monthlyLimit) * 100))}%`,
                           }}
                         />
                       </div>
@@ -178,13 +181,95 @@ export default function CreditsPage() {
             </Card>
           )}
 
-          {/* Earning Breakdown */}
-          {stats && (
+          {/* How to Earn Credits */}
+          <Card className="bg-[var(--card)] border-[var(--border)]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+                <TrendingUp className="w-5 h-5 text-[var(--color-aurora-mint)]" />
+                How to Earn Credits
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-[var(--muted-foreground)] mb-4">
+                Earn credits by contributing to the community. Your actions help other women stay safe!
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { action: "Create a public post", credits: 10, icon: "📝" },
+                  { action: "Share a safe route", credits: 50, icon: "🗺️" },
+                  { action: "Verify another post", credits: 5, icon: "✅" },
+                  { action: "Complete your profile", credits: 10, icon: "👤" },
+                  { action: "Upload a reel", credits: 20, icon: "🎬" },
+                  { action: "Daily check-in", credits: 5, icon: "📍" },
+                  { action: "Invite a friend", credits: 15, icon: "👥" },
+                  { action: "Report a workplace", credits: 25, icon: "🏢" },
+                  { action: "Complete meditation", credits: 5, icon: "🧘" },
+                  { action: "Viral reel (1000+ views)", credits: 50, icon: "🔥" },
+                ].map((item) => (
+                  <div
+                    key={item.action}
+                    className="flex items-center justify-between p-3 bg-[var(--accent)] rounded-xl"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{item.icon}</span>
+                      <span className="text-sm font-medium text-[var(--foreground)]">
+                        {item.action}
+                      </span>
+                    </div>
+                    <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">
+                      +{item.credits}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* How to Spend Credits */}
+          <Card className="bg-[var(--card)] border-[var(--border)]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+                <TrendingDown className="w-5 h-5 text-[var(--color-aurora-pink)]" />
+                How to Spend Credits
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-[var(--muted-foreground)] mb-4">
+                Use your credits to unlock exclusive opportunities and features.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { action: "Unlock job opportunity", credits: "5-50", icon: "💼" },
+                  { action: "Access mentorship", credits: "20-100", icon: "🎓" },
+                  { action: "Premium AI features", credits: "10", icon: "🤖" },
+                  { action: "Boost your post", credits: "25", icon: "🚀" },
+                ].map((item) => (
+                  <div
+                    key={item.action}
+                    className="flex items-center justify-between p-3 bg-[var(--accent)] rounded-xl"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{item.icon}</span>
+                      <span className="text-sm font-medium text-[var(--foreground)]">
+                        {item.action}
+                      </span>
+                    </div>
+                    <Badge className="bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] border-0">
+                      -{item.credits}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Your Earning Breakdown */}
+          {stats && Object.keys(stats.earnedByType).length > 0 && (
             <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
                   <Award className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
-                  How You Earn Credits
+                  Your Earnings Breakdown
                 </CardTitle>
               </CardHeader>
               <CardContent>

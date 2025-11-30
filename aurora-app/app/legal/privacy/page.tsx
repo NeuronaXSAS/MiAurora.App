@@ -166,24 +166,36 @@ We may update this Privacy Policy from time to time. We will notify you of any m
 - Sending you an email notification
 - Displaying a prominent notice in the app
 
+## Applicable Laws
+
+Aurora App complies with the following data protection regulations:
+
+- **GDPR** (General Data Protection Regulation) - European Union
+- **CCPA** (California Consumer Privacy Act) - California, USA
+- **Law 1581 of 2012** (Habeas Data) - Colombia
+- **LGPD** (Lei Geral de Proteção de Dados) - Brazil
+
 ## Contact Us
 
 If you have questions about this Privacy Policy or our privacy practices, please contact us:
 
-- **Email**: privacy@miaurora.app
-- **Address**: Aurora Privacy Team, [Company Address]
-- **Phone**: [Contact Number]
+- **Email**: auroraapp.info@gmail.com
+- **Support**: Available through the app's Help section
 
-## Data Protection Officer
+## Your Rights
 
-For users in the European Union, you can contact our Data Protection Officer:
+You have the right to:
 
-- **Email**: dpo@miaurora.app
-- **Address**: Aurora DPO, [EU Address]
+- Access your personal data
+- Correct inaccurate data
+- Delete your data ("right to be forgotten")
+- Export your data in a portable format
+- Withdraw consent at any time
+- Lodge a complaint with a supervisory authority
 
 ---
 
-*This Privacy Policy is effective as of December 2024 and was last updated on December 2024.*
+*This Privacy Policy is effective as of December 2024 and was last updated on November 2024.*
 `;
 
 export default function PrivacyPage() {

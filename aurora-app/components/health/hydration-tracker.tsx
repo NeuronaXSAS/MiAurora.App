@@ -136,7 +136,19 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
           <p className="text-sm text-[var(--muted-foreground)]">
             {completed ? "🎉 Goal reached!" : `${goal - glasses} more to go`}
           </p>
+          <p className="text-xs text-[var(--muted-foreground)] mt-1">
+            📅 Resets daily at midnight
+          </p>
         </div>
+
+        {/* Hydration Tips */}
+        {!completed && glasses < goal / 2 && (
+          <div className="bg-[var(--color-aurora-pink)]/10 border border-[var(--color-aurora-pink)]/30 rounded-xl p-3 mb-4">
+            <p className="text-sm text-[var(--foreground)]">
+              💡 <span className="font-medium">Tip:</span> Try drinking a glass of water every 2 hours to stay hydrated throughout the day!
+            </p>
+          </div>
+        )}
 
         {/* Controls */}
         <div className="flex items-center justify-center gap-4">

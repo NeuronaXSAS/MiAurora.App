@@ -31,7 +31,7 @@ type SortOption = "best" | "hot" | "new" | "top";
 export function MobileFeed() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [sortBy, setSortBy] = useState<SortOption>("best");
+  const [sortBy, setSortBy] = useState<SortOption>("new");
   const [isPremium, setIsPremium] = useState(false);
 
   // Get user ID and premium status

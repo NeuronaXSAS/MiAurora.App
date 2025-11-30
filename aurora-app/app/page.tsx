@@ -481,6 +481,63 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Privacy & Trust Section */}
+      <section className="py-16 bg-[#fffaf1]">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="text-center mb-10">
+            <div className="w-16 h-16 bg-[#d6f4ec] rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-8 h-8 text-[#3d0d73]" />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-[#3d0d73] mb-4">
+              Your Privacy is Our Priority
+            </h2>
+            <p className="text-[#3d0d73]/60 max-w-2xl mx-auto">
+              At Aurora App, we believe your data belongs to you. We are committed to transparency and protecting your personal information.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 mb-10">
+            <div className="bg-white rounded-2xl p-6 border border-gray-100">
+              <Lock className="w-8 h-8 text-[#5537a7] mb-4" />
+              <h3 className="font-bold text-[#3d0d73] mb-2">Data Protection</h3>
+              <p className="text-sm text-[#3d0d73]/60">
+                Your data is encrypted and protected under GDPR, CCPA, and Colombian Law 1581 of 2012 (Habeas Data).
+              </p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 border border-gray-100">
+              <CheckCircle className="w-8 h-8 text-[#22c55e] mb-4" />
+              <h3 className="font-bold text-[#3d0d73] mb-2">Full Control</h3>
+              <p className="text-sm text-[#3d0d73]/60">
+                You control your data. Export, delete, or modify your information anytime from your profile settings.
+              </p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 border border-gray-100">
+              <Shield className="w-8 h-8 text-[#f29de5] mb-4" />
+              <h3 className="font-bold text-[#3d0d73] mb-2">Anonymous Options</h3>
+              <p className="text-sm text-[#3d0d73]/60">
+                Post anonymously when sharing sensitive experiences. Your identity is protected.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-[#c9cef4]/20 rounded-2xl p-6 text-center">
+            <p className="text-sm text-[#3d0d73]/80 mb-4">
+              By creating an account, you agree to our{" "}
+              <Link href="/legal/terms" className="text-[#5537a7] underline hover:text-[#3d0d73]">Terms of Service</Link>
+              {" "}and{" "}
+              <Link href="/legal/privacy" className="text-[#5537a7] underline hover:text-[#3d0d73]">Privacy Policy</Link>.
+              We respect your rights and are committed to keeping your data safe.
+            </p>
+            <p className="text-xs text-[#3d0d73]/50">
+              Questions? Contact us at{" "}
+              <a href="mailto:auroraapp.info@gmail.com" className="text-[#5537a7] hover:underline">
+                auroraapp.info@gmail.com
+              </a>
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Final CTA Section */}
       <section className="py-16 bg-white">
         <div className="max-w-2xl mx-auto px-4 text-center">
@@ -501,6 +558,11 @@ export default function LandingPage() {
           </div>
           <p className="text-xs text-[#3d0d73]/50 mt-4">
             Sign in with Google, Microsoft, or email
+          </p>
+          <p className="text-xs text-[#3d0d73]/40 mt-2">
+            By signing up you accept our{" "}
+            <Link href="/legal/terms" className="underline">Terms</Link> and{" "}
+            <Link href="/legal/privacy" className="underline">Privacy Policy</Link>
           </p>
         </div>
       </section>

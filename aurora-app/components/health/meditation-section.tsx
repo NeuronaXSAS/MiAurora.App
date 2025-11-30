@@ -94,21 +94,39 @@ export function MeditationSection({ userId }: MeditationSectionProps) {
         {/* Breathing Circle */}
         {isActive && (
           <div className="relative w-48 h-48 mx-auto">
-            <div
-              className={`absolute inset-0 rounded-full bg-gradient-to-br from-[var(--color-aurora-lavender)]/40 to-[var(--color-aurora-pink)]/40 transition-all duration-[4000ms] ease-in-out ${
-                breathingPhase === 0 ? "scale-100" : "scale-75"
-              }`}
-            />
+            {/* Outer glow ring */}
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[var(--color-aurora-lavender)]/20 to-[var(--color-aurora-pink)]/20 animate-[breathe_8s_ease-in-out_infinite]" />
+            
+            {/* Main breathing circle */}
+            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-[var(--color-aurora-lavender)]/50 to-[var(--color-aurora-pink)]/50 animate-[breathe_8s_ease-in-out_infinite] shadow-lg" />
+            
+            {/* Inner circle */}
+            <div className="absolute inset-8 rounded-full bg-gradient-to-br from-[var(--color-aurora-lavender)] to-[var(--color-aurora-pink)] animate-[breathe_8s_ease-in-out_infinite] opacity-60" />
+            
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-4xl font-bold text-[var(--foreground)] mb-2">
+              <div className="text-center z-10">
+                <p className="text-4xl font-bold text-[var(--foreground)] mb-2 drop-shadow-lg">
                   {formatTime(timeLeft)}
                 </p>
-                <p className="text-sm text-[var(--muted-foreground)]">
+                <p className="text-sm text-[var(--foreground)] font-medium animate-pulse">
                   {breathingPhase === 0 ? "Breathe In..." : "Breathe Out..."}
                 </p>
               </div>
             </div>
+            
+            {/* CSS for smooth breathing animation */}
+            <style jsx>{`
+              @keyframes breathe {
+                0%, 100% {
+                  transform: scale(0.8);
+                  opacity: 0.6;
+                }
+                50% {
+                  transform: scale(1);
+                  opacity: 1;
+                }
+              }
+            `}</style>
           </div>
         )}
 
