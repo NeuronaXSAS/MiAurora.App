@@ -41,6 +41,7 @@ import type * as resources from "../resources.js";
 import type * as routes from "../routes.js";
 import type * as safetyCheckins from "../safetyCheckins.js";
 import type * as scheduled_aggregateIntelligence from "../scheduled/aggregateIntelligence.js";
+import type * as search from "../search.js";
 import type * as seedData from "../seedData.js";
 import type * as seedDataEnhanced from "../seedDataEnhanced.js";
 import type * as seedResources from "../seedResources.js";
@@ -87,6 +88,7 @@ declare const fullApi: ApiFromModules<{
   routes: typeof routes;
   safetyCheckins: typeof safetyCheckins;
   "scheduled/aggregateIntelligence": typeof scheduled_aggregateIntelligence;
+  search: typeof search;
   seedData: typeof seedData;
   seedDataEnhanced: typeof seedDataEnhanced;
   seedResources: typeof seedResources;

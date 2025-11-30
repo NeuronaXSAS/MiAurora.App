@@ -9,12 +9,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { 
-  Menu, Plus, Shield, Search, User, X,
+  Menu, Plus, Shield, Search, User, X, Loader2,
   MapPin, Users, Heart, Route, Briefcase, Play, FileText, MessageSquare
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { NotificationsDropdown } from "@/components/notifications-dropdown";
 import { AIChatCompanion } from "@/components/ai-chat-companion";
 import { CreateOptionsModal } from "@/components/create-options-modal";
@@ -58,8 +60,23 @@ export function GlobalHeader({
   const [showPollDialog, setShowPollDialog] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  // Filter suggestions based on search query
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Real search results from Convex
+  const searchResults = useQuery(
+    api.search.globalSearch,
+    debouncedQuery.length >= 2 ? { query: debouncedQuery, limit: 15 } : "skip"
+  );
+
+  // Filter navigation suggestions based on search query
   const filteredSuggestions = searchQuery.trim() 
     ? SEARCH_SUGGESTIONS.filter(item => 
         item.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -79,6 +96,32 @@ export function GlobalHeader({
     setShowSearch(false);
     setSearchQuery("");
     router.push(href);
+  };
+
+  // Get icon for result type
+  const getResultIcon = (type: string) => {
+    switch (type) {
+      case "post": return FileText;
+      case "route": return Route;
+      case "reel": return Play;
+      case "opportunity": return Briefcase;
+      case "resource": return Shield;
+      case "circle": return Users;
+      default: return FileText;
+    }
+  };
+
+  // Get href for result
+  const getResultHref = (type: string, id: string) => {
+    switch (type) {
+      case "post": return `/feed?post=${id}`;
+      case "route": return `/routes/${id}`;
+      case "reel": return `/reels/${id}`;
+      case "opportunity": return `/opportunities?id=${id}`;
+      case "resource": return `/resources`;
+      case "circle": return `/circles/${id}`;
+      default: return `/feed`;
+    }
   };
 
   // Focus input when search opens
@@ -231,37 +274,103 @@ export function GlobalHeader({
             {/* Search Results */}
             <div className="flex-1 overflow-y-auto p-4">
               <div className="max-w-2xl mx-auto space-y-4">
-                {Object.entries(groupedSuggestions).map(([category, items]) => (
-                  <div key={category}>
+                {/* Loading state */}
+                {debouncedQuery.length >= 2 && searchResults === undefined && (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 text-[var(--color-aurora-purple)] animate-spin" />
+                    <span className="ml-2 text-[var(--muted-foreground)]">Searching...</span>
+                  </div>
+                )}
+
+                {/* Content Search Results */}
+                {searchResults && searchResults.results.length > 0 && (
+                  <div>
                     <p className="text-xs text-[var(--muted-foreground)] font-semibold uppercase tracking-wider mb-2 px-2">
-                      {category}
+                      Content ({searchResults.total} results)
                     </p>
                     <div className="space-y-1">
-                      {items.map((item) => {
-                        const Icon = item.icon;
+                      {searchResults.results.map((result: {
+                        type: string;
+                        id: string;
+                        title: string;
+                        description?: string;
+                        author?: { name: string; profileImage?: string };
+                      }) => {
+                        const Icon = getResultIcon(result.type);
                         return (
                           <button
-                            key={item.href}
-                            onClick={() => handleSearchSelect(item.href)}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[var(--accent)] transition-colors text-left group"
+                            key={`${result.type}-${result.id}`}
+                            onClick={() => handleSearchSelect(getResultHref(result.type, result.id))}
+                            className="w-full flex items-start gap-3 px-4 py-3 rounded-xl hover:bg-[var(--accent)] transition-colors text-left group"
                           >
-                            <div className="w-10 h-10 rounded-xl bg-[var(--color-aurora-purple)]/10 flex items-center justify-center group-hover:bg-[var(--color-aurora-purple)]/20 transition-colors">
+                            <div className="w-10 h-10 rounded-xl bg-[var(--color-aurora-purple)]/10 flex items-center justify-center group-hover:bg-[var(--color-aurora-purple)]/20 transition-colors flex-shrink-0">
                               <Icon className="w-5 h-5 text-[var(--color-aurora-purple)]" />
                             </div>
-                            <span className="text-[var(--foreground)] font-medium">{item.label}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[var(--foreground)] font-medium truncate">{result.title}</span>
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--accent)] text-[var(--muted-foreground)] capitalize flex-shrink-0">
+                                  {result.type}
+                                </span>
+                              </div>
+                              {result.description && (
+                                <p className="text-sm text-[var(--muted-foreground)] truncate mt-0.5">
+                                  {result.description}
+                                </p>
+                              )}
+                              {result.author && (
+                                <p className="text-xs text-[var(--color-aurora-purple)] mt-1">
+                                  by {result.author.name}
+                                </p>
+                              )}
+                            </div>
                           </button>
                         );
                       })}
                     </div>
                   </div>
-                ))}
+                )}
 
-                {filteredSuggestions.length === 0 && searchQuery && (
-                  <div className="text-center py-8">
-                    <Search className="w-12 h-12 text-[var(--muted-foreground)]/30 mx-auto mb-3" />
-                    <p className="text-[var(--muted-foreground)]">No results for "{searchQuery}"</p>
-                    <p className="text-sm text-[var(--muted-foreground)]/70 mt-1">Try a different search term</p>
+                {/* No content results but has query */}
+                {searchResults && searchResults.results.length === 0 && debouncedQuery.length >= 2 && (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-[var(--muted-foreground)]">No content found for "{debouncedQuery}"</p>
                   </div>
+                )}
+
+                {/* Navigation Suggestions - Show when no query or as quick access */}
+                {(searchQuery.length < 2 || filteredSuggestions.length > 0) && (
+                  <>
+                    <div className="border-t border-[var(--border)] pt-4">
+                      <p className="text-xs text-[var(--muted-foreground)] font-semibold uppercase tracking-wider mb-2 px-2">
+                        {searchQuery.length >= 2 ? "Quick Navigation" : "Browse"}
+                      </p>
+                    </div>
+                    {Object.entries(groupedSuggestions).map(([category, items]) => (
+                      <div key={category}>
+                        <p className="text-xs text-[var(--muted-foreground)] font-medium mb-2 px-2">
+                          {category}
+                        </p>
+                        <div className="space-y-1">
+                          {items.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                              <button
+                                key={item.href}
+                                onClick={() => handleSearchSelect(item.href)}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-[var(--accent)] transition-colors text-left group"
+                              >
+                                <div className="w-8 h-8 rounded-lg bg-[var(--color-aurora-purple)]/10 flex items-center justify-center group-hover:bg-[var(--color-aurora-purple)]/20 transition-colors">
+                                  <Icon className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                                </div>
+                                <span className="text-[var(--foreground)] text-sm">{item.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </>
                 )}
 
                 {/* Keyboard shortcut hint */}
