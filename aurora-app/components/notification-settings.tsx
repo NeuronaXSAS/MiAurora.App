@@ -134,7 +134,13 @@ export function NotificationSettings() {
           
           {permission !== 'granted' && permission !== 'denied' && (
             <Button
-              onClick={requestPermission}
+              onClick={async () => {
+                const granted = await requestPermission();
+                if (granted) {
+                  // Show success notification
+                  await notify(AuroraNotifications.creditsEarned(0, 'enabling notifications'));
+                }
+              }}
               disabled={isLoading}
               className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] min-h-[44px]"
             >

@@ -30,6 +30,7 @@ interface GlobalHeaderProps {
   showCreateButton?: boolean;
   title?: string;
   className?: string;
+  sidebarCollapsed?: boolean;
 }
 
 // Search suggestions with icons and routes
@@ -50,7 +51,8 @@ export function GlobalHeader({
   userId, 
   showCreateButton = true,
   title,
-  className 
+  className,
+  sidebarCollapsed = false
 }: GlobalHeaderProps) {
   const router = useRouter();
   const searchInputRef = useRef<HTMLInputElement>(null);

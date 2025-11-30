@@ -355,10 +355,20 @@ export default function ProfilePage() {
                       if (pushSubscribed) {
                         await unsubscribePush();
                       } else {
-                        // Request permission first, then subscribe
-                        const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
-                        if (vapidKey) {
-                          await subscribePush(vapidKey);
+                        // Request permission first
+                        const permission = await Notification.requestPermission();
+                        if (permission === 'granted') {
+                          // Then subscribe with VAPID key
+                          const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
+                          if (vapidKey) {
+                            await subscribePush(vapidKey);
+                          } else {
+                            // Show local notification as fallback
+                            new Notification('Aurora App', {
+                              body: 'Notifications enabled! You\'ll receive safety reminders.',
+                              icon: '/icon.png'
+                            });
+                          }
                         }
                       }
                     }}
@@ -637,7 +647,11 @@ export default function ProfilePage() {
                 <div className="space-y-3">
                   {savedPosts && savedPosts.length > 0 ? (
                     savedPosts.map((post: any) => (
-                      <div key={post._id} className="border-b border-[var(--border)] last:border-0 pb-3 last:pb-0">
+                      <Link 
+                        key={post._id} 
+                        href={`/feed?post=${post._id}`}
+                        className="block border-b border-[var(--border)] last:border-0 pb-3 last:pb-0 hover:bg-[var(--accent)] -mx-2 px-2 py-1 rounded-lg transition-colors"
+                      >
                         <p className="font-medium text-sm line-clamp-1 text-[var(--foreground)]">{post.title}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="secondary" className="text-xs bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]">
@@ -647,7 +661,7 @@ export default function ProfilePage() {
                             by {post.author?.name || "Anonymous"}
                           </span>
                         </div>
-                      </div>
+                      </Link>
                     ))
                   ) : (
                     <div className="text-center py-4">

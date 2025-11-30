@@ -32,6 +32,15 @@ export default function AuthenticatedLayout({
     getUserId();
   }, []);
 
+  // Listen for sidebar toggle events
+  useEffect(() => {
+    const handleToggle = () => {
+      setSidebarCollapsed(prev => !prev);
+    };
+    window.addEventListener('toggle-sidebar', handleToggle);
+    return () => window.removeEventListener('toggle-sidebar', handleToggle);
+  }, []);
+
   // Watch for credit changes and celebrate
   useCreditsCelebration(userId);
 
@@ -47,10 +56,10 @@ export default function AuthenticatedLayout({
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
       />
       
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Main Content Area - Expands when sidebar is collapsed */}
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-0' : ''}`}>
         {/* Global Header - Now shown on ALL pages for consistent navigation */}
-        <GlobalHeader userId={userId} />
+        <GlobalHeader userId={userId} sidebarCollapsed={sidebarCollapsed} />
         
         <main 
           id="main-content" 

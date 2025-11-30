@@ -88,7 +88,7 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
       content: "Hi beautiful! I'm Aurora, your AI companion. I'm here to support you, listen to you, and help you navigate life safely. How are you feeling today? 💜",
       isUser: false,
       timestamp: new Date(),
-    }
+    },
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -217,14 +217,14 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
   };
 
   return (
-    <div className={cn("flex flex-col h-full bg-gradient-to-b from-[#150F22] to-[#1E1535] rounded-2xl overflow-hidden", className)}>
+    <div className={cn("flex flex-col h-full bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-xl", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/5">
+      <div className="flex items-center justify-between p-4 border-b border-[var(--border)] bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10">
         <div className="flex items-center gap-3">
           <AuroraAvatar />
           <div>
-            <h3 className="text-white font-semibold">Aurora AI</h3>
-            <p className="text-[#FF6B7A] text-sm flex items-center gap-1">
+            <h3 className="text-[var(--foreground)] font-semibold">Aurora AI</h3>
+            <p className="text-[var(--color-aurora-pink)] text-sm flex items-center gap-1">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
               Always here for you
             </p>
@@ -235,7 +235,7 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
             variant="ghost"
             size="icon"
             onClick={() => setIsMuted(!isMuted)}
-            className="min-w-[44px] min-h-[44px] text-white/60 hover:text-white hover:bg-white/10"
+            className="min-w-[44px] min-h-[44px] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
           >
             {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
           </Button>
@@ -244,12 +244,12 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
               <Button
                 variant="ghost"
                 size="icon"
-                className="min-w-[44px] min-h-[44px] text-white/60 hover:text-white hover:bg-white/10"
+                className="min-w-[44px] min-h-[44px] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
               >
                 <MoreHorizontal className="w-5 h-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#1E1535] border-white/20">
+            <DropdownMenuContent align="end" className="bg-[var(--card)] border-[var(--border)]">
               <DropdownMenuItem 
                 onClick={() => {
                   if (confirm('Are you sure you want to clear the chat history?')) {
@@ -261,9 +261,9 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
                     }]);
                   }
                 }}
-                className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer"
+                className="text-[var(--foreground)] hover:bg-[var(--accent)] cursor-pointer"
               >
-                <Trash2 className="w-4 h-4 mr-2 text-[#f05a6b]" />
+                <Trash2 className="w-4 h-4 mr-2 text-[var(--color-aurora-salmon)]" />
                 Clear Chat History
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -294,8 +294,8 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
               <div className={cn(
                 "max-w-[75%] rounded-2xl px-4 py-3",
                 message.isUser 
-                  ? "bg-gradient-to-r from-[#FF6B7A] to-[#E84D5F] text-white rounded-tr-sm"
-                  : "bg-white/10 text-white rounded-tl-sm border border-white/10"
+                  ? "bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white rounded-tr-sm"
+                  : "bg-[var(--accent)] text-[var(--foreground)] rounded-tl-sm border border-[var(--border)]"
               )}>
                 {message.isTyping ? (
                   <TypingIndicator />
@@ -305,7 +305,7 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
                 {!message.isTyping && (
                   <p className={cn(
                     "text-xs mt-2",
-                    message.isUser ? "text-white/70" : "text-white/40"
+                    message.isUser ? "text-white/70" : "text-[var(--muted-foreground)]"
                   )}>
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
@@ -318,12 +318,12 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-white/10 bg-white/5">
+      <div className="p-4 border-t border-[var(--border)] bg-[var(--accent)]/30">
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
-            className="min-w-[44px] min-h-[44px] text-white/60 hover:text-white hover:bg-white/10 shrink-0"
+            className="min-w-[44px] min-h-[44px] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)] shrink-0"
           >
             <Smile className="w-5 h-5" />
           </Button>
@@ -334,7 +334,7 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Share what's on your mind..."
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/40 pr-12 rounded-full min-h-[44px]"
+              className="bg-[var(--background)] border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] pr-12 rounded-full min-h-[44px]"
               disabled={isLoading}
             />
           </div>
@@ -346,8 +346,8 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
             className={cn(
               "shrink-0 transition-colors min-w-[44px] min-h-[44px]",
               isRecording 
-                ? "text-[#FF6B7A] bg-[#FF6B7A]/20 hover:bg-[#FF6B7A]/30" 
-                : "text-white/60 hover:text-white hover:bg-white/10"
+                ? "text-[var(--color-aurora-pink)] bg-[var(--color-aurora-pink)]/20 hover:bg-[var(--color-aurora-pink)]/30" 
+                : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
             )}
           >
             {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
@@ -356,7 +356,7 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
           <Button
             onClick={handleSendMessage}
             disabled={!inputValue.trim() || isLoading}
-            className="min-w-[44px] min-h-[44px] bg-gradient-to-r from-[#FF6B7A] to-[#E84D5F] hover:from-[#E84D5F] hover:to-[#C73A4D] text-white rounded-full shrink-0"
+            className="min-w-[44px] min-h-[44px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:opacity-90 text-white rounded-full shrink-0"
             size="icon"
           >
             <Send className="w-4 h-4" />
