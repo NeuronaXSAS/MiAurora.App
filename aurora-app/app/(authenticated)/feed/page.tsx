@@ -25,7 +25,6 @@ import {
 import { 
   Sparkles, MapPin, Users, Target, Share2, Copy, Mail,
   ChevronDown, Flame, TrendingUp, Clock, LayoutGrid, List,
-  MessageCircle, Shield, Plus,
 } from "lucide-react";
 import { CreateOptionsModal } from "@/components/create-options-modal";
 import { PostCreateDialog } from "@/components/post-create-dialog";
@@ -174,82 +173,13 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      {/* Aurora-styled Header */}
-      <div className="bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-40 shadow-sm">
-        <div className="max-w-3xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Link href="/feed" className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-0.5">
-                  <div className="w-full h-full rounded-[10px] bg-[var(--card)] flex items-center justify-center overflow-hidden">
-                    <Image src="/Au_Logo_1.png" alt="Aurora" width={32} height={32} className="object-contain" />
-                  </div>
-                </div>
-              </Link>
-              <div>
-                <h1 className="text-xl font-bold text-[var(--foreground)]">Your Feed</h1>
-                <p className="text-sm text-[var(--muted-foreground)]">Community intelligence for women</p>
-              </div>
-            </div>
-
-            {/* Right actions: Create + AI + Panic + Filter */}
-            <div className="flex items-center gap-2">
-              {/* Create Post Button */}
-              <button 
-                onClick={() => setShowCreateModal(true)}
-                className="p-2 rounded-xl bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 transition-all shadow-md"
-                aria-label="Create Post"
-              >
-                <Plus className="w-5 h-5 text-white" />
-              </button>
-
-              <button 
-                onClick={() => setShowAIChat(true)}
-                className="p-2 rounded-xl hover:bg-[var(--accent)] transition-colors"
-                aria-label="AI Companion"
-              >
-                <MessageCircle className="w-5 h-5 text-[var(--color-aurora-purple)]" />
-              </button>
-
-              <Link 
-                href="/emergency"
-                className="p-2 rounded-xl bg-[var(--color-aurora-orange)] hover:bg-[var(--color-aurora-orange)]/90 transition-colors shadow-lg"
-                aria-label="Emergency"
-              >
-                <Shield className="w-5 h-5 text-white" />
-              </Link>
-
-              {isMounted && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--foreground)] text-sm">
-                      {contentType === "all" ? "All" : contentType.charAt(0).toUpperCase() + contentType.slice(1)}
-                      <ChevronDown className="w-4 h-4" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-[var(--card)] border-[var(--border)]">
-                    {["all", "post", "poll", "route", "opportunity"].map((type) => (
-                      <DropdownMenuItem
-                        key={type}
-                        onClick={() => setContentType(type)}
-                        className={`text-[var(--foreground)] hover:bg-[var(--accent)] ${contentType === type ? "bg-[var(--accent)]" : ""}`}
-                      >
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Sort Bar */}
-        <div className="max-w-3xl mx-auto px-4 py-2 border-t border-[var(--border)]">
+      {/* Sort & Filter Bar - No duplicate header, uses GlobalHeader from layout */}
+      <div className="bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-30 shadow-sm">
+        <div className="max-w-3xl mx-auto px-4 py-2">
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--foreground)] text-sm font-medium transition-colors">
+                <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--foreground)] text-sm font-medium transition-colors min-h-[40px]">
                   <currentSort.icon className="w-4 h-4 text-[var(--color-aurora-purple)]" />
                   {currentSort.label}
                   <ChevronDown className="w-4 h-4 text-[var(--muted-foreground)]" />
@@ -269,16 +199,38 @@ export default function FeedPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {isMounted && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--foreground)] text-sm min-h-[40px]">
+                    {contentType === "all" ? "All" : contentType.charAt(0).toUpperCase() + contentType.slice(1)}
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-[var(--card)] border-[var(--border)]">
+                  {["all", "post", "poll", "route", "opportunity"].map((type) => (
+                    <DropdownMenuItem
+                      key={type}
+                      onClick={() => setContentType(type)}
+                      className={`text-[var(--foreground)] hover:bg-[var(--accent)] ${contentType === type ? "bg-[var(--accent)]" : ""}`}
+                    >
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             <div className="flex items-center gap-1 ml-auto">
               <button
                 onClick={() => setViewMode("card")}
-                className={`p-1.5 rounded-lg transition-colors ${viewMode === "card" ? "bg-[var(--accent)]" : "hover:bg-[var(--accent)]"}`}
+                className={`p-2 rounded-lg transition-colors min-w-[40px] min-h-[40px] ${viewMode === "card" ? "bg-[var(--accent)]" : "hover:bg-[var(--accent)]"}`}
               >
                 <LayoutGrid className="w-5 h-5 text-[var(--muted-foreground)]" />
               </button>
               <button
                 onClick={() => setViewMode("compact")}
-                className={`p-1.5 rounded-lg transition-colors ${viewMode === "compact" ? "bg-[var(--accent)]" : "hover:bg-[var(--accent)]"}`}
+                className={`p-2 rounded-lg transition-colors min-w-[40px] min-h-[40px] ${viewMode === "compact" ? "bg-[var(--accent)]" : "hover:bg-[var(--accent)]"}`}
               >
                 <List className="w-5 h-5 text-[var(--muted-foreground)]" />
               </button>

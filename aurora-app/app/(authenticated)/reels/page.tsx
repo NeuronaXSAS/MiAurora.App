@@ -129,8 +129,8 @@ function SafetyTip() {
   if (!show) return null;
 
   return (
-    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-30 animate-fade-in">
-      <div className="px-4 py-2 bg-[var(--color-aurora-purple)]/90 backdrop-blur-sm rounded-full text-white text-sm font-medium shadow-lg">
+    <div className="absolute top-16 left-0 right-0 flex justify-center z-20 pointer-events-none">
+      <div className="px-4 py-2 bg-[var(--color-aurora-purple)]/90 backdrop-blur-sm rounded-full text-white text-sm font-medium shadow-lg animate-fade-in">
         {tips[tipIndex]}
       </div>
     </div>
