@@ -120,53 +120,53 @@ export function OpportunityCard({
         </div>
       )}
 
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3 flex-1">
+      <CardHeader className="pb-3 px-4 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
             {!thumbnailUrl && (
-              <div className={`w-12 h-12 rounded-lg ${colorClass} flex items-center justify-center flex-shrink-0`}>
-                <Icon className="w-6 h-6" />
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg ${colorClass} flex items-center justify-center flex-shrink-0`}>
+                <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-lg truncate text-[var(--foreground)]">{opportunity.title}</h3>
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-semibold text-base sm:text-lg text-[var(--foreground)] line-clamp-2 sm:truncate">{opportunity.title}</h3>
+                <Badge className={`${colorClass} flex-shrink-0 text-xs`}>
+                  {opportunity.category.charAt(0).toUpperCase() + opportunity.category.slice(1)}
+                </Badge>
+              </div>
               {companyName && (
-                <p className="text-sm text-[var(--muted-foreground)]">{companyName}</p>
+                <p className="text-sm text-[var(--muted-foreground)] truncate">{companyName}</p>
               )}
               {opportunity.location && (
-                <p className="text-xs text-[var(--muted-foreground)]">{opportunity.location}</p>
+                <p className="text-xs text-[var(--muted-foreground)] truncate">{opportunity.location}</p>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge className={colorClass}>
-              {opportunity.category.charAt(0).toUpperCase() + opportunity.category.slice(1)}
-            </Badge>
-            {isCreator && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={handleDelete}
-                    className="text-red-600 focus:text-red-600"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Opportunity
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
+          {isCreator && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="flex-shrink-0 -mr-2">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={handleDelete}
+                  className="text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Opportunity
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 px-4 sm:px-6">
         {/* Description */}
-        <p className={`text-[var(--foreground)]/80 ${!isUnlocked ? 'line-clamp-2' : ''}`}>
+        <p className={`text-sm sm:text-base text-[var(--foreground)]/80 ${!isUnlocked ? 'line-clamp-2' : ''}`}>
           {opportunity.description}
         </p>
 
@@ -222,7 +222,7 @@ export function OpportunityCard({
         )}
 
         {/* Action */}
-        <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-[var(--border)]">
           <div className="flex items-center gap-2">
             {isUnlocked ? (
               <Badge variant="outline" className="text-[var(--color-aurora-mint)] border-[var(--color-aurora-mint)]">
@@ -242,10 +242,10 @@ export function OpportunityCard({
               onClick={onUnlock}
               disabled={!canAfford}
               size="sm"
-              className={canAfford 
+              className={`w-full sm:w-auto ${canAfford 
                 ? "bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white min-h-[44px]" 
                 : "bg-[var(--muted-foreground)]/20 text-[var(--muted-foreground)] min-h-[44px]"
-              }
+              }`}
             >
               {canAfford ? `Unlock (${opportunity.creditCost} credits)` : 'Insufficient Credits'}
             </Button>
