@@ -182,12 +182,12 @@ export class GPSTracker {
   private stateKey: string = 'aurora-gps-tracker-state';
 
   constructor() {
-    // Restore state from localStorage on initialization
-    this.restoreState();
+    // Do NOT restore state on initialization - each session should start fresh
+    // The restoreState method is kept for potential future use but not called automatically
   }
 
   /**
-   * Start tracking
+   * Start tracking - ALWAYS starts fresh with no previous data
    */
   start(
     onUpdate: (state: TrackingState) => void,
@@ -195,12 +195,28 @@ export class GPSTracker {
   ): void {
     if (this.state.isTracking) return;
 
+    // CRITICAL: Always clear any persisted state before starting a new session
+    this.clearPersistedState();
+    
+    // Reset state completely for fresh tracking
+    this.state = {
+      isTracking: true,
+      isPaused: false,
+      coordinates: [],
+      stats: {
+        distance: 0,
+        duration: 0,
+        pace: 0,
+        elevationGain: 0,
+      },
+      startTime: Date.now(),
+      pausedTime: 0,
+    };
+    
+    this.lastSamplePosition = null;
+    this.lastSampleTime = Date.now();
     this.onUpdate = onUpdate;
     this.onError = onError || null;
-    this.state.isTracking = true;
-    this.state.isPaused = false;
-    this.state.startTime = Date.now();
-    this.lastSampleTime = Date.now();
 
     if ('geolocation' in navigator) {
       this.watchId = navigator.geolocation.watchPosition(

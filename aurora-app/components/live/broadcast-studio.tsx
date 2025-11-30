@@ -331,17 +331,17 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
   // Preview Stage
   if (stage === 'preview') {
     return (
-      <div className="min-h-screen bg-black flex flex-col">
+      <div className="min-h-screen bg-[var(--color-aurora-violet)] flex flex-col">
         {/* Video Preview */}
         <div className="flex-1 relative">
           <div
             ref={localVideoRef}
-            className="w-full h-full bg-gray-900"
+            className="w-full h-full bg-[var(--color-aurora-violet)]"
             style={{ minHeight: '400px' }}
           />
 
           {!isCameraEnabled && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+            <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-aurora-violet)]">
               <div className="text-center text-white">
                 <CameraOff className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p>Camera is off</p>
@@ -351,7 +351,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
 
           {/* Preview Overlay */}
           <div className="absolute top-4 left-4 right-4">
-            <div className="bg-black/70 backdrop-blur-sm rounded-lg p-4">
+            <div className="bg-black/70 backdrop-blur-sm rounded-xl p-4">
               <h2 className="text-white font-bold text-lg mb-1">{title}</h2>
               <p className="text-white/70 text-sm">Preview Mode - Not Live Yet</p>
             </div>
@@ -359,13 +359,13 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
         </div>
 
         {/* Controls */}
-        <div className="bg-gray-900 p-6 space-y-4">
+        <div className="bg-[var(--card)] border-t border-[var(--border)] p-6 space-y-4">
           <div className="flex items-center justify-center gap-4">
             <Button
               onClick={toggleCamera}
               variant={isCameraEnabled ? "default" : "destructive"}
               size="lg"
-              className="rounded-full w-16 h-16"
+              className={`rounded-full w-16 h-16 ${isCameraEnabled ? 'bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]' : 'bg-[var(--color-aurora-salmon)]'}`}
             >
               {isCameraEnabled ? <Camera className="w-6 h-6" /> : <CameraOff className="w-6 h-6" />}
             </Button>
@@ -374,7 +374,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
               onClick={toggleMicrophone}
               variant={isMicrophoneEnabled ? "default" : "destructive"}
               size="lg"
-              className="rounded-full w-16 h-16"
+              className={`rounded-full w-16 h-16 ${isMicrophoneEnabled ? 'bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]' : 'bg-[var(--color-aurora-salmon)]'}`}
             >
               {isMicrophoneEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
             </Button>
@@ -383,7 +383,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
               onClick={switchCamera}
               variant="outline"
               size="lg"
-              className="rounded-full w-16 h-16"
+              className="rounded-full w-16 h-16 border-[var(--border)]"
             >
               <Repeat className="w-6 h-6" />
             </Button>
@@ -391,7 +391,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
 
           <Button
             onClick={handleStartBroadcast}
-            className="w-full bg-red-600 hover:bg-red-700 text-white"
+            className="w-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:from-[var(--color-aurora-violet)] hover:to-[var(--color-aurora-purple)] text-white min-h-[48px]"
             size="lg"
             disabled={!isConnected}
           >
@@ -404,7 +404,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
               router.push('/live');
             }}
             variant="outline"
-            className="w-full"
+            className="w-full border-[var(--border)] min-h-[48px]"
           >
             Cancel
           </Button>
@@ -415,12 +415,12 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
 
   // Live Stage
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen bg-[var(--color-aurora-violet)] flex flex-col">
       {/* Video Stream */}
       <div className="flex-1 relative">
         <div
           ref={localVideoRef}
-          className="w-full h-full bg-gray-900"
+          className="w-full h-full bg-[var(--color-aurora-violet)]"
           style={{ minHeight: '400px' }}
         />
 
@@ -428,7 +428,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
         <div className="absolute top-4 left-4 right-4 z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-red-600 px-4 py-2 rounded-full flex items-center gap-2 animate-pulse">
+              <div className="bg-[var(--color-aurora-pink)] px-4 py-2 rounded-full flex items-center gap-2 animate-pulse">
                 <div className="w-3 h-3 bg-white rounded-full" />
                 <span className="text-white font-bold text-sm">LIVE</span>
               </div>
@@ -444,20 +444,20 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
           </div>
         </div>
 
-        {/* Emergency Button */}
+        {/* Emergency Button - Uses Aurora Orange ONLY for emergency */}
         <div className="absolute top-20 right-4 z-10">
           <Button
             onClick={handleEmergency}
-            className="bg-red-600 hover:bg-red-700 rounded-full w-14 h-14 shadow-2xl animate-pulse"
+            className="bg-[var(--color-aurora-orange)] hover:bg-[var(--color-aurora-orange)]/90 rounded-full w-14 h-14 shadow-2xl animate-pulse min-w-[56px] min-h-[56px]"
             size="icon"
           >
-            <Shield className="w-6 h-6" />
+            <Shield className="w-6 h-6 text-white" />
           </Button>
         </div>
 
         {/* Stats Overlay */}
         {stats && (
-          <div className="absolute bottom-20 left-4 bg-black/70 backdrop-blur-sm rounded-lg p-3 text-white text-xs">
+          <div className="absolute bottom-20 left-4 bg-black/70 backdrop-blur-sm rounded-xl p-3 text-white text-xs">
             <p>Quality: {stats.resolution.width}x{stats.resolution.height}</p>
             <p>FPS: {stats.fps}</p>
             <p>Bitrate: {Math.round(stats.bitrate / 1000)}kbps</p>
@@ -466,13 +466,13 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
       </div>
 
       {/* Controls */}
-      <div className="bg-gray-900 p-6 space-y-4">
+      <div className="bg-[var(--card)] border-t border-[var(--border)] p-6 space-y-4">
         <div className="flex items-center justify-center gap-4">
           <Button
             onClick={toggleCamera}
             variant={isCameraEnabled ? "default" : "destructive"}
             size="lg"
-            className="rounded-full w-16 h-16"
+            className={`rounded-full w-16 h-16 ${isCameraEnabled ? 'bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]' : 'bg-[var(--color-aurora-salmon)]'}`}
           >
             {isCameraEnabled ? <Camera className="w-6 h-6" /> : <CameraOff className="w-6 h-6" />}
           </Button>
@@ -481,7 +481,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
             onClick={toggleMicrophone}
             variant={isMicrophoneEnabled ? "default" : "destructive"}
             size="lg"
-            className="rounded-full w-16 h-16"
+            className={`rounded-full w-16 h-16 ${isMicrophoneEnabled ? 'bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]' : 'bg-[var(--color-aurora-salmon)]'}`}
           >
             {isMicrophoneEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
           </Button>
@@ -490,7 +490,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
             onClick={switchCamera}
             variant="outline"
             size="lg"
-            className="rounded-full w-16 h-16"
+            className="rounded-full w-16 h-16 border-[var(--border)]"
           >
             <Repeat className="w-6 h-6" />
           </Button>
@@ -498,7 +498,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
 
         <Button
           onClick={handleEndStream}
-          className="w-full bg-red-600 hover:bg-red-700 text-white"
+          className="w-full bg-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/90 text-white min-h-[48px]"
           size="lg"
         >
           <X className="w-5 h-5 mr-2" />

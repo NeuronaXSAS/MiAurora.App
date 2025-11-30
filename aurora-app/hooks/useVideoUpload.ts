@@ -68,10 +68,10 @@ export function useVideoUpload(): UseVideoUploadReturn {
         throw new Error('El video debe ser menor a 100MB');
       }
 
-      // Get video duration
+      // Get video duration - no minimum, max 3 minutes
       const duration = await getVideoDuration(file);
-      if (duration < 5 || duration > 90) {
-        throw new Error('El video debe durar entre 5 y 90 segundos');
+      if (duration > 180) {
+        throw new Error('El video debe durar máximo 3 minutos');
       }
 
       // Step 1: Upload to Cloudinary using unsigned upload

@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { RedditPostCard } from "@/components/reddit-post-card";
 import { MobileRouteCard } from "@/components/mobile-route-card";
+import { ReelFeedCard } from "@/components/reel-feed-card";
 import { PollCard } from "@/components/poll-card";
 import { AIChatCard } from "@/components/ai-chat-card";
 import { PostCardSkeleton } from "@/components/loading-skeleton";
@@ -225,13 +226,36 @@ export function MobileFeed() {
                 />
               )}
 
-              {item.type === "post" && (!item.postType || item.postType === "standard") && (
+              {item.type === "post" && (!item.postType || item.postType === "standard") && !item.route && (
                 <RedditPostCard
                   post={item}
                   currentUserId={userId || undefined}
                   onVerify={() => handleVerify(item._id as Id<"posts">)}
                   onDelete={() => handleDelete(item._id as Id<"posts">)}
                   showActions={true}
+                />
+              )}
+
+              {item.type === "post" && item.route && (
+                <MobileRouteCard
+                  route={{
+                    ...item.route,
+                    _creationTime: item._creationTime,
+                    creatorId: item.authorId,
+                  }}
+                  safetyInsight={`Safety score: ${Math.round((item.route.rating || 0) * 20)}%`}
+                />
+              )}
+
+              {item.type === "post" && item.reel && (
+                <ReelFeedCard
+                  reel={{
+                    ...item.reel,
+                    _creationTime: item._creationTime,
+                  }}
+                  currentUserId={userId || undefined}
+                  onDelete={() => handleDelete(item._id as Id<"posts">)}
+                  isMobile={true}
                 />
               )}
             </div>

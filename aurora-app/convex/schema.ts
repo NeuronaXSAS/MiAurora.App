@@ -98,13 +98,15 @@ export default defineSchema({
     isVerified: v.boolean(), // True when verificationCount >= 5
     isAnonymous: v.boolean(),
     routeId: v.optional(v.id("routes")), // Link to shared route
+    reelId: v.optional(v.id("reels")), // Link to shared reel
     upvotes: v.optional(v.number()), // Default: 0
     downvotes: v.optional(v.number()), // Default: 0
     commentCount: v.optional(v.number()), // Default: 0
     postType: v.optional(v.union(
       v.literal("standard"),
       v.literal("poll"),
-      v.literal("ai_chat")
+      v.literal("ai_chat"),
+      v.literal("reel")
     )),
     pollOptions: v.optional(v.array(v.object({
       text: v.string(),

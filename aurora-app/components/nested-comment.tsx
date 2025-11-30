@@ -93,7 +93,7 @@ export function NestedComment({
         </Avatar>
         
         <div className="flex-1 min-w-0">
-          <div className="bg-gray-50 rounded-lg p-3">
+          <div className="bg-[var(--accent)] rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="font-semibold">{comment.author?.name || "Anonymous"}</span>
               {comment.author?.trustScore > 0 && (
@@ -114,7 +114,7 @@ export function NestedComment({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-2 text-xs"
+                    className="h-8 px-2 text-xs min-w-[44px] hover:bg-[var(--color-aurora-pink)]/10 hover:text-[var(--color-aurora-pink)]"
                     onClick={() => handleVote("upvote")}
                     disabled={!currentUserId}
                   >
@@ -125,7 +125,7 @@ export function NestedComment({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-2 text-xs"
+                    className="h-8 px-2 text-xs min-w-[44px] hover:bg-[var(--muted-foreground)]/10"
                     onClick={() => handleVote("downvote")}
                     disabled={!currentUserId}
                   >
@@ -137,7 +137,7 @@ export function NestedComment({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 px-2 text-xs"
+                      className="h-8 px-2 text-xs min-w-[44px] hover:bg-[var(--color-aurora-purple)]/10 hover:text-[var(--color-aurora-purple)]"
                       onClick={() => setShowReply(!showReply)}
                     >
                       <MessageSquare className="w-3 h-3 mr-1" />
@@ -162,12 +162,13 @@ export function NestedComment({
                 placeholder="Write a reply..."
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
-                className="min-h-[60px] text-sm"
+                className="min-h-[60px] text-sm border-[var(--border)] bg-[var(--background)]"
               />
               <Button
                 size="sm"
                 onClick={handleReply}
                 disabled={!replyText.trim()}
+                className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white min-h-[44px] min-w-[44px]"
               >
                 <Send className="w-4 h-4" />
               </Button>

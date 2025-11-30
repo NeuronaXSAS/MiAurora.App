@@ -127,7 +127,7 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-2xl lg:max-w-3xl bg-gradient-to-br from-[var(--color-aurora-violet)] via-[#231E35] to-[var(--color-aurora-purple)] border-[var(--color-aurora-pink)]/30 shadow-2xl max-h-[90vh] overflow-hidden p-0">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-2xl lg:max-w-3xl bg-gradient-to-br from-[var(--color-aurora-violet)] via-[#231E35] to-[var(--color-aurora-purple)] border-[var(--color-aurora-pink)]/30 shadow-2xl max-h-[85vh] overflow-hidden p-0 my-4">
         {/* Header - Fixed */}
         <DialogHeader className="p-4 sm:p-6 pb-0">
           <div className="flex items-center gap-3">
@@ -144,7 +144,7 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
         </DialogHeader>
 
         {/* Scrollable Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-180px)] px-4 sm:px-6">
+        <div className="overflow-y-auto max-h-[calc(85vh-200px)] px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 py-4">
             {/* Avatar Preview - Sticky on mobile */}
             <div className="space-y-3 sm:space-y-4">

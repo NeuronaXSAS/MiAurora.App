@@ -52,7 +52,7 @@ Duration: ${reel.duration} seconds
 
       // Call Google Gemini for analysis
       const genAI = getGenAI();
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
       const prompt = `
 You are an AI assistant for a women's safety platform called Aurora App.

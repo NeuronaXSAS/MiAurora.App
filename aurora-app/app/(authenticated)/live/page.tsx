@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,9 +27,12 @@ const LivePlayer = dynamic(
 export default function LivePage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [selectedLivestream, setSelectedLivestream] = useState<Id<"livestreams"> | null>(null);
+  const [hasCleanedUp, setHasCleanedUp] = useState(false);
   const router = useRouter();
+  
+  const cleanupStale = useMutation(api.livestreams.cleanupStaleLivestreams);
 
-  // Get user ID
+  // Get user ID and cleanup stale streams
   useEffect(() => {
     const getUserId = async () => {
       try {
@@ -37,6 +40,16 @@ export default function LivePage() {
         const data = await response.json();
         if (data.userId) {
           setUserId(data.userId as Id<"users">);
+          
+          // Cleanup stale livestreams once on page load
+          if (!hasCleanedUp) {
+            try {
+              await cleanupStale({});
+              setHasCleanedUp(true);
+            } catch (error) {
+              console.error("Error cleaning up stale streams:", error);
+            }
+          }
         } else {
           router.push("/");
         }
@@ -46,7 +59,7 @@ export default function LivePage() {
       }
     };
     getUserId();
-  }, [router]);
+  }, [router, cleanupStale, hasCleanedUp]);
 
   const livestreams = useQuery(api.livestreams.getLivestreams, { limit: 20 });
 

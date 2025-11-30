@@ -7,15 +7,118 @@
  * Shows upload progress with a sleek progress bar.
  */
 
-import { useState } from 'react';
-import { ArrowRight, Loader2, MapPin } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowRight, Loader2, MapPin, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 import { useVideoUpload } from '@/hooks/useVideoUpload';
 import type { Id } from '@/convex/_generated/dataModel';
+
+interface LocationData {
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+// Simple Location Picker Component
+function LocationPicker({ 
+  onLocationSelect, 
+  selectedLocation 
+}: { 
+  onLocationSelect: (loc: LocationData | null) => void;
+  selectedLocation: LocationData | null;
+}) {
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [locationName, setLocationName] = useState(selectedLocation?.name || '');
+
+  const getCurrentLocation = async () => {
+    setIsGettingLocation(true);
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+        });
+      });
+
+      const { latitude, longitude } = position.coords;
+      
+      // Reverse geocode to get location name
+      let name = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&limit=1`
+        );
+        const data = await response.json();
+        if (data.features?.[0]?.place_name) {
+          name = data.features[0].place_name;
+        }
+      } catch (e) {
+        console.warn('Geocoding failed:', e);
+      }
+
+      setLocationName(name);
+      onLocationSelect({ name, lat: latitude, lng: longitude });
+    } catch (error) {
+      console.error('Error getting location:', error);
+      alert('Could not get your location. Please check permissions.');
+    } finally {
+      setIsGettingLocation(false);
+    }
+  };
+
+  const clearLocation = () => {
+    setLocationName('');
+    onLocationSelect(null);
+  };
+
+  return (
+    <div className="space-y-2">
+      {selectedLocation ? (
+        <div className="flex items-center gap-2 p-3 bg-[var(--color-aurora-mint)]/10 border border-[var(--color-aurora-mint)]/30 rounded-xl">
+          <MapPin className="h-5 w-5 text-[var(--color-aurora-mint)] flex-shrink-0" />
+          <span className="text-sm text-[var(--foreground)] flex-1 truncate">{selectedLocation.name}</span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={clearLocation}
+            className="text-[var(--muted-foreground)] hover:text-[var(--color-aurora-salmon)] min-h-[36px]"
+          >
+            ✕
+          </Button>
+        </div>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={getCurrentLocation}
+          disabled={isGettingLocation}
+          className="w-full min-h-[48px] border-[var(--border)] hover:border-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-purple)]/10"
+        >
+          {isGettingLocation ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Getting location...
+            </>
+          ) : (
+            <>
+              <Navigation className="mr-2 h-4 w-4" />
+              Add my current location
+            </>
+          )}
+        </Button>
+      )}
+      <p className="text-xs text-[var(--muted-foreground)]">
+        Adding location helps other women discover safe areas
+      </p>
+    </div>
+  );
+}
 
 interface UploadFormProps {
   videoBlob: Blob;
@@ -44,6 +147,7 @@ export function UploadForm({
   const [caption, setCaption] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [location, setLocation] = useState<LocationData | null>(null);
 
   const { upload, progress, isUploading, error } = useVideoUpload();
 
@@ -59,6 +163,10 @@ export function UploadForm({
       hashtags,
       isAnonymous,
       safetyTags: selectedTags,
+      location: location ? {
+        name: location.name,
+        coordinates: [location.lng, location.lat],
+      } : undefined,
     }, userId);
 
     if (result.success) {
@@ -157,10 +265,16 @@ export function UploadForm({
           </div>
         </div>
 
-        {/* Location (Future Feature) */}
-        <div className="flex items-center gap-2 p-4 bg-[var(--card)] border border-[var(--border)] rounded-xl opacity-50">
-          <MapPin className="h-5 w-5 text-[var(--muted-foreground)]" />
-          <span className="text-[var(--muted-foreground)] text-sm">Add location (Coming soon)</span>
+        {/* Location */}
+        <div className="space-y-3">
+          <Label className="text-[var(--foreground)] text-lg flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-[var(--color-aurora-purple)]" />
+            Location
+          </Label>
+          <LocationPicker 
+            onLocationSelect={(loc) => setLocation(loc)}
+            selectedLocation={location}
+          />
         </div>
 
         {/* Error Message */}

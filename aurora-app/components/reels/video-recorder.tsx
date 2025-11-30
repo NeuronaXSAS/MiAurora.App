@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 interface VideoRecorderProps {
   onRecordingComplete: (videoBlob: Blob) => void;
   onCancel: () => void;
-  maxDuration?: number; // seconds
+  maxDuration?: number; // seconds - no minimum, users can record any length
 }
 
 type RecordingState = 'idle' | 'recording' | 'preview';
@@ -23,7 +23,7 @@ type RecordingState = 'idle' | 'recording' | 'preview';
 export function VideoRecorder({
   onRecordingComplete,
   onCancel,
-  maxDuration = 60,
+  maxDuration = 180, // 3 minutes max, no minimum
 }: VideoRecorderProps) {
   const [state, setState] = useState<RecordingState>('idle');
   const [recordingTime, setRecordingTime] = useState(0);

@@ -13,6 +13,8 @@ import { useRouter, useParams } from "next/navigation";
 import { formatDistance, formatDuration } from "@/lib/gps-tracker";
 import { VoiceRecorder } from "@/components/voice-recorder";
 import { useMutation as useConvexMutation } from "convex/react";
+import Map, { Source, Layer } from "react-map-gl/mapbox";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 const AVAILABLE_TAGS = [
   "safe",
@@ -182,30 +184,92 @@ export default function CompleteRoutePage() {
     );
   }
 
+  // Calculate stats from coordinates if route has them
+  const calculatedDistance = route.coordinates?.length > 1 
+    ? route.coordinates.reduce((total: number, coord: any, i: number, arr: any[]) => {
+        if (i === 0) return 0;
+        const prev = arr[i - 1];
+        const R = 6371e3;
+        const φ1 = (prev.lat * Math.PI) / 180;
+        const φ2 = (coord.lat * Math.PI) / 180;
+        const Δφ = ((coord.lat - prev.lat) * Math.PI) / 180;
+        const Δλ = ((coord.lng - prev.lng) * Math.PI) / 180;
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return total + R * c;
+      }, 0)
+    : route.distance;
+
+  const calculatedDuration = route.coordinates?.length > 1
+    ? Math.floor((route.coordinates[route.coordinates.length - 1]?.timestamp - route.coordinates[0]?.timestamp) / 1000)
+    : route.duration;
+
+  const displayDistance = calculatedDistance > 0 ? calculatedDistance : route.distance;
+  const displayDuration = calculatedDuration > 0 ? calculatedDuration : route.duration;
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--background)]">
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Complete Your Route</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-[var(--foreground)]">Complete Your Route</h1>
+          <p className="text-[var(--muted-foreground)] mb-6">
             Add details and share with the community
           </p>
 
-          {/* Route Summary */}
-          <Card className="mb-6">
+          {/* Route Summary with Map Preview */}
+          <Card className="mb-6 bg-[var(--card)] border-[var(--border)]">
             <CardContent className="p-6">
+              {/* Mini Map Preview */}
+              {route.coordinates && route.coordinates.length > 1 && process.env.NEXT_PUBLIC_MAPBOX_TOKEN && (
+                <div className="w-full h-40 rounded-xl overflow-hidden mb-4 border border-[var(--border)]">
+                  <Map
+                    mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+                    initialViewState={{
+                      longitude: route.coordinates[Math.floor(route.coordinates.length / 2)]?.lng || 0,
+                      latitude: route.coordinates[Math.floor(route.coordinates.length / 2)]?.lat || 0,
+                      zoom: 13,
+                    }}
+                    style={{ width: "100%", height: "100%" }}
+                    mapStyle="mapbox://styles/malunao/cm84u5ecf000x01qled5j8bvl"
+                    interactive={false}
+                  >
+                    <Source
+                      type="geojson"
+                      data={{
+                        type: "Feature",
+                        properties: {},
+                        geometry: {
+                          type: "LineString",
+                          coordinates: route.coordinates.map((c: any) => [c.lng, c.lat]),
+                        },
+                      }}
+                    >
+                      <Layer
+                        id="route-preview"
+                        type="line"
+                        paint={{
+                          "line-color": "#f29de5",
+                          "line-width": 4,
+                          "line-opacity": 0.9,
+                        }}
+                      />
+                    </Source>
+                  </Map>
+                </div>
+              )}
+              
               <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-sm text-gray-500">Distance</p>
-                  <p className="text-xl font-bold">{formatDistance(route.distance)}</p>
+                <div className="bg-[var(--color-aurora-purple)]/10 rounded-xl p-3">
+                  <p className="text-sm text-[var(--muted-foreground)]">Distance</p>
+                  <p className="text-xl font-bold text-[var(--color-aurora-purple)]">{formatDistance(displayDistance)}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Duration</p>
-                  <p className="text-xl font-bold">{formatDuration(route.duration)}</p>
+                <div className="bg-[var(--color-aurora-mint)]/10 rounded-xl p-3">
+                  <p className="text-sm text-[var(--muted-foreground)]">Duration</p>
+                  <p className="text-xl font-bold text-[var(--color-aurora-purple)]">{formatDuration(displayDuration)}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Type</p>
-                  <p className="text-xl font-bold capitalize">{route.routeType}</p>
+                <div className="bg-[var(--color-aurora-pink)]/10 rounded-xl p-3">
+                  <p className="text-sm text-[var(--muted-foreground)]">Type</p>
+                  <p className="text-xl font-bold capitalize text-[var(--color-aurora-purple)]">{route.routeType}</p>
                 </div>
               </div>
             </CardContent>
@@ -214,7 +278,7 @@ export default function CompleteRoutePage() {
           <div className="space-y-6">
             {/* Title */}
             <div>
-              <label className="text-sm font-medium mb-2 block">
+              <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">
                 Route Title (Optional)
               </label>
               <Input
@@ -222,12 +286,13 @@ export default function CompleteRoutePage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={100}
+                className="border-[var(--border)] bg-[var(--background)]"
               />
             </div>
 
             {/* Tags */}
             <div>
-              <label className="text-sm font-medium mb-2 block">
+              <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">
                 Tags * (Select at least one)
               </label>
               <div className="flex flex-wrap gap-2">
@@ -236,10 +301,10 @@ export default function CompleteRoutePage() {
                     key={tag}
                     type="button"
                     onClick={() => toggleTag(tag)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors min-h-[44px] ${
                       selectedTags.includes(tag)
-                        ? "bg-purple-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        ? "bg-[var(--color-aurora-purple)] text-white"
+                        : "bg-[var(--accent)] text-[var(--foreground)] hover:bg-[var(--color-aurora-lavender)]/50"
                     }`}
                   >
                     {tag}
@@ -250,7 +315,7 @@ export default function CompleteRoutePage() {
 
             {/* Rating */}
             <div>
-              <label className="text-sm font-medium mb-2 block">
+              <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">
                 Overall Experience *
               </label>
               <div className="flex gap-2">
@@ -259,19 +324,19 @@ export default function CompleteRoutePage() {
                     key={value}
                     type="button"
                     onClick={() => setRating(value)}
-                    className="focus:outline-none"
+                    className="focus:outline-none min-w-[44px] min-h-[44px]"
                   >
                     <Star
                       className={`w-10 h-10 transition-colors ${
                         value <= rating
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-300 hover:text-yellow-200"
+                          ? "fill-[var(--color-aurora-yellow)] text-[var(--color-aurora-yellow)]"
+                          : "text-[var(--muted-foreground)] hover:text-[var(--color-aurora-yellow)]/50"
                       }`}
                     />
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-[var(--muted-foreground)] mt-1">
                 {rating === 0 && "Rate your experience"}
                 {rating === 1 && "Very Poor"}
                 {rating === 2 && "Poor"}
@@ -283,7 +348,7 @@ export default function CompleteRoutePage() {
 
             {/* Journal Entry */}
             <div>
-              <label className="text-sm font-medium mb-2 block">
+              <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">
                 Journal Entry (Optional)
               </label>
               <Textarea
@@ -292,16 +357,17 @@ export default function CompleteRoutePage() {
                 onChange={(e) => setJournalEntry(e.target.value)}
                 rows={5}
                 maxLength={2000}
+                className="border-[var(--border)] bg-[var(--background)]"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-[var(--muted-foreground)] mt-1">
                 {journalEntry.length}/2000 characters
-                {journalEntry.length > 200 && " • +5 bonus credits for detailed entry!"}
+                {journalEntry.length > 200 && <span className="text-[var(--color-aurora-yellow)]"> • +5 bonus credits for detailed entry!</span>}
               </p>
             </div>
 
             {/* Voice Note */}
             <div>
-              <label className="text-sm font-medium mb-2 block">
+              <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">
                 Voice Note (Optional)
               </label>
               <VoiceRecorder
@@ -309,31 +375,31 @@ export default function CompleteRoutePage() {
                 onRecordingDelete={handleVoiceDelete}
                 maxDuration={180}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-[var(--muted-foreground)] mt-1">
                 Record up to 3 minutes to share your experience
               </p>
             </div>
 
             {/* Sharing Options */}
             <div>
-              <label className="text-sm font-medium mb-3 block">
+              <label className="text-sm font-medium mb-3 block text-[var(--foreground)]">
                 Sharing Preferences
               </label>
               <div className="space-y-3">
                 <button
                   type="button"
                   onClick={() => setSharingLevel("private")}
-                  className={`w-full p-4 rounded-lg border-2 transition-colors text-left ${
+                  className={`w-full p-4 rounded-xl border-2 transition-colors text-left min-h-[72px] ${
                     sharingLevel === "private"
-                      ? "border-purple-600 bg-purple-50"
-                      : "border-gray-200 hover:border-gray-300"
+                      ? "border-[var(--color-aurora-purple)] bg-[var(--color-aurora-purple)]/10"
+                      : "border-[var(--border)] hover:border-[var(--color-aurora-lavender)]"
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <Lock className="w-5 h-5 mt-0.5 text-gray-600" />
+                    <Lock className={`w-5 h-5 mt-0.5 ${sharingLevel === "private" ? "text-[var(--color-aurora-purple)]" : "text-[var(--muted-foreground)]"}`} />
                     <div>
-                      <p className="font-semibold">Private</p>
-                      <p className="text-sm text-gray-600">Only you can see this route</p>
+                      <p className="font-semibold text-[var(--foreground)]">Private</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">Only you can see this route</p>
                     </div>
                   </div>
                 </button>
@@ -341,17 +407,17 @@ export default function CompleteRoutePage() {
                 <button
                   type="button"
                   onClick={() => setSharingLevel("anonymous")}
-                  className={`w-full p-4 rounded-lg border-2 transition-colors text-left ${
+                  className={`w-full p-4 rounded-xl border-2 transition-colors text-left min-h-[72px] ${
                     sharingLevel === "anonymous"
-                      ? "border-purple-600 bg-purple-50"
-                      : "border-gray-200 hover:border-gray-300"
+                      ? "border-[var(--color-aurora-purple)] bg-[var(--color-aurora-purple)]/10"
+                      : "border-[var(--border)] hover:border-[var(--color-aurora-lavender)]"
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <UserX className="w-5 h-5 mt-0.5 text-gray-600" />
+                    <UserX className={`w-5 h-5 mt-0.5 ${sharingLevel === "anonymous" ? "text-[var(--color-aurora-purple)]" : "text-[var(--muted-foreground)]"}`} />
                     <div>
-                      <p className="font-semibold">Anonymous • +15 credits</p>
-                      <p className="text-sm text-gray-600">Share without your name</p>
+                      <p className="font-semibold text-[var(--foreground)]">Anonymous • <span className="text-[var(--color-aurora-yellow)]">+15 credits</span></p>
+                      <p className="text-sm text-[var(--muted-foreground)]">Share without your name</p>
                     </div>
                   </div>
                 </button>
@@ -359,17 +425,17 @@ export default function CompleteRoutePage() {
                 <button
                   type="button"
                   onClick={() => setSharingLevel("public")}
-                  className={`w-full p-4 rounded-lg border-2 transition-colors text-left ${
+                  className={`w-full p-4 rounded-xl border-2 transition-colors text-left min-h-[72px] ${
                     sharingLevel === "public"
-                      ? "border-purple-600 bg-purple-50"
-                      : "border-gray-200 hover:border-gray-300"
+                      ? "border-[var(--color-aurora-purple)] bg-[var(--color-aurora-purple)]/10"
+                      : "border-[var(--border)] hover:border-[var(--color-aurora-lavender)]"
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <Globe className="w-5 h-5 mt-0.5 text-gray-600" />
+                    <Globe className={`w-5 h-5 mt-0.5 ${sharingLevel === "public" ? "text-[var(--color-aurora-purple)]" : "text-[var(--muted-foreground)]"}`} />
                     <div>
-                      <p className="font-semibold">Public • +15 credits</p>
-                      <p className="text-sm text-gray-600">Share with your name</p>
+                      <p className="font-semibold text-[var(--foreground)]">Public • <span className="text-[var(--color-aurora-yellow)]">+15 credits</span></p>
+                      <p className="text-sm text-[var(--muted-foreground)]">Share with your name</p>
                     </div>
                   </div>
                 </button>
@@ -378,14 +444,14 @@ export default function CompleteRoutePage() {
 
             {/* Credit Info */}
             {sharingLevel !== "private" && (
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <div className="bg-[var(--color-aurora-yellow)]/10 border border-[var(--color-aurora-yellow)]/30 rounded-xl p-4">
                 <div className="flex items-start gap-3">
-                  <Sparkles className="w-5 h-5 text-purple-600 mt-0.5" />
+                  <Sparkles className="w-5 h-5 text-[var(--color-aurora-yellow)] mt-0.5" />
                   <div>
-                    <p className="font-medium text-sm text-purple-900">
-                      Earn {journalEntry.length > 200 ? "20" : "15"} credits for sharing!
+                    <p className="font-medium text-sm text-[var(--foreground)]">
+                      Earn <span className="text-[var(--color-aurora-yellow)] font-bold">{journalEntry.length > 200 ? "20" : "15"}</span> credits for sharing!
                     </p>
-                    <p className="text-xs text-purple-700 mt-1">
+                    <p className="text-xs text-[var(--muted-foreground)] mt-1">
                       + 5 more credits each time someone completes your route
                     </p>
                   </div>
@@ -395,25 +461,25 @@ export default function CompleteRoutePage() {
 
             {/* Error */}
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+              <div className="text-sm text-[var(--color-aurora-salmon)] bg-[var(--color-aurora-salmon)]/10 p-3 rounded-xl border border-[var(--color-aurora-salmon)]/30">
                 {error}
               </div>
             )}
 
             {/* Actions */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 pb-safe">
               <Button
                 variant="outline"
                 onClick={() => router.push("/routes")}
                 disabled={loading}
-                className="flex-1"
+                className="flex-1 min-h-[48px] border-[var(--border)]"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={loading || uploadingVoice}
-                className="flex-1"
+                className="flex-1 min-h-[48px] bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white"
               >
                 {uploadingVoice ? "Uploading voice..." : loading ? "Saving..." : "Save Route"}
               </Button>

@@ -89,11 +89,26 @@ export default function TrackRoutePage() {
     setAnnouncement("Route tracking resumed");
   };
 
-  const handleStop = () => {
+  const handleStop = async () => {
     if (!trackerRef.current || !routeId) return;
 
     const finalState = trackerRef.current.stop();
     setAnnouncement("Route tracking stopped");
+    
+    // Save final coordinates before navigating
+    if (finalState.coordinates.length > 0) {
+      try {
+        await saveCoordinates({
+          routeId,
+          coordinates: finalState.coordinates,
+        });
+      } catch (error) {
+        console.error("Error saving final coordinates:", error);
+      }
+    }
+    
+    // Clear persisted state to ensure next session starts fresh
+    trackerRef.current.clearPersistedState();
     
     // Navigate to completion dialog with route data
     router.push(`/routes/complete/${routeId}`);
@@ -212,8 +227,8 @@ export default function TrackRoutePage() {
         )}
       </div>
 
-      {/* Controls */}
-      <div className="backdrop-blur-xl bg-[var(--color-aurora-violet)]/95 border-t border-[var(--color-aurora-pink)]/30 p-4 pb-safe">
+      {/* Controls - Fixed at bottom with safe area padding */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl bg-[var(--color-aurora-violet)]/95 border-t border-[var(--color-aurora-pink)]/30 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
         {showTypeSelector ? (
           <div className="max-w-md mx-auto space-y-4">
             <h3 className="font-semibold text-center text-[var(--color-aurora-cream)]">Select Activity Type</h3>
@@ -266,15 +281,17 @@ export default function TrackRoutePage() {
             <Button 
               onClick={handleStop} 
               size="lg" 
-              className="flex-1 min-h-[56px] bg-gradient-to-r from-[var(--color-aurora-orange)] to-[var(--color-aurora-salmon)] hover:from-[var(--color-aurora-salmon)] hover:to-red-600 text-white"
-              aria-label="Stop route tracking"
+              className="flex-1 min-h-[56px] bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:from-[var(--color-aurora-violet)] hover:to-[var(--color-aurora-purple)] text-white shadow-lg"
+              aria-label="Save and finish route"
             >
               <Square className="w-5 h-5 mr-2" aria-hidden="true" />
-              Save
+              Save & Finish
             </Button>
           </div>
         )}
       </div>
+      {/* Spacer to prevent content from being hidden behind fixed controls */}
+      <div className="h-[140px]" />
     </div>
   );
 }

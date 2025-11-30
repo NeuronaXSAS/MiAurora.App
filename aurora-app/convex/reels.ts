@@ -91,9 +91,9 @@ export const createReel = mutation({
       throw new Error('Caption must be 500 characters or less');
     }
 
-    // Validate duration (5-90 seconds)
-    if (args.duration < 5 || args.duration > 90) {
-      throw new Error('El video debe durar entre 5 y 90 segundos');
+    // Validate duration (max 3 minutes / 180 seconds, no minimum)
+    if (args.duration > 180) {
+      throw new Error('El video debe durar máximo 3 minutos');
     }
 
     // Create reel with pending moderation status
@@ -123,6 +123,24 @@ export const createReel = mutation({
       reelId,
       thumbnailUrl: args.thumbnailUrl,
       caption: args.caption || '',
+    });
+
+    // Auto-publish to feed for discoverability
+    await ctx.db.insert('posts', {
+      authorId: args.authorId,
+      title: args.caption || 'Shared a new reel',
+      description: args.caption || 'Check out this reel!',
+      lifeDimension: 'daily',
+      location: args.location,
+      verificationCount: 0,
+      isVerified: false,
+      isAnonymous: args.isAnonymous || false,
+      reelId: reelId,
+      upvotes: 0,
+      downvotes: 0,
+      commentCount: 0,
+      postType: 'reel',
+      rating: 5,
     });
 
     // Note: Credits are awarded AFTER moderation approval

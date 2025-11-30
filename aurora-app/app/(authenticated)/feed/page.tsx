@@ -7,6 +7,7 @@ import { RedditPostCard } from "@/components/reddit-post-card";
 import { PollCard } from "@/components/poll-card";
 import { AIChatCard } from "@/components/ai-chat-card";
 import { RouteFeedCard } from "@/components/route-feed-card";
+import { ReelFeedCard } from "@/components/reel-feed-card";
 import { OpportunityFeedCard } from "@/components/opportunity-feed-card";
 import { FeedAd } from "@/components/ads/feed-ad";
 import { PostCardSkeleton } from "@/components/loading-skeleton";
@@ -347,13 +348,34 @@ export default function FeedPage() {
                   {item.type === "post" && item.postType === "ai_chat" && (
                     <AIChatCard post={item} currentUserId={userId || undefined} onDelete={() => handleDelete(item._id as Id<"posts">)} />
                   )}
-                  {item.type === "post" && item.postType !== "poll" && item.postType !== "ai_chat" && (
+                  {item.type === "post" && item.postType !== "poll" && item.postType !== "ai_chat" && !item.route && (
                     <RedditPostCard
                       post={item}
                       currentUserId={userId || undefined}
                       onVerify={() => handleVerify(item._id as Id<"posts">)}
                       onDelete={() => handleDelete(item._id as Id<"posts">)}
                       showActions={true}
+                    />
+                  )}
+                  {item.type === "post" && item.route && (
+                    <RouteFeedCard 
+                      route={{
+                        ...item.route,
+                        _creationTime: item._creationTime,
+                        creatorId: item.authorId,
+                      }} 
+                      currentUserId={userId || undefined} 
+                      onDelete={() => handleDelete(item._id as Id<"posts">)} 
+                    />
+                  )}
+                  {item.type === "post" && item.reel && (
+                    <ReelFeedCard 
+                      reel={{
+                        ...item.reel,
+                        _creationTime: item._creationTime,
+                      }} 
+                      currentUserId={userId || undefined} 
+                      onDelete={() => handleDelete(item._id as Id<"posts">)} 
                     />
                   )}
                   {item.type === "route" && (

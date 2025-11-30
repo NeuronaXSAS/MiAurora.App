@@ -205,21 +205,44 @@ export const completeRoute = mutation({
           type: "route_shared",
           relatedId: args.routeId,
         });
+
+        // Award bonus for detailed journal
+        if (args.journalEntry && args.journalEntry.length > 200) {
+          await ctx.db.patch(args.userId, {
+            credits: user.credits + 20, // 15 + 5 bonus
+          });
+
+          await ctx.db.insert("transactions", {
+            userId: args.userId,
+            amount: 5,
+            type: "route_bonus",
+            relatedId: args.routeId,
+          });
+        }
       }
 
-      // Award bonus for detailed journal
-      if (args.journalEntry && args.journalEntry.length > 200) {
-        await ctx.db.patch(args.userId, {
-          credits: user!.credits + 20, // 15 + 5 bonus
-        });
-
-        await ctx.db.insert("transactions", {
-          userId: args.userId,
-          amount: 5,
-          type: "route_bonus",
-          relatedId: args.routeId,
-        });
-      }
+      // Auto-publish to feed when sharing level is anonymous or public
+      const distanceKm = (args.distance / 1000).toFixed(2);
+      const durationMins = Math.floor(args.duration / 60);
+      
+      await ctx.db.insert("posts", {
+        authorId: args.userId,
+        title: `Shared a route: ${args.title || route.title}`,
+        description: args.journalEntry || `Check out my ${route.routeType} route! ${distanceKm}km in ${durationMins} minutes.`,
+        lifeDimension: "daily",
+        rating: args.rating,
+        location: {
+          name: processedStartLocation.name,
+          coordinates: [processedStartLocation.lng, processedStartLocation.lat],
+        },
+        verificationCount: 0,
+        isVerified: false,
+        isAnonymous: args.sharingLevel === "anonymous",
+        routeId: args.routeId,
+        upvotes: 0,
+        downvotes: 0,
+        commentCount: 0,
+      });
     }
 
     return { success: true, routeId: args.routeId };

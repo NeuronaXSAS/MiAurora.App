@@ -470,38 +470,52 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
           </div>
 
           {/* Mood & Energy */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">Mood</label>
-              <div className="flex gap-1">
+              <div className="flex gap-1 justify-start overflow-x-auto pb-1">
                 {[1, 2, 3, 4, 5].map(level => (
                   <button
                     key={level}
                     onClick={() => setMood(level)}
-                    className={`text-2xl transition-transform min-w-[44px] min-h-[44px] ${
-                      mood >= level ? 'scale-110' : 'opacity-30'
+                    className={`text-xl sm:text-2xl transition-all min-w-[40px] sm:min-w-[44px] min-h-[40px] sm:min-h-[44px] flex-shrink-0 rounded-lg ${
+                      mood === level 
+                        ? 'scale-110 bg-[var(--color-aurora-pink)]/20 ring-2 ring-[var(--color-aurora-pink)]' 
+                        : mood > level 
+                        ? 'opacity-50' 
+                        : 'opacity-30 hover:opacity-60'
                     }`}
                   >
                     {level === 1 ? '😢' : level === 2 ? '😐' : level === 3 ? '🙂' : level === 4 ? '😊' : '🤩'}
                   </button>
                 ))}
               </div>
+              <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                {mood === 1 ? 'Very Low' : mood === 2 ? 'Low' : mood === 3 ? 'Neutral' : mood === 4 ? 'Good' : 'Great'}
+              </p>
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block text-[var(--foreground)]">Energy</label>
-              <div className="flex gap-1">
+              <div className="flex gap-1 justify-start overflow-x-auto pb-1">
                 {[1, 2, 3, 4, 5].map(level => (
                   <button
                     key={level}
                     onClick={() => setEnergy(level)}
-                    className={`text-2xl transition-transform min-w-[44px] min-h-[44px] ${
-                      energy >= level ? 'scale-110' : 'opacity-30'
+                    className={`text-xl sm:text-2xl transition-all min-w-[40px] sm:min-w-[44px] min-h-[40px] sm:min-h-[44px] flex-shrink-0 rounded-lg ${
+                      energy === level 
+                        ? 'scale-110 bg-[var(--color-aurora-mint)]/20 ring-2 ring-[var(--color-aurora-mint)]' 
+                        : energy > level 
+                        ? 'opacity-50' 
+                        : 'opacity-30 hover:opacity-60'
                     }`}
                   >
-                    {level <= 2 ? '🔋' : level <= 4 ? '⚡' : '🚀'}
+                    {level === 1 ? '😴' : level === 2 ? '🥱' : level === 3 ? '🙂' : level === 4 ? '⚡' : '🚀'}
                   </button>
                 ))}
               </div>
+              <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                {energy === 1 ? 'Exhausted' : energy === 2 ? 'Tired' : energy === 3 ? 'Normal' : energy === 4 ? 'Energized' : 'Super Charged'}
+              </p>
             </div>
           </div>
 

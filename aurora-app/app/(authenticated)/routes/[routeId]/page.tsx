@@ -215,6 +215,7 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
                   variant="outline"
                   size="sm"
                   onClick={handleShareToFeed}
+                  className="min-h-[44px] border-[var(--color-aurora-purple)] text-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-purple)]/10"
                 >
                   <Share2 className="w-4 h-4 mr-2" />
                   Share to Feed
@@ -224,15 +225,16 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
                 variant="outline"
                 size="sm"
                 onClick={exportToGPX}
+                className="min-h-[44px] border-[var(--border)]"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Export GPX
               </Button>
               {userId === route?.creatorId && (
                 <Button
-                  variant="destructive"
                   size="sm"
                   onClick={() => setShowDeleteConfirm(true)}
+                  className="min-h-[44px] min-w-[44px] bg-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/90 text-white"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -271,73 +273,73 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Card>
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <TrendingUp className="w-4 h-4 text-gray-500" />
-                  <p className="text-sm text-gray-500">Distance</p>
+                  <TrendingUp className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                  <p className="text-sm text-[var(--muted-foreground)]">Distance</p>
                 </div>
-                <p className="text-2xl font-bold">{formatDistance(route.distance)}</p>
+                <p className="text-2xl font-bold text-[var(--foreground)]">{formatDistance(route.distance)}</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <Clock className="w-4 h-4 text-gray-500" />
-                  <p className="text-sm text-gray-500">Duration</p>
+                  <Clock className="w-4 h-4 text-[var(--color-aurora-mint)]" />
+                  <p className="text-sm text-[var(--muted-foreground)]">Duration</p>
                 </div>
-                <p className="text-2xl font-bold">{formatDuration(route.duration)}</p>
+                <p className="text-2xl font-bold text-[var(--foreground)]">{formatDuration(route.duration)}</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <Play className="w-4 h-4 text-gray-500" />
-                  <p className="text-sm text-gray-500">Pace</p>
+                  <Play className="w-4 h-4 text-[var(--color-aurora-pink)]" />
+                  <p className="text-sm text-[var(--muted-foreground)]">Pace</p>
                 </div>
-                <p className="text-2xl font-bold">{formatPace(pace)}</p>
+                <p className="text-2xl font-bold text-[var(--foreground)]">{formatPace(pace)}</p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <Award className="w-4 h-4 text-gray-500" />
-                  <p className="text-sm text-gray-500">Credits</p>
+                  <Award className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
+                  <p className="text-sm text-[var(--muted-foreground)]">Credits</p>
                 </div>
-                <p className="text-2xl font-bold">{route.creditsEarned}</p>
+                <p className="text-2xl font-bold text-[var(--color-aurora-yellow)]">{route.creditsEarned}</p>
               </CardContent>
             </Card>
           </div>
 
           {/* Rating */}
-          <Card>
+          <Card className="bg-[var(--card)] border-[var(--border)]">
             <CardContent className="p-6">
-              <h3 className="font-semibold mb-2">Your Rating</h3>
+              <h3 className="font-semibold mb-2 text-[var(--foreground)]">Your Rating</h3>
               <div className="flex items-center gap-2">
                 <div className="text-3xl">{"⭐".repeat(route.rating)}</div>
-                <span className="text-gray-600">({route.rating}/5)</span>
+                <span className="text-[var(--muted-foreground)]">({route.rating}/5)</span>
               </div>
             </CardContent>
           </Card>
 
           {/* Journal Entry */}
           {route.journalEntry && (
-            <Card>
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardContent className="p-6">
-                <h3 className="font-semibold mb-3">Journal Entry</h3>
-                <p className="text-gray-700 whitespace-pre-wrap">{route.journalEntry}</p>
+                <h3 className="font-semibold mb-3 text-[var(--foreground)]">Journal Entry</h3>
+                <p className="text-[var(--foreground)] whitespace-pre-wrap">{route.journalEntry}</p>
               </CardContent>
             </Card>
           )}
 
           {/* Voice Note */}
           {route.voiceNoteStorageId && (
-            <Card>
+            <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardContent className="p-6">
-                <h3 className="font-semibold mb-3">Voice Note</h3>
+                <h3 className="font-semibold mb-3 text-[var(--foreground)]">Voice Note</h3>
                 <audio controls className="w-full">
                   <source src={`/api/files/${route.voiceNoteStorageId}`} type="audio/webm" />
                   Your browser does not support audio playback.
@@ -347,29 +349,29 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
           )}
 
           {/* Locations */}
-          <Card>
+          <Card className="bg-[var(--card)] border-[var(--border)]">
             <CardContent className="p-6">
-              <h3 className="font-semibold mb-4">Route Details</h3>
+              <h3 className="font-semibold mb-4 text-[var(--foreground)]">Route Details</h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
+                  <MapPin className="w-5 h-5 text-[var(--color-aurora-mint)] mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Start</p>
-                    <p className="font-medium">{route.startLocation.name}</p>
+                    <p className="text-sm text-[var(--muted-foreground)]">Start</p>
+                    <p className="font-medium text-[var(--foreground)]">{route.startLocation.name}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-red-600 mt-0.5" />
+                  <MapPin className="w-5 h-5 text-[var(--color-aurora-pink)] mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">End</p>
-                    <p className="font-medium">{route.endLocation.name}</p>
+                    <p className="text-sm text-[var(--muted-foreground)]">End</p>
+                    <p className="font-medium text-[var(--foreground)]">{route.endLocation.name}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-gray-600 mt-0.5" />
+                  <Clock className="w-5 h-5 text-[var(--color-aurora-purple)] mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Completed</p>
-                    <p className="font-medium">
+                    <p className="text-sm text-[var(--muted-foreground)]">Completed</p>
+                    <p className="font-medium text-[var(--foreground)]">
                       {formatDistanceToNow(route._creationTime, { addSuffix: true })}
                     </p>
                   </div>
@@ -379,57 +381,57 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
           </Card>
 
           {/* Privacy Settings */}
-          <Card>
+          <Card className="bg-[var(--card)] border-[var(--border)]">
             <CardContent className="p-6">
-              <h3 className="font-semibold mb-4">Privacy Settings</h3>
+              <h3 className="font-semibold mb-4 text-[var(--foreground)]">Privacy Settings</h3>
               <div className="space-y-3">
                 <button
                   onClick={() => handlePrivacyChange("private")}
-                  className={`w-full p-4 rounded-lg border-2 transition-colors text-left ${
+                  className={`w-full p-4 rounded-xl border-2 transition-colors text-left min-h-[72px] ${
                     route.sharingLevel === "private"
-                      ? "border-purple-600 bg-purple-50"
-                      : "border-gray-200 hover:border-gray-300"
+                      ? "border-[var(--color-aurora-purple)] bg-[var(--color-aurora-purple)]/10"
+                      : "border-[var(--border)] hover:border-[var(--color-aurora-lavender)]"
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <Lock className="w-5 h-5 mt-0.5 text-gray-600" />
+                    <Lock className={`w-5 h-5 mt-0.5 ${route.sharingLevel === "private" ? "text-[var(--color-aurora-purple)]" : "text-[var(--muted-foreground)]"}`} />
                     <div>
-                      <p className="font-semibold">Private</p>
-                      <p className="text-sm text-gray-600">Only you can see this route</p>
+                      <p className="font-semibold text-[var(--foreground)]">Private</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">Only you can see this route</p>
                     </div>
                   </div>
                 </button>
 
                 <button
                   onClick={() => handlePrivacyChange("anonymous")}
-                  className={`w-full p-4 rounded-lg border-2 transition-colors text-left ${
+                  className={`w-full p-4 rounded-xl border-2 transition-colors text-left min-h-[72px] ${
                     route.sharingLevel === "anonymous"
-                      ? "border-purple-600 bg-purple-50"
-                      : "border-gray-200 hover:border-gray-300"
+                      ? "border-[var(--color-aurora-purple)] bg-[var(--color-aurora-purple)]/10"
+                      : "border-[var(--border)] hover:border-[var(--color-aurora-lavender)]"
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <UserX className="w-5 h-5 mt-0.5 text-gray-600" />
+                    <UserX className={`w-5 h-5 mt-0.5 ${route.sharingLevel === "anonymous" ? "text-[var(--color-aurora-purple)]" : "text-[var(--muted-foreground)]"}`} />
                     <div>
-                      <p className="font-semibold">Anonymous</p>
-                      <p className="text-sm text-gray-600">Share without your name (coordinates fuzzed)</p>
+                      <p className="font-semibold text-[var(--foreground)]">Anonymous</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">Share without your name (coordinates fuzzed)</p>
                     </div>
                   </div>
                 </button>
 
                 <button
                   onClick={() => handlePrivacyChange("public")}
-                  className={`w-full p-4 rounded-lg border-2 transition-colors text-left ${
+                  className={`w-full p-4 rounded-xl border-2 transition-colors text-left min-h-[72px] ${
                     route.sharingLevel === "public"
-                      ? "border-purple-600 bg-purple-50"
-                      : "border-gray-200 hover:border-gray-300"
+                      ? "border-[var(--color-aurora-purple)] bg-[var(--color-aurora-purple)]/10"
+                      : "border-[var(--border)] hover:border-[var(--color-aurora-lavender)]"
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <Globe className="w-5 h-5 mt-0.5 text-gray-600" />
+                    <Globe className={`w-5 h-5 mt-0.5 ${route.sharingLevel === "public" ? "text-[var(--color-aurora-purple)]" : "text-[var(--muted-foreground)]"}`} />
                     <div>
-                      <p className="font-semibold">Public</p>
-                      <p className="text-sm text-gray-600">Share with your name</p>
+                      <p className="font-semibold text-[var(--foreground)]">Public</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">Share with your name</p>
                     </div>
                   </div>
                 </button>
@@ -442,24 +444,23 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-md w-full">
+          <Card className="max-w-md w-full bg-[var(--card)] border-[var(--border)]">
             <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-2">Delete Route?</h3>
-              <p className="text-gray-600 mb-6">
+              <h3 className="text-lg font-semibold mb-2 text-[var(--foreground)]">Delete Route?</h3>
+              <p className="text-[var(--muted-foreground)] mb-6">
                 Are you sure you want to delete this route? All GPS data, ratings, and reviews will be permanently removed.
               </p>
               <div className="flex gap-3">
                 <Button
                   variant="outline"
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1"
+                  className="flex-1 min-h-[48px] border-[var(--border)]"
                 >
                   Cancel
                 </Button>
                 <Button
-                  variant="destructive"
                   onClick={handleDelete}
-                  className="flex-1"
+                  className="flex-1 min-h-[48px] bg-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/90 text-white"
                 >
                   Delete
                 </Button>

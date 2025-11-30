@@ -119,10 +119,31 @@ export const getFeed = query({
         .take(limit * 2);
     }
 
-    // Enrich posts with author info and calculate Aurora engagement score
+    // Enrich posts with author info, route data, and calculate Aurora engagement score
     const enrichedPosts = await Promise.all(
       posts.map(async (post) => {
         const author = await ctx.db.get(post.authorId);
+        
+        // Get route data if this post is linked to a route
+        let routeData = null;
+        if (post.routeId) {
+          const route = await ctx.db.get(post.routeId);
+          if (route) {
+            routeData = {
+              _id: route._id,
+              title: route.title,
+              routeType: route.routeType,
+              distance: route.distance,
+              duration: route.duration,
+              rating: route.rating,
+              tags: route.tags,
+              coordinates: route.coordinates,
+              startLocation: route.startLocation,
+              endLocation: route.endLocation,
+              completionCount: route.completionCount,
+            };
+          }
+        }
         
         // Aurora Algorithm: Smart engagement scoring
         const upvotes = post.upvotes || 0;
@@ -150,6 +171,7 @@ export const getFeed = query({
                 trustScore: author?.trustScore ?? 0,
                 profileImage: author?.profileImage,
               },
+          route: routeData,
           engagementScore,
         };
       })

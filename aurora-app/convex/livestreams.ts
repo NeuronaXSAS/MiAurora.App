@@ -153,6 +153,7 @@ export const endLivestream = mutation({
 
 /**
  * Get all active livestreams
+ * Only returns streams that are truly live (started within last 24 hours and status is 'live')
  */
 export const getLivestreams = query({
   args: {
@@ -160,6 +161,7 @@ export const getLivestreams = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit || 20;
+    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
 
     // Get current user for isLiked status
     const identity = await ctx.auth.getUserIdentity();
@@ -170,13 +172,18 @@ export const getLivestreams = query({
           .first()
       : null;
 
-    // Get active livestreams
-    const livestreams = await ctx.db
+    // Get active livestreams - only those with status 'live' AND started recently
+    const allLivestreams = await ctx.db
       .query('livestreams')
       .withIndex('by_status')
       .filter((q) => q.eq(q.field('status'), 'live'))
       .order('desc')
-      .take(limit);
+      .take(limit * 2); // Get more to filter
+    
+    // Filter out stale streams (started more than 24 hours ago - likely abandoned)
+    const livestreams = allLivestreams.filter(stream => 
+      stream.startedAt && stream.startedAt > twentyFourHoursAgo
+    ).slice(0, limit);
 
     // Fetch host information and like status
     const livestreamsWithData = await Promise.all(
@@ -469,5 +476,55 @@ export const deleteLivestream = mutation({
     await ctx.db.delete(args.livestreamId);
 
     return { success: true };
+  },
+});
+
+
+/**
+ * Clean up stale/abandoned livestreams
+ * This should be called periodically or when loading the live page
+ */
+export const cleanupStaleLivestreams = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+    
+    // Find all livestreams that are still marked as 'live' but started more than 24 hours ago
+    const staleLivestreams = await ctx.db
+      .query('livestreams')
+      .withIndex('by_status')
+      .filter((q) => q.eq(q.field('status'), 'live'))
+      .collect();
+    
+    let cleanedCount = 0;
+    
+    for (const stream of staleLivestreams) {
+      if (stream.startedAt && stream.startedAt < twentyFourHoursAgo) {
+        // Mark as ended
+        await ctx.db.patch(stream._id, {
+          status: 'ended',
+          endedAt: Date.now(),
+        });
+        
+        // Mark all viewers as inactive
+        const activeViewers = await ctx.db
+          .query('livestreamViewers')
+          .withIndex('by_livestream_and_active', (q) =>
+            q.eq('livestreamId', stream._id).eq('isActive', true)
+          )
+          .collect();
+
+        for (const viewer of activeViewers) {
+          await ctx.db.patch(viewer._id, {
+            isActive: false,
+            leftAt: Date.now(),
+          });
+        }
+        
+        cleanedCount++;
+      }
+    }
+    
+    return { cleanedCount };
   },
 });

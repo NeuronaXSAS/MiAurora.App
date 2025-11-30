@@ -189,7 +189,7 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-lg lg:max-w-2xl max-h-[90vh] overflow-hidden backdrop-blur-xl bg-gradient-to-br from-[var(--color-aurora-violet)] via-[#231E35] to-[var(--color-aurora-purple)] border-[var(--color-aurora-pink)]/30 shadow-2xl p-0">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-lg lg:max-w-2xl max-h-[85vh] overflow-hidden backdrop-blur-xl bg-gradient-to-br from-[var(--color-aurora-violet)] via-[#231E35] to-[var(--color-aurora-purple)] border-[var(--color-aurora-pink)]/30 shadow-2xl p-0 my-4">
         <DialogHeader className="p-4 sm:p-6 pb-0">
           <div className="flex items-center gap-3">
             {/* Aurora App Logo */}
@@ -215,7 +215,7 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
         </DialogHeader>
 
         {/* Scrollable Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-200px)] px-4 sm:px-6">
+        <div className="overflow-y-auto max-h-[calc(85vh-220px)] px-4 sm:px-6">
           <AnimatePresence mode="wait">
             {/* Step 1: Profile */}
             {step === 1 && (

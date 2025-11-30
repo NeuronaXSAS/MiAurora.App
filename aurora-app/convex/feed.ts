@@ -11,7 +11,7 @@ export const getUnifiedFeed = query({
   handler: async (ctx, args) => {
     const limit = args.limit ?? 50;
 
-    // Fetch recent posts with author data
+    // Fetch recent posts with author data and route data if linked
     const posts = await ctx.db
       .query("posts")
       .order("desc")
@@ -20,9 +20,55 @@ export const getUnifiedFeed = query({
     const postsWithAuthors = await Promise.all(
       posts.map(async (post) => {
         const author = await ctx.db.get(post.authorId);
+        
+        // Get route data if this post is linked to a route
+        let routeData = null;
+        if (post.routeId) {
+          const route = await ctx.db.get(post.routeId);
+          if (route) {
+            routeData = {
+              _id: route._id,
+              title: route.title,
+              routeType: route.routeType,
+              distance: route.distance,
+              duration: route.duration,
+              rating: route.rating,
+              tags: route.tags,
+              coordinates: route.coordinates,
+              startLocation: route.startLocation,
+              endLocation: route.endLocation,
+              completionCount: route.completionCount,
+            };
+          }
+        }
+
+        // Get reel data if this post is linked to a reel
+        let reelData = null;
+        if (post.reelId) {
+          const reel = await ctx.db.get(post.reelId);
+          if (reel) {
+            reelData = {
+              _id: reel._id,
+              authorId: reel.authorId,
+              videoUrl: reel.videoUrl,
+              thumbnailUrl: reel.thumbnailUrl,
+              caption: reel.caption,
+              hashtags: reel.hashtags,
+              location: reel.location,
+              duration: reel.duration,
+              views: reel.views,
+              likes: reel.likes,
+              shares: reel.shares,
+              comments: reel.comments,
+            };
+          }
+        }
+        
         return {
           ...post,
           author,
+          route: routeData,
+          reel: reelData,
           type: "post" as const,
           timestamp: post._creationTime,
         };

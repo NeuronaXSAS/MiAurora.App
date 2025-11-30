@@ -46,7 +46,6 @@ import type * as scheduled_aggregateIntelligence from "../scheduled/aggregateInt
 import type * as search from "../search.js";
 import type * as seedData from "../seedData.js";
 import type * as seedDataEnhanced from "../seedDataEnhanced.js";
-import type * as seedResources from "../seedResources.js";
 import type * as users from "../users.js";
 import type * as workplaceReports from "../workplaceReports.js";
 
@@ -95,7 +94,6 @@ declare const fullApi: ApiFromModules<{
   search: typeof search;
   seedData: typeof seedData;
   seedDataEnhanced: typeof seedDataEnhanced;
-  seedResources: typeof seedResources;
   users: typeof users;
   workplaceReports: typeof workplaceReports;
 }>;

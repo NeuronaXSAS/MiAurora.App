@@ -164,23 +164,23 @@ export function VoiceRecorder({
           type="button"
           variant="outline"
           onClick={startRecording}
-          className="w-full"
+          className="w-full min-h-[48px] border-[var(--border)] hover:bg-[var(--color-aurora-pink)]/10 hover:border-[var(--color-aurora-pink)]"
         >
-          <Mic className="w-4 h-4 mr-2" />
+          <Mic className="w-4 h-4 mr-2 text-[var(--color-aurora-pink)]" />
           Record Voice Note
         </Button>
       )}
 
       {isRecording && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-[var(--color-aurora-pink)]/10 border border-[var(--color-aurora-pink)]/30 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-              <span className="font-medium text-red-900">
+              <div className="w-3 h-3 bg-[var(--color-aurora-pink)] rounded-full animate-pulse" />
+              <span className="font-medium text-[var(--foreground)]">
                 {isPaused ? "Paused" : "Recording"}
               </span>
             </div>
-            <span className="text-sm font-mono text-red-900">
+            <span className="text-sm font-mono text-[var(--foreground)]">
               {formatTime(recordingTime)} / {formatTime(maxDuration)}
             </span>
           </div>
@@ -191,7 +191,7 @@ export function VoiceRecorder({
                 variant="outline"
                 size="sm"
                 onClick={pauseRecording}
-                className="flex-1"
+                className="flex-1 min-h-[44px] border-[var(--color-aurora-yellow)]/50 text-[var(--color-aurora-yellow)] hover:bg-[var(--color-aurora-yellow)]/10"
               >
                 <Pause className="w-4 h-4 mr-2" />
                 Pause
@@ -202,7 +202,7 @@ export function VoiceRecorder({
                 variant="outline"
                 size="sm"
                 onClick={resumeRecording}
-                className="flex-1"
+                className="flex-1 min-h-[44px] border-[var(--color-aurora-mint)]/50 text-[var(--color-aurora-mint)] hover:bg-[var(--color-aurora-mint)]/10"
               >
                 <Mic className="w-4 h-4 mr-2" />
                 Resume
@@ -210,23 +210,22 @@ export function VoiceRecorder({
             )}
             <Button
               type="button"
-              variant="destructive"
               size="sm"
               onClick={stopRecording}
-              className="flex-1"
+              className="flex-1 min-h-[44px] bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white"
             >
               <Square className="w-4 h-4 mr-2" />
-              Stop
+              Done
             </Button>
           </div>
         </div>
       )}
 
       {audioUrl && (
-        <div className="bg-aurora-lavender/20 border border-aurora-lavender rounded-lg p-4">
+        <div className="bg-[var(--color-aurora-lavender)]/20 border border-[var(--color-aurora-lavender)] rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="font-medium text-aurora-violet">Voice Note</span>
-            <span className="text-sm font-mono text-aurora-violet/80">
+            <span className="font-medium text-[var(--foreground)]">Voice Note</span>
+            <span className="text-sm font-mono text-[var(--muted-foreground)]">
               {formatTime(recordingTime)}
             </span>
           </div>
@@ -245,7 +244,7 @@ export function VoiceRecorder({
                 variant="outline"
                 size="sm"
                 onClick={playAudio}
-                className="flex-1"
+                className="flex-1 min-h-[44px] border-[var(--border)]"
               >
                 <Play className="w-4 h-4 mr-2" />
                 Play
@@ -256,7 +255,7 @@ export function VoiceRecorder({
                 variant="outline"
                 size="sm"
                 onClick={pauseAudio}
-                className="flex-1"
+                className="flex-1 min-h-[44px] border-[var(--border)]"
               >
                 <Pause className="w-4 h-4 mr-2" />
                 Pause
@@ -267,6 +266,7 @@ export function VoiceRecorder({
               variant="outline"
               size="sm"
               onClick={deleteRecording}
+              className="min-h-[44px] min-w-[44px] border-[var(--color-aurora-salmon)]/50 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10"
             >
               <Trash2 className="w-4 h-4" />
             </Button>
@@ -274,7 +274,7 @@ export function VoiceRecorder({
               type="button"
               size="sm"
               onClick={uploadRecording}
-              className="flex-1"
+              className="flex-1 min-h-[44px] bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white"
             >
               <Upload className="w-4 h-4 mr-2" />
               Use This
