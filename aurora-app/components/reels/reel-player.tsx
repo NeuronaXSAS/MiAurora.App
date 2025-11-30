@@ -222,10 +222,11 @@ export function ReelPlayer({ reel, isActive, currentUserId, onLike }: ReelPlayer
         </div>
       )}
 
+      {/* Action buttons with improved contrast - dark background with border for visibility on any video */}
       <div className="absolute right-4 bottom-32 flex flex-col gap-5 z-10">
         {reel.author && (
           <div className="relative mb-2">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-0.5">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-0.5 shadow-lg">
               <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
                 {reel.author.profileImage ? (
                   <img src={reel.author.profileImage} alt={reel.author.name} className="w-full h-full object-cover" />
@@ -234,43 +235,48 @@ export function ReelPlayer({ reel, isActive, currentUserId, onLike }: ReelPlayer
                 )}
               </div>
             </div>
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-[var(--color-aurora-pink)] flex items-center justify-center">
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-[var(--color-aurora-pink)] flex items-center justify-center border-2 border-black">
               <span className="text-white text-xs">+</span>
             </div>
           </div>
         )}
 
-        <button onClick={handleLikeClick} className="flex flex-col items-center gap-1 text-white active:scale-90 transition-transform">
-          <div className={cn("w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200", localIsLiked ? "bg-[var(--color-aurora-pink)]" : "bg-white/20 backdrop-blur-sm")}>
-            <Heart className={cn("w-6 h-6 transition-transform", localIsLiked && "fill-white scale-110")} />
+        <button onClick={handleLikeClick} className="flex flex-col items-center gap-1 text-white active:scale-90 transition-transform drop-shadow-lg">
+          <div className={cn(
+            "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 border-2 shadow-lg",
+            localIsLiked 
+              ? "bg-[var(--color-aurora-pink)] border-[var(--color-aurora-pink)]" 
+              : "bg-black/60 backdrop-blur-md border-white/30"
+          )}>
+            <Heart className={cn("w-6 h-6 transition-transform drop-shadow-md", localIsLiked && "fill-white scale-110")} />
           </div>
-          <span className="text-xs font-medium">{formatCount(localLikes)}</span>
+          <span className="text-xs font-semibold drop-shadow-lg [text-shadow:_0_1px_3px_rgb(0_0_0_/_80%)]">{formatCount(localLikes)}</span>
         </button>
 
-        <button onClick={() => setShowCommentsSheet(true)} className="flex flex-col items-center gap-1 text-white active:scale-90 transition-transform">
-          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <MessageCircle className="w-6 h-6" />
+        <button onClick={() => setShowCommentsSheet(true)} className="flex flex-col items-center gap-1 text-white active:scale-90 transition-transform drop-shadow-lg">
+          <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md border-2 border-white/30 flex items-center justify-center shadow-lg">
+            <MessageCircle className="w-6 h-6 drop-shadow-md" />
           </div>
-          <span className="text-xs font-medium">{formatCount(reel.comments)}</span>
+          <span className="text-xs font-semibold drop-shadow-lg [text-shadow:_0_1px_3px_rgb(0_0_0_/_80%)]">{formatCount(reel.comments)}</span>
         </button>
 
-        <button onClick={() => setShowShareSheet(true)} className="flex flex-col items-center gap-1 text-white active:scale-90 transition-transform">
-          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <Share2 className="w-6 h-6" />
+        <button onClick={() => setShowShareSheet(true)} className="flex flex-col items-center gap-1 text-white active:scale-90 transition-transform drop-shadow-lg">
+          <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md border-2 border-white/30 flex items-center justify-center shadow-lg">
+            <Share2 className="w-6 h-6 drop-shadow-md" />
           </div>
-          <span className="text-xs font-medium">{formatCount(reel.shares)}</span>
+          <span className="text-xs font-semibold drop-shadow-lg [text-shadow:_0_1px_3px_rgb(0_0_0_/_80%)]">{formatCount(reel.shares)}</span>
         </button>
 
-        <button onClick={toggleMute} className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white active:scale-90 transition-transform">
-          {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+        <button onClick={toggleMute} className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md border-2 border-white/30 flex items-center justify-center text-white active:scale-90 transition-transform shadow-lg drop-shadow-lg">
+          {isMuted ? <VolumeX className="w-5 h-5 drop-shadow-md" /> : <Volume2 className="w-5 h-5 drop-shadow-md" />}
         </button>
 
         {/* More Options (Delete for owner) */}
         {isOwner && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white active:scale-90 transition-transform">
-                <MoreVertical className="w-5 h-5" />
+              <button className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md border-2 border-white/30 flex items-center justify-center text-white active:scale-90 transition-transform shadow-lg drop-shadow-lg">
+                <MoreVertical className="w-5 h-5 drop-shadow-md" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-[var(--card)] border-[var(--border)]">

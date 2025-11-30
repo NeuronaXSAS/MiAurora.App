@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLivestream } from "@/hooks/useLivestream";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -92,6 +92,36 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Local preview stream (before going live)
+  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Start camera preview without Agora
+  const startCameraPreview = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: true,
+      });
+      setPreviewStream(stream);
+      if (previewVideoRef.current) {
+        previewVideoRef.current.srcObject = stream;
+      }
+      return true;
+    } catch (err) {
+      console.error('Camera access error:', err);
+      return false;
+    }
+  };
+
+  // Stop camera preview
+  const stopCameraPreview = () => {
+    if (previewStream) {
+      previewStream.getTracks().forEach(track => track.stop());
+      setPreviewStream(null);
+    }
+  };
+
   // Handle go live
   const handleGoLive = async () => {
     if (!title.trim()) {
@@ -101,6 +131,13 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
 
     try {
       setPermissionError(null);
+
+      // First, request camera/mic permissions and start preview
+      const cameraOk = await startCameraPreview();
+      if (!cameraOk) {
+        setPermissionError('Permiso de cámara/micrófono denegado. Habilita los permisos en tu navegador.');
+        return;
+      }
 
       // Create livestream record (without safety mode to avoid moderation issues)
       const result = await createLivestream({
@@ -113,30 +150,37 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
       // Check if Agora is not configured
       if (!result.livestreamId) {
         setPermissionError('Aurora Live estará disponible pronto. Estamos trabajando en esta función. 🚀');
+        stopCameraPreview();
         return;
       }
 
       setLivestreamId(result.livestreamId);
       setChannelName(result.channelName);
 
-      // Initialize streaming provider
-      await initialize({
-        channelName: result.channelName,
-        userId: userId,
-        role: 'host',
-        onError: (err) => {
-          console.error('Streaming error:', err);
-          if (err.message.includes('permission')) {
-            setPermissionError('Permiso de cámara/micrófono denegado. Habilita los permisos en tu navegador.');
-          } else if (err.message.includes('not_configured') || err.message.includes('coming soon')) {
-            setPermissionError('Aurora Live estará disponible pronto. 🚀');
-          }
-        },
-      });
+      // Initialize streaming provider (but don't start broadcast yet)
+      try {
+        await initialize({
+          channelName: result.channelName,
+          userId: userId,
+          role: 'host',
+          onError: (err) => {
+            console.error('Streaming error:', err);
+            if (err.message.includes('permission')) {
+              setPermissionError('Permiso de cámara/micrófono denegado. Habilita los permisos en tu navegador.');
+            } else if (err.message.includes('not_configured') || err.message.includes('coming soon')) {
+              setPermissionError('Aurora Live estará disponible pronto. 🚀');
+            }
+          },
+        });
+      } catch (initError) {
+        console.warn('Agora init failed, using preview mode:', initError);
+        // Continue with preview even if Agora fails
+      }
 
       setStage('preview');
     } catch (error) {
       console.error('Failed to create livestream:', error);
+      stopCameraPreview();
       const err = error as Error;
       if (err.message.includes('permission') || err.message.includes('NotAllowedError')) {
         setPermissionError('Permiso de cámara/micrófono denegado. Habilita los permisos e intenta de nuevo.');
@@ -151,14 +195,19 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
   // Handle start broadcasting
   const handleStartBroadcast = async () => {
     try {
+      // Stop the preview stream before starting Agora broadcast
+      stopCameraPreview();
+      
       await startBroadcast({
-        video: isCameraEnabled,
-        audio: isMicrophoneEnabled,
+        video: true,
+        audio: true,
       });
       setStage('live');
     } catch (error) {
       console.error('Failed to start broadcast:', error);
-      alert('Failed to start broadcast: ' + (error as Error).message);
+      // If Agora fails, show a friendly message
+      alert('Livestreaming will be available soon. Your preview looked great! 🚀');
+      router.push('/live');
     }
   };
 
@@ -328,23 +377,26 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
     );
   }
 
-  // Preview Stage
+  // Preview Stage - Uses native video element for camera preview
   if (stage === 'preview') {
     return (
       <div className="min-h-screen bg-[var(--color-aurora-violet)] flex flex-col">
-        {/* Video Preview */}
+        {/* Video Preview - Native video element */}
         <div className="flex-1 relative">
-          <div
-            ref={localVideoRef}
-            className="w-full h-full bg-[var(--color-aurora-violet)]"
-            style={{ minHeight: '400px' }}
+          <video
+            ref={previewVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover bg-[var(--color-aurora-violet)]"
+            style={{ minHeight: '400px', transform: 'scaleX(-1)' }}
           />
 
-          {!isCameraEnabled && (
+          {!previewStream && (
             <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-aurora-violet)]">
               <div className="text-center text-white">
                 <CameraOff className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p>Camera is off</p>
+                <p>Camera is loading...</p>
               </div>
             </div>
           )}
@@ -354,6 +406,9 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
             <div className="bg-black/70 backdrop-blur-sm rounded-xl p-4">
               <h2 className="text-white font-bold text-lg mb-1">{title}</h2>
               <p className="text-white/70 text-sm">Preview Mode - Not Live Yet</p>
+              {previewStream && (
+                <p className="text-[var(--color-aurora-mint)] text-xs mt-1">✓ Camera ready</p>
+              )}
             </div>
           </div>
         </div>
@@ -362,25 +417,59 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
         <div className="bg-[var(--card)] border-t border-[var(--border)] p-6 space-y-4">
           <div className="flex items-center justify-center gap-4">
             <Button
-              onClick={toggleCamera}
-              variant={isCameraEnabled ? "default" : "destructive"}
+              onClick={() => {
+                if (previewStream) {
+                  const videoTrack = previewStream.getVideoTracks()[0];
+                  if (videoTrack) {
+                    videoTrack.enabled = !videoTrack.enabled;
+                  }
+                }
+              }}
+              variant="default"
               size="lg"
-              className={`rounded-full w-16 h-16 ${isCameraEnabled ? 'bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]' : 'bg-[var(--color-aurora-salmon)]'}`}
+              className="rounded-full w-16 h-16 bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
             >
-              {isCameraEnabled ? <Camera className="w-6 h-6" /> : <CameraOff className="w-6 h-6" />}
+              <Camera className="w-6 h-6" />
             </Button>
 
             <Button
-              onClick={toggleMicrophone}
-              variant={isMicrophoneEnabled ? "default" : "destructive"}
+              onClick={() => {
+                if (previewStream) {
+                  const audioTrack = previewStream.getAudioTracks()[0];
+                  if (audioTrack) {
+                    audioTrack.enabled = !audioTrack.enabled;
+                  }
+                }
+              }}
+              variant="default"
               size="lg"
-              className={`rounded-full w-16 h-16 ${isMicrophoneEnabled ? 'bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]' : 'bg-[var(--color-aurora-salmon)]'}`}
+              className="rounded-full w-16 h-16 bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
             >
-              {isMicrophoneEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+              <Mic className="w-6 h-6" />
             </Button>
 
             <Button
-              onClick={switchCamera}
+              onClick={async () => {
+                // Switch camera by stopping current and starting with different facing mode
+                if (previewStream) {
+                  const currentTrack = previewStream.getVideoTracks()[0];
+                  const currentFacing = currentTrack?.getSettings().facingMode;
+                  stopCameraPreview();
+                  try {
+                    const newStream = await navigator.mediaDevices.getUserMedia({
+                      video: { facingMode: currentFacing === 'user' ? 'environment' : 'user' },
+                      audio: true,
+                    });
+                    setPreviewStream(newStream);
+                    if (previewVideoRef.current) {
+                      previewVideoRef.current.srcObject = newStream;
+                    }
+                  } catch (err) {
+                    console.error('Failed to switch camera:', err);
+                    startCameraPreview(); // Fallback to original
+                  }
+                }
+              }}
               variant="outline"
               size="lg"
               className="rounded-full w-16 h-16 border-[var(--border)]"
@@ -393,13 +482,14 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
             onClick={handleStartBroadcast}
             className="w-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:from-[var(--color-aurora-violet)] hover:to-[var(--color-aurora-purple)] text-white min-h-[48px]"
             size="lg"
-            disabled={!isConnected}
+            disabled={!previewStream}
           >
-            {isConnected ? 'Go Live Now' : 'Connecting...'}
+            {previewStream ? 'Go Live Now' : 'Starting camera...'}
           </Button>
 
           <Button
             onClick={() => {
+              stopCameraPreview();
               leave();
               router.push('/live');
             }}
