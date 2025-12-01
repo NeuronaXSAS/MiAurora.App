@@ -1,25 +1,42 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#FF6B7A",
+};
+
 export const metadata: Metadata = {
   title: "Aurora App - The Front Page of the Internet for Women",
   description: "A community-driven platform where women share intelligence and unlock opportunities",
   manifest: "/manifest.json",
-  themeColor: "#FF6B7A",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Aurora",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
+  openGraph: {
+    title: "Aurora App - Safety & Community for Women",
+    description: "Join millions of women sharing safety intelligence and unlocking opportunities worldwide",
+    type: "website",
+    locale: "en_US",
+    siteName: "Aurora App",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Aurora App - Safety & Community for Women",
+    description: "Join millions of women sharing safety intelligence and unlocking opportunities worldwide",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
