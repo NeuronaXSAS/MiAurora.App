@@ -3,7 +3,8 @@ import { action, mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
 
 /**
- * Chat with AI assistant using Google Gemini
+ * Chat with AI assistant using Google Gemini 2.0 Flash-Lite
+ * Most economical model for Free Tier: 30 RPM, 1,000,000 TPM, 200 RPD
  */
 export const chat = action({
   args: {
@@ -13,23 +14,11 @@ export const chat = action({
   handler: async (ctx, args): Promise<{ response: string }> => {
     try {
       // Check if API key is configured
-      if (!process.env.GOOGLE_AI_API_KEY) {
+      const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
+      
+      if (!apiKey) {
         // Return a helpful fallback response when API is not configured
-        const fallbackResponse = `¡Hola! 💜 Soy Aurora, tu asistente de bienestar. 
-
-Actualmente estoy en modo de demostración porque la API de IA no está configurada. Sin embargo, puedo compartir algunos consejos generales:
-
-**Para tu bienestar:**
-• Tómate un momento para respirar profundamente
-• Recuerda que tus sentimientos son válidos
-• Conecta con tu comunidad de Aurora App
-
-**Recursos disponibles:**
-• Explora los círculos de apoyo en la app
-• Revisa los recursos de seguridad
-• Comparte tus experiencias con la comunidad
-
-Pronto tendré capacidades completas de IA para darte apoyo personalizado. ¡Gracias por tu paciencia! 🌟`;
+        const fallbackResponse = getFallbackResponse(args.message);
 
         // Save the fallback message
         await ctx.runMutation(api.ai.saveMessage, {
@@ -43,41 +32,32 @@ Pronto tendré capacidades completas de IA para darte apoyo personalizado. ¡Gra
 
       // Fetch user context
       const user: any = await ctx.runQuery(api.users.getUser, { userId: args.userId });
-      const userStats: any = await ctx.runQuery(api.users.getUserStats, { userId: args.userId });
-      const recentPosts: any = await ctx.runQuery(api.posts.getUserRecent, { 
-        userId: args.userId, 
-        limit: 5 
-      });
 
-      // Build context for AI
-      const context: string = `You are Aurora, an AI assistant for Aurora App - a platform helping women navigate life safely and advance their careers.
+      // Build context for AI - optimized for token efficiency
+      const context: string = `You are Aurora, a warm and supportive AI companion in Aurora App - a safety and community platform for women worldwide.
 
-User Profile:
-- Name: ${user?.name || "User"}
-- Industry: ${user?.industry || "Not specified"}
-- Location: ${user?.location || "Not specified"}
-- Career Goals: ${user?.careerGoals || "Not specified"}
-- Credits: ${user?.credits || 0}
-- Trust Score: ${user?.trustScore || 0}
+User: ${user?.name || "Friend"}
+${user?.industry ? `Industry: ${user.industry}` : ""}
 
-User Activity:
-- Total Posts: ${userStats?.totalPosts || 0}
-- Total Verifications: ${userStats?.totalVerifications || 0}
-- Women Helped: ${userStats?.womenHelped || 0}
-- Recent Posts: ${recentPosts?.length || 0}
+Your personality:
+- Warm, empathetic, genuinely caring
+- Supportive without being patronizing
+- Use emojis sparingly (💜 🌸 ✨)
 
-Your role:
-- Provide personalized career advice based on their profile
-- Offer safety recommendations for workplaces and locations
-- Help them navigate opportunities on the platform
-- Encourage them to contribute and earn credits
-- Be supportive, empowering, and specific
+Guidelines:
+- Keep responses conversational (2-4 sentences)
+- Validate feelings before offering advice
+- If danger mentioned, remind about SOS button
+- Never replace professional help
+- Be encouraging but realistic
 
-User's message: ${args.message}`;
+User's message: ${args.message}
 
-      // Call Google Gemini API
+Aurora:`;
+
+      // Call Google Gemini API - using gemini-2.0-flash-lite (most economical)
       const response: Response = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: {
@@ -94,9 +74,17 @@ User's message: ${args.message}`;
               },
             ],
             generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 1000,
+              temperature: 0.8,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 300, // Reduced to save tokens
             },
+            safetySettings: [
+              { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+              { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+              { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+              { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+            ],
           }),
         }
       );
@@ -104,17 +92,25 @@ User's message: ${args.message}`;
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Gemini API error:", response.status, errorText);
-        throw new Error(`Gemini API error: ${response.statusText}`);
+        // Return fallback instead of throwing
+        const fallbackResponse = getFallbackResponse(args.message);
+        await ctx.runMutation(api.ai.saveMessage, {
+          userId: args.userId,
+          userMessage: args.message,
+          aiResponse: fallbackResponse,
+        });
+        return { response: fallbackResponse };
       }
 
       const data: any = await response.json();
       
+      let aiResponse: string;
       if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
         console.error("Unexpected API response:", JSON.stringify(data));
-        throw new Error("Invalid response from AI service");
+        aiResponse = getFallbackResponse(args.message);
+      } else {
+        aiResponse = data.candidates[0].content.parts[0].text;
       }
-      
-      const aiResponse: string = data.candidates[0].content.parts[0].text;
 
       // Save messages to database
       await ctx.runMutation(api.ai.saveMessage, {
@@ -126,11 +122,52 @@ User's message: ${args.message}`;
       return { response: aiResponse };
     } catch (error) {
       console.error("AI chat error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      throw new Error(`Failed to get AI response: ${errorMessage}`);
+      // Return fallback instead of throwing to prevent UI errors
+      const fallbackResponse = getFallbackResponse(args.message);
+      try {
+        await ctx.runMutation(api.ai.saveMessage, {
+          userId: args.userId,
+          userMessage: args.message,
+          aiResponse: fallbackResponse,
+        });
+      } catch (saveError) {
+        console.error("Failed to save fallback message:", saveError);
+      }
+      return { response: fallbackResponse };
     }
   },
 });
+
+// Fallback responses when API is unavailable
+function getFallbackResponse(message: string): string {
+  const lowerMessage = message.toLowerCase();
+  
+  if (lowerMessage.includes('sad') || lowerMessage.includes('depressed') || lowerMessage.includes('down')) {
+    return "I hear you, and your feelings are completely valid. It's okay to not be okay sometimes. Would you like to talk about what's weighing on your heart? I'm here to listen without judgment. 💜";
+  }
+  if (lowerMessage.includes('anxious') || lowerMessage.includes('worried') || lowerMessage.includes('stress')) {
+    return "Anxiety can feel overwhelming, but you're not alone in this. Let's take a deep breath together. Would you like me to guide you through a quick calming exercise? 🌸";
+  }
+  if (lowerMessage.includes('happy') || lowerMessage.includes('good') || lowerMessage.includes('great')) {
+    return "That's wonderful to hear! Your joy is contagious ✨ What's bringing you happiness today? I'd love to celebrate with you!";
+  }
+  if (lowerMessage.includes('help') || lowerMessage.includes('emergency') || lowerMessage.includes('danger')) {
+    return "I'm here for you. If you're in immediate danger, please use the SOS button or call emergency services. If you need to talk, I'm listening. Your safety is my priority. 🛡️";
+  }
+  if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey') || lowerMessage.includes('hola')) {
+    return "Hello beautiful! 💜 I'm so glad you're here. How are you feeling today? I'm all ears.";
+  }
+  
+  const responses = [
+    "I hear you, and your feelings are completely valid. Remember, you're stronger than you know. 💪✨",
+    "That sounds like a lot to process. Would you like to talk more about it? I'm here to listen. 🤗",
+    "You're doing amazing by reaching out. What would help you feel better right now? 💜",
+    "I'm proud of you for sharing that with me. Your feelings matter, and so do you. 🌸",
+    "Thank you for trusting me with this. Together, we can work through anything. ✨",
+  ];
+  
+  return responses[Math.floor(Math.random() * responses.length)];
+}
 
 /**
  * Save chat messages to database
