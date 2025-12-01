@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactCompiler: true,
 
-  // Image optimization
+  // Image optimization - aggressive for mobile
   images: {
     remotePatterns: [
       {
@@ -14,15 +14,22 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.convex.cloud",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
     ],
     formats: ["image/avif", "image/webp"],
-    deviceSizes: [375, 640, 750, 828, 1080, 1200],
+    // Mobile-first device sizes
+    deviceSizes: [375, 414, 640, 750, 828, 1080, 1200],
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
+    // Minimize image quality for faster loading on slow networks
+    minimumCacheTTL: 31536000, // 1 year cache
   },
 
   // Experimental features for performance
   experimental: {
-    // Optimize package imports
+    // Optimize package imports - tree shaking for smaller bundles
     optimizePackageImports: [
       "lucide-react",
       "date-fns",
@@ -31,8 +38,20 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-dropdown-menu",
       "@radix-ui/react-tabs",
       "@radix-ui/react-select",
+      "@radix-ui/react-avatar",
+      "@radix-ui/react-checkbox",
+      "@radix-ui/react-switch",
+      "@radix-ui/react-slider",
+      "@radix-ui/react-progress",
+      "class-variance-authority",
     ],
   },
+
+  // Compression
+  compress: true,
+
+  // Reduce powered by header
+  poweredByHeader: false,
 
   // Security and caching headers
   async headers() {
@@ -73,7 +92,18 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/:all*(svg|jpg|jpeg|png|webp|avif|ico)",
+        // Aggressive caching for static assets
+        source: "/:all*(svg|jpg|jpeg|png|webp|avif|ico|woff|woff2)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        // Cache JS/CSS chunks
+        source: "/_next/static/:path*",
         headers: [
           {
             key: "Cache-Control",

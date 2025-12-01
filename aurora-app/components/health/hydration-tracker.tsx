@@ -230,6 +230,43 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
           </div>
         )}
 
+        {/* Streak indicator */}
+        {hydrationHistory && hydrationHistory.length > 0 && (
+          <div className="bg-gradient-to-r from-[var(--color-aurora-blue)]/10 to-[var(--color-aurora-mint)]/10 border border-[var(--color-aurora-blue)]/20 rounded-xl p-3 text-center">
+            {(() => {
+              const streak = hydrationHistory.filter((h: any) => h.completed).length;
+              if (streak >= 7) {
+                return (
+                  <>
+                    <p className="text-sm font-medium text-[var(--foreground)]">
+                      🔥 {streak}-day hydration streak!
+                    </p>
+                    <p className="text-xs text-[var(--muted-foreground)]">You're a hydration champion!</p>
+                  </>
+                );
+              } else if (streak >= 3) {
+                return (
+                  <>
+                    <p className="text-sm font-medium text-[var(--foreground)]">
+                      💪 {streak} days of great hydration!
+                    </p>
+                    <p className="text-xs text-[var(--muted-foreground)]">{7 - streak} more days for a week streak!</p>
+                  </>
+                );
+              } else {
+                return (
+                  <>
+                    <p className="text-sm font-medium text-[var(--foreground)]">
+                      🌱 Building your hydration habit
+                    </p>
+                    <p className="text-xs text-[var(--muted-foreground)]">Keep going! Consistency is key</p>
+                  </>
+                );
+              }
+            })()}
+          </div>
+        )}
+
         {/* Celebration Animation */}
         {showCelebration && (
           <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-aurora-mint)]/20 backdrop-blur-sm animate-in fade-in zoom-in duration-500">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { RedditPostCard } from "@/components/reddit-post-card";
@@ -12,12 +12,15 @@ import { OpportunityFeedCard } from "@/components/opportunity-feed-card";
 import { PostCardSkeleton } from "@/components/loading-skeleton";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { FeedAd } from "@/components/ads/feed-ad";
+import { useDevicePerformance, useOptimizedAnimations } from "@/hooks/use-device-performance";
 import { 
   Sparkles, 
   ChevronDown, 
   Flame, 
   TrendingUp, 
   Clock,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import {
@@ -30,12 +33,110 @@ import {
 type SortOption = "best" | "hot" | "new" | "top";
 type ContentFilter = "all" | "posts" | "routes" | "polls" | "reels" | "opportunities";
 
+// Memoized feed item component for better performance
+const FeedItem = memo(function FeedItem({ 
+  item, 
+  userId, 
+  onVerify, 
+  onDelete,
+  isLowEnd 
+}: { 
+  item: any; 
+  userId: Id<"users"> | null;
+  onVerify: (id: Id<"posts">) => void;
+  onDelete: (id: Id<"posts">) => void;
+  isLowEnd: boolean;
+}) {
+  if (item.type === "route") {
+    return (
+      <MobileRouteCard
+        route={item}
+        safetyInsight={`Safety score: ${Math.round(item.rating * 20)}%`}
+      />
+    );
+  }
+
+  if (item.type === "post" && item.postType === "poll") {
+    return (
+      <PollCard
+        post={item}
+        currentUserId={userId || undefined}
+        isMobile={true}
+      />
+    );
+  }
+
+  if (item.type === "post" && item.postType === "ai_chat") {
+    return (
+      <AIChatCard
+        post={item}
+        currentUserId={userId || undefined}
+        isMobile={true}
+      />
+    );
+  }
+
+  if (item.type === "post" && (!item.postType || item.postType === "standard") && !item.route) {
+    return (
+      <RedditPostCard
+        post={item}
+        currentUserId={userId || undefined}
+        onVerify={() => onVerify(item._id as Id<"posts">)}
+        onDelete={() => onDelete(item._id as Id<"posts">)}
+        showActions={true}
+      />
+    );
+  }
+
+  if (item.type === "post" && item.route) {
+    return (
+      <MobileRouteCard
+        route={{
+          ...item.route,
+          _creationTime: item._creationTime,
+          creatorId: item.authorId,
+        }}
+        safetyInsight={`Safety score: ${Math.round((item.route.rating || 0) * 20)}%`}
+      />
+    );
+  }
+
+  if (item.type === "post" && item.reel) {
+    return (
+      <ReelFeedCard
+        reel={{
+          ...item.reel,
+          _creationTime: item._creationTime,
+        }}
+        currentUserId={userId || undefined}
+        onDelete={() => onDelete(item._id as Id<"posts">)}
+        isMobile={true}
+      />
+    );
+  }
+
+  if (item.type === "opportunity") {
+    return (
+      <OpportunityFeedCard
+        opportunity={item as any}
+        currentUserId={userId || undefined}
+      />
+    );
+  }
+
+  return null;
+});
+
 export function MobileFeed() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("new");
   const [contentFilter, setContentFilter] = useState<ContentFilter>("all");
   const [isPremium, setIsPremium] = useState(false);
+  const [visibleItems, setVisibleItems] = useState(10); // Progressive loading
+
+  // Device performance detection
+  const { isLowEnd, isSlowNetwork, shouldReduceData } = useDevicePerformance();
 
   // Get user ID and premium status
   useEffect(() => {
@@ -74,28 +175,48 @@ export function MobileFeed() {
   const verifyPost = useMutation(api.posts.verify);
   const deletePost = useMutation(api.posts.deletePost);
 
-  // Handle verify post
-  const handleVerify = async (postId: Id<"posts">) => {
+  // Handle verify post - memoized
+  const handleVerify = useCallback(async (postId: Id<"posts">) => {
     if (!userId) return;
     try {
       await verifyPost({ postId, userId });
     } catch (error) {
       console.error("Verify error:", error);
     }
-  };
+  }, [userId, verifyPost]);
 
-  // Handle delete post
-  const handleDelete = async (postId: Id<"posts">) => {
+  // Handle delete post - memoized
+  const handleDelete = useCallback(async (postId: Id<"posts">) => {
     if (!userId) return;
     try {
       await deletePost({ postId, userId });
     } catch (error) {
       console.error("Delete error:", error);
     }
-  };
+  }, [userId, deletePost]);
 
-  // Sort items based on selection
-  const sortedItems = feedItems ? [...feedItems].sort((a: any, b: any) => {
+  // Load more items on scroll - progressive loading for performance
+  const loadMoreItems = useCallback(() => {
+    setVisibleItems(prev => Math.min(prev + (isLowEnd ? 5 : 10), 50));
+  }, [isLowEnd]);
+
+  // Scroll handler for infinite loading
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + window.scrollY >= 
+        document.documentElement.scrollHeight - 1000
+      ) {
+        loadMoreItems();
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loadMoreItems]);
+
+  // Sort items based on selection - memoized
+  const sortedItems = useMemo(() => feedItems ? [...feedItems].sort((a: any, b: any) => {
     switch (sortBy) {
       case "hot":
         const aScore = (a.upvotes || 0) - (a.downvotes || 0) + (a.commentCount || 0) * 2;
@@ -113,7 +234,7 @@ export function MobileFeed() {
         const bRecency = 1 / (Date.now() - b._creationTime + 1);
         return (bEngagement * bRecency) - (aEngagement * aRecency);
     }
-  }) : [];
+  }) : [], [feedItems, sortBy]);
 
   const sortOptions = [
     { value: "best", label: "Best", icon: Sparkles },
@@ -134,8 +255,8 @@ export function MobileFeed() {
   const currentSort = sortOptions.find(opt => opt.value === sortBy) || sortOptions[0];
   const currentFilter = contentFilterOptions.find(opt => opt.value === contentFilter) || contentFilterOptions[0];
 
-  // Filter items based on content type
-  const filteredItems = sortedItems.filter((item: any) => {
+  // Filter items based on content type - memoized
+  const filteredItems = useMemo(() => sortedItems.filter((item: any) => {
     if (contentFilter === "all") return true;
     if (contentFilter === "posts") return item.type === "post" && !item.route && !item.reel && item.postType !== "poll";
     if (contentFilter === "routes") return item.type === "route" || (item.type === "post" && item.route);
@@ -143,7 +264,13 @@ export function MobileFeed() {
     if (contentFilter === "reels") return item.type === "post" && item.reel;
     if (contentFilter === "opportunities") return item.type === "opportunity";
     return true;
-  });
+  }), [sortedItems, contentFilter]);
+
+  // Progressive loading - only render visible items
+  const displayedItems = useMemo(() => 
+    filteredItems.slice(0, visibleItems), 
+    [filteredItems, visibleItems]
+  );
 
   return (
     <div className="bg-[var(--background)] min-h-screen">
@@ -234,14 +361,27 @@ export function MobileFeed() {
           </div>
         )}
 
-        {/* Feed Items */}
-        {filteredItems.map((item: any, index: number) => {
+        {/* Network Status Indicator */}
+        {isSlowNetwork && (
+          <div className="flex items-center justify-center gap-2 py-2 px-3 bg-[var(--color-aurora-yellow)]/20 rounded-xl mb-3">
+            <WifiOff className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
+            <span className="text-xs text-[var(--foreground)]">Slow connection - Loading optimized content</span>
+          </div>
+        )}
+
+        {/* Feed Items - Progressive Loading */}
+        {displayedItems.map((item: any, index: number) => {
           const showSuggested = index === 3;
-          // Show ad every 5 posts for free users
-          const showAd = !isPremium && index > 0 && index % 5 === 0;
+          // Show ad every 5 posts for free users (less on slow networks)
+          const adFrequency = isSlowNetwork ? 8 : 5;
+          const showAd = !isPremium && !shouldReduceData && index > 0 && index % adFrequency === 0;
 
           return (
-            <div key={item._id}>
+            <div 
+              key={item._id} 
+              className="content-visibility-auto touch-feedback"
+              style={{ containIntrinsicSize: 'auto 200px' }}
+            >
               {/* Show ad before certain posts */}
               {showAd && <FeedAd isPremium={isPremium} />}
 
@@ -253,71 +393,33 @@ export function MobileFeed() {
                 </div>
               )}
 
-              {item.type === "route" && (
-                <MobileRouteCard
-                  route={item}
-                  safetyInsight={`Safety score: ${Math.round(item.rating * 20)}%`}
-                />
-              )}
-
-              {item.type === "post" && item.postType === "poll" && (
-                <PollCard
-                  post={item}
-                  currentUserId={userId || undefined}
-                  isMobile={true}
-                />
-              )}
-
-              {item.type === "post" && item.postType === "ai_chat" && (
-                <AIChatCard
-                  post={item}
-                  currentUserId={userId || undefined}
-                  isMobile={true}
-                />
-              )}
-
-              {item.type === "post" && (!item.postType || item.postType === "standard") && !item.route && (
-                <RedditPostCard
-                  post={item}
-                  currentUserId={userId || undefined}
-                  onVerify={() => handleVerify(item._id as Id<"posts">)}
-                  onDelete={() => handleDelete(item._id as Id<"posts">)}
-                  showActions={true}
-                />
-              )}
-
-              {item.type === "post" && item.route && (
-                <MobileRouteCard
-                  route={{
-                    ...item.route,
-                    _creationTime: item._creationTime,
-                    creatorId: item.authorId,
-                  }}
-                  safetyInsight={`Safety score: ${Math.round((item.route.rating || 0) * 20)}%`}
-                />
-              )}
-
-              {item.type === "post" && item.reel && (
-                <ReelFeedCard
-                  reel={{
-                    ...item.reel,
-                    _creationTime: item._creationTime,
-                  }}
-                  currentUserId={userId || undefined}
-                  onDelete={() => handleDelete(item._id as Id<"posts">)}
-                  isMobile={true}
-                />
-              )}
-
-              {item.type === "opportunity" && (
-                <OpportunityFeedCard
-                  opportunity={item as any}
-                  currentUserId={userId || undefined}
-                />
-              )}
+              <FeedItem
+                item={item}
+                userId={userId}
+                onVerify={handleVerify}
+                onDelete={handleDelete}
+                isLowEnd={isLowEnd}
+              />
             </div>
           );
         })}
+
+        {/* Load More Indicator */}
+        {displayedItems.length < filteredItems.length && (
+          <div className="py-4 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)] rounded-full">
+              <div className="w-4 h-4 border-2 border-[var(--color-aurora-purple)] border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm text-[var(--muted-foreground)]">Loading more...</span>
+            </div>
+          </div>
+        )}
+
+        {/* End of Feed */}
+        {displayedItems.length >= filteredItems.length && filteredItems.length > 0 && (
+          <div className="py-6 text-center">
+            <p className="text-sm text-[var(--muted-foreground)]">You're all caught up! 🎉</p>
+          </div>
+        )}
       </div>
 
       {/* Onboarding Wizard for new users */}

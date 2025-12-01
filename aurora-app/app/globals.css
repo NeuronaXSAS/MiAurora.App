@@ -265,6 +265,165 @@
 }
 
 /* ============================================
+   MOBILE PERFORMANCE OPTIMIZATIONS
+   ============================================ */
+
+/* GPU acceleration for smooth scrolling */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* Optimize touch scrolling on iOS */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+}
+
+/* Prevent layout shifts */
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+.aspect-video {
+  aspect-ratio: 16 / 9;
+}
+
+/* Skeleton loading - optimized for performance */
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.skeleton-loading {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  background-color: var(--accent);
+}
+
+/* Lazy image placeholder */
+.img-placeholder {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--muted) 100%);
+}
+
+/* Content visibility for off-screen content (saves memory) */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+
+/* Optimize font rendering */
+body {
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reduce paint areas */
+.contain-paint {
+  contain: paint;
+}
+
+.contain-layout {
+  contain: layout;
+}
+
+.contain-strict {
+  contain: strict;
+}
+
+/* Touch feedback for mobile */
+.touch-feedback {
+  -webkit-tap-highlight-color: rgba(93, 55, 167, 0.2);
+}
+
+.touch-feedback:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* Disable hover effects on touch devices for better performance */
+@media (hover: none) and (pointer: coarse) {
+  .hover-lift:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* Simpler animations on touch devices */
+  .animate-bounce-in {
+    animation: fade-in 0.3s ease-out;
+  }
+  
+  .animate-slide-in-right {
+    animation: fade-in 0.2s ease-out;
+  }
+}
+
+/* Low-end device optimizations */
+@media (prefers-reduced-motion: reduce), (update: slow) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+  
+  .animate-shimmer,
+  .animate-pulse,
+  .animate-bounce {
+    animation: none !important;
+  }
+}
+
+/* Save battery on OLED screens in dark mode */
+.dark {
+  /* Pure black backgrounds save battery on OLED */
+  --background-oled: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+  .oled-optimized {
+    background-color: #000000;
+  }
+}
+
+/* Optimize scrollbar for mobile */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--muted-foreground);
+    border-radius: 4px;
+  }
+}
+
+/* Prevent text selection lag on mobile */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Optimize images */
+img {
+  content-visibility: auto;
+}
+
+/* Lazy load below-fold content */
+.lazy-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 300px;
+}
+
+/* ============================================
    ACCESSIBILITY - WCAG 2.1 AAA COMPLIANCE
    ============================================ */
 

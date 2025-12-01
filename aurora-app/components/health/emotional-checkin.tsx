@@ -184,6 +184,30 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
             {getMoodInsight()}
           </p>
         </div>
+
+        {/* Encouragement for consistency */}
+        {moodHistory && moodHistory.length > 0 && moodHistory.length < 7 && (
+          <div className="bg-[var(--color-aurora-purple)]/10 border border-[var(--color-aurora-purple)]/20 rounded-xl p-3 text-center">
+            <p className="text-sm text-[var(--foreground)]">
+              🌟 {7 - moodHistory.length} more days to complete your first week!
+            </p>
+            <p className="text-xs text-[var(--muted-foreground)] mt-1">
+              Consistent tracking helps you understand your patterns
+            </p>
+          </div>
+        )}
+
+        {/* Weekly achievement */}
+        {moodHistory && moodHistory.length >= 7 && (
+          <div className="bg-gradient-to-r from-[var(--color-aurora-mint)]/20 to-[var(--color-aurora-blue)]/20 border border-[var(--color-aurora-mint)]/30 rounded-xl p-3 text-center">
+            <p className="text-sm font-medium text-[var(--foreground)]">
+              🏆 Amazing! You've tracked for {moodHistory.length} days!
+            </p>
+            <p className="text-xs text-[var(--muted-foreground)] mt-1">
+              Your dedication to self-care is inspiring
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
