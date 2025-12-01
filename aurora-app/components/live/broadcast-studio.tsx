@@ -152,8 +152,16 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
     }
   };
 
-  // Handle start broadcasting
+  // State for broadcast status
+  const [broadcastError, setBroadcastError] = useState<string | null>(null);
+  const [isStartingBroadcast, setIsStartingBroadcast] = useState(false);
+
+  // Handle start broadcasting with Agora
   const handleStartBroadcast = async () => {
+    if (isStartingBroadcast) return;
+    
+    setIsStartingBroadcast(true);
+    setBroadcastError(null);
     let createdLivestreamId: Id<"livestreams"> | null = null;
     
     try {
@@ -173,55 +181,40 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
       setLivestreamId(result.livestreamId);
       setChannelName(result.channelName);
 
-      // Try to initialize Agora for real streaming
-      try {
-        await initialize({
-          channelName: result.channelName,
-          userId: userId,
-          role: 'host',
-          onError: (err) => {
-            console.error('Streaming error:', err);
-          },
-        });
+      console.log('Livestream created:', result.channelName);
 
-        // Stop preview stream before starting Agora
-        stopCameraPreview();
-        
-        // Start Agora broadcast
-        await startBroadcast({
-          video: true,
-          audio: true,
-        });
-        
-        setStage('live');
-      } catch (agoraError) {
-        console.warn('Agora initialization failed:', agoraError);
-        
-        // Clean up: end the livestream since we can't broadcast
-        if (createdLivestreamId) {
-          try {
-            await endLivestream({
-              livestreamId: createdLivestreamId,
-              hostId: userId,
-            });
-          } catch (cleanupError) {
-            console.error('Failed to cleanup livestream:', cleanupError);
-          }
-        }
-        
-        stopCameraPreview();
-        
-        // Show user-friendly message
-        const errorMessage = (agoraError as Error).message || '';
-        if (errorMessage.includes('not configured') || errorMessage.includes('App ID')) {
-          alert('Livestreaming is being set up. Please try again later! 🚀');
-        } else {
-          alert('Could not start livestream. Please check your camera permissions and try again.');
-        }
-        router.push('/live');
-      }
+      // Initialize Agora
+      await initialize({
+        channelName: result.channelName,
+        userId: userId,
+        role: 'host',
+        onError: (err) => {
+          console.error('Agora streaming error:', err);
+          setBroadcastError(err.message);
+        },
+      });
+
+      console.log('Agora initialized, stopping preview...');
+
+      // Stop preview stream before starting Agora broadcast
+      stopCameraPreview();
+      
+      console.log('Starting Agora broadcast...');
+
+      // Start Agora broadcast
+      await startBroadcast({
+        video: true,
+        audio: true,
+      });
+
+      console.log('Broadcast started successfully!');
+      
+      setStage('live');
+      setIsStartingBroadcast(false);
     } catch (error) {
       console.error('Failed to start broadcast:', error);
+      const errorMsg = (error as Error).message || 'Unknown error';
+      setBroadcastError(errorMsg);
       
       // Clean up if livestream was created
       if (createdLivestreamId) {
@@ -235,9 +228,16 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
         }
       }
       
-      stopCameraPreview();
-      alert('Failed to start livestream. Please try again.');
-      router.push('/live');
+      setIsStartingBroadcast(false);
+      
+      // Show specific error message
+      if (errorMsg.includes('not configured')) {
+        alert('Livestreaming service is not configured. Please contact support.');
+      } else if (errorMsg.includes('permission')) {
+        alert('Camera/microphone permission denied. Please enable permissions and try again.');
+      } else {
+        alert(`Failed to start livestream: ${errorMsg}`);
+      }
     }
   };
 
@@ -403,7 +403,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
             playsInline
             muted
             className="w-full h-full object-cover bg-[var(--color-aurora-violet)]"
-            style={{ minHeight: '400px', transform: 'scaleX(-1)' }}
+            style={{ minHeight: '400px' }}
           />
 
           {!previewStream && (
@@ -492,13 +492,19 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
             </Button>
           </div>
 
+          {broadcastError && (
+            <div className="p-3 bg-[var(--color-aurora-salmon)]/20 border border-[var(--color-aurora-salmon)]/30 rounded-xl mb-2">
+              <p className="text-[var(--color-aurora-salmon)] text-sm text-center">{broadcastError}</p>
+            </div>
+          )}
+
           <Button
             onClick={handleStartBroadcast}
             className="w-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:from-[var(--color-aurora-violet)] hover:to-[var(--color-aurora-purple)] text-white min-h-[48px]"
             size="lg"
-            disabled={!previewStream}
+            disabled={!previewStream || isStartingBroadcast}
           >
-            {previewStream ? 'Go Live Now' : 'Starting camera...'}
+            {isStartingBroadcast ? 'Starting broadcast...' : previewStream ? 'Go Live Now' : 'Starting camera...'}
           </Button>
 
           <Button
@@ -517,10 +523,10 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
     );
   }
 
-  // Live Stage
+  // Live Stage - Agora streaming
   return (
     <div className="min-h-screen bg-[var(--color-aurora-violet)] flex flex-col">
-      {/* Video Stream */}
+      {/* Video Stream - Agora */}
       <div className="flex-1 relative">
         <div
           ref={localVideoRef}
@@ -531,8 +537,8 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
         {/* Live Indicator */}
         <div className="absolute top-4 left-4 right-4 z-10">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-[var(--color-aurora-pink)] px-4 py-2 rounded-full flex items-center gap-2 animate-pulse">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="bg-red-500 px-4 py-2 rounded-full flex items-center gap-2 animate-pulse">
                 <div className="w-3 h-3 bg-white rounded-full" />
                 <span className="text-white font-bold text-sm">LIVE</span>
               </div>
@@ -574,18 +580,26 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
         <div className="flex items-center justify-center gap-4">
           <Button
             onClick={toggleCamera}
-            variant={isCameraEnabled ? "default" : "destructive"}
+            variant="default"
             size="lg"
-            className={`rounded-full w-16 h-16 ${isCameraEnabled ? 'bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]' : 'bg-[var(--color-aurora-salmon)]'}`}
+            className={`rounded-full w-16 h-16 min-w-[64px] min-h-[64px] ${
+              isCameraEnabled 
+                ? 'bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]' 
+                : 'bg-[var(--color-aurora-salmon)]'
+            }`}
           >
             {isCameraEnabled ? <Camera className="w-6 h-6" /> : <CameraOff className="w-6 h-6" />}
           </Button>
 
           <Button
             onClick={toggleMicrophone}
-            variant={isMicrophoneEnabled ? "default" : "destructive"}
+            variant="default"
             size="lg"
-            className={`rounded-full w-16 h-16 ${isMicrophoneEnabled ? 'bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]' : 'bg-[var(--color-aurora-salmon)]'}`}
+            className={`rounded-full w-16 h-16 min-w-[64px] min-h-[64px] ${
+              isMicrophoneEnabled 
+                ? 'bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]' 
+                : 'bg-[var(--color-aurora-salmon)]'
+            }`}
           >
             {isMicrophoneEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
           </Button>
@@ -594,7 +608,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
             onClick={switchCamera}
             variant="outline"
             size="lg"
-            className="rounded-full w-16 h-16 border-[var(--border)]"
+            className="rounded-full w-16 h-16 min-w-[64px] min-h-[64px] border-[var(--border)]"
           >
             <Repeat className="w-6 h-6" />
           </Button>
