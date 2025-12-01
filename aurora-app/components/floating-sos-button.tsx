@@ -39,17 +39,21 @@ export function FloatingSOSButton() {
         onClick={handleSOSClick}
         className={cn(
           "fixed top-4 right-4 z-50",
-          "w-14 h-14 rounded-full",
-          "bg-gradient-to-br from-aurora-orange to-red-600",
-          "shadow-2xl shadow-aurora-orange/50",
+          "w-14 h-14 min-w-[56px] min-h-[56px] rounded-full",
+          "bg-gradient-to-br from-[var(--color-aurora-orange)] to-red-600",
+          "shadow-2xl shadow-[var(--color-aurora-orange)]/50",
           "flex items-center justify-center",
           "transition-all duration-200",
           "active:scale-90",
-          "hover:shadow-aurora-orange/70",
-          "animate-pulse-glow"
+          "hover:shadow-[var(--color-aurora-orange)]/70",
+          "border-2 border-white/30"
         )}
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
-        aria-label="Emergency SOS"
+        style={{ 
+          paddingTop: "env(safe-area-inset-top)",
+          animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
+        }}
+        aria-label="Emergency SOS - Tap to access emergency options"
+        role="button"
       >
         <Shield className="w-7 h-7 text-white drop-shadow-lg" />
       </motion.button>
@@ -106,27 +110,29 @@ export function FloatingSOSButton() {
                   <button
                     onClick={handleConfirm}
                     className={cn(
-                      "w-full py-4 rounded-2xl font-semibold",
-                      "bg-gradient-to-r from-aurora-orange to-red-600",
-                      "text-white shadow-lg",
+                      "w-full py-4 min-h-[56px] rounded-2xl font-semibold",
+                      "bg-gradient-to-r from-[var(--color-aurora-orange)] to-red-600",
+                      "text-white shadow-lg text-lg",
                       "transition-all duration-200",
                       "active:scale-95",
                       "flex items-center justify-center gap-2"
                     )}
+                    aria-label="Activate emergency alert"
                   >
-                    <Shield className="w-5 h-5" />
+                    <Shield className="w-6 h-6" />
                     Activate Emergency
                   </button>
 
                   <button
                     onClick={handleCancel}
                     className={cn(
-                      "w-full py-4 rounded-2xl font-semibold",
+                      "w-full py-4 min-h-[52px] rounded-2xl font-semibold",
                       "bg-white/10 hover:bg-white/20",
                       "text-white",
                       "transition-all duration-200",
                       "active:scale-95"
                     )}
+                    aria-label="Cancel and close"
                   >
                     Cancel
                   </button>
@@ -137,28 +143,28 @@ export function FloatingSOSButton() {
                   <p className="text-xs text-white/60 text-center mb-3">
                     Quick Actions
                   </p>
-                  <div className="flex gap-2 justify-center">
+                  <div className="flex gap-3 justify-center">
                     <button
                       onClick={() => {
                         // Use tel:112 for international emergency (works in most countries)
-                        // 112 is the universal emergency number in EU and works in many other countries
-                        // It will redirect to local emergency services
                         window.location.href = "tel:112";
                       }}
-                      className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 py-4 min-h-[52px] rounded-xl bg-white/10 hover:bg-white/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                      aria-label="Call emergency services"
                     >
-                      <Phone className="w-4 h-4 text-white" />
-                      <span className="text-sm text-white">Emergency Call</span>
+                      <Phone className="w-5 h-5 text-white" />
+                      <span className="text-sm font-medium text-white">Emergency Call</span>
                     </button>
                     <button
                       onClick={() => {
                         router.push("/map");
                         setShowConfirm(false);
                       }}
-                      className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 py-4 min-h-[52px] rounded-xl bg-white/10 hover:bg-white/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                      aria-label="Share your location"
                     >
-                      <MapPin className="w-4 h-4 text-white" />
-                      <span className="text-sm text-white">Share Location</span>
+                      <MapPin className="w-5 h-5 text-white" />
+                      <span className="text-sm font-medium text-white">Share Location</span>
                     </button>
                   </div>
                 </div>

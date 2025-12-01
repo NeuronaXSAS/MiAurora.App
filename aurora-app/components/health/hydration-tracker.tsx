@@ -157,16 +157,18 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
             disabled={glasses === 0}
             variant="outline"
             size="icon"
-            className="border-[var(--border)] min-w-[44px] min-h-[44px]"
+            className="border-[var(--border)] min-w-[48px] min-h-[48px] rounded-full transition-all active:scale-95"
+            aria-label="Remove one glass of water"
           >
-            <Minus className="w-4 h-4" />
+            <Minus className="w-5 h-5" />
           </Button>
 
           <Button
             onClick={handleAddGlass}
-            className="bg-[var(--color-aurora-pink)] hover:bg-[var(--color-aurora-purple)] text-white font-semibold px-6 min-h-[44px]"
+            className="bg-[var(--color-aurora-pink)] hover:bg-[var(--color-aurora-purple)] text-white font-semibold px-8 min-h-[48px] rounded-full transition-all active:scale-95 shadow-lg"
+            aria-label="Add one glass of water"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-5 h-5 mr-2" />
             Add Glass
           </Button>
         </div>

@@ -439,19 +439,27 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
               <Button
                 onClick={() => setStep(step + 1)}
                 disabled={step === 1 ? !role : selectedInterests.length === 0}
-                className="w-full sm:w-auto min-h-[48px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50 order-1 sm:order-2"
+                className="w-full sm:w-auto min-h-[52px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50 order-1 sm:order-2 transition-all active:scale-[0.98] text-base font-semibold"
               >
                 Next
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             ) : (
               <Button
                 onClick={handleComplete}
                 disabled={isSubmitting}
-                className="w-full sm:w-auto min-h-[48px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50 disabled:opacity-50 order-1 sm:order-2"
+                className="w-full sm:w-auto min-h-[52px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:from-[var(--color-aurora-purple)] hover:to-[var(--color-aurora-violet)] shadow-lg shadow-[var(--color-aurora-purple)]/50 disabled:opacity-50 order-1 sm:order-2 transition-all active:scale-[0.98] text-base font-semibold"
               >
-                {isSubmitting ? "Saving..." : "Complete Setup"}
-                <Check className="w-4 h-4 ml-2" />
+                {isSubmitting ? (
+                  <>
+                    <span className="animate-pulse">Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    Complete Setup
+                    <Check className="w-5 h-5 ml-2" />
+                  </>
+                )}
               </Button>
             )}
           </div>

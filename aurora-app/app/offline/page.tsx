@@ -31,6 +31,25 @@ export default function OfflinePage() {
           Don't worry, your safety features still work!
         </p>
 
+        {/* Emergency Call Buttons */}
+        <Card className="p-4 bg-[var(--color-aurora-orange)]/20 border-[var(--color-aurora-orange)]/30 mb-4">
+          <h3 className="text-white font-semibold mb-3 text-sm">Emergency Services</h3>
+          <div className="flex gap-2">
+            <a href="tel:911" className="flex-1">
+              <Button variant="secondary" className="w-full min-h-[48px] font-semibold">
+                <Phone className="w-4 h-4 mr-2" />
+                911 (US)
+              </Button>
+            </a>
+            <a href="tel:112" className="flex-1">
+              <Button variant="secondary" className="w-full min-h-[48px] font-semibold">
+                <Phone className="w-4 h-4 mr-2" />
+                112 (EU)
+              </Button>
+            </a>
+          </div>
+        </Card>
+
         {/* Emergency Features Card */}
         <Card className="p-6 bg-white/5 border-white/10 mb-6 text-left">
           <h3 className="text-white font-semibold mb-4 flex items-center gap-2">

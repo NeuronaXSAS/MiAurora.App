@@ -121,8 +121,9 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
             </div>
             <Button
               size="lg"
-              className="bg-white text-[var(--color-aurora-violet)] hover:bg-white/90 w-full sm:w-auto min-h-[48px]"
+              className="bg-white text-[var(--color-aurora-violet)] hover:bg-white/90 w-full sm:w-auto min-h-[52px] font-semibold text-base transition-all active:scale-95 shadow-lg"
               onClick={() => router.push("/routes/track")}
+              aria-label="Start tracking a new route"
             >
               <Play className="w-5 h-5 mr-2" />
               Start Tracking
@@ -152,29 +153,43 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
         <div className="max-w-4xl mx-auto">
           {/* Quick Actions */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-            <Card className="hover:shadow-lg cursor-pointer bg-[var(--card)] border-[var(--border)] transition-shadow" onClick={() => router.push("/routes/track")}>
-              <CardContent className="p-6">
+            <Card 
+              className="hover:shadow-lg cursor-pointer bg-[var(--card)] border-[var(--border)] transition-all active:scale-[0.98]" 
+              onClick={() => router.push("/routes/track")}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && router.push("/routes/track")}
+              aria-label="Start tracking a new route"
+            >
+              <CardContent className="p-6 min-h-[88px]">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-[var(--color-aurora-purple)]/10 rounded-full flex items-center justify-center">
-                    <Play className="w-6 h-6 text-[var(--color-aurora-purple)]" />
+                  <div className="w-14 h-14 bg-[var(--color-aurora-purple)]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Play className="w-7 h-7 text-[var(--color-aurora-purple)]" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-[var(--foreground)]">Start New Route</h3>
-                    <p className="text-sm text-[var(--muted-foreground)]">Track your movement</p>
+                    <h3 className="font-semibold text-lg text-[var(--foreground)]">Start New Route</h3>
+                    <p className="text-sm text-[var(--muted-foreground)]">Track your movement safely</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-lg cursor-pointer bg-[var(--card)] border-[var(--border)] transition-shadow" onClick={() => router.push("/routes/discover")}>
-              <CardContent className="p-6">
+            <Card 
+              className="hover:shadow-lg cursor-pointer bg-[var(--card)] border-[var(--border)] transition-all active:scale-[0.98]" 
+              onClick={() => router.push("/routes/discover")}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && router.push("/routes/discover")}
+              aria-label="Discover safe routes in your area"
+            >
+              <CardContent className="p-6 min-h-[88px]">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-[var(--color-aurora-blue)]/10 rounded-full flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-[var(--color-aurora-blue)]" />
+                  <div className="w-14 h-14 bg-[var(--color-aurora-blue)]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <TrendingUp className="w-7 h-7 text-[var(--color-aurora-blue)]" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-[var(--foreground)]">Discover Routes</h3>
-                    <p className="text-sm text-[var(--muted-foreground)]">Find safe paths</p>
+                    <h3 className="font-semibold text-lg text-[var(--foreground)]">Discover Routes</h3>
+                    <p className="text-sm text-[var(--muted-foreground)]">Find community-verified paths</p>
                   </div>
                 </div>
               </CardContent>

@@ -208,6 +208,9 @@ export function MobileFeed() {
             <PostCardSkeleton />
             <PostCardSkeleton />
             <PostCardSkeleton />
+            <p className="text-center text-sm text-[var(--muted-foreground)] py-2">
+              Loading your personalized feed...
+            </p>
           </div>
         )}
 

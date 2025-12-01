@@ -67,8 +67,11 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
     toggleCamera,
     toggleMicrophone,
     switchCamera,
-    localVideoRef,
+    playLocalVideo,
   } = useLivestream();
+
+  // Local ref for Agora video
+  const localVideoRef = useRef<HTMLDivElement>(null);
 
   // Duration timer
   useEffect(() => {
@@ -79,6 +82,20 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
       return () => clearInterval(interval);
     }
   }, [stage]);
+
+  // Play local video when entering live stage
+  useEffect(() => {
+    if (stage === 'live' && localVideoRef.current) {
+      // Small delay to ensure Agora is fully ready
+      const timer = setTimeout(() => {
+        if (localVideoRef.current) {
+          console.log('Playing local video in container...');
+          playLocalVideo(localVideoRef.current);
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [stage, playLocalVideo]);
 
   // Format duration
   const formatDuration = (seconds: number) => {
@@ -209,6 +226,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
 
       console.log('Broadcast started successfully!');
       
+      // Move to live stage first so the video container is mounted
       setStage('live');
       setIsStartingBroadcast(false);
     } catch (error) {

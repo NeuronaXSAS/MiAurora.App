@@ -113,6 +113,7 @@ export const deleteEmergencyContact = mutation({
 
 /**
  * Trigger emergency alert
+ * Rate limited: Max 3 alerts per hour per user to prevent abuse
  */
 export const triggerEmergencyAlert = mutation({
   args: {
@@ -140,6 +141,18 @@ export const triggerEmergencyAlert = mutation({
       .first();
 
     if (!user) throw new Error("User not found");
+
+    // Rate limiting: Check for recent alerts (max 3 per hour)
+    const oneHourAgo = Date.now() - 60 * 60 * 1000;
+    const recentAlerts = await ctx.db
+      .query("emergencyAlerts")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) => q.gt(q.field("_creationTime"), oneHourAgo))
+      .collect();
+
+    if (recentAlerts.length >= 3) {
+      throw new Error("Rate limit exceeded. Maximum 3 emergency alerts per hour. If this is a real emergency, please call local emergency services directly.");
+    }
 
     // Get emergency contacts
     const contacts = await ctx.db

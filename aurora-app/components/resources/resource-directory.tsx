@@ -90,10 +90,10 @@ export function ResourceDirectory({ userId, country, city }: ResourceDirectoryPr
   return (
     <div className="space-y-6">
       {/* Emergency Banner */}
-      <Card className="bg-gradient-to-r from-[var(--color-aurora-orange)] to-[var(--color-aurora-pink)] text-white border-0">
+      <Card className="bg-gradient-to-r from-[var(--color-aurora-orange)] to-[var(--color-aurora-pink)] text-white border-0" role="alert">
         <CardContent className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 animate-pulse">
               <Phone className="w-6 h-6 sm:w-8 sm:h-8" />
             </div>
             <div className="flex-1">
@@ -101,16 +101,16 @@ export function ResourceDirectory({ userId, country, city }: ResourceDirectoryPr
               <p className="text-white/90 text-sm mb-3">
                 Call emergency services immediately
               </p>
-              <div className="flex flex-wrap gap-2">
-                <a href="tel:911" className="inline-block">
-                  <Button variant="secondary" size="sm" className="min-h-[44px]">
-                    <Phone className="w-4 h-4 mr-2" />
+              <div className="flex flex-wrap gap-3">
+                <a href="tel:911" className="inline-block" aria-label="Call 911 for US emergency services">
+                  <Button variant="secondary" size="sm" className="min-h-[48px] min-w-[120px] font-semibold transition-all active:scale-95">
+                    <Phone className="w-5 h-5 mr-2" />
                     Call 911 (US)
                   </Button>
                 </a>
-                <a href="tel:112" className="inline-block">
-                  <Button variant="outline" size="sm" className="bg-white/10 border-white/30 text-white hover:bg-white/20 min-h-[44px]">
-                    <Phone className="w-4 h-4 mr-2" />
+                <a href="tel:112" className="inline-block" aria-label="Call 112 for EU emergency services">
+                  <Button variant="outline" size="sm" className="bg-white/10 border-white/30 text-white hover:bg-white/20 min-h-[48px] min-w-[120px] font-semibold transition-all active:scale-95">
+                    <Phone className="w-5 h-5 mr-2" />
                     Call 112 (EU)
                   </Button>
                 </a>

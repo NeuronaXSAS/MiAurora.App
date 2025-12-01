@@ -210,7 +210,7 @@ export function MobileNavigationMenu({ children }: MobileNavigationMenuProps) {
 
       {/* Bottom Navigation - Trinity Pillars */}
       <nav 
-        className="fixed bottom-0 left-0 right-0 bg-aurora-violet/95 backdrop-blur-lg border-t border-white/10 safe-area-inset-bottom z-50 shadow-2xl"
+        className="fixed bottom-0 left-0 right-0 bg-[var(--color-aurora-violet)]/95 backdrop-blur-lg border-t border-white/10 safe-area-inset-bottom z-50 shadow-2xl"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         role="navigation"
         aria-label="Main navigation - Trinity Pillars"

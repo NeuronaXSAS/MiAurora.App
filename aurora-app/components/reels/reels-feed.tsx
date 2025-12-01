@@ -90,8 +90,9 @@ export function ReelsFeed({ currentUserId, sortBy = "recent" }: ReelsFeedProps) 
 
   if (isLoading) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-black">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      <div className="h-full w-full flex flex-col items-center justify-center bg-gradient-to-b from-[var(--color-aurora-violet)] to-black">
+        <Loader2 className="w-10 h-10 animate-spin text-[var(--color-aurora-pink)] mb-4" />
+        <p className="text-white/70 text-sm">Loading safety reels...</p>
       </div>
     );
   }

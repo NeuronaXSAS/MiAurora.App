@@ -130,6 +130,14 @@ export function useLivestream(options?: UseLivestreamOptions) {
     }
   }, [generateToken]);
 
+  // Reference to provider for direct access
+  const providerRef = useRef<StreamingProvider | null>(null);
+
+  // Keep providerRef in sync with provider state
+  useEffect(() => {
+    providerRef.current = provider;
+  }, [provider]);
+
   // Start broadcasting (host)
   const startBroadcast = useCallback(async (options?: {
     video?: boolean;
@@ -139,17 +147,24 @@ export function useLivestream(options?: UseLivestreamOptions) {
 
     try {
       await provider.startBroadcast(options);
-
-      // Play local video
-      if (localVideoRef.current) {
-        (provider as AgoraProvider).playLocalVideo(localVideoRef.current);
-      }
+      console.log('Broadcast started, local video track should be ready');
     } catch (error) {
       const err = error as Error;
       setState(prev => ({ ...prev, error: err.message }));
       throw error;
     }
   }, [provider]);
+
+  // Play local video in a container element
+  const playLocalVideo = useCallback((container: HTMLElement) => {
+    const currentProvider = providerRef.current;
+    if (!currentProvider) {
+      console.warn('Provider not initialized, cannot play local video');
+      return;
+    }
+    console.log('Playing local video in container:', container);
+    (currentProvider as AgoraProvider).playLocalVideo(container);
+  }, []);
 
   // Stop broadcasting
   const stopBroadcast = useCallback(async () => {
@@ -286,6 +301,7 @@ export function useLivestream(options?: UseLivestreamOptions) {
     getDevices,
     getStats,
     setVideoQuality,
+    playLocalVideo,
 
     // Refs for video containers
     localVideoRef,

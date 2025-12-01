@@ -153,12 +153,16 @@ export default function MessagesPage() {
               {conversations.map((conv: any) => (
                 <Card
                   key={conv.partnerId}
-                  className="hover:shadow-lg cursor-pointer bg-[var(--card)] border-[var(--border)] transition-shadow"
+                  className="hover:shadow-lg cursor-pointer bg-[var(--card)] border-[var(--border)] transition-all active:scale-[0.99]"
                   onClick={() => router.push(`/messages/${conv.partnerId}`)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && router.push(`/messages/${conv.partnerId}`)}
+                  aria-label={`Chat with ${conv.partner?.name || "Unknown User"}${conv.unreadCount > 0 ? `, ${conv.unreadCount} unread messages` : ''}`}
                 >
-                  <CardContent className="p-4">
+                  <CardContent className="p-4 min-h-[72px]">
                     <div className="flex items-start gap-3">
-                      <Avatar className="w-12 h-12">
+                      <Avatar className="w-12 h-12 flex-shrink-0">
                         <AvatarImage src={conv.partner?.profileImage} />
                         <AvatarFallback className="bg-[var(--color-aurora-lavender)] text-[var(--color-aurora-violet)]">
                           {conv.partner?.name?.charAt(0).toUpperCase() || "U"}
@@ -181,7 +185,7 @@ export default function MessagesPage() {
                             {conv.lastMessage.content}
                           </p>
                           {conv.unreadCount > 0 && (
-                            <Badge className="bg-[var(--color-aurora-purple)] ml-2 flex-shrink-0">
+                            <Badge className="bg-[var(--color-aurora-purple)] ml-2 flex-shrink-0 min-w-[24px] h-6 flex items-center justify-center">
                               {conv.unreadCount}
                             </Badge>
                           )}
