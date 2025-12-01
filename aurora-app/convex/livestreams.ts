@@ -153,7 +153,7 @@ export const endLivestream = mutation({
 
 /**
  * Get all active livestreams
- * Only returns streams that are truly live (started within last 24 hours and status is 'live')
+ * Only returns streams that are truly live (started within last 2 hours and status is 'live')
  */
 export const getLivestreams = query({
   args: {
@@ -161,7 +161,8 @@ export const getLivestreams = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit || 20;
-    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+    // Reduced to 2 hours - streams older than this are likely abandoned
+    const twoHoursAgo = Date.now() - (2 * 60 * 60 * 1000);
 
     // Get current user for isLiked status
     const identity = await ctx.auth.getUserIdentity();
@@ -180,10 +181,20 @@ export const getLivestreams = query({
       .order('desc')
       .take(limit * 2); // Get more to filter
     
-    // Filter out stale streams (started more than 24 hours ago - likely abandoned)
-    const livestreams = allLivestreams.filter(stream => 
-      stream.startedAt && stream.startedAt > twentyFourHoursAgo
-    ).slice(0, limit);
+    // Filter out stale/abandoned streams
+    const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+    const livestreams = allLivestreams.filter(stream => {
+      // Must have started recently (within 2 hours)
+      if (!stream.startedAt || stream.startedAt < twoHoursAgo) return false;
+      
+      // If stream is older than 5 minutes with no viewers, it's likely abandoned
+      if (stream.startedAt < fiveMinutesAgo && 
+          stream.viewerCount === 0 && stream.peakViewerCount === 0) {
+        return false;
+      }
+      
+      return true;
+    }).slice(0, limit);
 
     // Fetch host information and like status
     const livestreamsWithData = await Promise.all(
@@ -483,14 +494,17 @@ export const deleteLivestream = mutation({
 /**
  * Clean up stale/abandoned livestreams
  * This should be called periodically or when loading the live page
+ * - Streams older than 1 hour are considered abandoned
+ * - Streams older than 5 minutes with 0 viewers are likely failed attempts
  */
 export const cleanupStaleLivestreams = mutation({
   args: {},
   handler: async (ctx) => {
-    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+    const oneHourAgo = Date.now() - (60 * 60 * 1000);
+    const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
     
-    // Find all livestreams that are still marked as 'live' but started more than 24 hours ago
-    const staleLivestreams = await ctx.db
+    // Find all livestreams that are still marked as 'live'
+    const liveLivestreams = await ctx.db
       .query('livestreams')
       .withIndex('by_status')
       .filter((q) => q.eq(q.field('status'), 'live'))
@@ -498,8 +512,22 @@ export const cleanupStaleLivestreams = mutation({
     
     let cleanedCount = 0;
     
-    for (const stream of staleLivestreams) {
-      if (stream.startedAt && stream.startedAt < twentyFourHoursAgo) {
+    for (const stream of liveLivestreams) {
+      let shouldEnd = false;
+      
+      // Case 1: Stream is older than 1 hour - definitely abandoned
+      if (stream.startedAt && stream.startedAt < oneHourAgo) {
+        shouldEnd = true;
+      }
+      
+      // Case 2: Stream is older than 5 minutes with 0 viewers and 0 peak viewers
+      // This catches failed broadcast attempts
+      if (stream.startedAt && stream.startedAt < fiveMinutesAgo && 
+          stream.viewerCount === 0 && stream.peakViewerCount === 0) {
+        shouldEnd = true;
+      }
+      
+      if (shouldEnd) {
         // Mark as ended
         await ctx.db.patch(stream._id, {
           status: 'ended',
@@ -526,5 +554,64 @@ export const cleanupStaleLivestreams = mutation({
     }
     
     return { cleanedCount };
+  },
+});
+
+
+/**
+ * Force cleanup all stale livestreams (admin function)
+ * This will end ALL livestreams that appear to be abandoned
+ */
+export const forceCleanupAllStale = mutation({
+  args: {
+    userId: v.optional(v.id('users')), // Optional: only cleanup for specific user
+  },
+  handler: async (ctx, args) => {
+    const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+    
+    // Find all livestreams that are still marked as 'live'
+    let query = ctx.db
+      .query('livestreams')
+      .withIndex('by_status')
+      .filter((q) => q.eq(q.field('status'), 'live'));
+    
+    const liveLivestreams = await query.collect();
+    
+    let cleanedCount = 0;
+    
+    for (const stream of liveLivestreams) {
+      // If userId specified, only cleanup that user's streams
+      if (args.userId && stream.hostId !== args.userId) continue;
+      
+      // End streams that are older than 5 minutes OR have no activity
+      const isOld = stream.startedAt && stream.startedAt < fiveMinutesAgo;
+      const noActivity = stream.viewerCount === 0 && stream.peakViewerCount === 0;
+      
+      if (isOld || noActivity) {
+        await ctx.db.patch(stream._id, {
+          status: 'ended',
+          endedAt: Date.now(),
+        });
+        
+        // Mark all viewers as inactive
+        const activeViewers = await ctx.db
+          .query('livestreamViewers')
+          .withIndex('by_livestream_and_active', (q) =>
+            q.eq('livestreamId', stream._id).eq('isActive', true)
+          )
+          .collect();
+
+        for (const viewer of activeViewers) {
+          await ctx.db.patch(viewer._id, {
+            isActive: false,
+            leftAt: Date.now(),
+          });
+        }
+        
+        cleanedCount++;
+      }
+    }
+    
+    return { cleanedCount, message: `Cleaned up ${cleanedCount} stale livestreams` };
   },
 });

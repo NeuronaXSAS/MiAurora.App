@@ -42,7 +42,6 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
   const [stage, setStage] = useState<BroadcastStage>('setup');
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("safety-walk");
-  const [safetyMode, setSafetyMode] = useState(true);
   const [isEmergency, setIsEmergency] = useState(false);
   const [livestreamId, setLivestreamId] = useState<Id<"livestreams"> | null>(null);
   const [channelName, setChannelName] = useState("");
@@ -122,10 +121,10 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
     }
   };
 
-  // Handle go live
+  // Handle go live - just start camera preview first
   const handleGoLive = async () => {
     if (!title.trim()) {
-      alert("Por favor ingresa un título para tu transmisión");
+      alert("Please enter a title for your stream");
       return;
     }
 
@@ -135,29 +134,46 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
       // First, request camera/mic permissions and start preview
       const cameraOk = await startCameraPreview();
       if (!cameraOk) {
-        setPermissionError('Permiso de cámara/micrófono denegado. Habilita los permisos en tu navegador.');
+        setPermissionError('Camera/microphone permission denied. Please enable permissions in your browser settings.');
         return;
       }
 
-      // Create livestream record (without safety mode to avoid moderation issues)
+      // Move to preview stage - don't create livestream yet
+      setStage('preview');
+    } catch (error) {
+      console.error('Failed to start preview:', error);
+      stopCameraPreview();
+      const err = error as Error;
+      if (err.message.includes('permission') || err.message.includes('NotAllowedError')) {
+        setPermissionError('Camera/microphone permission denied. Please enable permissions and try again.');
+      } else {
+        setPermissionError('Failed to access camera. Please check your device settings.');
+      }
+    }
+  };
+
+  // Handle start broadcasting
+  const handleStartBroadcast = async () => {
+    let createdLivestreamId: Id<"livestreams"> | null = null;
+    
+    try {
+      // Create livestream record in database
       const result = await createLivestream({
         hostId: userId,
         title: title.trim(),
-        safetyMode: false, // Disabled for now to ensure functionality
+        safetyMode: false,
         isEmergency,
       });
 
-      // Check if Agora is not configured
       if (!result.livestreamId) {
-        setPermissionError('Aurora Live estará disponible pronto. Estamos trabajando en esta función. 🚀');
-        stopCameraPreview();
-        return;
+        throw new Error('Failed to create livestream');
       }
 
+      createdLivestreamId = result.livestreamId;
       setLivestreamId(result.livestreamId);
       setChannelName(result.channelName);
 
-      // Initialize streaming provider (but don't start broadcast yet)
+      // Try to initialize Agora for real streaming
       try {
         await initialize({
           channelName: result.channelName,
@@ -165,48 +181,62 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
           role: 'host',
           onError: (err) => {
             console.error('Streaming error:', err);
-            if (err.message.includes('permission')) {
-              setPermissionError('Permiso de cámara/micrófono denegado. Habilita los permisos en tu navegador.');
-            } else if (err.message.includes('not_configured') || err.message.includes('coming soon')) {
-              setPermissionError('Aurora Live estará disponible pronto. 🚀');
-            }
           },
         });
-      } catch (initError) {
-        console.warn('Agora init failed, using preview mode:', initError);
-        // Continue with preview even if Agora fails
-      }
 
-      setStage('preview');
-    } catch (error) {
-      console.error('Failed to create livestream:', error);
-      stopCameraPreview();
-      const err = error as Error;
-      if (err.message.includes('permission') || err.message.includes('NotAllowedError')) {
-        setPermissionError('Permiso de cámara/micrófono denegado. Habilita los permisos e intenta de nuevo.');
-      } else if (err.message.includes('not_configured') || err.message.includes('AGORA')) {
-        setPermissionError('Aurora Live estará disponible pronto. Estamos trabajando en esta función. 🚀');
-      } else {
-        setPermissionError('Aurora Live estará disponible pronto. 🚀');
+        // Stop preview stream before starting Agora
+        stopCameraPreview();
+        
+        // Start Agora broadcast
+        await startBroadcast({
+          video: true,
+          audio: true,
+        });
+        
+        setStage('live');
+      } catch (agoraError) {
+        console.warn('Agora initialization failed:', agoraError);
+        
+        // Clean up: end the livestream since we can't broadcast
+        if (createdLivestreamId) {
+          try {
+            await endLivestream({
+              livestreamId: createdLivestreamId,
+              hostId: userId,
+            });
+          } catch (cleanupError) {
+            console.error('Failed to cleanup livestream:', cleanupError);
+          }
+        }
+        
+        stopCameraPreview();
+        
+        // Show user-friendly message
+        const errorMessage = (agoraError as Error).message || '';
+        if (errorMessage.includes('not configured') || errorMessage.includes('App ID')) {
+          alert('Livestreaming is being set up. Please try again later! 🚀');
+        } else {
+          alert('Could not start livestream. Please check your camera permissions and try again.');
+        }
+        router.push('/live');
       }
-    }
-  };
-
-  // Handle start broadcasting
-  const handleStartBroadcast = async () => {
-    try {
-      // Stop the preview stream before starting Agora broadcast
-      stopCameraPreview();
-      
-      await startBroadcast({
-        video: true,
-        audio: true,
-      });
-      setStage('live');
     } catch (error) {
       console.error('Failed to start broadcast:', error);
-      // If Agora fails, show a friendly message
-      alert('Livestreaming will be available soon. Your preview looked great! 🚀');
+      
+      // Clean up if livestream was created
+      if (createdLivestreamId) {
+        try {
+          await endLivestream({
+            livestreamId: createdLivestreamId,
+            hostId: userId,
+          });
+        } catch (cleanupError) {
+          console.error('Failed to cleanup livestream:', cleanupError);
+        }
+      }
+      
+      stopCameraPreview();
+      alert('Failed to start livestream. Please try again.');
       router.push('/live');
     }
   };
@@ -325,22 +355,6 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
                   <SelectItem value="emergency">🚨 Emergency</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="flex items-center justify-between p-4 bg-[var(--color-aurora-lavender)]/20 rounded-xl border border-[var(--color-aurora-lavender)]/30">
-              <div className="flex items-center gap-2">
-                <Shield className="w-5 h-5 text-[var(--color-aurora-purple)]" />
-                <div>
-                  <p className="font-medium text-sm text-[var(--foreground)]">Safety Mode</p>
-                  <p className="text-xs text-[var(--muted-foreground)]">Enable emergency alerts</p>
-                </div>
-              </div>
-              <input
-                type="checkbox"
-                checked={safetyMode}
-                onChange={(e) => setSafetyMode(e.target.checked)}
-                className="w-5 h-5 accent-[var(--color-aurora-purple)]"
-              />
             </div>
 
             {permissionError && (
