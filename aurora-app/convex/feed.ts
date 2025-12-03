@@ -110,18 +110,12 @@ export const getUnifiedFeed = query({
     const sortByScore = (posts: typeof allPosts) => 
       [...posts].sort((a, b) => scorePost(b) - scorePost(a));
 
-    // Take balanced amounts from each type (sorted by relevance)
-    // Ensure ALL reels are included first, then balance the rest
-    const allReels = sortByScore(reelLinkedPosts);
-    const remainingLimit = limit - allReels.length;
+    // INCLUDE ALL POSTS - no filtering, just sort by score
+    // This ensures every post appears in the feed for maximum engagement
+    const allSortedPosts = sortByScore(allPosts);
     
-    const balancedPosts = [
-      ...allReels, // Include ALL reels first (they're engaging content)
-      ...sortByScore(standardPosts).slice(0, Math.ceil(remainingLimit * 0.45)), // 45% standard posts
-      ...sortByScore(pollPosts).slice(0, Math.ceil(remainingLimit * 0.15)),    // 15% polls
-      ...sortByScore(aiChatPosts).slice(0, Math.ceil(remainingLimit * 0.1)),   // 10% AI chats
-      ...sortByScore(routeLinkedPosts).slice(0, Math.ceil(remainingLimit * 0.3)), // 30% route posts
-    ];
+    // Take up to limit posts, prioritizing variety
+    const balancedPosts = allSortedPosts.slice(0, limit);
 
     const postsWithAuthors = await Promise.all(
       balancedPosts.map(async (post) => {

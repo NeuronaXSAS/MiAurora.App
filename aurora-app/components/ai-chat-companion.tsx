@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { useAvatar } from '@/hooks/use-avatar';
 import { 
   Send, Sparkles, Heart, Mic, MicOff, Volume2, VolumeX,
-  MoreHorizontal, Smile, Trash2
+  MoreHorizontal, Smile, Trash2, X
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -27,6 +27,7 @@ interface Message {
 
 interface AIChatCompanionProps {
   onSendMessage?: (message: string) => Promise<string>;
+  onClose?: () => void;
   className?: string;
 }
 
@@ -81,7 +82,7 @@ function TypingIndicator() {
   );
 }
 
-export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionProps) {
+export function AIChatCompanion({ onSendMessage, onClose, className }: AIChatCompanionProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -268,6 +269,16 @@ export function AIChatCompanion({ onSendMessage, className }: AIChatCompanionPro
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="min-w-[44px] min-h-[44px] text-[var(--muted-foreground)] hover:text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          )}
         </div>
       </div>
 

@@ -136,10 +136,12 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
             {/* Avatar Preview */}
             <div className="flex flex-col items-center gap-3">
               <div 
-                className="w-40 h-40 rounded-2xl overflow-hidden shadow-lg"
+                className="w-40 h-40 rounded-2xl overflow-hidden shadow-lg flex items-center justify-center"
                 style={{ backgroundColor: `#${config.backgroundColor}` }}
               >
-                <AvatarPreview config={config} />
+                <div className="w-36 h-36">
+                  <AvatarPreview config={config} />
+                </div>
               </div>
               <Button
                 onClick={randomize}
