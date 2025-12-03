@@ -44,6 +44,7 @@ import { MeditationSection } from "@/components/health/meditation-section";
 import { generateAvatarUrl, AvatarConfig } from "@/hooks/use-avatar";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { AvatarCreator } from "@/components/avatar-creator";
+import { BadgesShowcase } from "@/components/badges-showcase";
 
 export default function ProfilePage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
@@ -578,34 +579,8 @@ export default function ProfilePage() {
 
           {/* Right Column - Badges & Recent Posts */}
           <div className="space-y-6">
-            {/* Badges */}
-            <Card className="bg-[var(--card)] border-[var(--border)]">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
-                  <Award className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
-                  Badges
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {badges.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    {badges.map((badge, index) => (
-                      <div
-                        key={index}
-                        className="bg-[var(--color-aurora-lavender)]/20 border border-[var(--color-aurora-lavender)]/30 rounded-xl p-3 text-center"
-                      >
-                        <div className="text-3xl mb-2">{badge.icon}</div>
-                        <p className="text-xs font-medium text-[var(--foreground)]">{badge.name}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-[var(--muted-foreground)] py-4">
-                    Earn badges by contributing!
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+            {/* Badges Showcase */}
+            {userId && <BadgesShowcase userId={userId} />}
 
             {/* Recent Posts */}
             <Card className="bg-[var(--card)] border-[var(--border)]">

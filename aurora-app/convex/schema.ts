@@ -1158,4 +1158,30 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_post", ["postId"])
     .index("by_user_and_post", ["userId", "postId"]),
+
+  // User Badges - Achievement system for empowerment
+  userBadges: defineTable({
+    userId: v.id("users"),
+    badgeId: v.string(), // References BADGE_DEFINITIONS in badges.ts
+    earnedAt: v.number(),
+    isNew: v.boolean(), // For showing celebration animation
+  })
+    .index("by_user", ["userId"])
+    .index("by_badge", ["badgeId"])
+    .index("by_user_and_badge", ["userId", "badgeId"]),
+
+  // AI Interaction Tracking - For dashboard analytics
+  aiInteractions: defineTable({
+    userId: v.id("users"),
+    type: v.union(
+      v.literal("text_chat"),
+      v.literal("voice_chat"),
+      v.literal("shared_chat")
+    ),
+    messageCount: v.optional(v.number()),
+    duration: v.optional(v.number()), // seconds for voice
+    sentiment: v.optional(v.string()), // positive, neutral, negative
+    topics: v.optional(v.array(v.string())), // detected topics
+  })
+    .index("by_user", ["userId"]),
 });

@@ -20,6 +20,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Id } from "@/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { ReelCommentsSheet } from "@/components/reels/reel-comments-sheet";
 
 interface ReelFeedCardProps {
   reel: {
@@ -49,6 +50,7 @@ export function ReelFeedCard({ reel, currentUserId, onDelete, isMobile = false }
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   
   const likeReelMutation = useMutation(api.reels.likeReel);
@@ -199,7 +201,12 @@ export function ReelFeedCard({ reel, currentUserId, onDelete, isMobile = false }
                 {reel.likes}
               </Button>
               
-              <Button variant="ghost" size="sm" className="min-h-[44px] px-3 hover:text-[var(--color-aurora-purple)]">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowComments(true)}
+                className="min-h-[44px] px-3 hover:text-[var(--color-aurora-purple)]"
+              >
                 <MessageCircle className="w-5 h-5 mr-1" />
                 {reel.comments}
               </Button>
@@ -212,6 +219,14 @@ export function ReelFeedCard({ reel, currentUserId, onDelete, isMobile = false }
           </div>
         </div>
       </CardContent>
+
+      {/* Comments Sheet */}
+      <ReelCommentsSheet
+        open={showComments}
+        onOpenChange={setShowComments}
+        reelId={reel._id}
+        currentUserId={currentUserId}
+      />
     </Card>
   );
 }

@@ -10,6 +10,7 @@ import { CycleTracker } from "@/components/health/cycle-tracker";
 import { HydrationTracker } from "@/components/health/hydration-tracker";
 import { EmotionalCheckin } from "@/components/health/emotional-checkin";
 import { MeditationSection } from "@/components/health/meditation-section";
+import { HealthStatsDashboard } from "@/components/health/health-stats-dashboard";
 import { Id } from "@/convex/_generated/dataModel";
 import { 
   Moon, 
@@ -208,114 +209,9 @@ export default function HealthPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab - Your Journey */}
+          {/* Overview Tab - Enhanced Stats Dashboard */}
           <TabsContent value="overview">
-            <div className="space-y-6">
-              {/* Monthly Progress */}
-              <Card className="bg-[var(--card)] border-[var(--border)]">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-[var(--foreground)] mb-4 flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-[var(--color-aurora-purple)]" />
-                    Your 30-Day Journey
-                  </h3>
-                  
-                  {/* Mood Trend Chart */}
-                  {moodHistory && moodHistory.length > 0 ? (
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-sm text-[var(--muted-foreground)] mb-2">Mood Trend</p>
-                        <div className="flex items-end gap-1 h-20">
-                          {moodHistory.slice(0, 30).reverse().map((log, idx) => {
-                            const height = (log.mood / 5) * 100;
-                            const moodColors = ['bg-red-400', 'bg-yellow-400', 'bg-green-400', 'bg-blue-400', 'bg-purple-400'];
-                            return (
-                              <div 
-                                key={idx} 
-                                className={`flex-1 ${moodColors[log.mood - 1]} rounded-t opacity-80 hover:opacity-100 transition-all cursor-pointer`}
-                                style={{ height: `${height}%` }}
-                                title={`${log.date}: ${['😢', '😐', '😊', '😄', '🤩'][log.mood - 1]}`}
-                              />
-                            );
-                          })}
-                        </div>
-                        <div className="flex justify-between text-xs text-[var(--muted-foreground)] mt-1">
-                          <span>30 days ago</span>
-                          <span>Today</span>
-                        </div>
-                      </div>
-
-                      {/* Insights */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-[var(--border)]">
-                        <div className="bg-[var(--accent)] rounded-xl p-4 text-center">
-                          <p className="text-2xl font-bold text-[var(--color-aurora-pink)]">
-                            {(moodHistory.reduce((sum, m) => sum + m.mood, 0) / moodHistory.length).toFixed(1)}
-                          </p>
-                          <p className="text-xs text-[var(--muted-foreground)]">Avg Mood</p>
-                        </div>
-                        <div className="bg-[var(--accent)] rounded-xl p-4 text-center">
-                          <p className="text-2xl font-bold text-[var(--color-aurora-mint)]">
-                            {moodHistory.filter(m => m.mood >= 4).length}
-                          </p>
-                          <p className="text-xs text-[var(--muted-foreground)]">Great Days</p>
-                        </div>
-                        <div className="bg-[var(--accent)] rounded-xl p-4 text-center">
-                          <p className="text-2xl font-bold text-[var(--color-aurora-purple)]">
-                            {moodHistory.filter(m => m.journal).length}
-                          </p>
-                          <p className="text-xs text-[var(--muted-foreground)]">Journal Entries</p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Heart className="w-12 h-12 text-[var(--color-aurora-pink)]/30 mx-auto mb-3" />
-                      <p className="text-[var(--muted-foreground)]">Start tracking your mood to see your journey!</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Quick Actions */}
-              <div className="grid grid-cols-2 gap-4">
-                <Card 
-                  className="bg-gradient-to-br from-[var(--color-aurora-pink)]/20 to-[var(--color-aurora-purple)]/20 border-[var(--color-aurora-pink)]/30 cursor-pointer hover:shadow-lg transition-all active:scale-[0.98]"
-                  onClick={() => setActiveTab("mood")}
-                >
-                  <CardContent className="p-4 text-center">
-                    <Heart className="w-8 h-8 text-[var(--color-aurora-pink)] mx-auto mb-2" />
-                    <p className="font-semibold text-[var(--foreground)]">Daily Check-in</p>
-                    <p className="text-xs text-[var(--muted-foreground)]">How are you feeling?</p>
-                  </CardContent>
-                </Card>
-
-                <Card 
-                  className="bg-gradient-to-br from-[var(--color-aurora-blue)]/20 to-[var(--color-aurora-mint)]/20 border-[var(--color-aurora-blue)]/30 cursor-pointer hover:shadow-lg transition-all active:scale-[0.98]"
-                  onClick={() => setActiveTab("hydration")}
-                >
-                  <CardContent className="p-4 text-center">
-                    <Droplets className="w-8 h-8 text-[var(--color-aurora-blue)] mx-auto mb-2" />
-                    <p className="font-semibold text-[var(--foreground)]">Log Water</p>
-                    <p className="text-xs text-[var(--muted-foreground)]">Stay hydrated!</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Motivational Message */}
-              <Card className="bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border-[var(--color-aurora-purple)]/20">
-                <CardContent className="p-6 text-center">
-                  <Sparkles className="w-8 h-8 text-[var(--color-aurora-purple)] mx-auto mb-3" />
-                  <p className="text-lg font-medium text-[var(--foreground)] mb-2">
-                    {wellnessScore >= 80 ? "You're doing amazing! Keep it up! 🌟" :
-                     wellnessScore >= 60 ? "Great progress! You're on the right track! 💪" :
-                     wellnessScore >= 40 ? "Every step counts. Keep going! 🌸" :
-                     "Start your wellness journey today! 💜"}
-                  </p>
-                  <p className="text-sm text-[var(--muted-foreground)]">
-                    Your consistency builds your strength. Aurora App is here for you every day.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+            <HealthStatsDashboard userId={userId} />
           </TabsContent>
 
           <TabsContent value="cycle">

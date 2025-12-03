@@ -102,12 +102,26 @@ const FeedItem = memo(function FeedItem({
   }
 
   if (item.type === "post" && item.reel) {
+    // Ensure reel has all required properties including _id
+    const reelData = {
+      _id: item.reel._id,
+      _creationTime: item.reel._creationTime || item._creationTime,
+      authorId: item.reel.authorId || item.authorId,
+      videoUrl: item.reel.videoUrl,
+      thumbnailUrl: item.reel.thumbnailUrl,
+      caption: item.reel.caption,
+      hashtags: item.reel.hashtags,
+      location: item.reel.location,
+      duration: item.reel.duration || 0,
+      views: item.reel.views || 0,
+      likes: item.reel.likes || 0,
+      shares: item.reel.shares || 0,
+      comments: item.reel.comments || 0,
+    };
+    
     return (
       <ReelFeedCard
-        reel={{
-          ...item.reel,
-          _creationTime: item._creationTime,
-        }}
+        reel={reelData}
         currentUserId={userId || undefined}
         onDelete={() => onDelete(item._id as Id<"posts">)}
         isMobile={true}

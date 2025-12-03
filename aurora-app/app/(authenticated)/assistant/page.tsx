@@ -9,10 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, Sparkles, Loader2, Share2, Mic, MessageSquare, Heart, Brain } from "lucide-react";
+import { Send, Sparkles, Loader2, Share2, Mic, MessageSquare, Heart, Brain, BarChart3 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { createAvatar } from "@dicebear/core";
 import { lorelei } from "@dicebear/collection";
+import { AIInteractionsDashboard } from "@/components/ai-interactions-dashboard";
 
 export default function AssistantPage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
@@ -141,7 +142,7 @@ export default function AssistantPage() {
                 className="data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white"
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
-                Text Chat
+                Chat
               </TabsTrigger>
               <TabsTrigger 
                 value="voice" 
@@ -150,6 +151,13 @@ export default function AssistantPage() {
                 <Mic className="w-4 h-4 mr-2" />
                 Voice
               </TabsTrigger>
+              <TabsTrigger 
+                value="stats" 
+                className="data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Stats
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -157,7 +165,11 @@ export default function AssistantPage() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6">
-        {activeTab === "voice" ? (
+        {activeTab === "stats" && userId ? (
+          <div className="max-w-4xl mx-auto">
+            <AIInteractionsDashboard userId={userId} />
+          </div>
+        ) : activeTab === "voice" ? (
           <div className="max-w-4xl mx-auto">
             <AIVoiceAssistant 
               userId={userId || undefined}
