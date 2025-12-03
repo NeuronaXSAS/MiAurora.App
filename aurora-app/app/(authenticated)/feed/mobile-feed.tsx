@@ -102,7 +102,7 @@ const FeedItem = memo(function FeedItem({
   }
 
   if (item.type === "post" && item.reel) {
-    // Ensure reel has all required properties including _id
+    // Ensure reel has all required properties including _id and author
     const reelData = {
       _id: item.reel._id,
       _creationTime: item.reel._creationTime || item._creationTime,
@@ -117,6 +117,8 @@ const FeedItem = memo(function FeedItem({
       likes: item.reel.likes || 0,
       shares: item.reel.shares || 0,
       comments: item.reel.comments || 0,
+      // Include author info for profile linking
+      author: item.reel.author || item.author || null,
     };
     
     return (

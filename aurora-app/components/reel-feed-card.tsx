@@ -21,6 +21,8 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ReelCommentsSheet } from "@/components/reels/reel-comments-sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
 
 interface ReelFeedCardProps {
   reel: {
@@ -40,6 +42,12 @@ interface ReelFeedCardProps {
     likes: number;
     shares: number;
     comments: number;
+    // Author info
+    author?: {
+      _id: Id<"users">;
+      name: string;
+      profileImage?: string;
+    } | null;
   };
   currentUserId?: Id<"users">;
   onDelete?: () => void;
@@ -159,6 +167,37 @@ export function ReelFeedCard({ reel, currentUserId, onDelete, isMobile = false }
         
         {/* Content */}
         <div className="p-4 space-y-3">
+          {/* Author Info */}
+          {reel.author && (
+            <Link 
+              href={`/profile/${reel.author._id}`}
+              className="flex items-center gap-3 group"
+            >
+              <Avatar className="w-10 h-10 border-2 border-[var(--color-aurora-pink)]/30 group-hover:border-[var(--color-aurora-pink)] transition-colors">
+                <AvatarImage src={reel.author.profileImage} />
+                <AvatarFallback className="bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white text-sm">
+                  {reel.author.name?.charAt(0).toUpperCase() || "A"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-[var(--foreground)] group-hover:text-[var(--color-aurora-purple)] transition-colors truncate">
+                  {reel.author.name}
+                </p>
+                <p className="text-xs text-[var(--muted-foreground)]">
+                  {formatDistanceToNow(reel._creationTime, { addSuffix: true })}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="min-h-[36px] px-4 border-[var(--color-aurora-pink)]/50 text-[var(--color-aurora-pink)] hover:bg-[var(--color-aurora-pink)]/10"
+                onClick={(e) => e.preventDefault()}
+              >
+                Follow
+              </Button>
+            </Link>
+          )}
+
           {reel.caption && (
             <p className="text-[var(--foreground)] leading-relaxed">{reel.caption}</p>
           )}

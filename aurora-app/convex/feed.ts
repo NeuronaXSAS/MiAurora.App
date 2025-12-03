@@ -111,12 +111,16 @@ export const getUnifiedFeed = query({
       [...posts].sort((a, b) => scorePost(b) - scorePost(a));
 
     // Take balanced amounts from each type (sorted by relevance)
+    // Ensure ALL reels are included first, then balance the rest
+    const allReels = sortByScore(reelLinkedPosts);
+    const remainingLimit = limit - allReels.length;
+    
     const balancedPosts = [
-      ...sortByScore(standardPosts).slice(0, Math.ceil(limit * 0.4)), // 40% standard posts
-      ...sortByScore(pollPosts).slice(0, Math.ceil(limit * 0.15)),    // 15% polls
-      ...sortByScore(aiChatPosts).slice(0, Math.ceil(limit * 0.1)),   // 10% AI chats
-      ...sortByScore(routeLinkedPosts).slice(0, Math.ceil(limit * 0.2)), // 20% route posts
-      ...sortByScore(reelLinkedPosts).slice(0, Math.ceil(limit * 0.15)), // 15% reels
+      ...allReels, // Include ALL reels first (they're engaging content)
+      ...sortByScore(standardPosts).slice(0, Math.ceil(remainingLimit * 0.45)), // 45% standard posts
+      ...sortByScore(pollPosts).slice(0, Math.ceil(remainingLimit * 0.15)),    // 15% polls
+      ...sortByScore(aiChatPosts).slice(0, Math.ceil(remainingLimit * 0.1)),   // 10% AI chats
+      ...sortByScore(routeLinkedPosts).slice(0, Math.ceil(remainingLimit * 0.3)), // 30% route posts
     ];
 
     const postsWithAuthors = await Promise.all(
@@ -149,8 +153,11 @@ export const getUnifiedFeed = query({
         if (post.reelId) {
           const reel = await ctx.db.get(post.reelId);
           if (reel) {
+            // Get reel author info
+            const reelAuthor = await ctx.db.get(reel.authorId);
             reelData = {
               _id: reel._id,
+              _creationTime: reel._creationTime,
               authorId: reel.authorId,
               videoUrl: reel.videoUrl,
               thumbnailUrl: reel.thumbnailUrl,
@@ -162,6 +169,12 @@ export const getUnifiedFeed = query({
               likes: reel.likes,
               shares: reel.shares,
               comments: reel.comments,
+              // Include author info for display
+              author: reelAuthor ? {
+                _id: reelAuthor._id,
+                name: reelAuthor.name,
+                profileImage: reelAuthor.profileImage,
+              } : null,
             };
           }
         }
