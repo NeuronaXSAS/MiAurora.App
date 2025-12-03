@@ -200,8 +200,17 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
 
       console.log('Livestream created:', result.channelName);
 
-      // Initialize Agora
-      await initialize({
+      // Stop preview stream FIRST before initializing Agora
+      // This releases the camera so Agora can use it
+      stopCameraPreview();
+      
+      // Small delay to ensure camera is released
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      console.log('Initializing Agora...');
+
+      // Initialize Agora - this returns the provider
+      const agoraProvider = await initialize({
         channelName: result.channelName,
         userId: userId,
         role: 'host',
@@ -211,22 +220,30 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
         },
       });
 
-      console.log('Agora initialized, stopping preview...');
+      console.log('Agora initialized, provider ready:', !!agoraProvider);
 
-      // Stop preview stream before starting Agora broadcast
-      stopCameraPreview();
+      // Wait a bit for provider to be fully ready
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       console.log('Starting Agora broadcast...');
 
-      // Start Agora broadcast
-      await startBroadcast({
-        video: true,
-        audio: true,
-      });
+      // Start Agora broadcast - use the returned provider directly
+      if (agoraProvider) {
+        await agoraProvider.startBroadcast({
+          video: true,
+          audio: true,
+        });
+      } else {
+        // Fallback to hook's startBroadcast
+        await startBroadcast({
+          video: true,
+          audio: true,
+        });
+      }
 
       console.log('Broadcast started successfully!');
       
-      // Move to live stage first so the video container is mounted
+      // Move to live stage so the video container is mounted
       setStage('live');
       setIsStartingBroadcast(false);
     } catch (error) {
@@ -249,9 +266,9 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
       setIsStartingBroadcast(false);
       
       // Show specific error message
-      if (errorMsg.includes('not configured')) {
+      if (errorMsg.includes('not configured') || errorMsg.includes('App ID')) {
         alert('Livestreaming service is not configured. Please contact support.');
-      } else if (errorMsg.includes('permission')) {
+      } else if (errorMsg.includes('permission') || errorMsg.includes('NotAllowedError')) {
         alert('Camera/microphone permission denied. Please enable permissions and try again.');
       } else {
         alert(`Failed to start livestream: ${errorMsg}`);

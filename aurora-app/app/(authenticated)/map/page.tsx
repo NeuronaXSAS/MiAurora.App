@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { SafetyMap } from "@/components/safety-map";
+import { LazyMap } from "@/components/lazy-map";
 import { PostCreateDialog } from "@/components/post-create-dialog";
 import {
   Select,
@@ -49,8 +49,8 @@ export default function MapPage() {
 
   return (
     <div className="h-[calc(100dvh-60px)] w-full relative overflow-hidden bg-[var(--background)]">
-      {/* Full-screen Map */}
-      <SafetyMap 
+      {/* Full-screen Map - Lazy loaded for performance */}
+      <LazyMap 
         lifeDimension={lifeDimension}
         onLocationSelect={handleLocationSelect}
       />

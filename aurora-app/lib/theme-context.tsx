@@ -13,16 +13,35 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+// Default theme is LIGHT - Aurora App is feminine and warm
+const DEFAULT_THEME: Theme = 'light';
 
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setThemeState] = useState<Theme>(DEFAULT_THEME);
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Apply theme immediately on mount to prevent flash
   useEffect(() => {
-    // Load saved theme from localStorage
+    // Load saved theme from localStorage, default to light
     const savedTheme = localStorage.getItem('aurora-theme') as Theme | null;
-    if (savedTheme) {
-      setThemeState(savedTheme);
+    const themeToApply = savedTheme || DEFAULT_THEME;
+    
+    // Apply immediately
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    
+    let resolved: 'light' | 'dark' = 'light';
+    if (themeToApply === 'system') {
+      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    } else {
+      resolved = themeToApply;
     }
+    
+    root.classList.add(resolved);
+    setThemeState(themeToApply);
+    setResolvedTheme(resolved);
+    setIsHydrated(true);
   }, []);
 
   useEffect(() => {
