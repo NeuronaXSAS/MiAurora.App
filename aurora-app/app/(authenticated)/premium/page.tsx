@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,17 +18,72 @@ import {
   Coins,
   ArrowRight,
   Loader2,
-  Star
+  Star,
+  Globe
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SUBSCRIPTION_TIERS, CREDIT_PACKAGES } from "@/convex/premiumConfig";
+import { SAFETY_PROMISE, getSafetyFeaturesList } from "@/lib/safety-access";
 import type { Id } from "@/convex/_generated/dataModel";
+
+// Regional pricing type
+interface RegionalPricing {
+  country: string;
+  multiplier: number;
+  subscriptions: {
+    plus: { monthly: number; annual: number };
+    pro: { monthly: number; annual: number };
+    elite: { monthly: number; annual: number };
+  };
+  credits: {
+    small: { credits: number; price: number };
+    medium: { credits: number; price: number };
+    large: { credits: number; price: number };
+    xl: { credits: number; price: number };
+  };
+  paymentMethods: string[];
+}
 
 export default function PremiumPage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [userCountry, setUserCountry] = useState<string>("US");
+  const [regionalPricing, setRegionalPricing] = useState<RegionalPricing | null>(null);
+
+  // Detect user country and fetch regional pricing
+  useEffect(() => {
+    const detectCountry = async () => {
+      try {
+        // Try to get country from timezone or use default
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const countryMap: Record<string, string> = {
+          'America/New_York': 'US', 'America/Los_Angeles': 'US', 'America/Chicago': 'US',
+          'Europe/London': 'GB', 'Europe/Paris': 'EU', 'Europe/Berlin': 'DE',
+          'Asia/Kolkata': 'IN', 'Asia/Mumbai': 'IN',
+          'America/Sao_Paulo': 'BR', 'America/Mexico_City': 'MX',
+          'Australia/Sydney': 'AU', 'Asia/Tokyo': 'JP',
+          'Africa/Lagos': 'NG', 'Africa/Nairobi': 'KE', 'Africa/Johannesburg': 'ZA',
+        };
+        const detected = countryMap[timezone] || 'US';
+        setUserCountry(detected);
+        
+        // Fetch regional pricing
+        const response = await fetch(`/api/stripe/checkout?country=${detected}`);
+        if (response.ok) {
+          const pricing = await response.json();
+          setRegionalPricing(pricing);
+        }
+      } catch {
+        // Fallback to US pricing
+        setUserCountry('US');
+      }
+    };
+    
+    detectCountry();
+  }, []);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("aurora_user_id");
@@ -45,46 +100,101 @@ export default function PremiumPage() {
     userId ? { userId } : "skip"
   );
 
-  const createSubscription = useMutation(api.subscriptions.createSubscription);
-  const purchaseCredits = useMutation(api.credits.purchaseCredits);
+  // Memoized tier data with regional pricing
+  const tiersWithPricing = useMemo(() => {
+    return SUBSCRIPTION_TIERS.filter(t => t.tierId !== "free").map(tier => {
+      const regionalTier = regionalPricing?.subscriptions[tier.tierId as keyof typeof regionalPricing.subscriptions];
+      return {
+        ...tier,
+        displayPrice: {
+          monthly: regionalTier?.monthly ?? tier.monthlyPrice,
+          annual: regionalTier?.annual ?? tier.annualPrice,
+        },
+      };
+    });
+  }, [regionalPricing]);
 
-  const handleSubscribe = async (tierId: string) => {
-    if (!userId) return;
+  // Memoized credit packages with regional pricing
+  const creditsWithPricing = useMemo(() => {
+    return CREDIT_PACKAGES.map(pkg => {
+      const regionalPkg = regionalPricing?.credits[pkg.packageId as keyof typeof regionalPricing.credits];
+      return {
+        ...pkg,
+        displayPrice: regionalPkg?.price ?? pkg.priceUSD,
+      };
+    });
+  }, [regionalPricing]);
+
+  const handleSubscribe = useCallback(async (tierId: string) => {
+    if (!userId || !user) return;
     setIsProcessing(true);
     setSelectedTier(tierId);
     
     try {
-      // In production, this would redirect to Stripe Checkout
-      // For now, we'll create the subscription directly
-      await createSubscription({
-        userId,
-        tier: tierId,
-        billingCycle,
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          email: user.email,
+          type: 'subscription',
+          tier: tierId,
+          billingCycle,
+          country: userCountry,
+        }),
       });
-      // Show success message or redirect
+      
+      const data = await response.json();
+      
+      if (data.url) {
+        window.location.href = data.url;
+      } else if (data.error) {
+        console.error("Checkout error:", data.message || data.error);
+        alert(data.message || "Unable to process subscription. Please try again.");
+      }
     } catch (error) {
       console.error("Subscription failed:", error);
+      alert("Something went wrong. Please try again.");
     } finally {
       setIsProcessing(false);
       setSelectedTier(null);
     }
-  };
+  }, [userId, user, billingCycle, userCountry]);
 
-  const handlePurchaseCredits = async (packageId: string) => {
-    if (!userId) return;
+  const handlePurchaseCredits = useCallback(async (packageId: string) => {
+    if (!userId || !user) return;
     setIsProcessing(true);
+    setSelectedPackage(packageId);
     
     try {
-      await purchaseCredits({
-        userId,
-        packageId,
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          email: user.email,
+          type: 'credits',
+          packageId,
+          country: userCountry,
+        }),
       });
+      
+      const data = await response.json();
+      
+      if (data.url) {
+        window.location.href = data.url;
+      } else if (data.error) {
+        console.error("Checkout error:", data.message || data.error);
+        alert(data.message || "Unable to process purchase. Please try again.");
+      }
     } catch (error) {
       console.error("Purchase failed:", error);
+      alert("Something went wrong. Please try again.");
     } finally {
       setIsProcessing(false);
+      setSelectedPackage(null);
     }
-  };
+  }, [userId, user, userCountry]);
 
   if (userLoading) {
     return (
@@ -169,12 +279,25 @@ export default function PremiumPage() {
           </div>
         </div>
 
+        {/* Regional Pricing Indicator */}
+        {regionalPricing && regionalPricing.multiplier < 1 && (
+          <div className="flex items-center justify-center gap-2 mb-6 p-3 rounded-xl bg-[var(--color-aurora-mint)]/20">
+            <Globe className="w-4 h-4 text-[var(--color-aurora-violet)]" />
+            <span className="text-sm text-[var(--foreground)]">
+              Regional pricing applied for your location
+            </span>
+            <Badge className="bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] text-xs">
+              Save {Math.round((1 - regionalPricing.multiplier) * 100)}%
+            </Badge>
+          </div>
+        )}
+
         {/* Subscription Tiers */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {SUBSCRIPTION_TIERS.filter(t => t.tierId !== "free").map((tier) => {
+          {tiersWithPricing.map((tier) => {
             const isCurrentTier = currentTier === tier.tierId;
-            const price = billingCycle === "annual" ? tier.annualPrice : tier.monthlyPrice;
-            const monthlyEquivalent = billingCycle === "annual" ? tier.annualPrice / 12 : tier.monthlyPrice;
+            const price = billingCycle === "annual" ? tier.displayPrice.annual : tier.displayPrice.monthly;
+            const monthlyEquivalent = billingCycle === "annual" ? tier.displayPrice.annual / 12 : tier.displayPrice.monthly;
             const isPopular = tier.tierId === "pro";
 
             return (
@@ -293,7 +416,7 @@ export default function PremiumPage() {
           </p>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {CREDIT_PACKAGES.map((pkg) => (
+            {creditsWithPricing.map((pkg) => (
               <Card key={pkg.packageId} className="text-center hover:shadow-lg transition-shadow">
                 <CardContent className="p-4">
                   <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--color-aurora-yellow)]/20 flex items-center justify-center">
@@ -308,16 +431,20 @@ export default function PremiumPage() {
                     </Badge>
                   )}
                   <p className="text-lg font-semibold text-[var(--color-aurora-purple)]">
-                    ${pkg.priceUSD}
+                    ${pkg.displayPrice.toFixed(2)}
                   </p>
                   <Button
                     onClick={() => handlePurchaseCredits(pkg.packageId)}
-                    disabled={isProcessing}
+                    disabled={isProcessing || selectedPackage === pkg.packageId}
                     variant="outline"
                     size="sm"
-                    className="w-full mt-3"
+                    className="w-full mt-3 min-h-[44px]"
                   >
-                    Buy
+                    {isProcessing && selectedPackage === pkg.packageId ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Buy"
+                    )}
                   </Button>
                 </CardContent>
               </Card>

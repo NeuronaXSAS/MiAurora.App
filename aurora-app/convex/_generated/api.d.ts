@@ -46,6 +46,7 @@ import type * as reels from "../reels.js";
 import type * as resources from "../resources.js";
 import type * as rooms from "../rooms.js";
 import type * as routes from "../routes.js";
+import type * as safetyAccess from "../safetyAccess.js";
 import type * as safetyCheckins from "../safetyCheckins.js";
 import type * as savedPosts from "../savedPosts.js";
 import type * as scheduled_aggregateIntelligence from "../scheduled/aggregateIntelligence.js";
@@ -102,6 +103,7 @@ declare const fullApi: ApiFromModules<{
   resources: typeof resources;
   rooms: typeof rooms;
   routes: typeof routes;
+  safetyAccess: typeof safetyAccess;
   safetyCheckins: typeof safetyCheckins;
   savedPosts: typeof savedPosts;
   "scheduled/aggregateIntelligence": typeof scheduled_aggregateIntelligence;
