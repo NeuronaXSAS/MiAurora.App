@@ -9,6 +9,7 @@ import { ReelFeedCard } from "@/components/reel-feed-card";
 import { PollCard } from "@/components/poll-card";
 import { AIChatCard } from "@/components/ai-chat-card";
 import { OpportunityFeedCard } from "@/components/opportunity-feed-card";
+import { LivestreamFeedCard } from "@/components/livestream-feed-card";
 import { PostCardSkeleton } from "@/components/loading-skeleton";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { FeedAd } from "@/components/ads/feed-ad";
@@ -31,7 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 type SortOption = "best" | "hot" | "new" | "top";
-type ContentFilter = "all" | "posts" | "routes" | "polls" | "reels" | "opportunities";
+type ContentFilter = "all" | "posts" | "routes" | "polls" | "reels" | "opportunities" | "livestreams";
 
 // Memoized feed item component for better performance
 const FeedItem = memo(function FeedItem({ 
@@ -135,6 +136,15 @@ const FeedItem = memo(function FeedItem({
     return (
       <OpportunityFeedCard
         opportunity={item as any}
+        currentUserId={userId || undefined}
+      />
+    );
+  }
+
+  if (item.type === "livestream") {
+    return (
+      <LivestreamFeedCard
+        livestream={item as any}
         currentUserId={userId || undefined}
       />
     );
@@ -265,6 +275,7 @@ export function MobileFeed() {
     { value: "routes", label: "Routes" },
     { value: "polls", label: "Polls" },
     { value: "reels", label: "Reels" },
+    { value: "livestreams", label: "Live" },
     { value: "opportunities", label: "Jobs" },
   ];
 
@@ -292,6 +303,9 @@ export function MobileFeed() {
     }
     if (contentFilter === "opportunities") {
       return item.type === "opportunity";
+    }
+    if (contentFilter === "livestreams") {
+      return item.type === "livestream";
     }
     return true;
   }), [sortedItems, contentFilter]);

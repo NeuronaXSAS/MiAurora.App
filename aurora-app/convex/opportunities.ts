@@ -357,3 +357,291 @@ export const getByCreator = query({
     return opportunities;
   },
 });
+
+
+// ============================================
+// CREDIT-BASED INTERACTIONS
+// ============================================
+
+const COMMENT_CREDIT_COST = 2;
+const LIKE_CREDIT_COST = 1;
+
+/**
+ * Comment on an opportunity (costs 2 credits)
+ */
+export const commentOnOpportunity = mutation({
+  args: {
+    userId: v.id("users"),
+    opportunityId: v.id("opportunities"),
+    content: v.string(),
+    parentId: v.optional(v.id("opportunityComments")),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error("User not found");
+
+    const opportunity = await ctx.db.get(args.opportunityId);
+    if (!opportunity || !opportunity.isActive) {
+      throw new Error("Opportunity not found or inactive");
+    }
+
+    // Validate content
+    if (!args.content || args.content.trim().length === 0) {
+      throw new Error("Comment cannot be empty");
+    }
+    if (args.content.length > 500) {
+      throw new Error("Comment must be 500 characters or less");
+    }
+
+    // Check credits
+    if (user.credits < COMMENT_CREDIT_COST) {
+      throw new Error(`Insufficient credits. Need ${COMMENT_CREDIT_COST} credits to comment.`);
+    }
+
+    // Deduct credits
+    await ctx.db.patch(args.userId, {
+      credits: user.credits - COMMENT_CREDIT_COST,
+    });
+
+    // Create comment
+    const commentId = await ctx.db.insert("opportunityComments", {
+      opportunityId: args.opportunityId,
+      authorId: args.userId,
+      content: args.content.trim(),
+      parentId: args.parentId,
+      likes: 0,
+      isDeleted: false,
+    });
+
+    // Log transaction
+    await ctx.db.insert("transactions", {
+      userId: args.userId,
+      amount: -COMMENT_CREDIT_COST,
+      type: "opportunity_comment",
+      relatedId: args.opportunityId,
+    });
+
+    return { success: true, commentId, newCredits: user.credits - COMMENT_CREDIT_COST };
+  },
+});
+
+/**
+ * Like an opportunity (costs 1 credit, refundable on unlike)
+ */
+export const likeOpportunity = mutation({
+  args: {
+    userId: v.id("users"),
+    opportunityId: v.id("opportunities"),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error("User not found");
+
+    const opportunity = await ctx.db.get(args.opportunityId);
+    if (!opportunity || !opportunity.isActive) {
+      throw new Error("Opportunity not found or inactive");
+    }
+
+    // Check if already liked
+    const existingLike = await ctx.db
+      .query("opportunityLikes")
+      .withIndex("by_user_and_opportunity", (q) =>
+        q.eq("userId", args.userId).eq("opportunityId", args.opportunityId)
+      )
+      .first();
+
+    if (existingLike) {
+      throw new Error("You have already liked this opportunity");
+    }
+
+    // Check credits
+    if (user.credits < LIKE_CREDIT_COST) {
+      throw new Error(`Insufficient credits. Need ${LIKE_CREDIT_COST} credit to like.`);
+    }
+
+    // Deduct credits
+    await ctx.db.patch(args.userId, {
+      credits: user.credits - LIKE_CREDIT_COST,
+    });
+
+    // Create like
+    await ctx.db.insert("opportunityLikes", {
+      opportunityId: args.opportunityId,
+      userId: args.userId,
+    });
+
+    // Log transaction
+    await ctx.db.insert("transactions", {
+      userId: args.userId,
+      amount: -LIKE_CREDIT_COST,
+      type: "opportunity_like",
+      relatedId: args.opportunityId,
+    });
+
+    return { success: true, newCredits: user.credits - LIKE_CREDIT_COST };
+  },
+});
+
+/**
+ * Unlike an opportunity (refunds 1 credit)
+ */
+export const unlikeOpportunity = mutation({
+  args: {
+    userId: v.id("users"),
+    opportunityId: v.id("opportunities"),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error("User not found");
+
+    // Find existing like
+    const existingLike = await ctx.db
+      .query("opportunityLikes")
+      .withIndex("by_user_and_opportunity", (q) =>
+        q.eq("userId", args.userId).eq("opportunityId", args.opportunityId)
+      )
+      .first();
+
+    if (!existingLike) {
+      throw new Error("You haven't liked this opportunity");
+    }
+
+    // Delete like
+    await ctx.db.delete(existingLike._id);
+
+    // Refund credit
+    await ctx.db.patch(args.userId, {
+      credits: user.credits + LIKE_CREDIT_COST,
+    });
+
+    // Log refund transaction
+    await ctx.db.insert("transactions", {
+      userId: args.userId,
+      amount: LIKE_CREDIT_COST,
+      type: "opportunity_unlike_refund",
+      relatedId: args.opportunityId,
+    });
+
+    return { success: true, newCredits: user.credits + LIKE_CREDIT_COST };
+  },
+});
+
+/**
+ * Get comments for an opportunity
+ */
+export const getOpportunityComments = query({
+  args: {
+    opportunityId: v.id("opportunities"),
+  },
+  handler: async (ctx, args) => {
+    const comments = await ctx.db
+      .query("opportunityComments")
+      .withIndex("by_opportunity", (q) => q.eq("opportunityId", args.opportunityId))
+      .filter((q) => q.eq(q.field("isDeleted"), false))
+      .order("desc")
+      .collect();
+
+    // Get author info for each comment
+    const commentsWithAuthors = await Promise.all(
+      comments.map(async (comment) => {
+        const author = await ctx.db.get(comment.authorId);
+        return {
+          ...comment,
+          author: author ? {
+            _id: author._id,
+            name: author.name,
+            profileImage: author.profileImage,
+          } : null,
+        };
+      })
+    );
+
+    return commentsWithAuthors;
+  },
+});
+
+/**
+ * Get like count and user's like status for an opportunity
+ */
+export const getOpportunityLikeStatus = query({
+  args: {
+    opportunityId: v.id("opportunities"),
+    userId: v.optional(v.id("users")),
+  },
+  handler: async (ctx, args) => {
+    const likes = await ctx.db
+      .query("opportunityLikes")
+      .withIndex("by_opportunity", (q) => q.eq("opportunityId", args.opportunityId))
+      .collect();
+
+    let hasLiked = false;
+    if (args.userId) {
+      hasLiked = likes.some((like) => like.userId === args.userId);
+    }
+
+    return {
+      likeCount: likes.length,
+      hasLiked,
+    };
+  },
+});
+
+/**
+ * Like a comment on an opportunity
+ */
+export const likeOpportunityComment = mutation({
+  args: {
+    userId: v.id("users"),
+    commentId: v.id("opportunityComments"),
+  },
+  handler: async (ctx, args) => {
+    const comment = await ctx.db.get(args.commentId);
+    if (!comment || comment.isDeleted) {
+      throw new Error("Comment not found");
+    }
+
+    // Check if already liked
+    const existingLike = await ctx.db
+      .query("opportunityCommentLikes")
+      .withIndex("by_user_and_comment", (q) =>
+        q.eq("userId", args.userId).eq("commentId", args.commentId)
+      )
+      .first();
+
+    if (existingLike) {
+      // Unlike - remove like
+      await ctx.db.delete(existingLike._id);
+      await ctx.db.patch(args.commentId, { likes: Math.max(0, comment.likes - 1) });
+      return { success: true, liked: false, newLikeCount: Math.max(0, comment.likes - 1) };
+    } else {
+      // Like - add like
+      await ctx.db.insert("opportunityCommentLikes", {
+        commentId: args.commentId,
+        userId: args.userId,
+      });
+      await ctx.db.patch(args.commentId, { likes: comment.likes + 1 });
+      return { success: true, liked: true, newLikeCount: comment.likes + 1 };
+    }
+  },
+});
+
+/**
+ * Delete a comment (soft delete, only by author)
+ */
+export const deleteOpportunityComment = mutation({
+  args: {
+    userId: v.id("users"),
+    commentId: v.id("opportunityComments"),
+  },
+  handler: async (ctx, args) => {
+    const comment = await ctx.db.get(args.commentId);
+    if (!comment) throw new Error("Comment not found");
+
+    if (comment.authorId !== args.userId) {
+      throw new Error("Unauthorized: You can only delete your own comments");
+    }
+
+    await ctx.db.patch(args.commentId, { isDeleted: true });
+    return { success: true };
+  },
+});

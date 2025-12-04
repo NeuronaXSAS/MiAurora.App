@@ -202,6 +202,39 @@ export const getUnifiedFeed = query({
       })
     );
 
+    // Fetch active livestreams to show in feed
+    const activeLivestreams = await ctx.db
+      .query("livestreams")
+      .filter((q) => q.and(
+        q.eq(q.field("status"), "live"),
+        q.neq(q.field("isPrivate"), true)
+      ))
+      .order("desc")
+      .take(Math.ceil(limit * 0.2));
+
+    const livestreamsWithHosts = await Promise.all(
+      activeLivestreams.map(async (stream) => {
+        const host = await ctx.db.get(stream.hostId);
+        return {
+          _id: stream._id,
+          _creationTime: stream._creationTime,
+          type: "livestream" as const,
+          timestamp: stream._creationTime,
+          title: stream.title,
+          description: stream.description,
+          viewerCount: stream.viewerCount,
+          isEmergency: stream.isEmergency,
+          location: stream.location,
+          host: host ? {
+            _id: host._id,
+            name: host.name,
+            profileImage: host.profileImage,
+          } : null,
+          channelName: stream.channelName,
+        };
+      })
+    );
+
     // Fetch recent active opportunities with creator data
     const allOpportunities = await ctx.db
       .query("opportunities")
@@ -299,12 +332,13 @@ export const getUnifiedFeed = query({
       })
     );
 
-    // Combine all items - include reels directly
+    // Combine all items - include reels and livestreams directly
     const allItems = [
       ...postsWithAuthors,
       ...reelsWithAuthors,
       ...routesWithCreators,
       ...opportunitiesWithCreators,
+      ...livestreamsWithHosts,
     ];
 
     // Smart shuffle: Sort by timestamp but interleave content types

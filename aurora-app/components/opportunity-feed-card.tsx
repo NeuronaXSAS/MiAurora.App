@@ -1,6 +1,7 @@
 "use client";
 
-import { useMutation } from "convex/react";
+import { useState } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Briefcase, GraduationCap, FileText, Calendar, DollarSign, MapPin, Sparkles, MoreVertical, Trash2 } from "lucide-react";
+import { Briefcase, GraduationCap, FileText, Calendar, DollarSign, MapPin, Sparkles, MoreVertical, Trash2, Heart, MessageCircle, Share2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { Id } from "@/convex/_generated/dataModel";
@@ -49,11 +50,68 @@ const categoryColors = {
 };
 
 export function OpportunityFeedCard({ opportunity, currentUserId, onDelete }: OpportunityFeedCardProps) {
+  const [isLiking, setIsLiking] = useState(false);
+  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [isCommenting, setIsCommenting] = useState(false);
+
   const Icon = categoryIcons[opportunity.category as keyof typeof categoryIcons] || Briefcase;
   const colorClass = categoryColors[opportunity.category as keyof typeof categoryColors] || "bg-gray-100 text-gray-800";
   const isCreator = currentUserId === opportunity.creatorId;
 
   const deleteOpportunity = useMutation(api.opportunities.deleteOpportunity);
+  const likeOpportunity = useMutation(api.opportunities.likeOpportunity);
+  const unlikeOpportunity = useMutation(api.opportunities.unlikeOpportunity);
+  const commentOnOpportunity = useMutation(api.opportunities.commentOnOpportunity);
+
+  // Get like status and comments
+  const likeStatus = useQuery(
+    api.opportunities.getOpportunityLikeStatus,
+    currentUserId ? { opportunityId: opportunity._id as Id<"opportunities">, userId: currentUserId } : "skip"
+  );
+  const comments = useQuery(api.opportunities.getOpportunityComments, {
+    opportunityId: opportunity._id as Id<"opportunities">,
+  });
+
+  const handleLike = async () => {
+    if (!currentUserId || isLiking) return;
+    setIsLiking(true);
+    try {
+      if (likeStatus?.hasLiked) {
+        await unlikeOpportunity({
+          userId: currentUserId,
+          opportunityId: opportunity._id as Id<"opportunities">,
+        });
+      } else {
+        await likeOpportunity({
+          userId: currentUserId,
+          opportunityId: opportunity._id as Id<"opportunities">,
+        });
+      }
+    } catch (error) {
+      alert((error as Error).message);
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleComment = async () => {
+    if (!currentUserId || !commentText.trim() || isCommenting) return;
+    setIsCommenting(true);
+    try {
+      await commentOnOpportunity({
+        userId: currentUserId,
+        opportunityId: opportunity._id as Id<"opportunities">,
+        content: commentText.trim(),
+      });
+      setCommentText("");
+      setShowCommentInput(false);
+    } catch (error) {
+      alert((error as Error).message);
+    } finally {
+      setIsCommenting(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!currentUserId || !isCreator) return;
@@ -141,18 +199,27 @@ export function OpportunityFeedCard({ opportunity, currentUserId, onDelete }: Op
             <Button
               variant="ghost"
               size="sm"
-              className="min-h-[40px] min-w-[40px] p-2 hover:bg-[var(--color-aurora-mint)]/20 hover:text-[var(--color-aurora-purple)] group"
+              className={`min-h-[40px] min-w-[40px] p-2 group ${
+                likeStatus?.hasLiked 
+                  ? "text-[var(--color-aurora-pink)]" 
+                  : "hover:bg-[var(--color-aurora-mint)]/20 hover:text-[var(--color-aurora-purple)]"
+              }`}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                // TODO: Implement opportunity like with credit cost
-                alert("Liking opportunities costs 1 credit. Feature coming soon!");
+                handleLike();
               }}
-              title="Like (1 credit)"
+              disabled={isLiking || !currentUserId}
+              title={likeStatus?.hasLiked ? "Unlike (refund 1 credit)" : "Like (1 credit)"}
             >
-              <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
+              {isLiking ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Heart className={`w-5 h-5 group-hover:scale-110 transition-transform ${likeStatus?.hasLiked ? "fill-current" : ""}`} />
+              )}
+              {(likeStatus?.likeCount ?? 0) > 0 && (
+                <span className="ml-1 text-xs">{likeStatus?.likeCount}</span>
+              )}
             </Button>
             
             {/* Comment - costs 2 credits */}
@@ -163,14 +230,14 @@ export function OpportunityFeedCard({ opportunity, currentUserId, onDelete }: Op
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                // TODO: Implement opportunity comments with credit cost
-                alert("Commenting on opportunities costs 2 credits. Feature coming soon!");
+                setShowCommentInput(!showCommentInput);
               }}
               title="Comment (2 credits)"
             >
-              <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
+              <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              {(comments?.length ?? 0) > 0 && (
+                <span className="ml-1 text-xs">{comments?.length}</span>
+              )}
             </Button>
             
             {/* Share - free */}
@@ -186,9 +253,7 @@ export function OpportunityFeedCard({ opportunity, currentUserId, onDelete }: Op
               }}
               title="Share (free)"
             >
-              <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
+              <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
             </Button>
           </div>
 
@@ -204,6 +269,54 @@ export function OpportunityFeedCard({ opportunity, currentUserId, onDelete }: Op
             </Link>
           </div>
         </div>
+
+        {/* Comment Input */}
+        {showCommentInput && currentUserId && (
+          <div className="pt-3 space-y-2">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Write a comment... (2 credits)"
+                className="flex-1 h-10 px-3 rounded-xl border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-aurora-purple)]"
+                maxLength={500}
+              />
+              <Button
+                size="sm"
+                onClick={handleComment}
+                disabled={!commentText.trim() || isCommenting}
+                className="bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-blue)]/90 text-white min-h-[40px]"
+              >
+                {isCommenting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
+              </Button>
+            </div>
+            <p className="text-xs text-[var(--muted-foreground)]">
+              Commenting costs 2 credits
+            </p>
+          </div>
+        )}
+
+        {/* Comments Preview */}
+        {comments && comments.length > 0 && (
+          <div className="pt-3 space-y-2">
+            {comments.slice(0, 2).map((comment) => (
+              <div key={comment._id} className="flex gap-2 text-sm">
+                <span className="font-medium text-[var(--foreground)]">
+                  {comment.author?.name || "Anonymous"}:
+                </span>
+                <span className="text-[var(--muted-foreground)] line-clamp-1">
+                  {comment.content}
+                </span>
+              </div>
+            ))}
+            {comments.length > 2 && (
+              <Link href="/opportunities" className="text-xs text-[var(--color-aurora-purple)] hover:underline">
+                View all {comments.length} comments
+              </Link>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

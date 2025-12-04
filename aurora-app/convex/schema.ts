@@ -1184,4 +1184,33 @@ export default defineSchema({
     topics: v.optional(v.array(v.string())), // detected topics
   })
     .index("by_user", ["userId"]),
+
+  // Opportunity Comments - Credit-based interactions (2 credits per comment)
+  opportunityComments: defineTable({
+    opportunityId: v.id("opportunities"),
+    authorId: v.id("users"),
+    content: v.string(), // Max 500 chars
+    parentId: v.optional(v.id("opportunityComments")), // For replies
+    likes: v.number(), // Default: 0
+    isDeleted: v.boolean(), // Soft delete
+  })
+    .index("by_opportunity", ["opportunityId"])
+    .index("by_author", ["authorId"])
+    .index("by_parent", ["parentId"]),
+
+  // Opportunity Likes - Credit-based (1 credit, refundable on unlike)
+  opportunityLikes: defineTable({
+    opportunityId: v.id("opportunities"),
+    userId: v.id("users"),
+  })
+    .index("by_opportunity", ["opportunityId"])
+    .index("by_user_and_opportunity", ["userId", "opportunityId"]),
+
+  // Opportunity Comment Likes
+  opportunityCommentLikes: defineTable({
+    commentId: v.id("opportunityComments"),
+    userId: v.id("users"),
+  })
+    .index("by_comment", ["commentId"])
+    .index("by_user_and_comment", ["userId", "commentId"]),
 });
