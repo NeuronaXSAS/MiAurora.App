@@ -188,15 +188,23 @@ export default function LandingPage() {
               <span className="text-lg font-bold text-[#3d0d73] hidden sm:block">Aurora App</span>
               <Badge className="hidden sm:flex bg-gradient-to-r from-[#5537a7]/10 to-[#f29de5]/10 text-[#5537a7] border-[#5537a7]/20 text-xs">v2.0</Badge>
             </div>
-            <div className="flex items-center gap-3">
-              <Link href="/api/auth/login" className="hidden sm:block">
-                <Button variant="ghost" className="text-[#3d0d73] hover:bg-[#5537a7]/10 rounded-xl font-medium">Sign In</Button>
+            <div className="flex items-center gap-2">
+              <Link href="/api/auth/login?provider=GoogleOAuth" className="hidden md:block">
+                <Button variant="outline" className="text-[#3d0d73] border-[#3d0d73]/20 hover:bg-[#5537a7]/5 rounded-xl font-medium min-h-[44px] px-4 flex items-center gap-2">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  Sign in
+                </Button>
               </Link>
-              <Link href="/api/auth/login">
-                <Button className="bg-gradient-to-r from-[#5537a7] to-[#3d0d73] hover:opacity-90 text-white rounded-xl px-5 min-h-[44px] font-semibold shadow-lg shadow-[#5537a7]/20 border border-[#5537a7]/50">
-                  <span className="hidden sm:inline">Get Started</span>
+              <Link href="/api/auth/login?provider=GoogleOAuth">
+                <Button className="bg-gradient-to-r from-[#2e2ad6] to-[#5537a7] hover:opacity-90 text-white rounded-xl px-5 min-h-[44px] font-semibold shadow-lg shadow-[#5537a7]/20">
+                  <span className="hidden sm:inline">Join Free</span>
                   <span className="sm:hidden">Join</span>
-                  <Sparkles className="w-4 h-4 ml-2" />
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
             </div>
@@ -259,28 +267,61 @@ export default function LandingPage() {
               ))}
             </motion.div>
 
-            {/* CTA Buttons */}
-            <motion.div className="flex flex-col sm:flex-row gap-4 justify-center mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-              <Link href="/api/auth/login">
-                <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-[#5537a7] to-[#3d0d73] hover:opacity-90 text-white rounded-2xl px-10 min-h-[60px] font-bold text-lg shadow-xl shadow-[#5537a7]/30 border border-[#5537a7]/50 transition-all hover:scale-[1.02] hover:shadow-2xl">
-                  Enter the Future
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-              <Link href="#how-it-works">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-[#5537a7]/30 text-[#5537a7] hover:bg-[#5537a7]/5 rounded-2xl px-8 min-h-[60px] font-semibold text-lg backdrop-blur-sm">
-                  <Play className="w-5 h-5 mr-2 fill-[#5537a7]" />
-                  See How It Works
-                </Button>
-              </Link>
+            {/* APPLE-STYLE SIGN IN - Super Clear SSO Buttons */}
+            <motion.div className="max-w-md mx-auto mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+              {/* Clear instruction */}
+              <p className="text-center text-[#3d0d73]/70 text-lg mb-4 font-medium">
+                Join instantly with your existing account
+              </p>
+              <p className="text-center text-[#3d0d73]/50 text-sm mb-6">
+                No password needed — just one click
+              </p>
+              
+              {/* SSO Buttons - Apple Style */}
+              <div className="space-y-3">
+                <Link href="/api/auth/login?provider=GoogleOAuth" className="block">
+                  <Button size="lg" className="w-full bg-white hover:bg-gray-50 text-[#3d0d73] rounded-2xl min-h-[60px] font-semibold text-lg shadow-lg border border-[#3d0d73]/10 transition-all hover:scale-[1.01] hover:shadow-xl flex items-center justify-center gap-3">
+                    <svg className="w-6 h-6" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Continue with Google
+                  </Button>
+                </Link>
+                
+                <Link href="/api/auth/login?provider=MicrosoftOAuth" className="block">
+                  <Button size="lg" className="w-full bg-white hover:bg-gray-50 text-[#3d0d73] rounded-2xl min-h-[60px] font-semibold text-lg shadow-lg border border-[#3d0d73]/10 transition-all hover:scale-[1.01] hover:shadow-xl flex items-center justify-center gap-3">
+                    <svg className="w-6 h-6" viewBox="0 0 24 24">
+                      <path fill="#F25022" d="M1 1h10v10H1z"/>
+                      <path fill="#00A4EF" d="M1 13h10v10H1z"/>
+                      <path fill="#7FBA00" d="M13 1h10v10H13z"/>
+                      <path fill="#FFB900" d="M13 13h10v10H13z"/>
+                    </svg>
+                    Continue with Microsoft
+                  </Button>
+                </Link>
+
+                <Link href="/api/auth/login" className="block">
+                  <Button size="lg" variant="outline" className="w-full border-2 border-[#3d0d73]/20 text-[#3d0d73] hover:bg-[#3d0d73]/5 rounded-2xl min-h-[56px] font-medium text-base transition-all">
+                    More sign in options
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Trust message */}
+              <p className="text-center text-[#3d0d73]/40 text-xs mt-4">
+                🔒 We never post without your permission
+              </p>
             </motion.div>
 
             {/* Trust Indicators */}
             <motion.div className="flex flex-wrap justify-center gap-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
               {[
                 { icon: CheckCircle, text: "Free Safety Features" },
-                { icon: Lock, text: "End-to-End Encrypted" },
-                { icon: Zap, text: "No Credit Card" }
+                { icon: Lock, text: "No Password Needed" },
+                { icon: Zap, text: "Join in 10 Seconds" }
               ].map((item) => (
                 <span key={item.text} className="flex items-center gap-2 text-[#3d0d73]/60 text-sm">
                   <item.icon className="w-4 h-4 text-[#22c55e]" />
@@ -582,19 +623,39 @@ export default function LandingPage() {
               </div>
             </motion.div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <Link href="/api/auth/login">
-                <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-[#2e2ad6] to-[#5537a7] hover:opacity-90 text-white rounded-2xl px-12 min-h-[64px] font-bold text-lg shadow-2xl shadow-[#5537a7]/30 border border-[#5537a7]/50 transition-all hover:scale-[1.02]">
-                  Join Aurora App
-                  <ArrowRight className="w-6 h-6 ml-2" />
+            {/* Apple-Style SSO Buttons */}
+            <div className="max-w-sm mx-auto space-y-3 mb-8">
+              <p className="text-center text-[#3d0d73]/60 text-sm mb-4">Join instantly — no password needed</p>
+              
+              <Link href="/api/auth/login?provider=GoogleOAuth" className="block">
+                <Button size="lg" className="w-full bg-white hover:bg-gray-50 text-[#3d0d73] rounded-2xl min-h-[56px] font-semibold shadow-lg border border-[#3d0d73]/10 transition-all hover:scale-[1.01] flex items-center justify-center gap-3">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  Continue with Google
+                </Button>
+              </Link>
+              
+              <Link href="/api/auth/login?provider=MicrosoftOAuth" className="block">
+                <Button size="lg" className="w-full bg-white hover:bg-gray-50 text-[#3d0d73] rounded-2xl min-h-[56px] font-semibold shadow-lg border border-[#3d0d73]/10 transition-all hover:scale-[1.01] flex items-center justify-center gap-3">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#F25022" d="M1 1h10v10H1z"/>
+                    <path fill="#00A4EF" d="M1 13h10v10H1z"/>
+                    <path fill="#7FBA00" d="M13 1h10v10H13z"/>
+                    <path fill="#FFB900" d="M13 13h10v10H13z"/>
+                  </svg>
+                  Continue with Microsoft
                 </Button>
               </Link>
             </div>
 
             <div className="flex flex-wrap justify-center gap-6 text-sm text-[#3d0d73]/50">
-              <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-[#22c55e]" />No credit card</span>
-              <span className="flex items-center gap-2"><Lock className="w-4 h-4 text-[#22c55e]" />End-to-end encrypted</span>
-              <span className="flex items-center gap-2"><Brain className="w-4 h-4 text-[#22c55e]" />Non-toxic AI</span>
+              <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-[#22c55e]" />No password needed</span>
+              <span className="flex items-center gap-2"><Lock className="w-4 h-4 text-[#22c55e]" />We never post for you</span>
+              <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-[#22c55e]" />Join in 10 seconds</span>
             </div>
           </motion.div>
         </div>
