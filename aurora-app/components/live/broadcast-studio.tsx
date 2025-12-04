@@ -78,8 +78,29 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
   const [selectedCamera, setSelectedCamera] = useState<string>("");
   const [selectedMicrophone, setSelectedMicrophone] = useState<string>("");
 
+  // Local preview stream (before going live)
+  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
+  
+  // State for broadcast status
+  const [broadcastError, setBroadcastError] = useState<string | null>(null);
+  const [isStartingBroadcast, setIsStartingBroadcast] = useState(false);
+  
+  // State for live camera selection
+  const [showCameraSelector, setShowCameraSelector] = useState(false);
+
   // Local ref for Agora video
   const localVideoRef = useRef<HTMLDivElement>(null);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Load devices when going live
+  useEffect(() => {
+    if (stage === 'live' && isStreaming) {
+      getDevices().then(({ cameras: cams, microphones: mics }) => {
+        setCameras(cams);
+        setMicrophones(mics);
+      });
+    }
+  }, [stage, isStreaming, getDevices]);
 
   // Duration timer
   useEffect(() => {
@@ -152,10 +173,6 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
     }
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-
-  // Local preview stream (before going live)
-  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
-  const previewVideoRef = useRef<HTMLVideoElement>(null);
 
   // Start camera preview without Agora
   const startCameraPreview = async (cameraId?: string) => {
@@ -268,10 +285,6 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
       }
     }
   };
-
-  // State for broadcast status
-  const [broadcastError, setBroadcastError] = useState<string | null>(null);
-  const [isStartingBroadcast, setIsStartingBroadcast] = useState(false);
 
   // Handle start broadcasting with Agora
   const handleStartBroadcast = async () => {
@@ -688,19 +701,6 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
       </div>
     );
   }
-
-  // State for live camera selection
-  const [showCameraSelector, setShowCameraSelector] = useState(false);
-
-  // Load devices when going live
-  useEffect(() => {
-    if (stage === 'live' && isStreaming) {
-      getDevices().then(({ cameras: cams, microphones: mics }) => {
-        setCameras(cams);
-        setMicrophones(mics);
-      });
-    }
-  }, [stage, isStreaming, getDevices]);
 
   // Handle camera change while live
   const handleLiveCameraChange = async (deviceId: string) => {
