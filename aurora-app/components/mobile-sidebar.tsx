@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Menu, X, Home, MapPin, Shield, Users, Heart, Briefcase, 
   MessageSquare, Settings, User, Route, Play, Video, Mail,
-  Sparkles
+  Sparkles, Wallet, TrendingUp, Star, DollarSign, Zap
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -22,45 +22,13 @@ interface MobileSidebarProps {
 
 const navigationItems = [
   {
-    id: "health",
-    name: "HEALTH & SOUL",
-    subtitle: "The Sanctuary",
-    icon: Heart,
-    color: "text-[#FF6B7A]",
-    bgColor: "bg-[#FF6B7A]/10",
-    borderColor: "border-[#FF6B7A]/30",
-    items: [
-      { href: "/profile", icon: User, label: "Personal Dashboard", description: "Your wellness hub" },
-      { href: "/health", icon: Heart, label: "Soul Sanctuary", description: "Cycle, mood & wellness" },
-      { href: "/assistant", icon: MessageSquare, label: "Aurora AI", description: "Your AI companion" },
-      { href: "/settings", icon: Settings, label: "Privacy & Settings", description: "Control your data" },
-    ],
-  },
-  {
-    id: "mobility",
-    name: "MOBILITY & SAFETY",
-    subtitle: "The Guardian",
-    icon: Shield,
-    color: "text-[#8B5CF6]",
-    bgColor: "bg-[#8B5CF6]/10",
-    borderColor: "border-[#8B5CF6]/30",
-    items: [
-      { href: "/map", icon: MapPin, label: "Safety Map", description: "Navigate safely" },
-      { href: "/routes", icon: Route, label: "Aurora Routes", description: "Track & share routes" },
-      { href: "/emergency", icon: Shield, label: "Emergency", description: "Panic button & contacts" },
-      { href: "/resources", icon: Shield, label: "Safety Resources", description: "Hotlines & shelters" },
-      { href: "/report", icon: Shield, label: "Report Incident", description: "Workplace safety reports" },
-    ],
-  },
-
-  {
     id: "social",
-    name: "SOCIAL & OPPORTUNITY",
-    subtitle: "The Village",
+    name: "COMMUNITY",
+    subtitle: "Connect & Share",
     icon: Users,
-    color: "text-[#FFC285]",
-    bgColor: "bg-[#FFC285]/10",
-    borderColor: "border-[#FFC285]/30",
+    color: "text-[var(--color-aurora-pink)]",
+    bgColor: "bg-[var(--color-aurora-pink)]/10",
+    borderColor: "border-[var(--color-aurora-pink)]/30",
     items: [
       { href: "/feed", icon: Home, label: "Community Feed", description: "Your personalized feed" },
       { href: "/circles", icon: Users, label: "Support Circles", description: "Find your tribe" },
@@ -68,6 +36,61 @@ const navigationItems = [
       { href: "/live", icon: Video, label: "Aurora Live", description: "Livestreaming" },
       { href: "/opportunities", icon: Briefcase, label: "Opportunities", description: "Jobs & resources" },
       { href: "/messages", icon: Mail, label: "Messages", description: "Direct messages" },
+    ],
+  },
+  {
+    id: "safety",
+    name: "SAFETY",
+    subtitle: "Stay Protected",
+    icon: Shield,
+    color: "text-[var(--color-aurora-mint)]",
+    bgColor: "bg-[var(--color-aurora-mint)]/10",
+    borderColor: "border-[var(--color-aurora-mint)]/30",
+    items: [
+      { href: "/map", icon: MapPin, label: "Safety Map", description: "Navigate safely" },
+      { href: "/routes", icon: Route, label: "Safe Routes", description: "Track & share routes" },
+      { href: "/emergency", icon: Shield, label: "Emergency", description: "Panic button & contacts" },
+      { href: "/resources", icon: Shield, label: "Safety Resources", description: "Hotlines & shelters" },
+    ],
+  },
+  {
+    id: "wellness",
+    name: "WELLNESS",
+    subtitle: "Mind & Body",
+    icon: Heart,
+    color: "text-[var(--color-aurora-pink)]",
+    bgColor: "bg-[var(--color-aurora-pink)]/10",
+    borderColor: "border-[var(--color-aurora-pink)]/30",
+    items: [
+      { href: "/health", icon: Heart, label: "Health Tracker", description: "Cycle, mood & wellness" },
+      { href: "/assistant", icon: MessageSquare, label: "Aurora AI", description: "Your AI companion" },
+    ],
+  },
+  {
+    id: "finance",
+    name: "FINANCE",
+    subtitle: "Build Wealth",
+    icon: DollarSign,
+    color: "text-[var(--color-aurora-yellow)]",
+    bgColor: "bg-[var(--color-aurora-yellow)]/10",
+    borderColor: "border-[var(--color-aurora-yellow)]/30",
+    items: [
+      { href: "/wallet", icon: Wallet, label: "My Wallet", description: "Credits & transactions" },
+      { href: "/finance", icon: TrendingUp, label: "Financial Wellness", description: "Smart money tools" },
+    ],
+  },
+  {
+    id: "growth",
+    name: "GROWTH",
+    subtitle: "Level Up",
+    icon: Zap,
+    color: "text-[var(--color-aurora-purple)]",
+    bgColor: "bg-[var(--color-aurora-purple)]/10",
+    borderColor: "border-[var(--color-aurora-purple)]/30",
+    items: [
+      { href: "/premium", icon: Star, label: "Premium", description: "Unlock all features" },
+      { href: "/profile", icon: User, label: "My Profile", description: "Your personal hub" },
+      { href: "/settings", icon: Settings, label: "Settings", description: "Preferences & privacy" },
     ],
   },
 ];
@@ -270,9 +293,9 @@ export function MobileSidebar({ userCredits = 0, userName, userAvatar }: MobileS
               </div>
               <div className="text-center">
                 <p className="text-white/40 text-xs mb-2">
-                  Made with <Heart className="w-3 h-3 inline text-[#FF6B7A]" /> for women everywhere
+                  Made with <Heart className="w-3 h-3 inline text-[var(--color-aurora-pink)]" /> for women everywhere
                 </p>
-                <Badge variant="outline" className="border-[#FF6B7A]/30 text-[#FF6B7A]">v1.0.0</Badge>
+                <Badge variant="outline" className="border-[var(--color-aurora-purple)]/30 text-[var(--color-aurora-purple)]">v1.0.0</Badge>
               </div>
             </div>
           </motion.div>

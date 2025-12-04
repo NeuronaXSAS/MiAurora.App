@@ -18,6 +18,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion"
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { detectUserCountry, getRegionalPricing, formatRegionalPrice, getRegionalSavings, type RegionalPricing } from "@/lib/regional-pricing";
+import { SignupIncentiveBanner } from "@/components/signup-incentive-banner";
 
 // Animated grid background component
 const GridBackground = () => (
@@ -765,6 +766,9 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Floating Signup Incentive Banner - follows user while scrolling */}
+      <SignupIncentiveBanner credits={25} showAfterScroll={300} />
     </div>
   );
 }

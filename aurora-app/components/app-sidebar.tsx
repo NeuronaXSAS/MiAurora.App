@@ -31,6 +31,9 @@ import {
   AlertTriangle,
   Wallet,
   Star,
+  TrendingUp,
+  Zap,
+  DollarSign,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
@@ -61,7 +64,8 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
     safety: false,
     social: false,
     wellness: false,
-    account: false,
+    finance: false,
+    growth: false,
   });
 
   // Auto-expand section based on current path
@@ -69,13 +73,15 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
     const safetyPaths = ['/map', '/routes', '/emergency', '/resources', '/report'];
     const socialPaths = ['/circles', '/reels', '/live', '/creator', '/opportunities', '/messages'];
     const wellnessPaths = ['/health', '/assistant'];
-    const accountPaths = ['/profile', '/settings', '/wallet', '/premium'];
+    const financePaths = ['/wallet', '/finance'];
+    const growthPaths = ['/profile', '/settings', '/premium'];
     
     setExpandedSections({
       safety: safetyPaths.some(p => pathname.startsWith(p)),
       social: socialPaths.some(p => pathname.startsWith(p)),
       wellness: wellnessPaths.some(p => pathname.startsWith(p)),
-      account: accountPaths.some(p => pathname.startsWith(p)),
+      finance: financePaths.some(p => pathname.startsWith(p)),
+      growth: growthPaths.some(p => pathname.startsWith(p)),
     });
   }, [pathname]);
 
@@ -157,11 +163,15 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
     { href: "/assistant", icon: MessageSquare, label: "Aurora AI", color: "text-[var(--color-aurora-purple)]" },
   ];
 
-  const accountNav = [
-    { href: "/wallet", icon: Wallet, label: "Wallet", badge: null },
-    { href: "/premium", icon: Star, label: "Premium", badge: null },
-    { href: "/settings", icon: Settings, label: "Settings", badge: null },
-    { href: "/profile", icon: User, label: "Profile", badge: null },
+  const financeNav = [
+    { href: "/wallet", icon: Wallet, label: "My Wallet", badge: null, color: "text-[var(--color-aurora-yellow)]" },
+    { href: "/finance", icon: TrendingUp, label: "Financial Wellness", badge: "NEW", color: "text-[var(--color-aurora-mint)]" },
+  ];
+
+  const growthNav = [
+    { href: "/premium", icon: Star, label: "Premium", badge: user?.isPremium ? "PRO" : null, color: "text-[var(--color-aurora-yellow)]" },
+    { href: "/profile", icon: User, label: "My Profile", badge: null, color: null },
+    { href: "/settings", icon: Settings, label: "Settings", badge: null, color: null },
   ];
 
   const NavItem = ({ href, icon: Icon, label, badge, color, compact = false }: {
@@ -315,27 +325,52 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
           )}
         </div>
 
-        {/* Intelligence */}
-        <div className="pt-3 border-t border-[var(--border)] mt-3">
-          <NavItem href="/intelligence" icon={Database} label="Intelligence" badge="B2B" />
+        {/* Finance Section - NEW */}
+        <div className="pt-2">
+          <SectionHeader id="finance" label="Finance" icon={DollarSign} expanded={expandedSections.finance} />
+          {expandedSections.finance && (
+            <div className="space-y-1 mt-1">
+              {financeNav.map(item => (
+                <NavItem key={item.href} {...item} />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Account Section - Now part of scrollable content */}
+        {/* Growth & Premium Section */}
         <div className="pt-2">
-          <SectionHeader id="account" label="Account" icon={User} expanded={expandedSections.account} />
-          {expandedSections.account && (
+          <SectionHeader id="growth" label="Growth" icon={Zap} expanded={expandedSections.growth} />
+          {expandedSections.growth && (
             <div className="space-y-1 mt-1">
+              {/* Premium Highlight Card */}
+              {user && !user.isPremium && (
+                <Link href="/premium" onClick={() => setMobileOpen(false)}>
+                  <div className="mx-1 mb-2 p-3 rounded-xl bg-gradient-to-r from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20 border border-[var(--color-aurora-purple)]/30 hover:border-[var(--color-aurora-purple)]/50 transition-colors">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Star className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
+                      <span className="text-sm font-semibold text-[var(--foreground)]">Unlock Premium</span>
+                    </div>
+                    <p className="text-xs text-[var(--muted-foreground)]">Get unlimited AI, priority support & more</p>
+                  </div>
+                </Link>
+              )}
+              
               {/* Theme Toggle */}
               <div className="flex items-center justify-between px-3 py-2.5 rounded-xl text-[var(--muted-foreground)]">
                 <span className="text-sm font-medium">Theme</span>
                 <ThemeToggle />
               </div>
               
-              {accountNav.map(item => (
+              {growthNav.map(item => (
                 <NavItem key={item.href} {...item} />
               ))}
             </div>
           )}
+        </div>
+
+        {/* Intelligence - B2B */}
+        <div className="pt-3 border-t border-[var(--border)] mt-3">
+          <NavItem href="/intelligence" icon={Database} label="Intelligence" badge="B2B" />
         </div>
 
         {/* Legal & Logout - Now part of scrollable content */}

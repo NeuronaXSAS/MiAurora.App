@@ -30,15 +30,15 @@ import {
   Target,
   Edit,
   Heart,
-  Bell,
-  BellOff,
   Bookmark,
   Crown,
   MessageSquare,
   Clock,
-  Shield,
-  Route,
-  Settings,
+  Lightbulb,
+  Zap,
+  DollarSign,
+  Users,
+  Star,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
@@ -384,6 +384,13 @@ export default function ProfilePage() {
               >
                 <Heart className="w-4 h-4 mr-2" />
                 Wellness
+              </TabsTrigger>
+              <TabsTrigger 
+                value="insights" 
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[var(--color-aurora-purple)] data-[state=active]:text-[var(--color-aurora-purple)] rounded-none px-4 h-12"
+              >
+                <Lightbulb className="w-4 h-4 mr-2" />
+                Insights
               </TabsTrigger>
               <TabsTrigger 
                 value="history" 
@@ -915,6 +922,165 @@ export default function ProfilePage() {
                 {userId && <EmotionalCheckin userId={userId} />}
               </div>
               {userId && <MeditationSection userId={userId} />}
+            </div>
+          </TabsContent>
+
+          {/* Life Insights Tab - NEW */}
+          <TabsContent value="insights" className="mt-0">
+            <div className="max-w-4xl mx-auto space-y-6">
+              {/* Life Insights Header */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-[var(--foreground)] flex items-center gap-2">
+                  <Lightbulb className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
+                  Life Insights & Power Skills
+                </h2>
+                <Link href="/finance">
+                  <Button variant="outline" size="sm" className="border-[var(--color-aurora-purple)] text-[var(--color-aurora-purple)]">
+                    Financial Tools →
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Decision Making Score */}
+              <Card className="bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border-[var(--border)]">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-bold text-[var(--foreground)]">Your Life Decision Score</h3>
+                      <p className="text-sm text-[var(--muted-foreground)]">Based on community interactions & learning</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-bold text-[var(--color-aurora-purple)]">{Math.min(100, Math.round((user.trustScore / 5) + (stats.womenHelped * 2)))}</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">out of 100</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 mt-4">
+                    <div className="text-center p-3 bg-[var(--card)] rounded-xl">
+                      <Zap className="w-5 h-5 text-[var(--color-aurora-yellow)] mx-auto mb-1" />
+                      <p className="text-lg font-bold text-[var(--foreground)]">{stats.totalPosts}</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">Shared Wisdom</p>
+                    </div>
+                    <div className="text-center p-3 bg-[var(--card)] rounded-xl">
+                      <Users className="w-5 h-5 text-[var(--color-aurora-pink)] mx-auto mb-1" />
+                      <p className="text-lg font-bold text-[var(--foreground)]">{stats.womenHelped}</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">Women Helped</p>
+                    </div>
+                    <div className="text-center p-3 bg-[var(--card)] rounded-xl">
+                      <Star className="w-5 h-5 text-[var(--color-aurora-purple)] mx-auto mb-1" />
+                      <p className="text-lg font-bold text-[var(--foreground)]">{user.trustScore}</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">Trust Score</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Power Skills Progress */}
+              <Card className="bg-[var(--card)] border-[var(--border)]">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+                    <Zap className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
+                    Power Skills Progress
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[
+                    { name: "Safety Awareness", progress: 85, color: "var(--color-aurora-mint)" },
+                    { name: "Community Building", progress: Math.min(100, stats.womenHelped * 2), color: "var(--color-aurora-pink)" },
+                    { name: "Career Growth", progress: 45, color: "var(--color-aurora-blue)" },
+                    { name: "Financial Literacy", progress: 30, color: "var(--color-aurora-yellow)" },
+                    { name: "Wellness & Self-Care", progress: 60, color: "var(--color-aurora-purple)" },
+                  ].map((skill, idx) => (
+                    <div key={idx}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-[var(--foreground)]">{skill.name}</span>
+                        <span className="text-sm text-[var(--muted-foreground)]">{skill.progress}%</span>
+                      </div>
+                      <div className="h-2 bg-[var(--accent)] rounded-full overflow-hidden">
+                        <div 
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${skill.progress}%`, backgroundColor: skill.color }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Personalized Recommendations */}
+              <Card className="bg-[var(--card)] border-[var(--border)]">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
+                    <Lightbulb className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
+                    Personalized Recommendations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Link href="/finance" className="block">
+                    <div className="p-4 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent)]/80 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-[var(--color-aurora-mint)]/20 rounded-xl flex items-center justify-center">
+                          <DollarSign className="w-5 h-5 text-[var(--color-aurora-mint)]" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-[var(--foreground)]">Boost Your Financial Wellness</p>
+                          <p className="text-sm text-[var(--muted-foreground)]">Complete the salary negotiation course</p>
+                        </div>
+                        <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)]">+50 credits</Badge>
+                      </div>
+                    </div>
+                  </Link>
+                  <Link href="/circles" className="block">
+                    <div className="p-4 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent)]/80 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-[var(--color-aurora-pink)]/20 rounded-xl flex items-center justify-center">
+                          <Users className="w-5 h-5 text-[var(--color-aurora-pink)]" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-[var(--foreground)]">Join a Support Circle</p>
+                          <p className="text-sm text-[var(--muted-foreground)]">Connect with women in your industry</p>
+                        </div>
+                        <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)]">+25 credits</Badge>
+                      </div>
+                    </div>
+                  </Link>
+                  <Link href="/opportunities" className="block">
+                    <div className="p-4 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent)]/80 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-[var(--color-aurora-blue)]/20 rounded-xl flex items-center justify-center">
+                          <Briefcase className="w-5 h-5 text-[var(--color-aurora-blue)]" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-[var(--foreground)]">Explore Career Opportunities</p>
+                          <p className="text-sm text-[var(--muted-foreground)]">3 new jobs match your profile</p>
+                        </div>
+                        <Badge className="bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]">View</Badge>
+                      </div>
+                    </div>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              {/* Premium Upsell */}
+              {!user.isPremium && (
+                <Card className="bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] border-0 text-white">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
+                        <Crown className="w-7 h-7" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg">Unlock Advanced Insights</h3>
+                        <p className="text-white/80 text-sm">Get AI-powered career advice, financial planning & personalized growth paths</p>
+                      </div>
+                      <Link href="/premium">
+                        <Button className="bg-white text-[var(--color-aurora-purple)] hover:bg-white/90">
+                          Go Premium
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </TabsContent>
 
