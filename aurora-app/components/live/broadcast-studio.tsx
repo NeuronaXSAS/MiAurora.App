@@ -83,16 +83,32 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
     }
   }, [stage]);
 
-  // Play local video when entering live stage
+  // Play local video when entering live stage - with retry logic
   useEffect(() => {
     if (stage === 'live' && localVideoRef.current) {
-      // Small delay to ensure Agora is fully ready
-      const timer = setTimeout(() => {
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      const tryPlayVideo = () => {
+        attempts++;
         if (localVideoRef.current) {
-          console.log('Playing local video in container...');
+          console.log(`Playing local video attempt ${attempts}...`);
           playLocalVideo(localVideoRef.current);
         }
-      }, 300);
+        
+        // Retry if video container is still empty after a delay
+        if (attempts < maxAttempts) {
+          setTimeout(() => {
+            if (localVideoRef.current && localVideoRef.current.children.length === 0) {
+              console.log('Video container empty, retrying...');
+              tryPlayVideo();
+            }
+          }, 500);
+        }
+      };
+      
+      // Initial delay to ensure Agora is fully ready
+      const timer = setTimeout(tryPlayVideo, 500);
       return () => clearTimeout(timer);
     }
   }, [stage, playLocalVideo]);
@@ -228,17 +244,31 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
       console.log('Starting Agora broadcast...');
 
       // Start Agora broadcast - use the returned provider directly
-      if (agoraProvider) {
-        await agoraProvider.startBroadcast({
-          video: true,
-          audio: true,
-        });
-      } else {
-        // Fallback to hook's startBroadcast
-        await startBroadcast({
-          video: true,
-          audio: true,
-        });
+      // Add retry logic for robustness
+      let broadcastStarted = false;
+      let retries = 0;
+      const maxRetries = 3;
+      
+      while (!broadcastStarted && retries < maxRetries) {
+        try {
+          if (agoraProvider) {
+            await agoraProvider.startBroadcast({
+              video: true,
+              audio: true,
+            });
+            broadcastStarted = true;
+          } else {
+            throw new Error('Provider not available');
+          }
+        } catch (broadcastError) {
+          retries++;
+          console.warn(`Broadcast attempt ${retries} failed:`, broadcastError);
+          if (retries < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          } else {
+            throw broadcastError;
+          }
+        }
       }
 
       console.log('Broadcast started successfully!');

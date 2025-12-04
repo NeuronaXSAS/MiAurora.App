@@ -293,10 +293,22 @@ export class AgoraProvider implements StreamingProvider {
   }
 
   /**
+   * Check if local video track is ready
+   */
+  hasLocalVideoTrack(): boolean {
+    return this.localVideoTrack !== null && this.localVideoTrack.enabled;
+  }
+
+  /**
    * Play local video in a container
    */
   playLocalVideo(container: HTMLElement | string): void {
-    if (!this.localVideoTrack) return;
+    if (!this.localVideoTrack) {
+      console.warn('No local video track available');
+      return;
+    }
+    
+    console.log('Playing local video track, enabled:', this.localVideoTrack.enabled);
     this.localVideoTrack.play(container);
   }
 

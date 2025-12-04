@@ -178,8 +178,23 @@ export function useLivestream(options?: UseLivestreamOptions) {
       console.warn('Provider not initialized, cannot play local video');
       return;
     }
-    console.log('Playing local video in container:', container);
-    (currentProvider as AgoraProvider).playLocalVideo(container);
+    
+    try {
+      console.log('Playing local video in container:', container);
+      const agoraProvider = currentProvider as AgoraProvider;
+      
+      // Check if local video track exists using the method if available
+      if (typeof (agoraProvider as any).hasLocalVideoTrack === 'function') {
+        if (!(agoraProvider as any).hasLocalVideoTrack()) {
+          console.warn('Local video track not ready yet');
+          return;
+        }
+      }
+      
+      agoraProvider.playLocalVideo(container);
+    } catch (error) {
+      console.error('Error playing local video:', error);
+    }
   }, []);
 
   // Stop broadcasting
