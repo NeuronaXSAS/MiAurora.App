@@ -67,8 +67,16 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
     toggleCamera,
     toggleMicrophone,
     switchCamera,
+    setCamera,
+    getDevices,
     playLocalVideo,
   } = useLivestream();
+
+  // Available devices state
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
+  const [microphones, setMicrophones] = useState<MediaDeviceInfo[]>([]);
+  const [selectedCamera, setSelectedCamera] = useState<string>("");
+  const [selectedMicrophone, setSelectedMicrophone] = useState<string>("");
 
   // Local ref for Agora video
   const localVideoRef = useRef<HTMLDivElement>(null);
@@ -150,20 +158,75 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
   const previewVideoRef = useRef<HTMLVideoElement>(null);
 
   // Start camera preview without Agora
-  const startCameraPreview = async () => {
+  const startCameraPreview = async (cameraId?: string) => {
     try {
+      const videoConstraints: MediaTrackConstraints = cameraId 
+        ? { deviceId: { exact: cameraId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        : { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } };
+      
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: videoConstraints,
         audio: true,
       });
       setPreviewStream(stream);
       if (previewVideoRef.current) {
         previewVideoRef.current.srcObject = stream;
       }
+      
+      // Get available devices after permission granted
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(d => d.kind === 'videoinput');
+      const audioDevices = devices.filter(d => d.kind === 'audioinput');
+      setCameras(videoDevices);
+      setMicrophones(audioDevices);
+      
+      // Set current device as selected
+      const videoTrack = stream.getVideoTracks()[0];
+      const audioTrack = stream.getAudioTracks()[0];
+      if (videoTrack) {
+        const settings = videoTrack.getSettings();
+        setSelectedCamera(settings.deviceId || '');
+      }
+      if (audioTrack) {
+        const settings = audioTrack.getSettings();
+        setSelectedMicrophone(settings.deviceId || '');
+      }
+      
       return true;
     } catch (err) {
       console.error('Camera access error:', err);
       return false;
+    }
+  };
+
+  // Switch preview camera
+  const switchPreviewCamera = async (deviceId: string) => {
+    if (!previewStream) return;
+    
+    // Stop current video track
+    previewStream.getVideoTracks().forEach(track => track.stop());
+    
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false, // Keep existing audio
+      });
+      
+      const newVideoTrack = newStream.getVideoTracks()[0];
+      const audioTrack = previewStream.getAudioTracks()[0];
+      
+      // Create combined stream
+      const combinedStream = new MediaStream([newVideoTrack, audioTrack]);
+      setPreviewStream(combinedStream);
+      setSelectedCamera(deviceId);
+      
+      if (previewVideoRef.current) {
+        previewVideoRef.current.srcObject = combinedStream;
+      }
+    } catch (err) {
+      console.error('Failed to switch camera:', err);
+      // Restart with original camera
+      startCameraPreview();
     }
   };
 
@@ -499,7 +562,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
             playsInline
             muted
             className="w-full h-full object-cover bg-[var(--color-aurora-violet)]"
-            style={{ minHeight: '400px' }}
+            style={{ minHeight: '400px', transform: 'scaleX(-1)' }}
           />
 
           {!previewStream && (
@@ -524,7 +587,27 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
         </div>
 
         {/* Controls */}
-        <div className="bg-[var(--card)] border-t border-[var(--border)] p-6 space-y-4">
+        <div className="bg-[var(--card)] border-t border-[var(--border)] p-4 space-y-4">
+          {/* Camera Selection */}
+          {cameras.length > 1 && (
+            <div>
+              <Label className="text-[var(--foreground)] text-sm mb-2 block">Camera</Label>
+              <Select value={selectedCamera} onValueChange={switchPreviewCamera}>
+                <SelectTrigger className="bg-[var(--background)] border-[var(--border)] text-[var(--foreground)]">
+                  <SelectValue placeholder="Select camera" />
+                </SelectTrigger>
+                <SelectContent className="bg-[var(--card)] border-[var(--border)]">
+                  {cameras.map((camera) => (
+                    <SelectItem key={camera.deviceId} value={camera.deviceId}>
+                      {camera.label || `Camera ${cameras.indexOf(camera) + 1}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Control Buttons */}
           <div className="flex items-center justify-center gap-4">
             <Button
               onClick={() => {
@@ -537,7 +620,7 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
               }}
               variant="default"
               size="lg"
-              className="rounded-full w-16 h-16 bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
+              className="rounded-full w-16 h-16 min-w-[64px] min-h-[64px] bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
             >
               <Camera className="w-6 h-6" />
             </Button>
@@ -553,43 +636,30 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
               }}
               variant="default"
               size="lg"
-              className="rounded-full w-16 h-16 bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
+              className="rounded-full w-16 h-16 min-w-[64px] min-h-[64px] bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
             >
               <Mic className="w-6 h-6" />
             </Button>
 
-            <Button
-              onClick={async () => {
-                // Switch camera by stopping current and starting with different facing mode
-                if (previewStream) {
-                  const currentTrack = previewStream.getVideoTracks()[0];
-                  const currentFacing = currentTrack?.getSettings().facingMode;
-                  stopCameraPreview();
-                  try {
-                    const newStream = await navigator.mediaDevices.getUserMedia({
-                      video: { facingMode: currentFacing === 'user' ? 'environment' : 'user' },
-                      audio: true,
-                    });
-                    setPreviewStream(newStream);
-                    if (previewVideoRef.current) {
-                      previewVideoRef.current.srcObject = newStream;
-                    }
-                  } catch (err) {
-                    console.error('Failed to switch camera:', err);
-                    startCameraPreview(); // Fallback to original
-                  }
-                }
-              }}
-              variant="outline"
-              size="lg"
-              className="rounded-full w-16 h-16 border-[var(--border)]"
-            >
-              <Repeat className="w-6 h-6" />
-            </Button>
+            {cameras.length > 1 && (
+              <Button
+                onClick={() => {
+                  // Cycle to next camera
+                  const currentIndex = cameras.findIndex(c => c.deviceId === selectedCamera);
+                  const nextIndex = (currentIndex + 1) % cameras.length;
+                  switchPreviewCamera(cameras[nextIndex].deviceId);
+                }}
+                variant="outline"
+                size="lg"
+                className="rounded-full w-16 h-16 min-w-[64px] min-h-[64px] border-[var(--border)]"
+              >
+                <Repeat className="w-6 h-6" />
+              </Button>
+            )}
           </div>
 
           {broadcastError && (
-            <div className="p-3 bg-[var(--color-aurora-salmon)]/20 border border-[var(--color-aurora-salmon)]/30 rounded-xl mb-2">
+            <div className="p-3 bg-[var(--color-aurora-salmon)]/20 border border-[var(--color-aurora-salmon)]/30 rounded-xl">
               <p className="text-[var(--color-aurora-salmon)] text-sm text-center">{broadcastError}</p>
             </div>
           )}
@@ -619,6 +689,30 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
     );
   }
 
+  // State for live camera selection
+  const [showCameraSelector, setShowCameraSelector] = useState(false);
+
+  // Load devices when going live
+  useEffect(() => {
+    if (stage === 'live' && isStreaming) {
+      getDevices().then(({ cameras: cams, microphones: mics }) => {
+        setCameras(cams);
+        setMicrophones(mics);
+      });
+    }
+  }, [stage, isStreaming, getDevices]);
+
+  // Handle camera change while live
+  const handleLiveCameraChange = async (deviceId: string) => {
+    try {
+      await setCamera(deviceId);
+      setSelectedCamera(deviceId);
+      setShowCameraSelector(false);
+    } catch (err) {
+      console.error('Failed to switch camera:', err);
+    }
+  };
+
   // Live Stage - Agora streaming
   return (
     <div className="min-h-screen bg-[var(--color-aurora-violet)] flex flex-col">
@@ -633,14 +727,14 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
             width: '100%', 
             height: '100%',
             minHeight: '400px',
-            backgroundColor: 'var(--color-aurora-violet)',
+            backgroundColor: '#3d0d73',
             overflow: 'hidden',
           }}
         />
 
         {/* Loading/Connecting overlay - shows while video is initializing */}
         {!isStreaming && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-aurora-violet)]/90 z-5">
+          <div className="absolute inset-0 flex items-center justify-center bg-[#3d0d73]/90 z-5">
             <div className="text-center text-white">
               <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4" />
               <p className="text-sm">Connecting to stream...</p>
@@ -681,16 +775,48 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
 
         {/* Stats Overlay */}
         {stats && (
-          <div className="absolute bottom-20 left-4 bg-black/70 backdrop-blur-sm rounded-xl p-3 text-white text-xs">
+          <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm rounded-xl p-3 text-white text-xs z-10">
             <p>Quality: {stats.resolution.width}x{stats.resolution.height}</p>
             <p>FPS: {stats.fps}</p>
             <p>Bitrate: {Math.round(stats.bitrate / 1000)}kbps</p>
           </div>
         )}
+
+        {/* Camera Selector Overlay */}
+        {showCameraSelector && cameras.length > 1 && (
+          <div className="absolute bottom-4 right-4 bg-black/90 backdrop-blur-sm rounded-xl p-4 z-20 min-w-[200px]">
+            <p className="text-white text-sm font-medium mb-2">Select Camera</p>
+            <div className="space-y-2">
+              {cameras.map((camera, index) => (
+                <Button
+                  key={camera.deviceId}
+                  onClick={() => handleLiveCameraChange(camera.deviceId)}
+                  variant={selectedCamera === camera.deviceId ? "default" : "outline"}
+                  size="sm"
+                  className={`w-full justify-start text-left text-xs ${
+                    selectedCamera === camera.deviceId 
+                      ? 'bg-[var(--color-aurora-purple)]' 
+                      : 'border-white/30 text-white hover:bg-white/10'
+                  }`}
+                >
+                  {camera.label || `Camera ${index + 1}`}
+                </Button>
+              ))}
+            </div>
+            <Button
+              onClick={() => setShowCameraSelector(false)}
+              variant="ghost"
+              size="sm"
+              className="w-full mt-2 text-white/70 hover:text-white"
+            >
+              Close
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Controls */}
-      <div className="bg-[var(--card)] border-t border-[var(--border)] p-6 space-y-4">
+      <div className="bg-[var(--card)] border-t border-[var(--border)] p-4 space-y-4">
         <div className="flex items-center justify-center gap-4">
           <Button
             onClick={toggleCamera}
@@ -718,14 +844,27 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
             {isMicrophoneEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
           </Button>
 
-          <Button
-            onClick={switchCamera}
-            variant="outline"
-            size="lg"
-            className="rounded-full w-16 h-16 min-w-[64px] min-h-[64px] border-[var(--border)]"
-          >
-            <Repeat className="w-6 h-6" />
-          </Button>
+          {cameras.length > 1 ? (
+            <Button
+              onClick={() => setShowCameraSelector(!showCameraSelector)}
+              variant="outline"
+              size="lg"
+              className={`rounded-full w-16 h-16 min-w-[64px] min-h-[64px] border-[var(--border)] ${
+                showCameraSelector ? 'bg-[var(--color-aurora-purple)] text-white' : ''
+              }`}
+            >
+              <Repeat className="w-6 h-6" />
+            </Button>
+          ) : (
+            <Button
+              onClick={switchCamera}
+              variant="outline"
+              size="lg"
+              className="rounded-full w-16 h-16 min-w-[64px] min-h-[64px] border-[var(--border)]"
+            >
+              <Repeat className="w-6 h-6" />
+            </Button>
+          )}
         </div>
 
         <Button

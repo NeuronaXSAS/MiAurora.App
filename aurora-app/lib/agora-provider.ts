@@ -259,6 +259,64 @@ export class AgoraProvider implements StreamingProvider {
     }
   }
 
+  /**
+   * Set specific camera device by ID
+   */
+  async setCamera(deviceId: string): Promise<void> {
+    if (!this.localVideoTrack) {
+      console.warn('Agora: No local video track to change camera');
+      return;
+    }
+
+    try {
+      console.log('Agora: Switching to camera:', deviceId);
+      await this.localVideoTrack.setDevice(deviceId);
+      this.emit(StreamingEvent.CAMERA_CHANGED, deviceId);
+      console.log('Agora: Camera switched successfully');
+    } catch (error) {
+      console.error('Agora: Error switching camera:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set specific microphone device by ID
+   */
+  async setMicrophone(deviceId: string): Promise<void> {
+    if (!this.localAudioTrack) {
+      console.warn('Agora: No local audio track to change microphone');
+      return;
+    }
+
+    try {
+      console.log('Agora: Switching to microphone:', deviceId);
+      await this.localAudioTrack.setDevice(deviceId);
+      this.emit(StreamingEvent.MICROPHONE_CHANGED, deviceId);
+      console.log('Agora: Microphone switched successfully');
+    } catch (error) {
+      console.error('Agora: Error switching microphone:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get current camera device ID
+   */
+  getCurrentCameraId(): string | null {
+    if (!this.localVideoTrack) return null;
+    const settings = this.localVideoTrack.getMediaStreamTrack().getSettings();
+    return settings.deviceId || null;
+  }
+
+  /**
+   * Get current microphone device ID
+   */
+  getCurrentMicrophoneId(): string | null {
+    if (!this.localAudioTrack) return null;
+    const settings = this.localAudioTrack.getMediaStreamTrack().getSettings();
+    return settings.deviceId || null;
+  }
+
   async getDevices(): Promise<{
     cameras: MediaDeviceInfo[];
     microphones: MediaDeviceInfo[];

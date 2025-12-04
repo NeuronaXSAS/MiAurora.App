@@ -156,11 +156,13 @@ export function LivePlayer({ livestreamId, userId, onClose }: LivePlayerProps) {
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
       {/* Video Area - Takes most of the screen */}
       <div className="flex-1 relative min-h-0">
-        {/* Remote video container */}
+        {/* Remote video container - multiple IDs for compatibility */}
         <div
           ref={videoContainerRef}
-          id={`remote-video-${livestream.hostId}`}
+          id="remote-video-host"
+          data-host-id={livestream.hostId}
           className="absolute inset-0 bg-[var(--color-aurora-violet)]"
+          style={{ minHeight: '300px' }}
         />
 
         {/* Connecting overlay */}

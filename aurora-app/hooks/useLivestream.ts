@@ -111,10 +111,28 @@ export function useLivestream(_options?: UseLivestreamOptions) {
 
       newProvider.on(StreamingEvent.USER_PUBLISHED, (user: any, mediaType: string, track: any) => {
         if (mediaType === 'video' && track) {
-          // Play remote video in container
-          const container = document.getElementById(`remote-video-${user.uid}`);
+          console.log('Agora: Remote user published video, uid:', user.uid);
+          // Try multiple container ID patterns
+          const containerIds = [
+            `remote-video-${user.uid}`,
+            `remote-video-host`,
+            'remote-video-container'
+          ];
+          
+          let container: HTMLElement | null = null;
+          for (const id of containerIds) {
+            container = document.getElementById(id);
+            if (container) {
+              console.log('Agora: Found container with id:', id);
+              break;
+            }
+          }
+          
           if (container) {
+            console.log('Agora: Playing remote video in container');
             (newProvider as AgoraProvider).playRemoteVideo(track, container);
+          } else {
+            console.warn('Agora: No container found for remote video. Tried:', containerIds);
           }
         }
       });
@@ -280,13 +298,43 @@ export function useLivestream(_options?: UseLivestreamOptions) {
     }
   }, []);
 
-  // Switch camera
+  // Switch camera (cycle through available cameras)
   const switchCamera = useCallback(async () => {
     const currentProvider = providerRef.current;
     if (!currentProvider) return;
 
     try {
       await currentProvider.switchCamera();
+    } catch (error) {
+      const err = error as Error;
+      setState(prev => ({ ...prev, error: err.message }));
+      throw error;
+    }
+  }, []);
+
+  // Set specific camera by device ID
+  const setCamera = useCallback(async (deviceId: string) => {
+    const currentProvider = providerRef.current;
+    if (!currentProvider) return;
+
+    try {
+      const agoraProvider = currentProvider as AgoraProvider;
+      await agoraProvider.setCamera(deviceId);
+    } catch (error) {
+      const err = error as Error;
+      setState(prev => ({ ...prev, error: err.message }));
+      throw error;
+    }
+  }, []);
+
+  // Set specific microphone by device ID
+  const setMicrophone = useCallback(async (deviceId: string) => {
+    const currentProvider = providerRef.current;
+    if (!currentProvider) return;
+
+    try {
+      const agoraProvider = currentProvider as AgoraProvider;
+      await agoraProvider.setMicrophone(deviceId);
     } catch (error) {
       const err = error as Error;
       setState(prev => ({ ...prev, error: err.message }));
@@ -360,6 +408,8 @@ export function useLivestream(_options?: UseLivestreamOptions) {
     toggleCamera,
     toggleMicrophone,
     switchCamera,
+    setCamera,
+    setMicrophone,
     getDevices,
     getStats,
     setVideoQuality,
