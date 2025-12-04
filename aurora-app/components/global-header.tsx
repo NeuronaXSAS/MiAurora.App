@@ -5,12 +5,17 @@
  * 
  * Consistent navigation header across all authenticated pages.
  * Includes: Menu, AI Chat, Create, Emergency, Search, Notifications, Profile
+ * 
+ * POWERFUL SEARCH: The search is designed to be THE destination for women
+ * looking for anything - safety, career, wellness, community, and more.
  */
 
 import { useState, useEffect, useRef } from "react";
 import { 
   Menu, Plus, Shield, Search, User, X, Loader2,
-  MapPin, Users, Heart, Route, Briefcase, Play, FileText, MessageSquare
+  MapPin, Users, Heart, Route, Briefcase, Play, FileText, MessageSquare,
+  Sparkles, TrendingUp, Clock, Star, Wallet, Video, Zap, BookOpen,
+  Baby, Stethoscope, Scale, Home, GraduationCap, Plane, ShoppingBag
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,18 +38,80 @@ interface GlobalHeaderProps {
   sidebarCollapsed?: boolean;
 }
 
-// Search suggestions with icons and routes
-const SEARCH_SUGGESTIONS = [
-  { label: "Safety Map", href: "/map", icon: MapPin, category: "Safety" },
-  { label: "Emergency", href: "/emergency", icon: Shield, category: "Safety" },
-  { label: "Safety Resources", href: "/resources", icon: Shield, category: "Safety" },
-  { label: "Report Incident", href: "/report", icon: FileText, category: "Safety" },
-  { label: "Routes", href: "/routes", icon: Route, category: "Navigation" },
-  { label: "Circles", href: "/circles", icon: Users, category: "Community" },
-  { label: "Reels", href: "/reels", icon: Play, category: "Community" },
-  { label: "Opportunities", href: "/opportunities", icon: Briefcase, category: "Career" },
-  { label: "Health Tracker", href: "/health", icon: Heart, category: "Wellness" },
-  { label: "AI Companion", href: "/assistant", icon: MessageSquare, category: "Wellness" },
+// Comprehensive search categories for women
+const SEARCH_CATEGORIES = {
+  safety: {
+    label: "Safety & Security",
+    icon: Shield,
+    color: "text-[var(--color-aurora-mint)]",
+    bgColor: "bg-[var(--color-aurora-mint)]/10",
+    items: [
+      { label: "Safety Map", href: "/map", icon: MapPin, description: "Find safe places near you" },
+      { label: "Emergency Help", href: "/emergency", icon: Shield, description: "Quick access to emergency services" },
+      { label: "Safe Routes", href: "/routes", icon: Route, description: "Community-verified safe paths" },
+      { label: "Report Incident", href: "/report", icon: FileText, description: "Report safety concerns anonymously" },
+      { label: "Safety Resources", href: "/resources", icon: BookOpen, description: "Hotlines, shelters & support" },
+    ]
+  },
+  career: {
+    label: "Career & Opportunities",
+    icon: Briefcase,
+    color: "text-[var(--color-aurora-blue)]",
+    bgColor: "bg-[var(--color-aurora-blue)]/10",
+    items: [
+      { label: "Job Opportunities", href: "/opportunities", icon: Briefcase, description: "Women-friendly job listings" },
+      { label: "Creator Studio", href: "/creator", icon: Video, description: "Monetize your content" },
+      { label: "Mentorship", href: "/circles?filter=mentorship", icon: GraduationCap, description: "Find mentors & guides" },
+      { label: "Networking", href: "/circles?filter=professional", icon: Users, description: "Professional women circles" },
+    ]
+  },
+  wellness: {
+    label: "Health & Wellness",
+    icon: Heart,
+    color: "text-[var(--color-aurora-pink)]",
+    bgColor: "bg-[var(--color-aurora-pink)]/10",
+    items: [
+      { label: "Health Tracker", href: "/health", icon: Heart, description: "Track cycle, mood & hydration" },
+      { label: "Aurora AI", href: "/assistant", icon: MessageSquare, description: "Your wellness companion" },
+      { label: "Mental Health", href: "/resources?category=mental-health", icon: Sparkles, description: "Support & resources" },
+      { label: "Fitness Circles", href: "/circles?filter=fitness", icon: Zap, description: "Workout together" },
+    ]
+  },
+  community: {
+    label: "Community & Social",
+    icon: Users,
+    color: "text-[var(--color-aurora-purple)]",
+    bgColor: "bg-[var(--color-aurora-purple)]/10",
+    items: [
+      { label: "Circles", href: "/circles", icon: Users, description: "Join supportive communities" },
+      { label: "Reels", href: "/reels", icon: Play, description: "Watch & share stories" },
+      { label: "Live Streams", href: "/live", icon: Video, description: "Connect in real-time" },
+      { label: "Messages", href: "/messages", icon: MessageSquare, description: "Chat with sisters" },
+    ]
+  },
+  finance: {
+    label: "Finance & Money",
+    icon: Wallet,
+    color: "text-[var(--color-aurora-yellow)]",
+    bgColor: "bg-[var(--color-aurora-yellow)]/10",
+    items: [
+      { label: "Aurora Wallet", href: "/wallet", icon: Wallet, description: "Manage your credits" },
+      { label: "Premium", href: "/premium", icon: Star, description: "Unlock premium features" },
+      { label: "Financial Tips", href: "/feed?filter=finance", icon: TrendingUp, description: "Money advice from women" },
+    ]
+  },
+};
+
+// Quick search suggestions (trending/popular)
+const TRENDING_SEARCHES = [
+  "safe walking routes",
+  "work from home jobs",
+  "mental health support",
+  "women entrepreneurs",
+  "self defense tips",
+  "career advice",
+  "wellness tips",
+  "networking events",
 ];
 
 export function GlobalHeader({ 
@@ -77,21 +144,6 @@ export function GlobalHeader({
     api.search.globalSearch,
     debouncedQuery.length >= 2 ? { query: debouncedQuery, limit: 15 } : "skip"
   );
-
-  // Filter navigation suggestions based on search query
-  const filteredSuggestions = searchQuery.trim() 
-    ? SEARCH_SUGGESTIONS.filter(item => 
-        item.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : SEARCH_SUGGESTIONS;
-
-  // Group suggestions by category
-  const groupedSuggestions = filteredSuggestions.reduce((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = [];
-    acc[item.category].push(item);
-    return acc;
-  }, {} as Record<string, typeof SEARCH_SUGGESTIONS>);
 
   // Handle search navigation
   const handleSearchSelect = (href: string) => {
@@ -158,15 +210,23 @@ export function GlobalHeader({
         className
       )}>
         <div className="flex items-center justify-between px-3 py-2 max-w-7xl mx-auto">
-          {/* Left: Menu + AI Chat (Aurora Logo) */}
-          <div className="flex items-center gap-1.5">
+          {/* Left: Menu + Brand + AI Chat */}
+          <div className="flex items-center gap-2">
             <button 
               onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
               className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-              aria-label="Open menu"
+              aria-label={sidebarCollapsed ? "Open menu" : "Close menu"}
             >
               <Menu className="w-5 h-5 text-[var(--foreground)]" />
             </button>
+            
+            {/* Brand - Show when sidebar is collapsed on desktop */}
+            {sidebarCollapsed && (
+              <Link href="/feed" className="hidden lg:flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <Image src="/Au_Logo_1.png" alt="Aurora App" width={36} height={36} className="rounded-lg" />
+                <span className="font-bold text-[var(--foreground)]">Aurora App</span>
+              </Link>
+            )}
             
             {/* AI Chat - Aurora Logo */}
             <button 
@@ -232,154 +292,197 @@ export function GlobalHeader({
         </div>
       </header>
 
-      {/* Search Modal - Full Screen on Mobile */}
+      {/* Search Modal - Full Screen Powerful Search */}
       {showSearch && (
         <div 
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md"
           onClick={() => {
             setShowSearch(false);
             setSearchQuery("");
           }}
         >
           <div 
-            className="bg-[var(--card)] border-b border-[var(--border)] shadow-xl max-h-[80vh] overflow-hidden flex flex-col"
+            className="bg-[var(--card)] h-full sm:h-auto sm:max-h-[85vh] sm:mt-16 sm:mx-auto sm:max-w-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Search Input */}
-            <div className="p-4 border-b border-[var(--border)]">
-              <div className="max-w-2xl mx-auto">
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--muted-foreground)]" />
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      placeholder="Search Aurora App..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--color-aurora-purple)]/50 text-base"
-                    />
-                  </div>
-                  <button 
-                    onClick={() => {
-                      setShowSearch(false);
-                      setSearchQuery("");
-                    }}
-                    className="p-3 rounded-xl hover:bg-[var(--accent)] transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center"
-                  >
-                    <X className="w-5 h-5 text-[var(--muted-foreground)]" />
-                  </button>
+            {/* Search Header */}
+            <div className="p-4 sm:p-6 border-b border-[var(--border)] bg-gradient-to-r from-[var(--color-aurora-purple)]/5 to-[var(--color-aurora-pink)]/5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-aurora-purple)]" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Search anything for women..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-12 pr-4 py-4 rounded-2xl bg-[var(--background)] border-2 border-[var(--color-aurora-purple)]/20 text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--color-aurora-purple)]/50 text-lg font-medium"
+                  />
                 </div>
+                <button 
+                  onClick={() => {
+                    setShowSearch(false);
+                    setSearchQuery("");
+                  }}
+                  className="p-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--color-aurora-purple)]/10 transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center"
+                >
+                  <X className="w-5 h-5 text-[var(--foreground)]" />
+                </button>
               </div>
+              
+              {/* Trending Searches - Quick chips */}
+              {searchQuery.length === 0 && (
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3" /> Trending:
+                  </span>
+                  {TRENDING_SEARCHES.slice(0, 5).map((term) => (
+                    <button
+                      key={term}
+                      onClick={() => setSearchQuery(term)}
+                      className="px-3 py-1.5 rounded-full bg-[var(--accent)] hover:bg-[var(--color-aurora-purple)]/10 text-xs text-[var(--foreground)] transition-colors"
+                    >
+                      {term}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             
             {/* Search Results */}
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="max-w-2xl mx-auto space-y-4">
-                {/* Loading state */}
-                {debouncedQuery.length >= 2 && searchResults === undefined && (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 text-[var(--color-aurora-purple)] animate-spin" />
-                    <span className="ml-2 text-[var(--muted-foreground)]">Searching...</span>
+            <div className="flex-1 overflow-y-auto">
+              {/* Loading state */}
+              {debouncedQuery.length >= 2 && searchResults === undefined && (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center mb-3">
+                    <Loader2 className="w-6 h-6 text-white animate-spin" />
                   </div>
-                )}
+                  <span className="text-[var(--muted-foreground)]">Searching Aurora App...</span>
+                </div>
+              )}
 
-                {/* Content Search Results */}
-                {searchResults && searchResults.results.length > 0 && (
-                  <div>
-                    <p className="text-xs text-[var(--muted-foreground)] font-semibold uppercase tracking-wider mb-2 px-2">
-                      Content ({searchResults.total} results)
+              {/* Content Search Results */}
+              {searchResults && searchResults.results.length > 0 && (
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-semibold text-[var(--foreground)]">
+                      Found {searchResults.total} results
                     </p>
-                    <div className="space-y-1">
-                      {searchResults.results.map((result: {
-                        type: string;
-                        id: string;
-                        title: string;
-                        description?: string;
-                        author?: { name: string; profileImage?: string };
-                      }) => {
-                        const Icon = getResultIcon(result.type);
-                        return (
-                          <button
-                            key={`${result.type}-${result.id}`}
-                            onClick={() => handleSearchSelect(getResultHref(result.type, result.id))}
-                            className="w-full flex items-start gap-3 px-4 py-3 rounded-xl hover:bg-[var(--accent)] transition-colors text-left group"
-                          >
-                            <div className="w-10 h-10 rounded-xl bg-[var(--color-aurora-purple)]/10 flex items-center justify-center group-hover:bg-[var(--color-aurora-purple)]/20 transition-colors flex-shrink-0">
-                              <Icon className="w-5 h-5 text-[var(--color-aurora-purple)]" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-[var(--foreground)] font-medium truncate">{result.title}</span>
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--accent)] text-[var(--muted-foreground)] capitalize flex-shrink-0">
-                                  {result.type}
-                                </span>
-                              </div>
-                              {result.description && (
-                                <p className="text-sm text-[var(--muted-foreground)] truncate mt-0.5">
-                                  {result.description}
-                                </p>
-                              )}
-                              {result.author && (
-                                <p className="text-xs text-[var(--color-aurora-purple)] mt-1">
-                                  by {result.author.name}
-                                </p>
-                              )}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <span className="text-xs text-[var(--muted-foreground)]">for "{debouncedQuery}"</span>
                   </div>
-                )}
-
-                {/* No content results but has query */}
-                {searchResults && searchResults.results.length === 0 && debouncedQuery.length >= 2 && (
-                  <div className="text-center py-4">
-                    <p className="text-sm text-[var(--muted-foreground)]">No content found for "{debouncedQuery}"</p>
+                  <div className="space-y-2">
+                    {searchResults.results.map((result: {
+                      type: string;
+                      id: string;
+                      title: string;
+                      description?: string;
+                      author?: { name: string; profileImage?: string };
+                    }) => {
+                      const Icon = getResultIcon(result.type);
+                      return (
+                        <button
+                          key={`${result.type}-${result.id}`}
+                          onClick={() => handleSearchSelect(getResultHref(result.type, result.id))}
+                          className="w-full flex items-start gap-4 p-4 rounded-2xl hover:bg-[var(--accent)] transition-all text-left group border border-transparent hover:border-[var(--color-aurora-purple)]/20"
+                        >
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 flex items-center justify-center group-hover:from-[var(--color-aurora-purple)]/20 group-hover:to-[var(--color-aurora-pink)]/20 transition-colors flex-shrink-0">
+                            <Icon className="w-6 h-6 text-[var(--color-aurora-purple)]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-[var(--foreground)] font-semibold truncate">{result.title}</span>
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--color-aurora-purple)]/10 text-[var(--color-aurora-purple)] capitalize flex-shrink-0">
+                                {result.type}
+                              </span>
+                            </div>
+                            {result.description && (
+                              <p className="text-sm text-[var(--muted-foreground)] line-clamp-2">
+                                {result.description}
+                              </p>
+                            )}
+                            {result.author && (
+                              <p className="text-xs text-[var(--color-aurora-pink)] mt-1 flex items-center gap-1">
+                                <User className="w-3 h-3" /> {result.author.name}
+                              </p>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Navigation Suggestions - Show when no query or as quick access */}
-                {(searchQuery.length < 2 || filteredSuggestions.length > 0) && (
-                  <>
-                    <div className="border-t border-[var(--border)] pt-4">
-                      <p className="text-xs text-[var(--muted-foreground)] font-semibold uppercase tracking-wider mb-2 px-2">
-                        {searchQuery.length >= 2 ? "Quick Navigation" : "Browse"}
-                      </p>
-                    </div>
-                    {Object.entries(groupedSuggestions).map(([category, items]) => (
-                      <div key={category}>
-                        <p className="text-xs text-[var(--muted-foreground)] font-medium mb-2 px-2">
-                          {category}
-                        </p>
-                        <div className="space-y-1">
-                          {items.map((item) => {
-                            const Icon = item.icon;
+              {/* No content results */}
+              {searchResults && searchResults.results.length === 0 && debouncedQuery.length >= 2 && (
+                <div className="text-center py-8 px-4">
+                  <div className="w-16 h-16 rounded-full bg-[var(--accent)] flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-[var(--muted-foreground)]" />
+                  </div>
+                  <p className="text-[var(--foreground)] font-medium mb-1">No results for "{debouncedQuery}"</p>
+                  <p className="text-sm text-[var(--muted-foreground)]">Try different keywords or browse categories below</p>
+                </div>
+              )}
+
+              {/* Browse Categories - Show when no query */}
+              {searchQuery.length < 2 && (
+                <div className="p-4 space-y-6">
+                  <p className="text-sm font-semibold text-[var(--foreground)] flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                    Browse by Category
+                  </p>
+                  
+                  {Object.entries(SEARCH_CATEGORIES).map(([key, category]) => {
+                    const CategoryIcon = category.icon;
+                    return (
+                      <div key={key} className="space-y-2">
+                        <div className={cn("flex items-center gap-2 px-2", category.color)}>
+                          <CategoryIcon className="w-4 h-4" />
+                          <span className="text-sm font-semibold">{category.label}</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {category.items.map((item) => {
+                            const ItemIcon = item.icon;
                             return (
                               <button
                                 key={item.href}
                                 onClick={() => handleSearchSelect(item.href)}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-[var(--accent)] transition-colors text-left group"
+                                className={cn(
+                                  "flex items-start gap-3 p-3 rounded-xl transition-all text-left group border border-transparent",
+                                  "hover:border-[var(--border)] hover:bg-[var(--accent)]",
+                                  category.bgColor
+                                )}
                               >
-                                <div className="w-8 h-8 rounded-lg bg-[var(--color-aurora-purple)]/10 flex items-center justify-center group-hover:bg-[var(--color-aurora-purple)]/20 transition-colors">
-                                  <Icon className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                                <div className={cn(
+                                  "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                                  "bg-white/50 dark:bg-white/10"
+                                )}>
+                                  <ItemIcon className={cn("w-5 h-5", category.color)} />
                                 </div>
-                                <span className="text-[var(--foreground)] text-sm">{item.label}</span>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-[var(--foreground)] font-medium text-sm block">{item.label}</span>
+                                  <span className="text-xs text-[var(--muted-foreground)] line-clamp-1">{item.description}</span>
+                                </div>
                               </button>
                             );
                           })}
                         </div>
                       </div>
-                    ))}
-                  </>
-                )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
-                {/* Keyboard shortcut hint */}
-                <div className="text-center pt-4 border-t border-[var(--border)]">
-                  <p className="text-xs text-[var(--muted-foreground)]">
-                    Press <kbd className="px-1.5 py-0.5 rounded bg-[var(--accent)] text-[var(--foreground)] font-mono text-xs">Esc</kbd> to close
-                  </p>
+            {/* Footer */}
+            <div className="p-4 border-t border-[var(--border)] bg-[var(--accent)]/50">
+              <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
+                <span>Aurora App - Your search destination</span>
+                <div className="flex items-center gap-2">
+                  <kbd className="px-2 py-1 rounded bg-[var(--card)] border border-[var(--border)] font-mono">⌘K</kbd>
+                  <span>to search</span>
+                  <kbd className="px-2 py-1 rounded bg-[var(--card)] border border-[var(--border)] font-mono">Esc</kbd>
+                  <span>to close</span>
                 </div>
               </div>
             </div>

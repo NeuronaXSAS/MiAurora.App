@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { GlobalHeader } from "@/components/global-header";
 import { PWAInstallBanner } from "@/components/pwa-install-banner";
@@ -46,40 +45,40 @@ export default function AuthenticatedLayout({
   useCreditsCelebration(userId);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--background)]">
+    <div className="min-h-screen bg-[var(--background)]">
       <a href="#main-content" className="skip-to-main">
         Skip to main content
       </a>
       
-      {/* Sidebar - Always visible on desktop, collapsible on mobile */}
+      {/* Sidebar - Fixed position, slides in/out */}
       <AppSidebar 
         collapsed={sidebarCollapsed} 
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
       />
       
-      {/* Main Content Area - Expands smoothly when sidebar is collapsed */}
+      {/* Main Content Area - Uses margin to account for sidebar */}
       <div 
         className={`
-          flex-1 flex flex-col overflow-hidden 
-          transition-all duration-300 ease-in-out
-          ${sidebarCollapsed ? 'lg:w-full' : 'lg:w-[calc(100%-16rem)] xl:w-[calc(100%-18rem)]'}
+          min-h-screen flex flex-col
+          transition-[margin] duration-300 ease-out
+          ${sidebarCollapsed ? 'lg:ml-0' : 'lg:ml-64 xl:ml-72'}
         `}
       >
-        {/* Global Header - Now shown on ALL pages for consistent navigation */}
+        {/* Global Header */}
         <GlobalHeader userId={userId} sidebarCollapsed={sidebarCollapsed} />
         
         <main 
           id="main-content" 
-          className="flex-1 overflow-auto"
+          className="flex-1 overflow-x-hidden"
         >
           {children}
         </main>
       </div>
       
-      {/* PWA Install Banner - Floating style for better visibility */}
+      {/* PWA Install Banner */}
       <PWAInstallBanner variant="floating" />
       
-      {/* Notification Permission Prompt - Shows after 5 seconds */}
+      {/* Notification Permission Prompt */}
       <NotificationPermissionPrompt variant="modal" delay={8000} />
     </div>
   );

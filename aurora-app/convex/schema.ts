@@ -296,10 +296,34 @@ export default defineSchema({
     content: v.string(),
     isRead: v.boolean(),
     media: v.optional(v.array(v.object({
-      type: v.union(v.literal("image"), v.literal("video")),
+      type: v.union(v.literal("image"), v.literal("video"), v.literal("audio"), v.literal("file")),
       storageId: v.id("_storage"),
       url: v.string(),
+      fileName: v.optional(v.string()),
+      fileSize: v.optional(v.number()),
     }))),
+    // Reply functionality
+    replyTo: v.optional(v.object({
+      messageId: v.id("directMessages"),
+      content: v.string(),
+      senderId: v.id("users"),
+    })),
+    // Reactions (emoji)
+    reactions: v.optional(v.array(v.object({
+      userId: v.id("users"),
+      emoji: v.string(),
+      timestamp: v.number(),
+    }))),
+    // Edit tracking
+    isEdited: v.optional(v.boolean()),
+    editedAt: v.optional(v.number()),
+    // Delete tracking
+    isDeleted: v.optional(v.boolean()),
+    deletedAt: v.optional(v.number()),
+    hiddenBy: v.optional(v.array(v.id("users"))), // For "delete for me"
+    // Forward tracking
+    isForwarded: v.optional(v.boolean()),
+    forwardedFrom: v.optional(v.id("directMessages")),
   })
     .index("by_sender", ["senderId"])
     .index("by_receiver", ["receiverId"])

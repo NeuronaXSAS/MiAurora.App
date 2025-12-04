@@ -384,14 +384,14 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 flex flex-col h-screen bg-[var(--card)] border-r border-[var(--border)]",
+          "fixed inset-y-0 left-0 z-50 flex flex-col h-screen bg-[var(--card)] border-r border-[var(--border)]",
           "w-72 lg:w-64 xl:w-72",
-          "transform transition-all duration-300 ease-out",
+          "transform transition-transform duration-300 ease-out",
           // Mobile: slide in/out
           mobileOpen ? "translate-x-0" : "-translate-x-full",
-          // Desktop: show/hide based on desktopCollapsed state
+          // Desktop: always use fixed positioning, slide in/out
           "lg:translate-x-0",
-          desktopCollapsed && "lg:-translate-x-full lg:w-0 lg:border-0"
+          desktopCollapsed && "lg:-translate-x-full"
         )}
       >
         {sidebarContent}

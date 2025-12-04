@@ -387,10 +387,153 @@ export default function ProfilePage() {
 
       {/* Content - Mobile-first responsive layout */}
       <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 pb-24 sm:pb-8">
-        {/* Mobile: Single column, Desktop: 3 columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Left Column - Wellness Widgets (Full width on mobile) */}
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6 order-1">
+        {/* Desktop: Better organized 12-column grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
+          
+          {/* Left Column - Stats Overview (Desktop: 4 cols) */}
+          <div className="lg:col-span-4 space-y-4 lg:space-y-6 order-2 lg:order-1">
+            {/* Stats Section - Vertical stack on desktop for better scanning */}
+            <Card className="bg-[var(--card)] border-[var(--border)] overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 pb-3">
+                <CardTitle className="text-base lg:text-lg text-[var(--foreground)] flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+                  Your Impact
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3">
+                {/* Credits - Highlighted */}
+                <div className="flex items-center justify-between p-3 bg-[var(--color-aurora-yellow)]/10 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[var(--color-aurora-yellow)]/20 rounded-full flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
+                    </div>
+                    <span className="text-sm font-medium text-[var(--foreground)]">Credits</span>
+                  </div>
+                  <span className="text-2xl font-bold text-[var(--foreground)]">{user.credits}</span>
+                </div>
+                
+                {/* Other stats in compact rows */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center gap-2 p-2 bg-[var(--accent)] rounded-lg">
+                    <FileText className="w-4 h-4 text-[var(--color-aurora-blue)]" />
+                    <div>
+                      <p className="text-lg font-bold text-[var(--foreground)]">{stats.totalPosts}</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">Posts</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 bg-[var(--accent)] rounded-lg">
+                    <CheckCircle2 className="w-4 h-4 text-[var(--color-aurora-pink)]" />
+                    <div>
+                      <p className="text-lg font-bold text-[var(--foreground)]">{stats.totalVerifications}</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">Verified</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 bg-[var(--accent)] rounded-lg">
+                    <Heart className="w-4 h-4 text-[var(--color-aurora-pink)]" />
+                    <div>
+                      <p className="text-lg font-bold text-[var(--foreground)]">{stats.womenHelped}</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">Helped</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 bg-[var(--accent)] rounded-lg">
+                    <TrendingUp className="w-4 h-4 text-[var(--color-aurora-mint)]" />
+                    <div>
+                      <p className="text-lg font-bold text-[var(--foreground)]">{user.monthlyCreditsEarned || 0}</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">Monthly</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Trust Score with stars */}
+                <div className="p-3 bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Award className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+                      <span className="text-sm font-medium text-[var(--foreground)]">Trust Score</span>
+                    </div>
+                    <Badge className="bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)] border-0">
+                      {getRankPercentile(user.trustScore)}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold text-[var(--foreground)]">{user.trustScore}</span>
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <span
+                          key={star}
+                          className={`text-lg ${
+                            star <= trustStars ? 'text-[var(--color-aurora-yellow)]' : 'text-[var(--muted-foreground)]/30'
+                          }`}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Badges Showcase - Desktop left column */}
+            <div className="hidden lg:block">
+              {userId && <BadgesShowcase userId={userId} />}
+            </div>
+
+            {/* Recent Posts - Desktop left column */}
+            <Card className="bg-[var(--card)] border-[var(--border)] hidden lg:block">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base text-[var(--foreground)]">Recent Posts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {recentPosts && recentPosts.length > 0 ? (
+                    recentPosts.slice(0, 3).map((post) => (
+                      <div key={post._id} className="border-b border-[var(--border)] last:border-0 pb-2 last:pb-0">
+                        <p className="font-medium text-sm line-clamp-1 text-[var(--foreground)]">{post.title}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)]">
+                            {post.rating}/5 ⭐
+                          </Badge>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center text-[var(--muted-foreground)] py-2 text-sm">No posts yet</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Saved Posts - Desktop left column */}
+            <Card className="bg-[var(--card)] border-[var(--border)] hidden lg:block">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base text-[var(--foreground)]">
+                  <Bookmark className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                  Saved Posts
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {savedPosts && savedPosts.length > 0 ? (
+                    savedPosts.slice(0, 3).map((post: any) => (
+                      <Link 
+                        key={post._id} 
+                        href={`/feed?post=${post._id}`}
+                        className="block border-b border-[var(--border)] last:border-0 pb-2 last:pb-0 hover:bg-[var(--accent)] -mx-2 px-2 py-1 rounded-lg transition-colors"
+                      >
+                        <p className="font-medium text-sm line-clamp-1 text-[var(--foreground)]">{post.title}</p>
+                      </Link>
+                    ))
+                  ) : (
+                    <p className="text-center text-[var(--muted-foreground)] py-2 text-sm">No saved posts</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Center/Right Column - Wellness & Activity (Desktop: 8 cols) */}
+          <div className="lg:col-span-8 space-y-4 lg:space-y-6 order-1 lg:order-2">
             {/* Wellness Section - Your Personal Evolution Journal */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -406,8 +549,8 @@ export default function ProfilePage() {
                 </Link>
               </div>
               
-              {/* Mobile: Stack vertically, Desktop: 2 columns */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+              {/* Desktop: 2 columns side by side, Mobile: Stack */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-4">
                 {/* Hydration Tracker */}
                 {userId && <HydrationTracker userId={userId} />}
                 
@@ -419,8 +562,8 @@ export default function ProfilePage() {
               {userId && <MeditationSection userId={userId} />}
             </div>
 
-            {/* Stats Section - Compact for mobile */}
-            <div className="space-y-3 sm:space-y-4">
+            {/* Mobile-only Stats Grid */}
+            <div className="lg:hidden space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-bold text-[var(--foreground)] flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-[var(--color-aurora-blue)]" />
                 Your Progress
@@ -530,7 +673,7 @@ export default function ProfilePage() {
               </Card>
               </div>
 
-              {/* Recent Activity - Compact for mobile */}
+              {/* Recent Activity - Mobile only */}
               <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardHeader className="pb-2 sm:pb-3">
                 <CardTitle className="text-base sm:text-lg text-[var(--foreground)]">Recent Activity</CardTitle>
@@ -574,15 +717,14 @@ export default function ProfilePage() {
               </CardContent>
               </Card>
             </div>
-          </div>
 
-          {/* Right Column - Badges & Recent Posts */}
-          <div className="space-y-6">
-            {/* Badges Showcase */}
-            {userId && <BadgesShowcase userId={userId} />}
+            {/* Mobile-only Badges */}
+            <div className="lg:hidden">
+              {userId && <BadgesShowcase userId={userId} />}
+            </div>
 
-            {/* Recent Posts */}
-            <Card className="bg-[var(--card)] border-[var(--border)]">
+            {/* Mobile-only Recent Posts */}
+            <Card className="bg-[var(--card)] border-[var(--border)] lg:hidden">
               <CardHeader>
                 <CardTitle className="text-[var(--foreground)]">Recent Posts</CardTitle>
               </CardHeader>
@@ -609,8 +751,8 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
 
-            {/* Saved Posts */}
-            <Card className="bg-[var(--card)] border-[var(--border)]">
+            {/* Mobile-only Saved Posts */}
+            <Card className="bg-[var(--card)] border-[var(--border)] lg:hidden">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
                   <Bookmark className="w-5 h-5 text-[var(--color-aurora-purple)]" />

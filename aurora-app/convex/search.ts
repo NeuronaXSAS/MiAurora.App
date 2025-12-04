@@ -1,8 +1,9 @@
 /**
  * Aurora App - Global Search
  * 
- * Search across posts, routes, reels, opportunities, and circles.
- * Returns unified results with type indicators.
+ * POWERFUL SEARCH: The search destination for women looking for anything.
+ * Search across posts, routes, reels, opportunities, circles, resources, and users.
+ * Returns unified results with type indicators and relevance scoring.
  */
 
 import { v } from "convex/values";
@@ -10,6 +11,7 @@ import { query } from "./_generated/server";
 
 /**
  * Search across all public content
+ * Optimized for women's needs: safety, career, wellness, community
  */
 export const globalSearch = query({
   args: {
@@ -18,7 +20,7 @@ export const globalSearch = query({
   },
   handler: async (ctx, args) => {
     const searchQuery = args.query.toLowerCase().trim();
-    const limit = args.limit || 20;
+    const limit = args.limit || 25;
 
     if (searchQuery.length < 2) {
       return { results: [], total: 0 };
@@ -30,7 +32,7 @@ export const globalSearch = query({
       title: string;
       description?: string;
       author?: { name: string; profileImage?: string };
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
       createdAt: number;
     }> = [];
 
@@ -163,6 +165,34 @@ export const globalSearch = query({
       }
     }
 
+    // Search Circles
+    const circles = await ctx.db
+      .query("circles")
+      .take(50);
+
+    for (const circle of circles) {
+      if (circle.isPrivate) continue;
+      
+      if (
+        circle.name.toLowerCase().includes(searchQuery) ||
+        circle.description.toLowerCase().includes(searchQuery) ||
+        circle.category.toLowerCase().includes(searchQuery)
+      ) {
+        results.push({
+          type: "circle",
+          id: circle._id,
+          title: circle.name,
+          description: circle.description.slice(0, 150),
+          metadata: {
+            category: circle.category,
+            memberCount: circle.memberCount || 0,
+            isPrivate: circle.isPrivate,
+          },
+          createdAt: circle._creationTime,
+        });
+      }
+    }
+
     // Search Safety Resources
     const resources = await ctx.db
       .query("safetyResources")
@@ -190,9 +220,18 @@ export const globalSearch = query({
 
     // Sort by relevance (exact matches first) and recency
     results.sort((a, b) => {
-      const aExact = a.title.toLowerCase() === searchQuery ? 1 : 0;
-      const bExact = b.title.toLowerCase() === searchQuery ? 1 : 0;
-      if (aExact !== bExact) return bExact - aExact;
+      // Exact title match gets highest priority
+      const aExact = a.title.toLowerCase() === searchQuery ? 100 : 0;
+      const bExact = b.title.toLowerCase() === searchQuery ? 100 : 0;
+      
+      // Title starts with query
+      const aStarts = a.title.toLowerCase().startsWith(searchQuery) ? 50 : 0;
+      const bStarts = b.title.toLowerCase().startsWith(searchQuery) ? 50 : 0;
+      
+      const aScore = aExact + aStarts;
+      const bScore = bExact + bStarts;
+      
+      if (aScore !== bScore) return bScore - aScore;
       return b.createdAt - a.createdAt;
     });
 
