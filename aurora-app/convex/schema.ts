@@ -1213,4 +1213,360 @@ export default defineSchema({
   })
     .index("by_comment", ["commentId"])
     .index("by_user_and_comment", ["userId", "commentId"]),
+
+  // ============================================
+  // AURORA PREMIUM EXPANSION - Monetization System
+  // ============================================
+
+  // Subscription Tiers Configuration
+  subscriptionTiers: defineTable({
+    tierId: v.string(), // "free", "plus", "pro", "elite"
+    name: v.string(),
+    monthlyPrice: v.number(), // USD
+    annualPrice: v.number(), // USD (20% discount)
+    benefits: v.object({
+      adFree: v.boolean(),
+      aiMessagesPerDay: v.number(), // -1 for unlimited
+      postsPerHour: v.number(),
+      reelsPerDay: v.number(),
+      livestreamsPerDay: v.number(),
+      monthlyCredits: v.number(),
+      prioritySupport: v.boolean(),
+      advancedAnalytics: v.boolean(),
+      exclusiveEvents: v.boolean(),
+      safetyConsultations: v.boolean(),
+      badge: v.string(), // "none", "premium", "pro", "vip"
+    }),
+    isActive: v.boolean(),
+  })
+    .index("by_tier_id", ["tierId"]),
+
+  // User Subscriptions (Premium)
+  userSubscriptions: defineTable({
+    userId: v.id("users"),
+    tier: v.string(), // "free", "plus", "pro", "elite"
+    billingCycle: v.union(v.literal("monthly"), v.literal("annual")),
+    stripeSubscriptionId: v.optional(v.string()),
+    stripeCustomerId: v.optional(v.string()),
+    currentPeriodStart: v.number(),
+    currentPeriodEnd: v.number(),
+    status: v.union(
+      v.literal("active"),
+      v.literal("cancelled"),
+      v.literal("past_due"),
+      v.literal("trialing")
+    ),
+    cancelAtPeriodEnd: v.optional(v.boolean()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_stripe_subscription", ["stripeSubscriptionId"])
+    .index("by_stripe_customer", ["stripeCustomerId"])
+    .index("by_status", ["status"]),
+
+  // Circle Premium Tiers (for Circle monetization)
+  circleTiers: defineTable({
+    circleId: v.id("circles"),
+    tierId: v.string(), // "free", "supporter", "vip"
+    name: v.string(),
+    price: v.number(), // Monthly price in credits
+    benefits: v.array(v.string()),
+    roomAccess: v.optional(v.array(v.string())), // Room IDs that require this tier
+    isActive: v.boolean(),
+  })
+    .index("by_circle", ["circleId"])
+    .index("by_circle_tier", ["circleId", "tierId"]),
+
+  // Circle Premium Memberships
+  circleMemberships: defineTable({
+    circleId: v.id("circles"),
+    userId: v.id("users"),
+    tier: v.string(), // "free", "supporter", "vip"
+    subscribedAt: v.number(),
+    renewsAt: v.number(),
+    status: v.union(v.literal("active"), v.literal("cancelled"), v.literal("expired")),
+    autoRenew: v.optional(v.boolean()),
+  })
+    .index("by_circle", ["circleId"])
+    .index("by_user", ["userId"])
+    .index("by_circle_user", ["circleId", "userId"])
+    .index("by_status", ["status"]),
+
+  // Rooms (for Circles - chat, audio, video, forum, broadcast)
+  rooms: defineTable({
+    circleId: v.id("circles"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    type: v.union(
+      v.literal("chat"),
+      v.literal("audio"),
+      v.literal("video"),
+      v.literal("forum"),
+      v.literal("broadcast")
+    ),
+    visibility: v.union(
+      v.literal("public"),
+      v.literal("members"),
+      v.literal("tier")
+    ),
+    requiredTier: v.optional(v.string()), // Required tier for access
+    maxParticipants: v.optional(v.number()), // 16 for video, 9 hosts for broadcast
+    createdBy: v.id("users"),
+    isActive: v.boolean(),
+    agoraChannel: v.optional(v.string()),
+    // Chat room features
+    features: v.optional(v.object({
+      threads: v.optional(v.boolean()),
+      reactions: v.optional(v.boolean()),
+      gifs: v.optional(v.boolean()),
+      polls: v.optional(v.boolean()),
+      pins: v.optional(v.boolean()),
+      mentions: v.optional(v.boolean()),
+    })),
+  })
+    .index("by_circle", ["circleId"])
+    .index("by_type", ["type"])
+    .index("by_circle_type", ["circleId", "type"]),
+
+  // Room Participants (for tracking who's in audio/video/broadcast rooms)
+  roomParticipants: defineTable({
+    roomId: v.id("rooms"),
+    userId: v.id("users"),
+    role: v.union(v.literal("host"), v.literal("speaker"), v.literal("listener")),
+    joinedAt: v.number(),
+    leftAt: v.optional(v.number()),
+    isActive: v.boolean(),
+  })
+    .index("by_room", ["roomId"])
+    .index("by_user", ["userId"])
+    .index("by_room_active", ["roomId", "isActive"]),
+
+  // Room Messages (for chat and forum rooms)
+  roomMessages: defineTable({
+    roomId: v.id("rooms"),
+    authorId: v.id("users"),
+    content: v.string(),
+    parentId: v.optional(v.id("roomMessages")), // For threads
+    isPinned: v.optional(v.boolean()),
+    reactions: v.optional(v.array(v.object({
+      emoji: v.string(),
+      count: v.number(),
+      users: v.array(v.id("users")),
+    }))),
+    attachments: v.optional(v.array(v.object({
+      type: v.string(),
+      url: v.string(),
+      name: v.optional(v.string()),
+    }))),
+    isDeleted: v.optional(v.boolean()),
+  })
+    .index("by_room", ["roomId"])
+    .index("by_author", ["authorId"])
+    .index("by_parent", ["parentId"]),
+
+  // Gift Catalog
+  giftCatalog: defineTable({
+    giftId: v.string(),
+    name: v.string(),
+    category: v.union(
+      v.literal("hearts"),
+      v.literal("sparkles"),
+      v.literal("crowns"),
+      v.literal("aurora_special")
+    ),
+    credits: v.number(),
+    animationUrl: v.string(),
+    thumbnailUrl: v.optional(v.string()),
+    isActive: v.boolean(),
+    sortOrder: v.optional(v.number()),
+  })
+    .index("by_gift_id", ["giftId"])
+    .index("by_category", ["category"]),
+
+  // Gift Transactions
+  giftTransactions: defineTable({
+    fromUserId: v.id("users"),
+    toUserId: v.id("users"),
+    giftId: v.string(),
+    credits: v.number(),
+    creatorEarnings: v.number(), // 85% of credits
+    platformFee: v.number(), // 15% of credits
+    livestreamId: v.optional(v.id("livestreams")),
+    message: v.optional(v.string()),
+  })
+    .index("by_sender", ["fromUserId"])
+    .index("by_recipient", ["toUserId"])
+    .index("by_livestream", ["livestreamId"]),
+
+  // Super Chats (pinned messages during livestreams)
+  superChats: defineTable({
+    userId: v.id("users"),
+    livestreamId: v.id("livestreams"),
+    message: v.string(),
+    credits: v.number(),
+    pinnedUntil: v.number(), // Timestamp when pin expires
+    creatorEarnings: v.number(),
+  })
+    .index("by_livestream", ["livestreamId"])
+    .index("by_user", ["userId"])
+    .index("by_pinned_until", ["pinnedUntil"]),
+
+  // Events (paid and free)
+  events: defineTable({
+    circleId: v.optional(v.id("circles")),
+    hostId: v.id("users"),
+    title: v.string(),
+    description: v.string(),
+    type: v.union(v.literal("virtual"), v.literal("in-person"), v.literal("hybrid")),
+    pricing: v.union(v.literal("free"), v.literal("paid"), v.literal("tier-exclusive")),
+    price: v.optional(v.number()), // In credits or USD
+    priceType: v.optional(v.union(v.literal("credits"), v.literal("usd"))),
+    requiredTier: v.optional(v.string()),
+    capacity: v.number(),
+    waitlistEnabled: v.boolean(),
+    startTime: v.number(),
+    endTime: v.number(),
+    timezone: v.optional(v.string()),
+    location: v.optional(v.object({
+      name: v.string(),
+      address: v.optional(v.string()),
+      coordinates: v.optional(v.array(v.number())),
+    })),
+    roomId: v.optional(v.id("rooms")), // For virtual events
+    coverImage: v.optional(v.string()),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("upcoming"),
+      v.literal("live"),
+      v.literal("ended"),
+      v.literal("cancelled")
+    ),
+    attendeeCount: v.optional(v.number()),
+    averageRating: v.optional(v.number()),
+  })
+    .index("by_circle", ["circleId"])
+    .index("by_host", ["hostId"])
+    .index("by_status", ["status"])
+    .index("by_start_time", ["startTime"]),
+
+  // Event RSVPs
+  eventRsvps: defineTable({
+    eventId: v.id("events"),
+    userId: v.id("users"),
+    status: v.union(
+      v.literal("going"),
+      v.literal("maybe"),
+      v.literal("waitlist"),
+      v.literal("cancelled")
+    ),
+    paidAmount: v.optional(v.number()),
+    paymentType: v.optional(v.union(v.literal("credits"), v.literal("usd"))),
+    hostEarnings: v.optional(v.number()), // 80% of paid amount
+    rsvpedAt: v.number(),
+    checkedInAt: v.optional(v.number()),
+  })
+    .index("by_event", ["eventId"])
+    .index("by_user", ["userId"])
+    .index("by_event_user", ["eventId", "userId"])
+    .index("by_status", ["status"]),
+
+  // Event Reviews
+  eventReviews: defineTable({
+    eventId: v.id("events"),
+    userId: v.id("users"),
+    rating: v.number(), // 1-5
+    review: v.optional(v.string()),
+    isPublic: v.optional(v.boolean()),
+  })
+    .index("by_event", ["eventId"])
+    .index("by_user", ["userId"]),
+
+  // Credit Packages (for purchase)
+  creditPackages: defineTable({
+    packageId: v.string(),
+    credits: v.number(),
+    priceUSD: v.number(),
+    bonus: v.optional(v.number()), // Bonus credits for larger packages
+    isActive: v.boolean(),
+    sortOrder: v.optional(v.number()),
+    // Regional pricing
+    regionalPricing: v.optional(v.array(v.object({
+      region: v.string(),
+      currency: v.string(),
+      price: v.number(),
+    }))),
+  })
+    .index("by_package_id", ["packageId"]),
+
+  // Credit Purchases
+  creditPurchases: defineTable({
+    userId: v.id("users"),
+    packageId: v.string(),
+    credits: v.number(),
+    bonusCredits: v.optional(v.number()),
+    amountPaid: v.number(),
+    currency: v.string(),
+    stripePaymentId: v.optional(v.string()),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("completed"),
+      v.literal("failed"),
+      v.literal("refunded")
+    ),
+  })
+    .index("by_user", ["userId"])
+    .index("by_stripe_payment", ["stripePaymentId"]),
+
+  // Referrals
+  referrals: defineTable({
+    referrerId: v.id("users"),
+    refereeId: v.id("users"),
+    referralCode: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("completed"),
+      v.literal("expired")
+    ),
+    referrerCredited: v.boolean(),
+    refereeCredited: v.boolean(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_referrer", ["referrerId"])
+    .index("by_referee", ["refereeId"])
+    .index("by_code", ["referralCode"]),
+
+  // Engagement Rewards Tracking (to prevent gaming)
+  engagementRewards: defineTable({
+    userId: v.id("users"),
+    action: v.string(), // "daily_login", "post_created", etc.
+    lastAwarded: v.number(),
+    countToday: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_action", ["userId", "action"]),
+
+  // Creator Subscription Tiers (for individual creators)
+  creatorTiers: defineTable({
+    creatorId: v.id("users"),
+    tierId: v.string(), // "basic", "premium", "vip"
+    name: v.string(),
+    price: v.number(), // Monthly price in credits
+    benefits: v.array(v.string()),
+    isActive: v.boolean(),
+  })
+    .index("by_creator", ["creatorId"])
+    .index("by_creator_tier", ["creatorId", "tierId"]),
+
+  // Creator Subscribers (users subscribed to creators)
+  creatorSubscribers: defineTable({
+    creatorId: v.id("users"),
+    subscriberId: v.id("users"),
+    tier: v.string(),
+    subscribedAt: v.number(),
+    renewsAt: v.number(),
+    status: v.union(v.literal("active"), v.literal("cancelled"), v.literal("expired")),
+    autoRenew: v.optional(v.boolean()),
+  })
+    .index("by_creator", ["creatorId"])
+    .index("by_subscriber", ["subscriberId"])
+    .index("by_creator_subscriber", ["creatorId", "subscriberId"]),
 });

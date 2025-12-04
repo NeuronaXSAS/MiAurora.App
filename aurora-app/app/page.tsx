@@ -1082,6 +1082,160 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Premium Section - NEW */}
+      <section className="py-16 md:py-24 bg-gradient-to-br from-[#e5e093]/20 via-white to-[#f29de5]/10">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <Badge className="bg-gradient-to-r from-[#e5e093] to-[#f29de5] text-[#3d0d73] border-0 mb-4 px-4 py-1.5 text-sm font-bold">
+                ✨ Aurora Premium
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#3d0d73] mb-4">
+                Unlock the{" "}
+                <span className="bg-gradient-to-r from-[#e5e093] to-[#f29de5] bg-clip-text text-transparent">
+                  full experience
+                </span>
+              </h2>
+              <p className="text-[#3d0d73]/60 text-lg max-w-2xl mx-auto">
+                Go premium for unlimited access, exclusive features, and support the mission of keeping women safe worldwide.
+              </p>
+            </motion.div>
+          </div>
+
+          {/* Premium Tiers */}
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            {[
+              {
+                name: "Aurora Plus",
+                price: "$5",
+                period: "/month",
+                badge: "Most Popular",
+                color: "#5537a7",
+                features: [
+                  "Ad-free experience",
+                  "100 AI messages/day",
+                  "25 posts/hour",
+                  "100 monthly credits",
+                  "Premium badge"
+                ]
+              },
+              {
+                name: "Aurora Pro",
+                price: "$12",
+                period: "/month",
+                badge: "Best Value",
+                color: "#f29de5",
+                features: [
+                  "Everything in Plus",
+                  "Unlimited AI companion",
+                  "Priority support",
+                  "Advanced analytics",
+                  "500 monthly credits"
+                ],
+                highlighted: true
+              },
+              {
+                name: "Aurora Elite",
+                price: "$25",
+                period: "/month",
+                badge: "VIP",
+                color: "#e5e093",
+                features: [
+                  "Everything in Pro",
+                  "Exclusive events access",
+                  "1-on-1 safety consultations",
+                  "VIP badge & priority",
+                  "1500 monthly credits"
+                ]
+              }
+            ].map((tier, i) => (
+              <motion.div
+                key={tier.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className={`relative rounded-3xl p-6 ${
+                  tier.highlighted 
+                    ? "bg-gradient-to-br from-[#5537a7] to-[#3d0d73] text-white shadow-2xl shadow-[#5537a7]/30 scale-105" 
+                    : "bg-white border border-gray-100 shadow-lg"
+                }`}
+              >
+                {tier.badge && (
+                  <Badge 
+                    className={`absolute -top-3 left-1/2 -translate-x-1/2 ${
+                      tier.highlighted 
+                        ? "bg-[#e5e093] text-[#3d0d73]" 
+                        : "bg-[#5537a7]/10 text-[#5537a7]"
+                    } border-0 px-3 py-1`}
+                  >
+                    {tier.badge}
+                  </Badge>
+                )}
+                
+                <div className="text-center mb-6 pt-4">
+                  <h3 className={`font-bold text-xl mb-2 ${tier.highlighted ? "text-white" : "text-[#3d0d73]"}`}>
+                    {tier.name}
+                  </h3>
+                  <div className="flex items-baseline justify-center gap-1">
+                    <span className={`text-4xl font-black ${tier.highlighted ? "text-white" : "text-[#3d0d73]"}`}>
+                      {tier.price}
+                    </span>
+                    <span className={tier.highlighted ? "text-white/70" : "text-[#3d0d73]/50"}>
+                      {tier.period}
+                    </span>
+                  </div>
+                </div>
+
+                <ul className="space-y-3 mb-6">
+                  {tier.features.map((feature) => (
+                    <li key={feature} className="flex items-center gap-2">
+                      <CheckCircle className={`w-4 h-4 flex-shrink-0 ${
+                        tier.highlighted ? "text-[#e5e093]" : "text-[#22c55e]"
+                      }`} />
+                      <span className={`text-sm ${tier.highlighted ? "text-white/90" : "text-[#3d0d73]/70"}`}>
+                        {feature}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Link href="/api/auth/login">
+                  <Button 
+                    className={`w-full min-h-[48px] rounded-xl font-semibold ${
+                      tier.highlighted 
+                        ? "bg-white text-[#5537a7] hover:bg-white/90" 
+                        : "bg-[#5537a7] text-white hover:bg-[#3d0d73]"
+                    }`}
+                  >
+                    Get {tier.name}
+                  </Button>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Free Forever Note */}
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+          >
+            <div className="inline-flex items-center gap-2 bg-[#d6f4ec]/50 text-[#3d0d73] px-6 py-3 rounded-full">
+              <Shield className="w-5 h-5 text-[#22c55e]" />
+              <span className="font-medium">
+                Safety features are <span className="font-bold">always free</span> — panic button, emergency contacts, and basic routes
+              </span>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Final CTA Section */}
       <section className="py-16 md:py-24 bg-white relative overflow-hidden">
         {/* Background Elements */}
