@@ -197,14 +197,18 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
     if (!confirm('Trigger emergency alert?')) return;
     try {
       const loc = await new Promise<{lat:number,lng:number}>((resolve) => {
-        navigator.geolocation?.getCurrentPosition(
-          p => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
-          () => resolve({ lat: 0, lng: 0 }),
-          { timeout: 5000 }
-        ) || resolve({ lat: 0, lng: 0 });
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            p => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+            () => resolve({ lat: 0, lng: 0 }),
+            { timeout: 5000 }
+          );
+        } else {
+          resolve({ lat: 0, lng: 0 });
+        }
       });
       await triggerEmergency({ location: { ...loc, accuracy: 0 }, alertType: 'manual', message: `Emergency: ${title}` });
-      alert('Emergency alert sent!');
+      alert('Emergency alert sent to all Aurora App users!');
     } catch {
       alert('Failed to send alert');
     }
