@@ -8,9 +8,9 @@ import { Card } from "@/components/ui/card";
 import {
   Sparkles, MapPin, Briefcase, Shield, ArrowRight,
   Heart, Users, Star, Lock, ThumbsUp, MessageSquare,
-  Route, X, CheckCircle, Zap, Globe, Play, Radio,
-  ChevronRight, Award, TrendingUp, Clock, Eye, Mic,
-  AlertTriangle, Phone, MapPinned, Building2, Lightbulb
+  Route, X, CheckCircle, Zap, Globe, Play,
+  ChevronRight, Eye, Brain, Smile, Ban, RefreshCw, 
+  HeartHandshake, Leaf, Cpu, Network, Fingerprint
 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -18,13 +18,61 @@ import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion"
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 
+// Animated grid background component
+const GridBackground = () => (
+  <div className="absolute inset-0 overflow-hidden">
+    <div className="absolute inset-0 bg-[linear-gradient(to_right,#5537a710_1px,transparent_1px),linear-gradient(to_bottom,#5537a710_1px,transparent_1px)] bg-[size:60px_60px]" />
+    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#fffaf1]/50 to-[#fffaf1]" />
+  </div>
+);
+
+// Floating orbs component
+const FloatingOrbs = () => (
+  <>
+    <motion.div 
+      className="absolute top-20 right-[10%] w-[400px] h-[400px] rounded-full"
+      style={{ background: "radial-gradient(circle, rgba(85,55,167,0.15) 0%, transparent 70%)" }}
+      animate={{ 
+        scale: [1, 1.2, 1],
+        x: [0, 30, 0],
+        y: [0, -20, 0]
+      }}
+      transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+    />
+    <motion.div 
+      className="absolute bottom-40 left-[5%] w-[500px] h-[500px] rounded-full"
+      style={{ background: "radial-gradient(circle, rgba(242,157,229,0.2) 0%, transparent 70%)" }}
+      animate={{ 
+        scale: [1.2, 1, 1.2],
+        x: [0, -20, 0],
+        y: [0, 30, 0]
+      }}
+      transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+    />
+    <motion.div 
+      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
+      style={{ background: "radial-gradient(circle, rgba(214,244,236,0.3) 0%, transparent 70%)" }}
+      animate={{ rotate: 360 }}
+      transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+    />
+  </>
+);
+
+// Glowing line component
+const GlowingLine = ({ className = "" }: { className?: string }) => (
+  <motion.div 
+    className={`h-px bg-gradient-to-r from-transparent via-[#5537a7] to-transparent ${className}`}
+    animate={{ opacity: [0.3, 0.8, 0.3] }}
+    transition={{ duration: 3, repeat: Infinity }}
+  />
+);
+
 export default function LandingPage() {
   const publicFeed = useQuery(api.feed.getPublicFeed, { limit: 10 });
-  const recentUsers = useQuery((api.users as any).getRecentUsers, { limit: 8 }) as { _id: string; name: string; profileImage?: string }[] | undefined;
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
   const [dismissedPrompt, setDismissedPrompt] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
-  const [activeStat, setActiveStat] = useState(0);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll();
   const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
@@ -32,165 +80,95 @@ export default function LandingPage() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      if (scrollTop > 400 && !dismissedPrompt) setShowSignupPrompt(true);
+      if (window.scrollY > 400 && !dismissedPrompt) setShowSignupPrompt(true);
+    };
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
     };
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
   }, [dismissedPrompt]);
 
-  // Auto-rotate features
   useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveFeature((prev) => (prev + 1) % 4);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Auto-rotate stats
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveStat((prev) => (prev + 1) % 4);
-    }, 3000);
+    const interval = setInterval(() => setActiveFeature((prev) => (prev + 1) % 4), 4000);
     return () => clearInterval(interval);
   }, []);
 
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const error = searchParams?.get("error");
 
+  const toxicVsAurora = [
+    { toxic: "Algorithms maximizing anger", aurora: "AI designed to uplift", icon: Brain },
+    { toxic: "Endless doom-scrolling", aurora: "Mindful engagement", icon: RefreshCw },
+    { toxic: "Fake perfection culture", aurora: "Authentic connections", icon: HeartHandshake },
+    { toxic: "Harassment & toxicity", aurora: "Safe moderated space", icon: Shield },
+    { toxic: "Data sold to advertisers", aurora: "Privacy-first architecture", icon: Lock },
+    { toxic: "Mental health damage", aurora: "Wellbeing by design", icon: Smile }
+  ];
+
   const features = [
-    {
-      id: 0,
-      icon: Shield,
-      title: "Safety Intelligence",
-      subtitle: "Know before you go",
-      desc: "Access community-verified safety ratings for workplaces, neighborhoods, and routes. Real women sharing real experiences.",
-      color: "#f29de5",
-      stats: "50K+ ratings",
-      image: "🛡️"
-    },
-    {
-      id: 1,
-      icon: Route,
-      title: "Safe Routes",
-      subtitle: "Walk with confidence",
-      desc: "GPS-tracked routes rated by women who've walked them. Share your journey with trusted contacts in real-time.",
-      color: "#2e2ad6",
-      stats: "25K+ routes",
-      image: "🗺️"
-    },
-    {
-      id: 2,
-      icon: Users,
-      title: "Support Circles",
-      subtitle: "Never alone",
-      desc: "Join private communities of women in your area or industry. Get advice, share experiences, find mentors.",
-      color: "#5537a7",
-      stats: "5K+ circles",
-      image: "👩‍👩‍👧‍👦"
-    },
-    {
-      id: 3,
-      icon: Briefcase,
-      title: "Opportunities",
-      subtitle: "Grow your career",
-      desc: "Access women-friendly job listings, mentorship programs, and professional development resources.",
-      color: "#e5e093",
-      stats: "2K+ jobs",
-      image: "💼"
-    }
+    { id: 0, icon: Shield, title: "Safety Intelligence", subtitle: "AI-Powered Protection", desc: "Real-time safety ratings powered by community intelligence and machine learning.", color: "#f29de5", stats: "50K+ ratings" },
+    { id: 1, icon: Route, title: "Safe Routes", subtitle: "Smart Navigation", desc: "GPS-tracked routes with live safety scores and real-time journey sharing.", color: "#2e2ad6", stats: "25K+ routes" },
+    { id: 2, icon: Users, title: "Support Circles", subtitle: "Encrypted Communities", desc: "Private, encrypted communities with AI-moderated safe spaces.", color: "#5537a7", stats: "5K+ circles" },
+    { id: 3, icon: Briefcase, title: "Opportunities", subtitle: "Career Intelligence", desc: "AI-matched job listings and mentorship from verified professionals.", color: "#e5e093", stats: "2K+ jobs" }
   ];
 
   const stats = [
-    { value: "10,000+", label: "Women Protected", icon: Users, color: "#f29de5" },
-    { value: "50,000+", label: "Safety Reports", icon: Shield, color: "#5537a7" },
-    { value: "25,000+", label: "Safe Routes", icon: Route, color: "#2e2ad6" },
-    { value: "98%", label: "Feel Safer", icon: Heart, color: "#d6f4ec" }
+    { value: "10K+", label: "Protected", icon: Users },
+    { value: "50K+", label: "Reports", icon: Shield },
+    { value: "25K+", label: "Routes", icon: Route },
+    { value: "98%", label: "Safer", icon: Heart }
   ];
 
   const testimonials = [
-    {
-      quote: "I was nervous about my new commute in a new city. Aurora's safe routes feature gave me the confidence to walk to work. The community ratings were spot-on.",
-      name: "Sarah Mitchell",
-      role: "Software Engineer",
-      location: "San Francisco, USA",
-      avatar: "👩‍💻",
-      rating: 5,
-      highlight: "safe routes"
-    },
-    {
-      quote: "The workplace ratings saved me from accepting a job at a company with serious harassment issues. This app is essential for every woman job hunting.",
-      name: "María López",
-      role: "Marketing Director",
-      location: "Bogotá, Colombia",
-      avatar: "👩‍💼",
-      rating: 5,
-      highlight: "workplace ratings"
-    },
-    {
-      quote: "Found my mentor through Aurora's circles. She helped me negotiate a 30% raise. The community here genuinely wants to see you succeed.",
-      name: "Priya Sharma",
-      role: "Data Analyst",
-      location: "Mumbai, India",
-      avatar: "👩‍🔬",
-      rating: 5,
-      highlight: "mentor"
-    },
-    {
-      quote: "The panic button feature gave my mom peace of mind when I moved abroad. Knowing help is one tap away makes all the difference.",
-      name: "Emma Chen",
-      role: "Graduate Student",
-      location: "London, UK",
-      avatar: "👩‍🎓",
-      rating: 5,
-      highlight: "panic button"
-    }
+    { quote: "Aurora App's AI actually understands what content helps me. After years of toxic feeds, this feels revolutionary.", name: "Sarah M.", role: "Engineer", location: "San Francisco", avatar: "👩‍💻", highlight: "revolutionary" },
+    { quote: "The workplace safety intelligence saved me from a toxic job. The AI analysis was spot-on.", name: "María L.", role: "Director", location: "Bogotá", avatar: "👩‍💼", highlight: "AI analysis" },
+    { quote: "Finally, an algorithm that doesn't exploit my emotions. My screen time is down 60% and I feel better.", name: "Priya S.", role: "Analyst", location: "Mumbai", avatar: "👩‍🔬", highlight: "60%" },
+    { quote: "The panic button's offline AI is incredible. Real safety tech, not just marketing.", name: "Emma C.", role: "Student", location: "London", avatar: "👩‍🎓", highlight: "offline AI" }
   ];
 
   return (
     <div className="min-h-screen bg-[#fffaf1] overflow-x-hidden">
+      {/* Cursor glow effect */}
+      <div 
+        className="pointer-events-none fixed inset-0 z-30 transition-opacity duration-300 hidden lg:block"
+        style={{
+          background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(85,55,167,0.06), transparent 40%)`
+        }}
+      />
+
       {/* Error Message */}
       {error === "user_not_found" && (
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 max-w-md"
-        >
-          <div className="bg-[#f05a6b] rounded-xl p-4 shadow-lg">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+          <div className="bg-[#f05a6b] rounded-xl p-4 shadow-lg backdrop-blur-sm">
             <p className="text-white font-semibold">⚠️ Session Expired</p>
             <p className="text-white/90 text-sm">Please sign in again.</p>
           </div>
         </motion.div>
       )}
 
-      {/* Floating Signup Prompt - Mobile */}
+      {/* Mobile Signup Prompt */}
       <AnimatePresence>
         {showSignupPrompt && !dismissedPrompt && (
-          <motion.div 
-            initial={{ opacity: 0, y: 100 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            exit={{ opacity: 0, y: 100 }} 
-            className="fixed bottom-4 left-4 right-4 z-50 md:hidden"
-          >
-            <Card className="bg-gradient-to-r from-[#5537a7] to-[#3d0d73] border-0 p-4 shadow-2xl rounded-2xl">
-              <button 
-                onClick={() => setDismissedPrompt(true)} 
-                className="absolute top-2 right-2 text-white/60 hover:text-white p-1"
-              >
+          <motion.div initial={{ opacity: 0, y: 100 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 100 }} className="fixed bottom-4 left-4 right-4 z-50 md:hidden">
+            <Card className="bg-[#3d0d73]/95 backdrop-blur-xl border border-[#5537a7]/30 p-4 shadow-2xl rounded-2xl">
+              <button onClick={() => setDismissedPrompt(true)} className="absolute top-2 right-2 text-white/60 hover:text-white p-1">
                 <X className="w-5 h-5" />
               </button>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-[#e5e093] rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="text-2xl">🎁</span>
+                <div className="w-12 h-12 bg-gradient-to-br from-[#5537a7] to-[#f29de5] rounded-xl flex items-center justify-center">
+                  <Cpu className="w-6 h-6 text-white" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-white text-sm">Get 25 Free Credits</h4>
-                  <p className="text-white/80 text-xs">Join 10,000+ women today</p>
+                <div className="flex-1">
+                  <h4 className="font-bold text-white text-sm">Next-Gen Social Network</h4>
+                  <p className="text-white/70 text-xs">Join 10,000+ women</p>
                 </div>
                 <Link href="/api/auth/login">
-                  <Button size="sm" className="bg-white text-[#5537a7] hover:bg-white/90 font-bold rounded-xl min-h-[44px] px-5">
-                    Join
-                  </Button>
+                  <Button size="sm" className="bg-white text-[#5537a7] hover:bg-white/90 font-bold rounded-xl min-h-[44px] px-5">Join</Button>
                 </Link>
               </div>
             </Card>
@@ -198,24 +176,27 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
-      {/* Navbar */}
-      <nav className="sticky top-0 z-40 bg-[#fffaf1]/95 backdrop-blur-lg border-b border-[#3d0d73]/10">
+      {/* Futuristic Navbar */}
+      <nav className="sticky top-0 z-40 bg-[#fffaf1]/80 backdrop-blur-xl border-b border-[#5537a7]/10">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Image src="/Au_Logo_1.png" alt="Aurora App" width={44} height={44} className="rounded-xl" />
+              <div className="relative">
+                <Image src="/Au_Logo_1.png" alt="Aurora App" width={44} height={44} className="rounded-xl" />
+                <motion.div className="absolute -inset-1 bg-gradient-to-r from-[#5537a7] to-[#f29de5] rounded-xl opacity-30 blur-sm -z-10" animate={{ opacity: [0.2, 0.4, 0.2] }} transition={{ duration: 2, repeat: Infinity }} />
+              </div>
               <span className="text-lg font-bold text-[#3d0d73] hidden sm:block">Aurora App</span>
+              <Badge className="hidden sm:flex bg-gradient-to-r from-[#5537a7]/10 to-[#f29de5]/10 text-[#5537a7] border-[#5537a7]/20 text-xs">v2.0</Badge>
             </div>
             <div className="flex items-center gap-3">
               <Link href="/api/auth/login" className="hidden sm:block">
-                <Button variant="ghost" className="text-[#3d0d73] hover:bg-[#5537a7]/10 rounded-xl font-medium">
-                  Sign In
-                </Button>
+                <Button variant="ghost" className="text-[#3d0d73] hover:bg-[#5537a7]/10 rounded-xl font-medium">Sign In</Button>
               </Link>
               <Link href="/api/auth/login">
-                <Button className="bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-xl px-5 min-h-[44px] font-semibold shadow-lg shadow-[#5537a7]/20">
-                  <span className="hidden sm:inline">Get Started Free</span>
-                  <span className="sm:hidden">Join Free</span>
+                <Button className="bg-gradient-to-r from-[#5537a7] to-[#3d0d73] hover:opacity-90 text-white rounded-xl px-5 min-h-[44px] font-semibold shadow-lg shadow-[#5537a7]/20 border border-[#5537a7]/50">
+                  <span className="hidden sm:inline">Get Started</span>
+                  <span className="sm:hidden">Join</span>
+                  <Sparkles className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
             </div>
@@ -223,203 +204,71 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section - Emotional & Story-Driven */}
-      <section ref={heroRef} className="relative overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#fffaf1] via-[#c9cef4]/30 to-[#f29de5]/20" />
-          <motion.div 
-            className="absolute top-20 right-10 w-72 h-72 bg-[#f29de5]/30 rounded-full blur-3xl"
-            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 8, repeat: Infinity }}
-          />
-          <motion.div 
-            className="absolute bottom-20 left-10 w-96 h-96 bg-[#c9cef4]/40 rounded-full blur-3xl"
-            animate={{ scale: [1.2, 1, 1.2], opacity: [0.4, 0.6, 0.4] }}
-            transition={{ duration: 10, repeat: Infinity }}
-          />
-          <motion.div 
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#5537a7]/10 rounded-full blur-3xl"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-          />
-        </div>
-        
-        <motion.div 
-          style={{ opacity: heroOpacity, scale: heroScale }}
-          className="relative max-w-6xl mx-auto px-4 pt-8 pb-16 md:pt-16 md:pb-24"
-        >
-          <div className="max-w-4xl mx-auto text-center">
-            {/* Live Activity Badge */}
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }} 
-              animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-[#5537a7]/20 rounded-full px-4 py-2 mb-6 shadow-lg"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22c55e] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#22c55e]"></span>
-              </span>
-              <span className="text-sm font-medium text-[#3d0d73]">
-                <span className="font-bold text-[#5537a7]">247 women</span> joined today
-              </span>
-              <ChevronRight className="w-4 h-4 text-[#5537a7]" />
-            </motion.div>
 
-            {/* Social Proof Avatars */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ delay: 0.1 }}
-              className="flex items-center justify-center gap-4 mb-8"
-            >
-              <div className="flex -space-x-3">
-                {recentUsers && recentUsers.length > 0 ? (
-                  recentUsers.slice(0, 5).map((user, i) => (
-                    <motion.div 
-                      key={user._id} 
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      className="w-10 h-10 rounded-full border-3 border-[#fffaf1] shadow-lg overflow-hidden bg-gradient-to-br from-[#f29de5] to-[#c9cef4]"
-                    >
-                      {user.profileImage ? (
-                        <Image src={user.profileImage} alt="" width={40} height={40} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white text-sm font-bold">
-                          {user.name?.[0] || "A"}
-                        </div>
-                      )}
-                    </motion.div>
-                  ))
-                ) : (
-                  ["👩‍💻", "👩‍🎨", "👩‍⚕️", "👩‍🔬", "👩‍💼"].map((emoji, i) => (
-                    <motion.div 
-                      key={i}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-[#f29de5] to-[#c9cef4] border-3 border-[#fffaf1] shadow-lg flex items-center justify-center text-lg"
-                    >
-                      {emoji}
-                    </motion.div>
-                  ))
-                )}
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.5 }}
-                  className="w-10 h-10 rounded-full bg-[#5537a7] border-3 border-[#fffaf1] shadow-lg flex items-center justify-center"
-                >
-                  <span className="text-white text-[10px] font-bold">+10K</span>
-                </motion.div>
-              </div>
-              <div className="text-left">
-                <div className="flex items-center gap-1">
-                  {[1,2,3,4,5].map(i => (
-                    <Star key={i} className="w-4 h-4 fill-[#e5e093] text-[#e5e093]" />
-                  ))}
-                  <span className="text-sm font-bold text-[#3d0d73] ml-1">4.9</span>
-                </div>
-                <p className="text-xs text-[#3d0d73]/60">Trusted by 10,000+ women</p>
+      {/* HERO SECTION - Futuristic */}
+      <section ref={heroRef} className="relative min-h-[90vh] flex items-center overflow-hidden">
+        <GridBackground />
+        <FloatingOrbs />
+        
+        <motion.div style={{ opacity: heroOpacity, scale: heroScale }} className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Futuristic Badge */}
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 mb-6">
+              <div className="flex items-center gap-2 bg-[#3d0d73]/5 backdrop-blur-sm border border-[#5537a7]/20 rounded-full px-4 py-2 shadow-lg">
+                <motion.div className="w-2 h-2 bg-[#22c55e] rounded-full" animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }} transition={{ duration: 1.5, repeat: Infinity }} />
+                <span className="text-sm font-medium text-[#3d0d73]">
+                  <span className="text-[#5537a7] font-bold">AI-Powered</span> • Non-Toxic Algorithm
+                </span>
+                <Cpu className="w-4 h-4 text-[#5537a7]" />
               </div>
             </motion.div>
 
             {/* Main Headline */}
-            <motion.h1 
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#3d0d73] mb-6 leading-[1.1]"
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ delay: 0.2 }}
-            >
-              Your Safety.{" "}
-              <span className="relative">
-                <span className="bg-gradient-to-r from-[#5537a7] to-[#f29de5] bg-clip-text text-transparent">
-                  Your Community.
+            <motion.h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#3d0d73] mb-6 leading-[1.05]" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+              The{" "}
+              <span className="relative inline-block">
+                <span className="bg-gradient-to-r from-[#5537a7] via-[#f29de5] to-[#2e2ad6] bg-clip-text text-transparent bg-[length:200%_auto] animate-[gradient_3s_linear_infinite]">
+                  Future
                 </span>
-                <motion.svg 
-                  className="absolute -bottom-2 left-0 w-full" 
-                  viewBox="0 0 300 12" 
-                  fill="none"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ delay: 0.8, duration: 0.8 }}
-                >
-                  <motion.path 
-                    d="M2 10C50 4 100 4 150 6C200 8 250 4 298 8" 
-                    stroke="#f29de5" 
-                    strokeWidth="4" 
-                    strokeLinecap="round"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ delay: 0.8, duration: 0.8 }}
-                  />
-                </motion.svg>
               </span>
+              {" "}of
               <br />
-              <span className="text-[#5537a7]">Your Growth.</span>
+              Social Networking
             </motion.h1>
 
             {/* Subheadline */}
-            <motion.p 
-              className="text-lg sm:text-xl text-[#3d0d73]/70 mb-8 max-w-2xl mx-auto leading-relaxed"
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ delay: 0.3 }}
-            >
-              The <span className="font-semibold text-[#5537a7]">#1 safety app</span> built by women, for women. 
-              Rate workplaces, share safe routes, find mentors, and connect with a global community that has your back.
+            <motion.p className="text-lg sm:text-xl md:text-2xl text-[#3d0d73]/70 mb-8 max-w-3xl mx-auto leading-relaxed" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              The first <span className="font-bold text-[#5537a7]">non-toxic algorithm</span> that cares for your wellbeing.
+              <br className="hidden sm:block" />
+              Built by women. Powered by ethical AI. Zero manipulation.
             </motion.p>
 
-            {/* Value Props Pills */}
-            <motion.div 
-              className="flex flex-wrap justify-center gap-2 mb-8"
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ delay: 0.4 }}
-            >
+            {/* Tech Pills */}
+            <motion.div className="flex flex-wrap justify-center gap-2 mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               {[
-                { emoji: "🛡️", text: "Safety Ratings", color: "#f29de5" },
-                { emoji: "🗺️", text: "Safe Routes", color: "#2e2ad6" },
-                { emoji: "👩‍👩‍👧‍👦", text: "Support Circles", color: "#5537a7" },
-                { emoji: "💼", text: "Job Opportunities", color: "#e5e093" },
-                { emoji: "🎯", text: "Mentorship", color: "#d6f4ec" }
+                { icon: Brain, text: "Ethical AI", color: "#5537a7" },
+                { icon: Shield, text: "Privacy-First", color: "#22c55e" },
+                { icon: Network, text: "Decentralized Safety", color: "#2e2ad6" },
+                { icon: Fingerprint, text: "Zero Data Sales", color: "#f29de5" }
               ].map((item, i) => (
-                <motion.span 
-                  key={item.text}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.5 + i * 0.1 }}
-                  className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-[#3d0d73] shadow-sm border border-[#3d0d73]/10"
-                >
-                  <span>{item.emoji}</span>
+                <motion.div key={item.text} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 + i * 0.1 }}
+                  className="flex items-center gap-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-[#3d0d73] shadow-sm border border-[#3d0d73]/10 hover:border-[#5537a7]/30 transition-all hover:shadow-md cursor-default">
+                  <item.icon className="w-4 h-4" style={{ color: item.color }} />
                   {item.text}
-                </motion.span>
+                </motion.div>
               ))}
             </motion.div>
 
             {/* CTA Buttons */}
-            <motion.div 
-              className="flex flex-col sm:flex-row gap-4 justify-center mb-8"
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ delay: 0.5 }}
-            >
+            <motion.div className="flex flex-col sm:flex-row gap-4 justify-center mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
               <Link href="/api/auth/login">
-                <Button 
-                  size="lg" 
-                  className="w-full sm:w-auto bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-2xl px-10 min-h-[60px] font-bold text-lg shadow-xl shadow-[#5537a7]/30 transition-all hover:scale-105"
-                >
-                  Join Free — Get 25 Credits
+                <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-[#5537a7] to-[#3d0d73] hover:opacity-90 text-white rounded-2xl px-10 min-h-[60px] font-bold text-lg shadow-xl shadow-[#5537a7]/30 border border-[#5537a7]/50 transition-all hover:scale-[1.02] hover:shadow-2xl">
+                  Enter the Future
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-              <Link href="#features">
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="w-full sm:w-auto border-2 border-[#5537a7]/30 text-[#5537a7] hover:bg-[#5537a7]/10 rounded-2xl px-8 min-h-[60px] font-semibold text-lg"
-                >
+              <Link href="#how-it-works">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-[#5537a7]/30 text-[#5537a7] hover:bg-[#5537a7]/5 rounded-2xl px-8 min-h-[60px] font-semibold text-lg backdrop-blur-sm">
                   <Play className="w-5 h-5 mr-2 fill-[#5537a7]" />
                   See How It Works
                 </Button>
@@ -427,16 +276,10 @@ export default function LandingPage() {
             </motion.div>
 
             {/* Trust Indicators */}
-            <motion.div 
-              className="flex flex-wrap justify-center gap-6"
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              transition={{ delay: 0.6 }}
-            >
+            <motion.div className="flex flex-wrap justify-center gap-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
               {[
-                { icon: CheckCircle, text: "100% Free to Start" },
-                { icon: Lock, text: "Private & Encrypted" },
-                { icon: Globe, text: "Available Worldwide" },
+                { icon: CheckCircle, text: "Free Safety Features" },
+                { icon: Lock, text: "End-to-End Encrypted" },
                 { icon: Zap, text: "No Credit Card" }
               ].map((item) => (
                 <span key={item.text} className="flex items-center gap-2 text-[#3d0d73]/60 text-sm">
@@ -449,155 +292,150 @@ export default function LandingPage() {
         </motion.div>
 
         {/* Scroll Indicator */}
-        <motion.div 
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <div className="w-6 h-10 rounded-full border-2 border-[#5537a7]/30 flex items-start justify-center p-2">
-            <motion.div 
-              className="w-1.5 h-1.5 bg-[#5537a7] rounded-full"
-              animate={{ y: [0, 16, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
+        <motion.div className="absolute bottom-8 left-1/2 -translate-x-1/2" animate={{ y: [0, 10, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+          <div className="w-6 h-10 rounded-full border-2 border-[#5537a7]/30 flex items-start justify-center p-2 backdrop-blur-sm">
+            <motion.div className="w-1.5 h-1.5 bg-[#5537a7] rounded-full" animate={{ y: [0, 16, 0] }} transition={{ duration: 2, repeat: Infinity }} />
           </div>
         </motion.div>
       </section>
 
-      {/* Live Stats Ticker */}
-      <section className="py-6 bg-gradient-to-r from-[#5537a7] to-[#3d0d73] overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4">
+      {/* Stats Bar - Futuristic */}
+      <section className="relative py-8 bg-[#3d0d73] overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#5537a720_1px,transparent_1px)] bg-[size:40px_40px]" />
+        <GlowingLine className="absolute top-0 left-0 right-0" />
+        <GlowingLine className="absolute bottom-0 left-0 right-0" />
+        <div className="relative max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-center gap-8 md:gap-16">
             {stats.map((stat, i) => (
-              <motion.div 
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="text-center"
-              >
-                <p className="text-2xl md:text-3xl font-black text-white">{stat.value}</p>
-                <p className="text-white/70 text-xs md:text-sm">{stat.label}</p>
+              <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="text-center group">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <stat.icon className="w-4 h-4 text-[#f29de5] opacity-70" />
+                  <p className="text-2xl md:text-3xl font-black text-white">{stat.value}</p>
+                </div>
+                <p className="text-white/50 text-xs md:text-sm uppercase tracking-wider">{stat.label}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Interactive Features Showcase */}
-      <section id="features" className="py-16 md:py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <Badge className="bg-[#f29de5]/20 text-[#5537a7] border-0 mb-4 px-4 py-1.5 text-sm font-medium">
-                ✨ Powerful Features
+
+      {/* TOXIC VS AURORA - Futuristic Comparison */}
+      <section id="how-it-works" className="py-20 md:py-28 bg-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#5537a705_1px,transparent_1px),linear-gradient(to_bottom,#5537a705_1px,transparent_1px)] bg-[size:40px_40px]" />
+        <div className="relative max-w-6xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <Badge className="bg-[#f05a6b]/10 text-[#f05a6b] border-[#f05a6b]/20 mb-4 px-4 py-1.5 text-sm font-medium">
+                <Ban className="w-3 h-3 mr-1 inline" /> The Problem
               </Badge>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#3d0d73] mb-4">
-                Everything you need to{" "}
-                <span className="bg-gradient-to-r from-[#5537a7] to-[#f29de5] bg-clip-text text-transparent">
-                  thrive
-                </span>
+              <h2 className="text-3xl md:text-5xl font-bold text-[#3d0d73] mb-4">
+                Legacy Social Media vs{" "}
+                <span className="bg-gradient-to-r from-[#5537a7] to-[#f29de5] bg-clip-text text-transparent">Aurora App</span>
               </h2>
               <p className="text-[#3d0d73]/60 text-lg max-w-2xl mx-auto">
-                Built with input from thousands of women worldwide. Every feature designed to keep you safe, connected, and growing.
+                Traditional platforms profit from your anxiety. We're built different.
               </p>
             </motion.div>
           </div>
 
-          {/* Feature Cards - Interactive */}
+          <div className="grid gap-3 max-w-4xl mx-auto">
+            {toxicVsAurora.map((item, i) => (
+              <motion.div key={i} initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
+                className="grid md:grid-cols-[1fr,60px,1fr] gap-3 items-center">
+                <div className="bg-gradient-to-r from-[#f05a6b]/5 to-transparent border border-[#f05a6b]/10 rounded-xl p-4 backdrop-blur-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#f05a6b]/10 rounded-lg flex items-center justify-center"><Ban className="w-4 h-4 text-[#f05a6b]" /></div>
+                    <p className="text-[#3d0d73]/60 text-sm font-medium">{item.toxic}</p>
+                  </div>
+                </div>
+                <div className="hidden md:flex w-10 h-10 bg-gradient-to-br from-[#3d0d73] to-[#5537a7] rounded-full items-center justify-center mx-auto shadow-lg">
+                  <span className="text-white text-[10px] font-bold">VS</span>
+                </div>
+                <div className="bg-gradient-to-l from-[#22c55e]/5 to-transparent border border-[#22c55e]/10 rounded-xl p-4 backdrop-blur-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#22c55e]/10 rounded-lg flex items-center justify-center"><item.icon className="w-4 h-4 text-[#22c55e]" /></div>
+                    <p className="text-[#3d0d73] text-sm font-semibold">{item.aurora}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div className="text-center mt-12" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <Link href="/api/auth/login">
+              <Button size="lg" className="bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:opacity-90 text-white rounded-2xl px-10 min-h-[56px] font-bold shadow-xl shadow-[#22c55e]/20">
+                <Leaf className="w-5 h-5 mr-2" />
+                Join the Revolution
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* FEATURES - Futuristic Cards */}
+      <section className="py-20 md:py-28 bg-gradient-to-b from-[#fffaf1] to-white relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0"><GlowingLine /></div>
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <Badge className="bg-[#5537a7]/10 text-[#5537a7] border-[#5537a7]/20 mb-4 px-4 py-1.5 text-sm font-medium">
+                <Cpu className="w-3 h-3 mr-1 inline" /> Core Technology
+              </Badge>
+              <h2 className="text-3xl md:text-5xl font-bold text-[#3d0d73] mb-4">
+                Powered by{" "}
+                <span className="bg-gradient-to-r from-[#5537a7] to-[#2e2ad6] bg-clip-text text-transparent">Ethical AI</span>
+              </h2>
+              <p className="text-[#3d0d73]/60 text-lg max-w-2xl mx-auto">
+                Every feature designed with your safety and wellbeing as the primary objective.
+              </p>
+            </motion.div>
+          </div>
+
           <div className="grid lg:grid-cols-2 gap-8 items-center">
-            {/* Feature Selector */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {features.map((feature, i) => (
-                <motion.div
-                  key={feature.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
+                <motion.div key={feature.id} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                   onClick={() => setActiveFeature(i)}
-                  className={`cursor-pointer p-5 rounded-2xl border-2 transition-all duration-300 ${
+                  className={`cursor-pointer p-5 rounded-2xl border transition-all duration-300 backdrop-blur-sm ${
                     activeFeature === i 
-                      ? "border-[#5537a7] bg-[#5537a7]/5 shadow-lg" 
-                      : "border-gray-100 hover:border-[#5537a7]/30 bg-white"
-                  }`}
-                >
+                      ? "border-[#5537a7]/50 bg-gradient-to-r from-[#5537a7]/10 to-transparent shadow-lg shadow-[#5537a7]/10" 
+                      : "border-[#3d0d73]/10 hover:border-[#5537a7]/30 bg-white/50"
+                  }`}>
                   <div className="flex items-start gap-4">
-                    <div 
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all"
-                      style={{ backgroundColor: activeFeature === i ? feature.color + "30" : "#f5f5f5" }}
-                    >
-                      <feature.icon 
-                        className="w-7 h-7 transition-colors"
-                        style={{ color: activeFeature === i ? feature.color : "#9ca3af" }}
-                      />
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${activeFeature === i ? "bg-gradient-to-br from-[#5537a7] to-[#3d0d73] shadow-lg" : "bg-[#3d0d73]/5"}`}>
+                      <feature.icon className={`w-6 h-6 transition-colors ${activeFeature === i ? "text-white" : "text-[#3d0d73]/50"}`} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-bold text-[#3d0d73] text-lg">{feature.title}</h3>
-                        <Badge 
-                          className="text-xs border-0"
-                          style={{ 
-                            backgroundColor: feature.color + "20", 
-                            color: feature.color === "#e5e093" ? "#3d0d73" : feature.color 
-                          }}
-                        >
-                          {feature.stats}
-                        </Badge>
+                        <h3 className="font-bold text-[#3d0d73]">{feature.title}</h3>
+                        <Badge className="text-xs border-0 bg-[#3d0d73]/5 text-[#3d0d73]/70">{feature.stats}</Badge>
                       </div>
-                      <p className="text-[#5537a7] text-sm font-medium mb-1">{feature.subtitle}</p>
-                      <p className={`text-sm transition-all ${activeFeature === i ? "text-[#3d0d73]/70" : "text-[#3d0d73]/50 line-clamp-1"}`}>
-                        {feature.desc}
-                      </p>
+                      <p className="text-[#5537a7] text-sm font-medium">{feature.subtitle}</p>
+                      {activeFeature === i && <p className="text-[#3d0d73]/60 text-sm mt-2">{feature.desc}</p>}
                     </div>
-                    <ChevronRight 
-                      className={`w-5 h-5 transition-all flex-shrink-0 ${
-                        activeFeature === i ? "text-[#5537a7] rotate-90" : "text-gray-300"
-                      }`}
-                    />
+                    <ChevronRight className={`w-5 h-5 transition-all ${activeFeature === i ? "text-[#5537a7] rotate-90" : "text-[#3d0d73]/30"}`} />
                   </div>
                 </motion.div>
               ))}
             </div>
 
-            {/* Feature Preview */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="relative"
-            >
-              <div className="bg-gradient-to-br from-[#5537a7]/10 to-[#f29de5]/10 rounded-3xl p-8 md:p-12">
+            <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="relative">
+              <div className="bg-gradient-to-br from-[#3d0d73] to-[#5537a7] rounded-3xl p-8 md:p-12 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:30px_30px]" />
                 <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeFeature}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-center"
-                  >
-                    <div 
-                      className="w-24 h-24 rounded-3xl mx-auto mb-6 flex items-center justify-center text-5xl shadow-xl"
-                      style={{ backgroundColor: features[activeFeature].color + "30" }}
-                    >
-                      {features[activeFeature].image}
+                  <motion.div key={activeFeature} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="relative text-center">
+                    <div className="w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 shadow-2xl">
+                      {activeFeature === 0 && <Shield className="w-10 h-10 text-white" />}
+                      {activeFeature === 1 && <Route className="w-10 h-10 text-white" />}
+                      {activeFeature === 2 && <Users className="w-10 h-10 text-white" />}
+                      {activeFeature === 3 && <Briefcase className="w-10 h-10 text-white" />}
                     </div>
-                    <h3 className="text-2xl font-bold text-[#3d0d73] mb-3">
-                      {features[activeFeature].title}
-                    </h3>
-                    <p className="text-[#3d0d73]/70 mb-6 max-w-sm mx-auto">
-                      {features[activeFeature].desc}
-                    </p>
+                    <h3 className="text-2xl font-bold text-white mb-3">{features[activeFeature].title}</h3>
+                    <p className="text-white/70 mb-6 max-w-sm mx-auto">{features[activeFeature].desc}</p>
                     <Link href="/api/auth/login">
-                      <Button 
-                        className="bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-xl px-6 min-h-[48px] font-semibold"
-                      >
+                      <Button className="bg-white text-[#5537a7] hover:bg-white/90 rounded-xl px-6 min-h-[48px] font-semibold">
                         Try {features[activeFeature].title}
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
@@ -605,613 +443,101 @@ export default function LandingPage() {
                   </motion.div>
                 </AnimatePresence>
               </div>
-
-              {/* Floating Elements */}
-              <motion.div 
-                className="absolute -top-4 -right-4 w-20 h-20 bg-[#e5e093] rounded-2xl flex items-center justify-center shadow-lg"
-                animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
-                transition={{ duration: 4, repeat: Infinity }}
-              >
-                <span className="text-3xl">🎁</span>
-              </motion.div>
-              <motion.div 
-                className="absolute -bottom-4 -left-4 w-16 h-16 bg-[#d6f4ec] rounded-2xl flex items-center justify-center shadow-lg"
-                animate={{ y: [0, 10, 0], rotate: [0, -5, 0] }}
-                transition={{ duration: 5, repeat: Infinity }}
-              >
-                <span className="text-2xl">💜</span>
-              </motion.div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* How It Works - Simple Steps */}
-      <section className="py-16 md:py-24 bg-[#fffaf1]">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <Badge className="bg-[#d6f4ec]/50 text-[#3d0d73] border-0 mb-4 px-4 py-1.5 text-sm font-medium">
-                🚀 Quick Start
+
+      {/* TESTIMONIALS - Futuristic */}
+      <section className="py-20 md:py-28 bg-[#3d0d73] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#5537a715_1px,transparent_1px),linear-gradient(to_bottom,#5537a715_1px,transparent_1px)] bg-[size:50px_50px]" />
+        <FloatingOrbs />
+        <div className="relative max-w-6xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <Badge className="bg-white/10 text-white border-white/20 mb-4 px-4 py-1.5 text-sm font-medium backdrop-blur-sm">
+                💜 Community Voices
               </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#3d0d73] mb-4">
-                Get started in 30 seconds
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+                Women Who Made the Switch
               </h2>
-              <p className="text-[#3d0d73]/60 text-lg">
-                No complicated setup. Just sign in and start exploring.
+              <p className="text-white/60 text-lg max-w-2xl mx-auto">
+                Real stories from women who escaped toxic platforms.
               </p>
             </motion.div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-            {[
-              {
-                step: "1",
-                icon: "🎁",
-                title: "Sign up free",
-                desc: "Create your account with Google or Microsoft. Get 25 credits instantly to unlock premium features.",
-                color: "#f29de5",
-                highlight: "25 free credits"
-              },
-              {
-                step: "2",
-                icon: "🗺️",
-                title: "Explore & share",
-                desc: "Rate workplaces, share safe routes, join circles, and connect with women in your area.",
-                color: "#5537a7",
-                highlight: "Help others"
-              },
-              {
-                step: "3",
-                icon: "✨",
-                title: "Earn & grow",
-                desc: "Earn credits by contributing. Unlock job opportunities, mentorship, and exclusive resources.",
-                color: "#d6f4ec",
-                highlight: "Unlock opportunities"
-              }
-            ].map((item, i) => (
-              <motion.div
-                key={item.step}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
-                className="relative"
-              >
-                <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-lg hover:shadow-xl transition-all h-full">
-                  {/* Step Number */}
-                  <div className="absolute -top-4 left-8">
-                    <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-lg"
-                      style={{ backgroundColor: item.color === "#d6f4ec" ? "#5537a7" : item.color }}
-                    >
-                      {item.step}
-                    </div>
-                  </div>
-
-                  {/* Icon */}
-                  <div 
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-6 mt-4"
-                    style={{ backgroundColor: item.color + "30" }}
-                  >
-                    {item.icon}
-                  </div>
-
-                  <h3 className="font-bold text-[#3d0d73] text-xl mb-3">{item.title}</h3>
-                  <p className="text-[#3d0d73]/60 mb-4">{item.desc}</p>
-                  
-                  <Badge 
-                    className="border-0"
-                    style={{ 
-                      backgroundColor: item.color + "30", 
-                      color: item.color === "#d6f4ec" ? "#3d0d73" : item.color === "#f29de5" ? "#5537a7" : "white" 
-                    }}
-                  >
-                    {item.highlight}
-                  </Badge>
-                </div>
-
-                {/* Connector Line */}
-                {i < 2 && (
-                  <div className="hidden md:block absolute top-1/2 -right-4 w-8 border-t-2 border-dashed border-[#5537a7]/30" />
-                )}
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div 
-            className="text-center mt-12"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <Link href="/api/auth/login">
-              <Button 
-                size="lg" 
-                className="bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-2xl px-10 min-h-[56px] font-bold shadow-xl shadow-[#5537a7]/30"
-              >
-                Create Free Account
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </Link>
-            <p className="text-sm text-[#3d0d73]/50 mt-4">
-              No credit card required • Cancel anytime • 100% free to start
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Live Community Feed */}
-      <section className="py-16 md:py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <div className="inline-flex items-center gap-2 bg-[#f05a6b]/10 text-[#f05a6b] px-4 py-2 rounded-full mb-4">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#f05a6b] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#f05a6b]"></span>
-                </span>
-                <span className="text-sm font-medium">Live Community Feed</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#3d0d73] mb-4">
-                See what women are sharing
-              </h2>
-              <p className="text-[#3d0d73]/60 text-lg max-w-2xl mx-auto">
-                Real stories, real experiences, real support. Join the conversation.
-              </p>
-            </motion.div>
-          </div>
-
-          {/* Feed Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {!publicFeed ? (
-              [1, 2, 3, 4, 5, 6].map((i) => (
-                <Card key={i} className="bg-[#fffaf1] border-gray-100 p-5 animate-pulse rounded-2xl">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-gray-200" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3 bg-gray-200 rounded w-24" />
-                      <div className="h-2 bg-gray-200 rounded w-16" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-3 bg-gray-200 rounded w-full" />
-                    <div className="h-3 bg-gray-200 rounded w-3/4" />
-                  </div>
-                </Card>
-              ))
-            ) : (
-              publicFeed.slice(0, 6).map((post, i) => (
-                <motion.div
-                  key={post._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <Card className="bg-[#fffaf1] border border-gray-100 rounded-2xl h-full hover:shadow-lg hover:border-[#5537a7]/20 transition-all group">
-                    <div className="p-5">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#f29de5] to-[#c9cef4] flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md">
-                          {(post.authorName || "A")[0].toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-[#3d0d73] text-sm truncate">
-                            {post.isAnonymous ? "Anonymous Sister" : post.authorName || "Aurora Member"}
-                          </p>
-                          <p className="text-xs text-[#3d0d73]/50">
-                            {formatDistanceToNow(post._creationTime, { addSuffix: true })}
-                          </p>
-                        </div>
-                        {post.type && (
-                          <Badge className="bg-[#5537a7]/10 text-[#5537a7] border-0 text-xs">
-                            {post.type}
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      {post.title && (
-                        <h3 className="font-semibold text-[#3d0d73] mb-2 line-clamp-1 group-hover:text-[#5537a7] transition-colors">
-                          {post.title}
-                        </h3>
-                      )}
-                      <p className="text-[#3d0d73]/70 text-sm line-clamp-3 mb-4">
-                        {post.content}
-                      </p>
-                      
-                      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                        <div className="flex items-center gap-4 text-xs text-[#3d0d73]/50">
-                          <span className="flex items-center gap-1">
-                            <ThumbsUp className="w-3.5 h-3.5" />
-                            {post.upvotes || 0}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MessageSquare className="w-3.5 h-3.5" />
-                            {post.commentCount || 0}
-                          </span>
-                        </div>
-                        <span className="text-xs text-[#5537a7] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                          Join to interact →
-                        </span>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))
-            )}
-          </div>
-
-          <motion.div 
-            className="text-center mt-12"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <Link href="/api/auth/login">
-              <Button 
-                size="lg" 
-                className="bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-2xl px-10 min-h-[56px] font-bold shadow-lg shadow-[#5537a7]/20"
-              >
-                Join the Community
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Testimonials - Social Proof */}
-      <section className="py-16 md:py-24 bg-gradient-to-br from-[#5537a7] to-[#3d0d73] overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <Badge className="bg-white/20 text-white border-0 mb-4 px-4 py-1.5 text-sm font-medium">
-                💜 Loved by Women Worldwide
-              </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                Real stories from our community
-              </h2>
-              <p className="text-white/70 text-lg max-w-2xl mx-auto">
-                Join thousands of women who've found safety, support, and success with Aurora App.
-              </p>
-            </motion.div>
-          </div>
-
-          {/* Testimonial Cards */}
           <div className="grid md:grid-cols-2 gap-6">
-            {testimonials.map((testimonial, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 md:p-8 border border-white/20 hover:bg-white/15 transition-all"
-              >
-                {/* Rating */}
+            {testimonials.map((t, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all group">
                 <div className="flex items-center gap-1 mb-4">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star key={star} className="w-4 h-4 fill-[#e5e093] text-[#e5e093]" />
-                  ))}
+                  {[1,2,3,4,5].map((s) => <Star key={s} className="w-4 h-4 fill-[#e5e093] text-[#e5e093]" />)}
                 </div>
-
-                {/* Quote */}
-                <p className="text-white/90 text-lg leading-relaxed mb-6">
-                  "{testimonial.quote.split(testimonial.highlight).map((part, idx, arr) => (
-                    <span key={idx}>
-                      {part}
-                      {idx < arr.length - 1 && (
-                        <span className="text-[#e5e093] font-semibold">{testimonial.highlight}</span>
-                      )}
-                    </span>
+                <p className="text-white/90 leading-relaxed mb-6">
+                  "{t.quote.split(t.highlight).map((part, idx, arr) => (
+                    <span key={idx}>{part}{idx < arr.length - 1 && <span className="text-[#f29de5] font-semibold">{t.highlight}</span>}</span>
                   ))}"
                 </p>
-
-                {/* Author */}
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#f29de5] to-[#c9cef4] flex items-center justify-center text-2xl shadow-lg">
-                    {testimonial.avatar}
-                  </div>
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#5537a7] to-[#f29de5] flex items-center justify-center text-2xl shadow-lg">{t.avatar}</div>
                   <div>
-                    <p className="font-bold text-white">{testimonial.name}</p>
-                    <p className="text-white/60 text-sm">{testimonial.role}</p>
-                    <p className="text-white/40 text-xs">{testimonial.location}</p>
+                    <p className="font-bold text-white">{t.name}</p>
+                    <p className="text-white/50 text-sm">{t.role} • {t.location}</p>
                   </div>
                 </div>
               </motion.div>
             ))}
           </div>
-
-          {/* Stats Row */}
-          <motion.div 
-            className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            {[
-              { value: "4.9/5", label: "App Rating", icon: Star },
-              { value: "10K+", label: "Active Members", icon: Users },
-              { value: "50+", label: "Countries", icon: Globe },
-              { value: "24/7", label: "AI Support", icon: MessageSquare }
-            ].map((stat, i) => (
-              <div key={stat.label} className="text-center">
-                <stat.icon className="w-6 h-6 text-[#e5e093] mx-auto mb-2" />
-                <p className="text-2xl md:text-3xl font-black text-white">{stat.value}</p>
-                <p className="text-white/60 text-sm">{stat.label}</p>
-              </div>
-            ))}
-          </motion.div>
         </div>
       </section>
 
-      {/* Safety & Privacy Section */}
-      <section className="py-16 md:py-24 bg-[#fffaf1]">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Content */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <Badge className="bg-[#d6f4ec]/50 text-[#3d0d73] border-0 mb-4 px-4 py-1.5 text-sm font-medium">
-                🔒 Your Privacy Matters
+      {/* PREMIUM - Futuristic */}
+      <section className="py-20 md:py-28 bg-gradient-to-b from-white to-[#fffaf1] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#5537a705_1px,transparent_1px),linear-gradient(to_bottom,#5537a705_1px,transparent_1px)] bg-[size:40px_40px]" />
+        <div className="relative max-w-6xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <Badge className="bg-gradient-to-r from-[#e5e093]/30 to-[#f29de5]/30 text-[#3d0d73] border-[#e5e093]/50 mb-4 px-4 py-1.5 text-sm font-bold">
+                <Sparkles className="w-3 h-3 mr-1 inline" /> Premium
               </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#3d0d73] mb-6">
-                Built with your safety{" "}
-                <span className="text-[#5537a7]">in mind</span>
-              </h2>
-              <p className="text-[#3d0d73]/70 text-lg mb-8">
-                We take your privacy seriously. Your data is encrypted, your identity is protected, 
-                and you're always in control.
-              </p>
-
-              <div className="space-y-4">
-                {[
-                  {
-                    icon: Lock,
-                    title: "End-to-End Encryption",
-                    desc: "Your data is encrypted under GDPR, CCPA & Colombian Law 1581",
-                    color: "#5537a7"
-                  },
-                  {
-                    icon: Eye,
-                    title: "Anonymous Posting",
-                    desc: "Share sensitive experiences without revealing your identity",
-                    color: "#f29de5"
-                  },
-                  {
-                    icon: CheckCircle,
-                    title: "Full Data Control",
-                    desc: "Export, modify, or delete your data anytime you want",
-                    color: "#22c55e"
-                  },
-                  {
-                    icon: Shield,
-                    title: "Offline Emergency Access",
-                    desc: "Panic button and emergency contacts work without internet",
-                    color: "#ec4c28"
-                  }
-                ].map((item, i) => (
-                  <motion.div
-                    key={item.title}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.1 }}
-                    className="flex items-start gap-4 p-4 bg-white rounded-2xl border border-gray-100"
-                  >
-                    <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: item.color + "20" }}
-                    >
-                      <item.icon className="w-5 h-5" style={{ color: item.color }} />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-[#3d0d73] mb-1">{item.title}</h3>
-                      <p className="text-[#3d0d73]/60 text-sm">{item.desc}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Visual */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="relative"
-            >
-              <div className="bg-gradient-to-br from-[#5537a7]/10 to-[#f29de5]/10 rounded-3xl p-8 md:p-12">
-                <div className="bg-white rounded-2xl p-6 shadow-xl">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-[#d6f4ec] rounded-xl flex items-center justify-center">
-                      <Shield className="w-6 h-6 text-[#3d0d73]" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-[#3d0d73]">Privacy Dashboard</h3>
-                      <p className="text-xs text-[#3d0d73]/50">You're in control</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    {[
-                      { label: "Profile Visibility", value: "Friends Only", icon: Users },
-                      { label: "Location Sharing", value: "When I Choose", icon: MapPin },
-                      { label: "Anonymous Mode", value: "Available", icon: Eye }
-                    ].map((setting) => (
-                      <div key={setting.label} className="flex items-center justify-between p-3 bg-[#fffaf1] rounded-xl">
-                        <div className="flex items-center gap-3">
-                          <setting.icon className="w-4 h-4 text-[#5537a7]" />
-                          <span className="text-sm text-[#3d0d73]">{setting.label}</span>
-                        </div>
-                        <Badge className="bg-[#d6f4ec] text-[#3d0d73] border-0 text-xs">
-                          {setting.value}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Floating Badge */}
-              <motion.div 
-                className="absolute -top-4 -right-4 bg-[#22c55e] text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2"
-                animate={{ y: [0, -5, 0] }}
-                transition={{ duration: 3, repeat: Infinity }}
-              >
-                <CheckCircle className="w-4 h-4" />
-                <span className="text-sm font-bold">Verified Secure</span>
-              </motion.div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Premium Section - NEW */}
-      <section className="py-16 md:py-24 bg-gradient-to-br from-[#e5e093]/20 via-white to-[#f29de5]/10">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <Badge className="bg-gradient-to-r from-[#e5e093] to-[#f29de5] text-[#3d0d73] border-0 mb-4 px-4 py-1.5 text-sm font-bold">
-                ✨ Aurora Premium
-              </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#3d0d73] mb-4">
-                Unlock the{" "}
-                <span className="bg-gradient-to-r from-[#e5e093] to-[#f29de5] bg-clip-text text-transparent">
-                  full experience
-                </span>
+              <h2 className="text-3xl md:text-5xl font-bold text-[#3d0d73] mb-4">
+                Unlock{" "}
+                <span className="bg-gradient-to-r from-[#e5e093] to-[#f29de5] bg-clip-text text-transparent">Full Power</span>
               </h2>
               <p className="text-[#3d0d73]/60 text-lg max-w-2xl mx-auto">
-                Go premium for unlimited access, exclusive features, and support the mission of keeping women safe worldwide.
+                Go premium for unlimited access. Support the mission.
               </p>
             </motion.div>
           </div>
 
-          {/* Premium Tiers */}
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             {[
-              {
-                name: "Aurora Plus",
-                price: "$5",
-                period: "/month",
-                badge: "Most Popular",
-                color: "#5537a7",
-                features: [
-                  "Ad-free experience",
-                  "100 AI messages/day",
-                  "25 posts/hour",
-                  "100 monthly credits",
-                  "Premium badge"
-                ]
-              },
-              {
-                name: "Aurora Pro",
-                price: "$12",
-                period: "/month",
-                badge: "Best Value",
-                color: "#f29de5",
-                features: [
-                  "Everything in Plus",
-                  "Unlimited AI companion",
-                  "Priority support",
-                  "Advanced analytics",
-                  "500 monthly credits"
-                ],
-                highlighted: true
-              },
-              {
-                name: "Aurora Elite",
-                price: "$25",
-                period: "/month",
-                badge: "VIP",
-                color: "#e5e093",
-                features: [
-                  "Everything in Pro",
-                  "Exclusive events access",
-                  "1-on-1 safety consultations",
-                  "VIP badge & priority",
-                  "1500 monthly credits"
-                ]
-              }
+              { name: "Plus", price: "$5", features: ["Ad-free", "100 AI/day", "100 credits"], badge: "Popular" },
+              { name: "Pro", price: "$12", features: ["Unlimited AI", "Priority support", "500 credits"], badge: "Best Value", highlighted: true },
+              { name: "Elite", price: "$25", features: ["VIP events", "1-on-1 consults", "1500 credits"], badge: "VIP" }
             ].map((tier, i) => (
-              <motion.div
-                key={tier.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className={`relative rounded-3xl p-6 ${
-                  tier.highlighted 
-                    ? "bg-gradient-to-br from-[#5537a7] to-[#3d0d73] text-white shadow-2xl shadow-[#5537a7]/30 scale-105" 
-                    : "bg-white border border-gray-100 shadow-lg"
-                }`}
-              >
-                {tier.badge && (
-                  <Badge 
-                    className={`absolute -top-3 left-1/2 -translate-x-1/2 ${
-                      tier.highlighted 
-                        ? "bg-[#e5e093] text-[#3d0d73]" 
-                        : "bg-[#5537a7]/10 text-[#5537a7]"
-                    } border-0 px-3 py-1`}
-                  >
-                    {tier.badge}
-                  </Badge>
-                )}
-                
+              <motion.div key={tier.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                className={`relative rounded-2xl p-6 backdrop-blur-sm ${tier.highlighted ? "bg-gradient-to-br from-[#3d0d73] to-[#5537a7] text-white shadow-2xl shadow-[#5537a7]/30 scale-105 border border-[#5537a7]/50" : "bg-white/80 border border-[#3d0d73]/10"}`}>
+                <Badge className={`absolute -top-3 left-1/2 -translate-x-1/2 ${tier.highlighted ? "bg-[#e5e093] text-[#3d0d73]" : "bg-[#5537a7]/10 text-[#5537a7]"} border-0 px-3 py-1`}>{tier.badge}</Badge>
                 <div className="text-center mb-6 pt-4">
-                  <h3 className={`font-bold text-xl mb-2 ${tier.highlighted ? "text-white" : "text-[#3d0d73]"}`}>
-                    {tier.name}
-                  </h3>
+                  <h3 className={`font-bold text-xl mb-2 ${tier.highlighted ? "text-white" : "text-[#3d0d73]"}`}>Aurora {tier.name}</h3>
                   <div className="flex items-baseline justify-center gap-1">
-                    <span className={`text-4xl font-black ${tier.highlighted ? "text-white" : "text-[#3d0d73]"}`}>
-                      {tier.price}
-                    </span>
-                    <span className={tier.highlighted ? "text-white/70" : "text-[#3d0d73]/50"}>
-                      {tier.period}
-                    </span>
+                    <span className={`text-4xl font-black ${tier.highlighted ? "text-white" : "text-[#3d0d73]"}`}>{tier.price}</span>
+                    <span className={tier.highlighted ? "text-white/70" : "text-[#3d0d73]/50"}>/mo</span>
                   </div>
                 </div>
-
                 <ul className="space-y-3 mb-6">
-                  {tier.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2">
-                      <CheckCircle className={`w-4 h-4 flex-shrink-0 ${
-                        tier.highlighted ? "text-[#e5e093]" : "text-[#22c55e]"
-                      }`} />
-                      <span className={`text-sm ${tier.highlighted ? "text-white/90" : "text-[#3d0d73]/70"}`}>
-                        {feature}
-                      </span>
+                  {tier.features.map((f) => (
+                    <li key={f} className="flex items-center gap-2">
+                      <CheckCircle className={`w-4 h-4 ${tier.highlighted ? "text-[#e5e093]" : "text-[#22c55e]"}`} />
+                      <span className={`text-sm ${tier.highlighted ? "text-white/90" : "text-[#3d0d73]/70"}`}>{f}</span>
                     </li>
                   ))}
                 </ul>
-
                 <Link href="/api/auth/login">
-                  <Button 
-                    className={`w-full min-h-[48px] rounded-xl font-semibold ${
-                      tier.highlighted 
-                        ? "bg-white text-[#5537a7] hover:bg-white/90" 
-                        : "bg-[#5537a7] text-white hover:bg-[#3d0d73]"
-                    }`}
-                  >
+                  <Button className={`w-full min-h-[48px] rounded-xl font-semibold ${tier.highlighted ? "bg-white text-[#5537a7] hover:bg-white/90" : "bg-[#2e2ad6] text-white hover:bg-[#5537a7]"}`}>
                     Get {tier.name}
                   </Button>
                 </Link>
@@ -1219,188 +545,103 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* Free Forever Note */}
-          <motion.div 
-            className="text-center"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-          >
-            <div className="inline-flex items-center gap-2 bg-[#d6f4ec]/50 text-[#3d0d73] px-6 py-3 rounded-full">
+          <motion.div className="text-center" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
+            <div className="inline-flex items-center gap-2 bg-[#d6f4ec]/50 text-[#3d0d73] px-6 py-3 rounded-full border border-[#22c55e]/20">
               <Shield className="w-5 h-5 text-[#22c55e]" />
-              <span className="font-medium">
-                Safety features are <span className="font-bold">always free</span> — panic button, emergency contacts, and basic routes
-              </span>
+              <span className="font-medium">Safety features are <span className="font-bold">always free</span></span>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Final CTA Section */}
-      <section className="py-16 md:py-24 bg-white relative overflow-hidden">
-        {/* Background Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#f29de5]/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#c9cef4]/20 rounded-full blur-3xl" />
-        </div>
 
+      {/* FINAL CTA - Futuristic */}
+      <section className="py-20 md:py-28 bg-[#fffaf1] relative overflow-hidden">
+        <GridBackground />
         <div className="relative max-w-4xl mx-auto px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            {/* Logo */}
-            <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 3, repeat: Infinity }}
-              className="inline-block mb-8"
-            >
-              <Image 
-                src="/Au_Logo_1.png" 
-                alt="Aurora App" 
-                width={80} 
-                height={80} 
-                className="rounded-3xl shadow-2xl shadow-[#5537a7]/30" 
-              />
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 3, repeat: Infinity }} className="inline-block mb-8 relative">
+              <Image src="/Au_Logo_1.png" alt="Aurora App" width={80} height={80} className="rounded-3xl shadow-2xl" />
+              <motion.div className="absolute -inset-2 bg-gradient-to-r from-[#5537a7] to-[#f29de5] rounded-3xl opacity-30 blur-lg -z-10" animate={{ opacity: [0.2, 0.4, 0.2] }} transition={{ duration: 2, repeat: Infinity }} />
             </motion.div>
 
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#3d0d73] mb-6">
-              Ready to join{" "}
-              <span className="bg-gradient-to-r from-[#5537a7] to-[#f29de5] bg-clip-text text-transparent">
-                Aurora App
-              </span>
-              ?
+            <h2 className="text-3xl md:text-5xl font-bold text-[#3d0d73] mb-6">
+              Ready for the{" "}
+              <span className="bg-gradient-to-r from-[#5537a7] to-[#f29de5] bg-clip-text text-transparent">Future</span>?
             </h2>
 
             <p className="text-[#3d0d73]/70 text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-              Join 10,000+ women who are navigating life more safely, building meaningful connections, 
-              and unlocking new opportunities every day.
+              Join 10,000+ women who chose a healthier digital life. Zero toxicity. Real community.
             </p>
 
-            {/* Bonus Offer */}
-            <motion.div 
-              className="inline-flex items-center gap-3 bg-gradient-to-r from-[#e5e093]/30 to-[#f29de5]/30 border border-[#e5e093] rounded-2xl px-6 py-4 mb-8"
-              animate={{ scale: [1, 1.02, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <span className="text-3xl">🎁</span>
+            <motion.div className="inline-flex items-center gap-3 bg-gradient-to-r from-[#5537a7]/10 to-[#f29de5]/10 border border-[#5537a7]/20 rounded-2xl px-6 py-4 mb-8 backdrop-blur-sm" animate={{ scale: [1, 1.02, 1] }} transition={{ duration: 2, repeat: Infinity }}>
+              <Cpu className="w-8 h-8 text-[#5537a7]" />
               <div className="text-left">
-                <p className="font-bold text-[#3d0d73]">Limited Time Offer</p>
-                <p className="text-sm text-[#3d0d73]/70">Sign up today and get <span className="font-bold text-[#5537a7]">25 free credits</span></p>
+                <p className="font-bold text-[#3d0d73]">AI That Cares</p>
+                <p className="text-sm text-[#3d0d73]/70">Non-toxic algorithm • Privacy-first • Ethical by design</p>
               </div>
             </motion.div>
 
-            {/* CTA Button */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Link href="/api/auth/login">
-                <Button 
-                  size="lg" 
-                  className="w-full sm:w-auto bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-2xl px-12 min-h-[64px] font-bold text-lg shadow-2xl shadow-[#5537a7]/40 transition-all hover:scale-105"
-                >
-                  Get Started Free
+                <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-[#2e2ad6] to-[#5537a7] hover:opacity-90 text-white rounded-2xl px-12 min-h-[64px] font-bold text-lg shadow-2xl shadow-[#5537a7]/30 border border-[#5537a7]/50 transition-all hover:scale-[1.02]">
+                  Join Aurora App
                   <ArrowRight className="w-6 h-6 ml-2" />
                 </Button>
               </Link>
             </div>
 
-            {/* Sign-in Options */}
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
-              {[
-                { icon: "🔵", text: "Google" },
-                { icon: "🟦", text: "Microsoft" }
-              ].map((option) => (
-                <span key={option.text} className="flex items-center gap-2 text-[#3d0d73]/60 text-sm">
-                  <span>{option.icon}</span>
-                  Sign in with {option.text}
-                </span>
-              ))}
-            </div>
-
-            {/* Trust Badges */}
             <div className="flex flex-wrap justify-center gap-6 text-sm text-[#3d0d73]/50">
-              <span className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-[#22c55e]" />
-                No credit card required
-              </span>
-              <span className="flex items-center gap-2">
-                <Lock className="w-4 h-4 text-[#22c55e]" />
-                100% private & secure
-              </span>
-              <span className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-[#22c55e]" />
-                Setup in 30 seconds
-              </span>
+              <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-[#22c55e]" />No credit card</span>
+              <span className="flex items-center gap-2"><Lock className="w-4 h-4 text-[#22c55e]" />End-to-end encrypted</span>
+              <span className="flex items-center gap-2"><Brain className="w-4 h-4 text-[#22c55e]" />Non-toxic AI</span>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-100 py-12 bg-[#fffaf1]">
+      {/* FOOTER - Futuristic */}
+      <footer className="border-t border-[#5537a7]/10 bg-[#fffaf1] py-12 relative">
+        <div className="absolute top-0 left-0 right-0"><GlowingLine /></div>
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
-            {/* Brand */}
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-4">
-                <Image src="/Au_Logo_1.png" alt="Aurora App" width={40} height={40} className="rounded-xl" />
-                <span className="text-[#3d0d73] font-bold text-lg">Aurora App</span>
+                <Image src="/Au_Logo_1.png" alt="Aurora App" width={44} height={44} className="rounded-xl" />
+                <span className="text-lg font-bold text-[#3d0d73]">Aurora App</span>
+                <Badge className="bg-[#5537a7]/10 text-[#5537a7] border-[#5537a7]/20 text-xs">v2.0</Badge>
               </div>
               <p className="text-[#3d0d73]/60 text-sm mb-4 max-w-sm">
-                The #1 safety app for women worldwide. Navigate life safely, build community, and unlock opportunities.
+                The future of social networking. Non-toxic AI. Privacy-first. Built by women, for women.
               </p>
-              <div className="flex items-center gap-1 text-sm text-[#3d0d73]/50">
-                Made with <Heart className="w-4 h-4 text-[#f29de5] mx-1" /> for women everywhere
+              <div className="flex items-center gap-2">
+                <Badge className="bg-[#d6f4ec] text-[#3d0d73] border-0 text-xs"><Cpu className="w-3 h-3 mr-1 inline" />Ethical AI</Badge>
+                <Badge className="bg-[#f29de5]/20 text-[#5537a7] border-0 text-xs">💜 Women-First</Badge>
               </div>
             </div>
-
-            {/* Links */}
+            <div>
+              <h4 className="font-bold text-[#3d0d73] mb-4">Features</h4>
+              <ul className="space-y-2 text-sm text-[#3d0d73]/60">
+                <li>Safety Intelligence</li>
+                <li>Safe Routes</li>
+                <li>Support Circles</li>
+                <li>AI Companion</li>
+              </ul>
+            </div>
             <div>
               <h4 className="font-bold text-[#3d0d73] mb-4">Legal</h4>
-              <div className="space-y-2">
-                <Link href="/legal/terms" className="block text-[#3d0d73]/60 hover:text-[#5537a7] text-sm transition-colors">
-                  Terms of Service
-                </Link>
-                <Link href="/legal/privacy" className="block text-[#3d0d73]/60 hover:text-[#5537a7] text-sm transition-colors">
-                  Privacy Policy
-                </Link>
-                <Link href="/legal/cookies" className="block text-[#3d0d73]/60 hover:text-[#5537a7] text-sm transition-colors">
-                  Cookie Policy
-                </Link>
-              </div>
-            </div>
-
-            {/* Contact */}
-            <div>
-              <h4 className="font-bold text-[#3d0d73] mb-4">Contact</h4>
-              <div className="space-y-2">
-                <a 
-                  href="mailto:auroraapp.info@gmail.com" 
-                  className="block text-[#3d0d73]/60 hover:text-[#5537a7] text-sm transition-colors"
-                >
-                  auroraapp.info@gmail.com
-                </a>
-                <p className="text-[#3d0d73]/60 text-sm">
-                  Available worldwide
-                </p>
-              </div>
+              <ul className="space-y-2 text-sm text-[#3d0d73]/60">
+                <li><Link href="/legal/privacy" className="hover:text-[#5537a7] transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/legal/terms" className="hover:text-[#5537a7] transition-colors">Terms of Service</Link></li>
+                <li><Link href="/legal/cookies" className="hover:text-[#5537a7] transition-colors">Cookie Policy</Link></li>
+              </ul>
             </div>
           </div>
-
-          {/* Bottom Bar */}
-          <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-[#3d0d73]/50 text-sm">
-              © {new Date().getFullYear()} Aurora App. All rights reserved.
-            </p>
-            <div className="flex items-center gap-4">
-              <Badge className="bg-[#d6f4ec] text-[#3d0d73] border-0 text-xs">
-                <Globe className="w-3 h-3 mr-1" />
-                Available in 50+ countries
-              </Badge>
-              <Badge className="bg-[#f29de5]/20 text-[#5537a7] border-0 text-xs">
-                <Shield className="w-3 h-3 mr-1" />
-                GDPR Compliant
-              </Badge>
+          <div className="border-t border-[#5537a7]/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-[#3d0d73]/50">© 2024 Aurora App. Made with 💜 for women everywhere.</p>
+            <div className="flex items-center gap-4 text-sm text-[#3d0d73]/50">
+              <span className="flex items-center gap-1"><Globe className="w-4 h-4" />Worldwide</span>
+              <span className="flex items-center gap-1"><Shield className="w-4 h-4" />GDPR</span>
             </div>
           </div>
         </div>

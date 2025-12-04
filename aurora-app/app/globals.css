@@ -745,3 +745,46 @@ textarea:focus-visible {
 .snap-x {
   scroll-behavior: smooth;
 }
+
+
+/* ============================================
+   FUTURISTIC LANDING PAGE ANIMATIONS
+   ============================================ */
+
+/* Animated gradient text */
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient {
+  background-size: 200% auto;
+  animation: gradient 3s linear infinite;
+}
+
+/* Glow pulse for futuristic elements */
+@keyframes glow-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(85, 55, 167, 0.3);
+    opacity: 0.8;
+  }
+  50% { 
+    box-shadow: 0 0 40px rgba(85, 55, 167, 0.5);
+    opacity: 1;
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Floating animation for orbs */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
