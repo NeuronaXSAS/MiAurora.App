@@ -26,8 +26,15 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
   const [journal, setJournal] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Safe queries with null coalescing for error handling
-  const todayMood = useQuery(api.health.getTodayMood, { userId }) ?? null;
+  // Get client's local date for timezone-aware queries
+  const getLocalDate = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  };
+  const clientDate = getLocalDate();
+
+  // Safe queries with null coalescing for error handling - using client date for timezone accuracy
+  const todayMood = useQuery(api.health.getTodayMood, { userId, clientDate }) ?? null;
   const moodHistory = useQuery(api.health.getMoodHistory, { userId, days: 7 }) ?? [];
   const logMood = useMutation(api.health.logMood);
 
@@ -48,6 +55,7 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
         userId,
         mood: selectedMood,
         journal: journal || undefined,
+        clientDate, // Send client's local date for timezone accuracy
       });
     } catch (error) {
       console.error("Error saving mood:", error);

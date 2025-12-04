@@ -7,9 +7,11 @@ export const logWater = mutation({
   args: {
     userId: v.id("users"),
     glasses: v.number(),
+    clientDate: v.optional(v.string()), // Client's local date YYYY-MM-DD
   },
   handler: async (ctx, args) => {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    // Use client date if provided, otherwise fallback to server UTC
+    const today = args.clientDate || new Date().toISOString().split('T')[0];
     
     // Check if log exists for today
     const existing = await ctx.db
@@ -43,9 +45,13 @@ export const logWater = mutation({
 });
 
 export const getTodayHydration = query({
-  args: { userId: v.id("users") },
+  args: { 
+    userId: v.id("users"),
+    clientDate: v.optional(v.string()), // Client's local date YYYY-MM-DD
+  },
   handler: async (ctx, args) => {
-    const today = new Date().toISOString().split('T')[0];
+    // Use client date if provided, otherwise fallback to server UTC
+    const today = args.clientDate || new Date().toISOString().split('T')[0];
     
     // Verify user exists first
     const user = await ctx.db.get(args.userId);
@@ -95,9 +101,11 @@ export const logMood = mutation({
     mood: v.number(), // 1-5
     journal: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
+    clientDate: v.optional(v.string()), // Client's local date YYYY-MM-DD
   },
   handler: async (ctx, args) => {
-    const today = new Date().toISOString().split('T')[0];
+    // Use client date if provided, otherwise fallback to server UTC
+    const today = args.clientDate || new Date().toISOString().split('T')[0];
     
     // Check if check-in exists for today
     const existing = await ctx.db
@@ -129,7 +137,10 @@ export const logMood = mutation({
 });
 
 export const getTodayMood = query({
-  args: { userId: v.id("users") },
+  args: { 
+    userId: v.id("users"),
+    clientDate: v.optional(v.string()), // Client's local date YYYY-MM-DD
+  },
   handler: async (ctx, args) => {
     // Verify user exists
     const user = await ctx.db.get(args.userId);
@@ -137,7 +148,8 @@ export const getTodayMood = query({
       return null;
     }
     
-    const today = new Date().toISOString().split('T')[0];
+    // Use client date if provided, otherwise fallback to server UTC
+    const today = args.clientDate || new Date().toISOString().split('T')[0];
     
     return await ctx.db
       .query("emotionalCheckins")

@@ -385,19 +385,29 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Left Column - Wellness Widgets */}
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-            {/* Wellness Section */}
+      {/* Content - Mobile-first responsive layout */}
+      <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 pb-24 sm:pb-8">
+        {/* Mobile: Single column, Desktop: 3 columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Left Column - Wellness Widgets (Full width on mobile) */}
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6 order-1">
+            {/* Wellness Section - Your Personal Evolution Journal */}
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-[var(--foreground)] flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[var(--color-aurora-pink)]" />
-                Daily Wellness
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg sm:text-xl font-bold text-[var(--foreground)] flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[var(--color-aurora-pink)]" />
+                  <span className="hidden sm:inline">Daily Wellness</span>
+                  <span className="sm:hidden">My Wellness</span>
+                </h2>
+                <Link href="/health">
+                  <Button variant="ghost" size="sm" className="text-[var(--color-aurora-pink)] hover:bg-[var(--color-aurora-pink)]/10 min-h-[36px]">
+                    View All →
+                  </Button>
+                </Link>
+              </div>
               
-              <div className="grid md:grid-cols-2 gap-4">
+              {/* Mobile: Stack vertically, Desktop: 2 columns */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 {/* Hydration Tracker */}
                 {userId && <HydrationTracker userId={userId} />}
                 
@@ -409,68 +419,62 @@ export default function ProfilePage() {
               {userId && <MeditationSection userId={userId} />}
             </div>
 
-            {/* Stats Section */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold text-[var(--foreground)] flex items-center gap-2">
+            {/* Stats Section - Compact for mobile */}
+            <div className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-bold text-[var(--foreground)] flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-[var(--color-aurora-blue)]" />
                 Your Progress
               </h2>
-              {/* Stats Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+              {/* Stats Cards - Compact grid on mobile */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
+              {/* Credits - Compact */}
               <Card className="bg-[var(--card)] border-[var(--border)]">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Credits</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-[var(--color-aurora-yellow)]/20 rounded-full flex items-center justify-center">
-                      <Sparkles className="w-6 h-6 text-[var(--color-aurora-yellow)]" />
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-aurora-yellow)]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--color-aurora-yellow)]" />
                     </div>
-                    <div>
-                      <p className="text-3xl font-bold text-[var(--foreground)]">{user.credits}</p>
-                      <p className="text-sm text-[var(--muted-foreground)]">Available to spend</p>
+                    <div className="min-w-0">
+                      <p className="text-xl sm:text-3xl font-bold text-[var(--foreground)]">{user.credits}</p>
+                      <p className="text-xs sm:text-sm text-[var(--muted-foreground)] truncate">Credits</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
+              {/* Monthly Earnings - Compact */}
               <Card className="bg-[var(--card)] border-[var(--border)]">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Monthly Earnings</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-[var(--color-aurora-mint)]/20 rounded-full flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-[var(--color-aurora-mint)]" />
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-aurora-mint)]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--color-aurora-mint)]" />
                     </div>
-                    <div>
-                      <p className="text-3xl font-bold text-[var(--foreground)]">{user.monthlyCreditsEarned || 0}</p>
-                      <p className="text-sm text-[var(--muted-foreground)]">This month</p>
+                    <div className="min-w-0">
+                      <p className="text-xl sm:text-3xl font-bold text-[var(--foreground)]">{user.monthlyCreditsEarned || 0}</p>
+                      <p className="text-xs sm:text-sm text-[var(--muted-foreground)] truncate">This month</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
+              {/* Trust Score - Compact */}
               <Card className="bg-[var(--card)] border-[var(--border)]">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Trust Score</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-12 h-12 bg-[var(--color-aurora-purple)]/20 rounded-full flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-[var(--color-aurora-purple)]" />
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-aurora-purple)]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Award className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--color-aurora-purple)]" />
                     </div>
-                    <div>
-                      <p className="text-3xl font-bold text-[var(--foreground)]">{user.trustScore}</p>
-                      <p className="text-sm text-[var(--muted-foreground)]">{getRankPercentile(user.trustScore)}</p>
+                    <div className="min-w-0">
+                      <p className="text-xl sm:text-3xl font-bold text-[var(--foreground)]">{user.trustScore}</p>
+                      <p className="text-xs sm:text-sm text-[var(--muted-foreground)] truncate">{getRankPercentile(user.trustScore)}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5 mt-1 sm:mt-2">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <span
                         key={star}
-                        className={`text-lg ${
-                          star <= trustStars ? 'text-[var(--color-aurora-yellow)]' : 'text-[var(--muted-foreground)]'
+                        className={`text-sm sm:text-lg ${
+                          star <= trustStars ? 'text-[var(--color-aurora-yellow)]' : 'text-[var(--muted-foreground)]/30'
                         }`}
                       >
                         ★
@@ -480,85 +484,80 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
 
+              {/* Posts - Compact */}
               <Card className="bg-[var(--card)] border-[var(--border)]">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Posts Created</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-[var(--color-aurora-blue)]/20 rounded-full flex items-center justify-center">
-                      <FileText className="w-6 h-6 text-[var(--color-aurora-blue)]" />
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-aurora-blue)]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--color-aurora-blue)]" />
                     </div>
-                    <div>
-                      <p className="text-3xl font-bold text-[var(--foreground)]">{stats.totalPosts}</p>
-                      <p className="text-sm text-[var(--muted-foreground)]">Contributions</p>
+                    <div className="min-w-0">
+                      <p className="text-xl sm:text-3xl font-bold text-[var(--foreground)]">{stats.totalPosts}</p>
+                      <p className="text-xs sm:text-sm text-[var(--muted-foreground)] truncate">Posts</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
+              {/* Verifications - Compact */}
               <Card className="bg-[var(--card)] border-[var(--border)]">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Verifications</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-[var(--color-aurora-pink)]/20 rounded-full flex items-center justify-center">
-                      <CheckCircle2 className="w-6 h-6 text-[var(--color-aurora-pink)]" />
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-aurora-pink)]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--color-aurora-pink)]" />
                     </div>
-                    <div>
-                      <p className="text-3xl font-bold text-[var(--foreground)]">{stats.totalVerifications}</p>
-                      <p className="text-sm text-[var(--muted-foreground)]">Posts verified</p>
+                    <div className="min-w-0">
+                      <p className="text-xl sm:text-3xl font-bold text-[var(--foreground)]">{stats.totalVerifications}</p>
+                      <p className="text-xs sm:text-sm text-[var(--muted-foreground)] truncate">Verified</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Women Helped - Compact */}
+              <Card className="bg-[var(--card)] border-[var(--border)]">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-full flex items-center justify-center flex-shrink-0">
+                      <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xl sm:text-3xl font-bold text-[var(--foreground)]">{stats.womenHelped}</p>
+                      <p className="text-xs sm:text-sm text-[var(--muted-foreground)] truncate">Helped</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
               </div>
 
-              {/* Impact */}
+              {/* Recent Activity - Compact for mobile */}
               <Card className="bg-[var(--card)] border-[var(--border)]">
-              <CardHeader>
-                <CardTitle className="text-[var(--foreground)]">Your Impact</CardTitle>
+              <CardHeader className="pb-2 sm:pb-3">
+                <CardTitle className="text-base sm:text-lg text-[var(--foreground)]">Recent Activity</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <span className="text-3xl font-bold text-white">{stats.womenHelped}</span>
-                  </div>
-                  <p className="text-2xl font-bold mb-2 text-[var(--color-aurora-purple)]">Women Helped</p>
-                  <p className="text-[var(--muted-foreground)]">
-                    Your contributions have been verified {stats.womenHelped} times, helping other women make informed decisions
-                  </p>
-                </div>
-              </CardContent>
-              </Card>
-
-              {/* Recent Activity */}
-              <Card className="bg-[var(--card)] border-[var(--border)]">
-              <CardHeader>
-                <CardTitle className="text-[var(--foreground)]">Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {transactions && transactions.length > 0 ? (
-                    transactions.map((tx, index) => (
-                      <div key={index} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    transactions.slice(0, 5).map((tx, index) => (
+                      <div key={index} className="flex items-center justify-between py-1.5 sm:py-2 border-b border-[var(--border)] last:border-0">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                          <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                             tx.amount > 0 ? 'bg-[var(--color-aurora-mint)]/20' : 'bg-[var(--color-aurora-salmon)]/20'
                           }`}>
-                            <span className={tx.amount > 0 ? 'text-[var(--color-aurora-mint)]' : 'text-[var(--color-aurora-salmon)]'}>
-                              {tx.amount > 0 ? '+' : ''}
+                            <span className={`text-xs sm:text-sm ${tx.amount > 0 ? 'text-[var(--color-aurora-mint)]' : 'text-[var(--color-aurora-salmon)]'}`}>
+                              {tx.amount > 0 ? '+' : '-'}
                             </span>
                           </div>
-                          <div>
-                            <p className="font-medium text-sm text-[var(--foreground)]">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-xs sm:text-sm text-[var(--foreground)] truncate">
                               {tx.type === 'post_created' && 'Created a post'}
                               {tx.type === 'verification' && 'Verified a post'}
                               {tx.type === 'opportunity_unlock' && 'Unlocked opportunity'}
                               {tx.type === 'signup_bonus' && 'Signup bonus'}
+                              {tx.type === 'meditation' && 'Meditation session'}
+                              {tx.type === 'hydration' && 'Hydration goal'}
                             </p>
-                            <p className="text-xs text-[var(--muted-foreground)]">
+                            <p className="text-[10px] sm:text-xs text-[var(--muted-foreground)]">
                               {formatDistanceToNow(tx._creationTime, { addSuffix: true })}
                             </p>
                           </div>

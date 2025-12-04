@@ -344,25 +344,38 @@ export default function FeedPage() {
           {/* Feed Items */}
           {sortedItems
             .filter((item: any) => {
+              // Safety check - skip null/undefined items
+              if (!item || !item._id) return false;
+              
               if (contentType === "all") return true;
               if (contentType === "poll") return item.type === "post" && item.postType === "poll";
-              if (contentType === "reel") return item.type === "post" && (item.postType === "reel" || item.reel);
+              if (contentType === "reel") return item.type === "post" && (item.postType === "reel" || item.reel || item.reelId);
               if (contentType === "ai_chat") return item.type === "post" && item.postType === "ai_chat";
-              if (contentType === "post") return item.type === "post" && !item.postType && !item.route && !item.reel;
+              if (contentType === "post") return item.type === "post" && (!item.postType || item.postType === "standard") && !item.route && !item.reel && !item.reelId;
+              if (contentType === "route") return item.type === "route" || (item.type === "post" && (item.route || item.routeId));
               return item.type === contentType;
             })
             .map((item: any, index: number) => {
+              // Safety check for rendering
+              if (!item || !item._id) return null;
+              
               const showAd = index > 0 && index % 5 === 0;
+              const isReel = item.type === "post" && (item.reel || item.reelId || item.postType === "reel");
+              const isPoll = item.type === "post" && item.postType === "poll";
+              const isAIChat = item.type === "post" && item.postType === "ai_chat";
+              const isRoutePost = item.type === "post" && (item.route || item.routeId);
+              const isStandardPost = item.type === "post" && !isReel && !isPoll && !isAIChat && !isRoutePost;
+              
               return (
                 <div key={item._id}>
                   {showAd && <FeedAd />}
-                  {item.type === "post" && item.postType === "poll" && (
+                  {isPoll && (
                     <PollCard post={item} currentUserId={userId || undefined} onDelete={() => handleDelete(item._id as Id<"posts">)} />
                   )}
-                  {item.type === "post" && item.postType === "ai_chat" && (
+                  {isAIChat && (
                     <AIChatCard post={item} currentUserId={userId || undefined} onDelete={() => handleDelete(item._id as Id<"posts">)} />
                   )}
-                  {item.type === "post" && item.postType !== "poll" && item.postType !== "ai_chat" && !item.route && (
+                  {isStandardPost && (
                     <RedditPostCard
                       post={item}
                       currentUserId={userId || undefined}
@@ -371,7 +384,7 @@ export default function FeedPage() {
                       showActions={true}
                     />
                   )}
-                  {item.type === "post" && item.route && (
+                  {isRoutePost && item.route && (
                     <RouteFeedCard 
                       route={{
                         ...item.route,
@@ -382,11 +395,13 @@ export default function FeedPage() {
                       onDelete={() => handleDelete(item._id as Id<"posts">)} 
                     />
                   )}
-                  {item.type === "post" && item.reel && (
+                  {isReel && item.reel && (
                     <ReelFeedCard 
                       reel={{
                         ...item.reel,
-                        _creationTime: item._creationTime,
+                        _id: item.reel._id || item._id,
+                        _creationTime: item.reel._creationTime || item._creationTime,
+                        authorId: item.reel.authorId || item.authorId,
                       }} 
                       currentUserId={userId || undefined} 
                       onDelete={() => handleDelete(item._id as Id<"posts">)} 

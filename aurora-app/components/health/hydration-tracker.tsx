@@ -17,10 +17,17 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
   const [showCelebration, setShowCelebration] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   
-  // Safe query with null coalescing for error handling
+  // Get client's local date for timezone-aware queries
+  const getLocalDate = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  };
+  const clientDate = getLocalDate();
+  
+  // Safe query with null coalescing for error handling - using client date for timezone accuracy
   const todayHydrationRaw = useQuery(
     api.health.getTodayHydration,
-    userId ? { userId } : "skip"
+    userId ? { userId, clientDate } : "skip"
   );
   const todayHydration = todayHydrationRaw ?? { glasses: 0, goal: 8, completed: false };
   
@@ -39,7 +46,7 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
 
   const handleAddGlass = async () => {
     const newGlasses = glasses + 1;
-    await logWater({ userId, glasses: newGlasses });
+    await logWater({ userId, glasses: newGlasses, clientDate });
     
     // Show celebration if goal reached
     if (newGlasses === goal) {
@@ -50,7 +57,7 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
 
   const handleRemoveGlass = async () => {
     if (glasses > 0) {
-      await logWater({ userId, glasses: glasses - 1 });
+      await logWater({ userId, glasses: glasses - 1, clientDate });
     }
   };
 

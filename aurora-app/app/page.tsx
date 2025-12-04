@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import {
   Sparkles, MapPin, Briefcase, Shield, ArrowRight,
   Heart, Users, Star, Lock, ThumbsUp, MessageSquare,
-  Route, ChevronDown, X, CheckCircle, Zap, Globe
+  Route, X, CheckCircle, Zap, Globe
 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -192,85 +192,122 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section - Light & Impactful */}
+      {/* Hero Section - Optimized for Conversions */}
       <section className="relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#fffaf1] via-[#c9cef4]/20 to-[#f29de5]/10" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#f29de5]/20 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#c9cef4]/30 rounded-full blur-3xl" />
         
-        <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="relative max-w-6xl mx-auto px-4 py-12 md:py-20">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Left Content */}
             <div>
+              {/* Urgency Banner */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2 mb-6"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-[#f29de5]/20 to-[#5537a7]/20 border border-[#5537a7]/30 rounded-full px-4 py-2 mb-6"
               >
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f29de5] to-[#c9cef4] border-2 border-[#fffaf1]" />
-                  ))}
-                </div>
-                <span className="text-[#3d0d73]/70 text-sm ml-2">
-                  <span className="font-bold text-[#3d0d73]">10,000+</span> women trust Aurora
+                <span className="w-2 h-2 bg-[#22c55e] rounded-full animate-pulse" />
+                <span className="text-sm font-medium text-[#3d0d73]">
+                  🎁 Join now & get <span className="text-[#5537a7] font-bold">25 free credits</span>
                 </span>
               </motion.div>
 
+              {/* Social Proof */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3 mb-6"
+              >
+                <div className="flex -space-x-3">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="w-10 h-10 rounded-full bg-gradient-to-br from-[#f29de5] to-[#c9cef4] border-3 border-[#fffaf1] shadow-md" />
+                  ))}
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-[#3d0d73] text-sm">Join 10,000+ women</p>
+                  <div className="flex items-center gap-1">
+                    {[1,2,3,4,5].map(i => <Star key={i} className="w-3 h-3 fill-[#e5e093] text-[#e5e093]" />)}
+                    <span className="text-xs text-[#3d0d73]/60 ml-1">4.9/5 rating</span>
+                  </div>
+                </div>
+              </motion.div>
+
               <motion.h1
-                className="text-4xl md:text-5xl lg:text-6xl font-black text-[#3d0d73] mb-6 leading-tight"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-[#3d0d73] mb-4 sm:mb-6 leading-tight"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
               >
-                Your Safety.{" "}
-                <span className="text-[#5537a7]">Your Community.</span>{" "}
-                <span className="bg-gradient-to-r from-[#f29de5] to-[#5537a7] bg-clip-text text-transparent">Your Growth.</span>
+                Navigate Life{" "}
+                <span className="text-[#5537a7]">Safely</span>{" "}
+                <span className="bg-gradient-to-r from-[#f29de5] to-[#5537a7] bg-clip-text text-transparent">Together</span>
               </motion.h1>
 
               <motion.p
-                className="text-lg text-[#3d0d73]/70 mb-8 max-w-lg"
+                className="text-base sm:text-lg text-[#3d0d73]/70 mb-6 max-w-lg"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                Community-powered safety intelligence for women. Share experiences, earn credits, unlock opportunities.
+                The #1 safety app for women worldwide. Rate workplaces, share safe routes, connect with your community, and access career opportunities.
               </motion.p>
 
+              {/* Value Props - Quick scan */}
               <motion.div
-                className="flex flex-col sm:flex-row gap-4 mb-8"
+                className="grid grid-cols-2 gap-3 mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+              >
+                {[
+                  { emoji: "🗺️", text: "Safe route sharing" },
+                  { emoji: "⭐", text: "Workplace ratings" },
+                  { emoji: "👩‍👩‍👧‍👦", text: "Support circles" },
+                  { emoji: "💼", text: "Job opportunities" },
+                ].map((item) => (
+                  <div key={item.text} className="flex items-center gap-2 text-[#3d0d73]/80 text-sm">
+                    <span>{item.emoji}</span>
+                    <span>{item.text}</span>
+                  </div>
+                ))}
+              </motion.div>
+
+              <motion.div
+                className="flex flex-col sm:flex-row gap-3 mb-6"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                <Link href="/api/auth/login">
-                  <Button size="lg" className="bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-xl px-8 min-h-[52px] font-semibold shadow-lg shadow-[#5537a7]/30 w-full sm:w-auto">
-                    Get Started Free
+                <Link href="/api/auth/login" className="flex-1 sm:flex-none">
+                  <Button size="lg" className="w-full bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-xl px-8 min-h-[56px] font-bold shadow-xl shadow-[#5537a7]/30 text-base">
+                    Start Free Now
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
-                <Link href="#features">
-                  <Button size="lg" variant="outline" className="border-[#5537a7]/30 text-[#5537a7] hover:bg-[#5537a7]/10 rounded-xl px-8 min-h-[52px] font-semibold w-full sm:w-auto">
-                    Learn More
+                <Link href="#how-it-works" className="flex-1 sm:flex-none">
+                  <Button size="lg" variant="outline" className="w-full border-[#5537a7]/30 text-[#5537a7] hover:bg-[#5537a7]/10 rounded-xl px-6 min-h-[56px] font-semibold">
+                    See How It Works
                   </Button>
                 </Link>
               </motion.div>
 
               {/* Trust Badges */}
               <motion.div
-                className="flex flex-wrap gap-4"
+                className="flex flex-wrap gap-3 sm:gap-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
               >
                 {[
-                  { icon: Shield, text: "Privacy First" },
-                  { icon: Lock, text: "Anonymous Posting" },
-                  { icon: CheckCircle, text: "Community Verified" },
+                  { icon: Shield, text: "100% Free" },
+                  { icon: Lock, text: "Private & Secure" },
+                  { icon: Globe, text: "Available Worldwide" },
                 ].map((item) => (
-                  <div key={item.text} className="flex items-center gap-2 text-[#3d0d73]/60 text-sm">
-                    <item.icon className="w-4 h-4 text-[#5537a7]" />
+                  <div key={item.text} className="flex items-center gap-1.5 text-[#3d0d73]/60 text-xs sm:text-sm">
+                    <item.icon className="w-4 h-4 text-[#22c55e]" />
                     <span>{item.text}</span>
                   </div>
                 ))}
@@ -406,7 +443,88 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features Section - After feed */}
+      {/* How It Works Section */}
+      <section id="how-it-works" className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <Badge className="bg-[#d6f4ec]/50 text-[#3d0d73] border-0 mb-4">Simple & Free</Badge>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#3d0d73] mb-4">
+              Get started in 30 seconds
+            </h2>
+            <p className="text-[#3d0d73]/60 max-w-xl mx-auto">
+              No credit card required. Sign in with Google and start exploring.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+            {[
+              { 
+                step: "1", 
+                title: "Sign up free", 
+                desc: "Create your account with Google or Microsoft. Get 25 credits instantly.",
+                icon: "🎁",
+                color: "#f29de5"
+              },
+              { 
+                step: "2", 
+                title: "Explore & share", 
+                desc: "Rate places, share safe routes, and connect with women in your area.",
+                icon: "🗺️",
+                color: "#5537a7"
+              },
+              { 
+                step: "3", 
+                title: "Earn & unlock", 
+                desc: "Earn credits by helping others. Unlock jobs, mentorship & resources.",
+                icon: "✨",
+                color: "#d6f4ec"
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="relative"
+              >
+                <div className="bg-[#fffaf1] rounded-2xl p-6 border border-gray-100 h-full">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div 
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
+                      style={{ backgroundColor: item.color + "20" }}
+                    >
+                      {item.icon}
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-[#5537a7] text-white font-bold flex items-center justify-center text-sm">
+                      {item.step}
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-[#3d0d73] text-lg mb-2">{item.title}</h3>
+                  <p className="text-[#3d0d73]/60 text-sm">{item.desc}</p>
+                </div>
+                {i < 2 && (
+                  <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2">
+                    <ArrowRight className="w-6 h-6 text-[#5537a7]/30" />
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="text-center mt-10">
+            <Link href="/api/auth/login">
+              <Button size="lg" className="bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-xl px-10 min-h-[56px] font-bold shadow-xl shadow-[#5537a7]/20">
+                Create Free Account
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+            <p className="text-xs text-[#3d0d73]/50 mt-3">No credit card • No spam • Cancel anytime</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
       <section id="features" className="py-16 bg-[#fffaf1]">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12">
@@ -454,10 +572,10 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-12">
             {[
-              { value: "10K+", label: "Women" },
-              { value: "50K+", label: "Posts" },
+              { value: "10K+", label: "Women Worldwide" },
+              { value: "50K+", label: "Safety Reports" },
               { value: "25K+", label: "Safe Routes" },
-              { value: "4.9★", label: "App Rating" },
+              { value: "98%", label: "Feel Safer" },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <p className="text-3xl md:text-4xl font-black">{stat.value}</p>
@@ -466,17 +584,55 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* Testimonial */}
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="flex justify-center gap-1 mb-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Star key={i} className="w-5 h-5 fill-[#e5e093] text-[#e5e093]" />
+          {/* Testimonials Carousel */}
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+              <p className="text-white/60 text-sm uppercase tracking-wider mb-2">What women are saying</p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-4">
+              {[
+                {
+                  quote: "Aurora helped me find a safe route to my new job. The community verification gives me peace of mind every day.",
+                  name: "Sarah M.",
+                  role: "Software Engineer",
+                  location: "🇺🇸 San Francisco",
+                },
+                {
+                  quote: "Finally an app that understands what women need. I've connected with amazing mentors and found job opportunities I never knew existed.",
+                  name: "María L.",
+                  role: "Marketing Manager",
+                  location: "🇨🇴 Bogotá",
+                },
+                {
+                  quote: "The workplace ratings saved me from accepting a job at a toxic company. This community is invaluable.",
+                  name: "Priya K.",
+                  role: "Data Analyst",
+                  location: "🇮🇳 Mumbai",
+                },
+              ].map((testimonial, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20"
+                >
+                  <div className="flex gap-1 mb-3">
+                    {[1,2,3,4,5].map(s => <Star key={s} className="w-4 h-4 fill-[#e5e093] text-[#e5e093]" />)}
+                  </div>
+                  <p className="text-white/90 text-sm mb-4 leading-relaxed">"{testimonial.quote}"</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#f29de5] to-[#c9cef4]" />
+                    <div>
+                      <p className="font-semibold text-white text-sm">{testimonial.name}</p>
+                      <p className="text-white/60 text-xs">{testimonial.role} • {testimonial.location}</p>
+                    </div>
+                  </div>
+                </motion.div>
               ))}
             </div>
-            <p className="text-lg md:text-xl mb-4 italic leading-relaxed">
-              "Aurora helped me find a safe route to my new job. The community verification gives me peace of mind every day."
-            </p>
-            <p className="text-white/70 text-sm">— Sarah M., Software Engineer</p>
           </div>
         </div>
       </section>

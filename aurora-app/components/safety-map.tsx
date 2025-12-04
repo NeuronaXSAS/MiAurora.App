@@ -608,29 +608,29 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
         </div>
       )}
 
-      {/* Legend - Always visible, responsive positioning */}
-      <div className="absolute bottom-24 sm:bottom-6 md:bottom-6 lg:bottom-6 left-4 bg-[var(--card)] backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg p-3 z-20">
+      {/* Legend - Always visible, positioned above bottom controls on mobile, left side on desktop */}
+      <div className="absolute bottom-28 sm:bottom-24 lg:bottom-6 left-4 bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg p-3 z-30 max-w-[280px]">
         <p className="text-[10px] sm:text-xs font-semibold text-[var(--foreground)] mb-2">Safety Legend</p>
         <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded-full bg-[#22c55e] border-2 border-white shadow-sm" />
-              <span className="text-xs text-[var(--foreground)]">Safe (4-5★)</span>
+              <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#22c55e] border-2 border-white shadow-sm" />
+              <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Safe (4-5★)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded-full bg-[#eab308] border-2 border-white shadow-sm" />
-              <span className="text-xs text-[var(--foreground)]">Neutral (3★)</span>
+              <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#eab308] border-2 border-white shadow-sm" />
+              <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Neutral (3★)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded-full bg-[#ef4444] border-2 border-white shadow-sm" />
-              <span className="text-xs text-[var(--foreground)]">Unsafe (1-2★)</span>
+              <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#ef4444] border-2 border-white shadow-sm" />
+              <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Unsafe (1-2★)</span>
             </div>
           </div>
           <div className="flex items-center gap-1.5 pt-1 border-t border-[var(--border)]">
-            <div className="w-4 h-4 bg-[#ec4c28] border-2 border-white shadow-sm rounded-sm rotate-45 flex items-center justify-center">
-              <span className="text-[8px] -rotate-45">⚠️</span>
+            <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-[#ec4c28] border-2 border-white shadow-sm rounded-sm rotate-45 flex items-center justify-center">
+              <span className="text-[6px] sm:text-[8px] -rotate-45">⚠️</span>
             </div>
-            <span className="text-xs text-[var(--foreground)]">Workplace Report</span>
+            <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Workplace Report</span>
           </div>
         </div>
       </div>

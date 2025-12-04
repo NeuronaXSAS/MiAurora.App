@@ -56,8 +56,14 @@ export default function AuthenticatedLayout({
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
       />
       
-      {/* Main Content Area - Expands when sidebar is collapsed */}
-      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-0' : ''}`}>
+      {/* Main Content Area - Expands smoothly when sidebar is collapsed */}
+      <div 
+        className={`
+          flex-1 flex flex-col overflow-hidden 
+          transition-all duration-300 ease-in-out
+          ${sidebarCollapsed ? 'lg:w-full' : 'lg:w-[calc(100%-16rem)] xl:w-[calc(100%-18rem)]'}
+        `}
+      >
         {/* Global Header - Now shown on ALL pages for consistent navigation */}
         <GlobalHeader userId={userId} sidebarCollapsed={sidebarCollapsed} />
         
