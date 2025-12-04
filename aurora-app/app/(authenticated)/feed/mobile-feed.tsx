@@ -274,11 +274,25 @@ export function MobileFeed() {
   // Filter items based on content type - memoized
   const filteredItems = useMemo(() => sortedItems.filter((item: any) => {
     if (contentFilter === "all") return true;
-    if (contentFilter === "posts") return item.type === "post" && !item.route && !item.reel && item.postType !== "poll";
-    if (contentFilter === "routes") return item.type === "route" || (item.type === "post" && item.route);
-    if (contentFilter === "polls") return item.type === "post" && item.postType === "poll";
-    if (contentFilter === "reels") return item.type === "post" && item.reel;
-    if (contentFilter === "opportunities") return item.type === "opportunity";
+    if (contentFilter === "posts") {
+      // Standard posts only - no routes, reels, or polls
+      return item.type === "post" && !item.route && !item.reel && !item.reelId && !item.routeId && item.postType !== "poll" && item.postType !== "reel";
+    }
+    if (contentFilter === "routes") {
+      // Routes - either standalone routes or posts linked to routes
+      return item.type === "route" || (item.type === "post" && (item.route || item.routeId));
+    }
+    if (contentFilter === "polls") {
+      // Polls only
+      return item.type === "post" && item.postType === "poll";
+    }
+    if (contentFilter === "reels") {
+      // Reels - posts linked to reels
+      return item.type === "post" && (item.reel || item.reelId || item.postType === "reel");
+    }
+    if (contentFilter === "opportunities") {
+      return item.type === "opportunity";
+    }
     return true;
   }), [sortedItems, contentFilter]);
 

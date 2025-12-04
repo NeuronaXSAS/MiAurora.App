@@ -66,12 +66,11 @@ export const getUnifiedFeed = query({
       .order("desc")
       .take(limit * 4); // Get more to filter by type and preferences
 
-    // Separate posts by type for balanced mixing
-    const standardPosts = allPosts.filter(p => !p.postType || p.postType === "standard");
-    const pollPosts = allPosts.filter(p => p.postType === "poll");
-    const aiChatPosts = allPosts.filter(p => p.postType === "ai_chat");
-    const routeLinkedPosts = allPosts.filter(p => p.routeId);
-    const reelLinkedPosts = allPosts.filter(p => p.reelId);
+    // Also fetch reels directly to ensure they appear in feed
+    const allReels = await ctx.db
+      .query("reels")
+      .order("desc")
+      .take(Math.ceil(limit * 0.4)); // 40% reels for variety
 
     // Score posts based on user preferences
     const scorePost = (post: typeof allPosts[0]) => {
@@ -253,9 +252,57 @@ export const getUnifiedFeed = query({
       })
     );
 
-    // Combine all items
+    // Process reels directly (not just posts with reelId)
+    const reelsWithAuthors = await Promise.all(
+      allReels.map(async (reel) => {
+        const author = await ctx.db.get(reel.authorId);
+        return {
+          _id: reel._id,
+          _creationTime: reel._creationTime,
+          authorId: reel.authorId,
+          postType: "reel" as const,
+          type: "post" as const,
+          timestamp: reel._creationTime,
+          author,
+          reel: {
+            _id: reel._id,
+            _creationTime: reel._creationTime,
+            authorId: reel.authorId,
+            videoUrl: reel.videoUrl,
+            thumbnailUrl: reel.thumbnailUrl,
+            caption: reel.caption,
+            hashtags: reel.hashtags,
+            location: reel.location,
+            duration: reel.duration,
+            views: reel.views,
+            likes: reel.likes,
+            shares: reel.shares,
+            comments: reel.comments,
+            author: author ? {
+              _id: author._id,
+              name: author.name,
+              profileImage: author.profileImage,
+            } : null,
+          },
+          reelId: reel._id,
+          // Required post fields with defaults
+          title: reel.caption || "Reel",
+          description: reel.caption || "",
+          lifeDimension: "social" as const,
+          rating: 5,
+          isVerified: false,
+          isAnonymous: reel.isAnonymous,
+          verificationCount: 0,
+          upvotes: reel.likes,
+          commentCount: reel.comments,
+        };
+      })
+    );
+
+    // Combine all items - include reels directly
     const allItems = [
       ...postsWithAuthors,
+      ...reelsWithAuthors,
       ...routesWithCreators,
       ...opportunitiesWithCreators,
     ];
@@ -269,9 +316,20 @@ export const getUnifiedFeed = query({
     const byType: Record<string, typeof allItems> = {};
     
     for (const item of allItems) {
-      const typeKey = item.type === "post" 
-        ? `post_${(item as any).postType || "standard"}` 
-        : item.type;
+      // Categorize by content type for better interleaving
+      let typeKey: string = item.type;
+      if (item.type === "post") {
+        const postItem = item as any;
+        if (postItem.reel || postItem.reelId || postItem.postType === "reel") {
+          typeKey = "reel";
+        } else if (postItem.postType === "poll") {
+          typeKey = "poll";
+        } else if (postItem.route || postItem.routeId) {
+          typeKey = "route_post";
+        } else {
+          typeKey = "post_standard";
+        }
+      }
       if (!byType[typeKey]) byType[typeKey] = [];
       byType[typeKey].push(item);
     }

@@ -230,7 +230,11 @@ export function MobileSidebar({ userCredits = 0, userName, userAvatar }: MobileS
                               const isActive = pathname === item.href;
                               
                               return (
-                                <Link key={item.href} href={item.href}>
+                                <Link 
+                                  key={item.href} 
+                                  href={item.href}
+                                  onClick={() => setIsOpen(false)}
+                                >
                                   <motion.div
                                     whileHover={{ x: 4 }}
                                     whileTap={{ scale: 0.98 }}
