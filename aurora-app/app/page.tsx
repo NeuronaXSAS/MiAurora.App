@@ -1,19 +1,18 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
-  Sparkles, MapPin, Briefcase, Shield, ArrowRight,
-  Heart, Users, Star, Lock, ThumbsUp, MessageSquare,
-  Route, X, CheckCircle, Zap, Globe, Play,
-  ChevronRight, Eye, Brain, Smile, Ban, RefreshCw, 
-  HeartHandshake, Leaf, Cpu, Network, Fingerprint
+  Sparkles, Briefcase, Shield, ArrowRight,
+  Heart, Users, Star, Lock,
+  Route, X, CheckCircle, Zap, Globe,
+  ChevronRight, Brain, Smile, Ban, RefreshCw, 
+  HeartHandshake, Cpu, Network, Fingerprint
 } from "lucide-react";
 import Link from "next/link";
-import { formatDistanceToNow } from "date-fns";
+
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
@@ -68,15 +67,14 @@ const GlowingLine = ({ className = "" }: { className?: string }) => (
 );
 
 export default function LandingPage() {
-  const publicFeed = useQuery(api.feed.getPublicFeed, { limit: 10 });
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
   const [dismissedPrompt, setDismissedPrompt] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll();
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
-  const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
+  // Removed opacity fade - keep hero always visible
+  const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.98]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -218,7 +216,7 @@ export default function LandingPage() {
         <GridBackground />
         <FloatingOrbs />
         
-        <motion.div style={{ opacity: heroOpacity, scale: heroScale }} className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
+        <motion.div style={{ scale: heroScale }} className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
           <div className="max-w-4xl mx-auto text-center">
             {/* Futuristic Badge */}
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 mb-6">
@@ -554,9 +552,9 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             {[
-              { name: "Plus", price: "$5", features: ["Ad-free", "100 AI/day", "100 credits"], badge: "Popular" },
-              { name: "Pro", price: "$12", features: ["Unlimited AI", "Priority support", "500 credits"], badge: "Best Value", highlighted: true },
-              { name: "Elite", price: "$25", features: ["VIP events", "1-on-1 consults", "1500 credits"], badge: "VIP" }
+              { name: "Plus", tier: "plus", price: "$5", features: ["Ad-free", "100 AI/day", "100 credits"], badge: "Popular" },
+              { name: "Pro", tier: "pro", price: "$12", features: ["Unlimited AI", "Priority support", "500 credits"], badge: "Best Value", highlighted: true },
+              { name: "Elite", tier: "elite", price: "$25", features: ["VIP events", "1-on-1 consults", "1500 credits"], badge: "VIP" }
             ].map((tier, i) => (
               <motion.div key={tier.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className={`relative rounded-2xl p-6 backdrop-blur-sm ${tier.highlighted ? "bg-gradient-to-br from-[#3d0d73] to-[#5537a7] text-white shadow-2xl shadow-[#5537a7]/30 scale-105 border border-[#5537a7]/50" : "bg-white/80 border border-[#3d0d73]/10"}`}>
@@ -576,7 +574,7 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/premium">
+                <Link href={`/api/auth/login?returnTo=/premium?tier=${tier.tier}`}>
                   <Button className={`w-full min-h-[48px] rounded-xl font-semibold ${tier.highlighted ? "bg-white text-[#3d0d73] hover:bg-white/90" : "bg-[#5537a7] text-white hover:bg-[#3d0d73]"}`}>
                     Get {tier.name}
                   </Button>

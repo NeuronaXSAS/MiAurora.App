@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SUBSCRIPTION_TIERS, CREDIT_PACKAGES } from "@/convex/premiumConfig";
-import { SAFETY_PROMISE, getSafetyFeaturesList } from "@/lib/safety-access";
 import type { Id } from "@/convex/_generated/dataModel";
 
 // Regional pricing type
@@ -89,6 +88,19 @@ export default function PremiumPage() {
     const storedUserId = localStorage.getItem("aurora_user_id");
     if (storedUserId) {
       setUserId(storedUserId as Id<"users">);
+    }
+  }, []);
+
+  // Handle tier query parameter from landing page
+  const [autoCheckoutTier, setAutoCheckoutTier] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tierParam = params.get("tier");
+      if (tierParam && ["plus", "pro", "elite"].includes(tierParam)) {
+        setAutoCheckoutTier(tierParam);
+      }
     }
   }, []);
 
@@ -195,6 +207,17 @@ export default function PremiumPage() {
       setSelectedPackage(null);
     }
   }, [userId, user, userCountry]);
+
+  // Auto-trigger checkout when user is loaded and tier is specified from landing page
+  useEffect(() => {
+    if (autoCheckoutTier && userId && user && !isProcessing) {
+      const timer = setTimeout(() => {
+        handleSubscribe(autoCheckoutTier);
+        setAutoCheckoutTier(null);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [autoCheckoutTier, userId, user, isProcessing, handleSubscribe]);
 
   if (userLoading) {
     return (
