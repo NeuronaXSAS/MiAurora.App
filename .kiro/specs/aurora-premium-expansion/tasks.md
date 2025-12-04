@@ -1,0 +1,280 @@
+# Implementation Plan
+
+- [ ] 1. Extend Database Schema for Premium Features
+  - [ ] 1.1 Add subscription tiers table to Convex schema
+    - Define subscriptionTiers table with id, name, prices, and benefits object
+    - Add indexes for efficient tier lookups
+    - _Requirements: 1.1_
+  - [ ] 1.2 Add userSubscriptions table to Convex schema
+    - Define table with userId, tier, billingCycle, stripeSubscriptionId, period dates, status
+    - Add indexes by_user and by_stripe_id
+    - _Requirements: 1.2, 1.3, 1.4_
+  - [ ] 1.3 Add rooms table for Circle room types
+    - Define table with circleId, name, type (chat/audio/video/forum/broadcast), visibility, requiredTier
+    - Add maxParticipants and agoraChannel fields
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+  - [ ] 1.4 Add circleTiers and circleMemberships tables
+    - Define circleTiers with circleId, tierId, name, price, benefits, roomAccess
+    - Define circleMemberships with circleId, userId, tier, subscribedAt, renewsAt, status
+    - _Requirements: 2.1, 2.2, 2.3_
+  - [ ] 1.5 Add giftTransactions and superChats tables
+    - Define giftTransactions with fromUserId, toUserId, giftId, credits, livestreamId, message
+    - Define superChats with userId, livestreamId, message, credits, pinnedUntil
+    - _Requirements: 4.1, 4.2, 4.5_
+  - [ ] 1.6 Add events, eventRsvps, and eventReviews tables
+    - Define events with circleId, hostId, title, type, pricing, capacity, startTime, location, status
+    - Define eventRsvps with eventId, userId, status, paidAmount
+    - Define eventReviews with eventId, userId, rating, review
+    - _Requirements: 5.1, 5.2, 5.4_
+  - [ ] 1.7 Add creditPackages and referrals tables
+    - Define creditPackages with packageId, credits, priceUSD, bonus
+    - Define referrals with referrerId, refereeId, status, creditAwarded
+    - _Requirements: 9.1, 9.4_
+  - [ ] 1.8 Write property test for schema validation
+    - **Property 1: Tier Benefits Inheritance**
+    - **Validates: Requirements 1.2, 1.3, 1.4**
+
+- [ ] 2. Implement Subscription Service
+  - [ ] 2.1 Create subscription tier configuration
+    - Implement getTiers query returning Plus ($5), Pro ($12), Elite ($25) with benefits
+    - Implement getTierBenefits query for specific tier lookup
+    - _Requirements: 1.1_
+  - [ ] 2.2 Implement subscription mutations
+    - Create createSubscription mutation with Stripe integration
+    - Create updateSubscription mutation for tier changes with proration
+    - Create cancelSubscription mutation
+    - _Requirements: 1.2, 1.3, 1.4, 1.5_
+  - [ ] 2.3 Implement Stripe webhook handler for subscriptions
+    - Handle subscription.created, subscription.updated, subscription.deleted events
+    - Update userSubscriptions table based on webhook events
+    - Handle payment failures and grace periods
+    - _Requirements: 1.2, 1.5_
+  - [ ] 2.4 Implement annual billing with discount
+    - Calculate annual price as monthly * 12 * 0.8
+    - Support billing cycle selection in subscription creation
+    - _Requirements: 1.6_
+  - [ ] 2.5 Write property tests for subscription calculations
+    - **Property 2: Annual Billing Discount**
+    - **Property 3: Tier Upgrade/Downgrade Proration**
+    - **Validates: Requirements 1.5, 1.6**
+
+- [ ] 3. Implement Access Control Service
+  - [ ] 3.1 Create centralized access control functions
+    - Implement checkAccess query that evaluates user tier against resource requirements
+    - Implement getUserLimits query returning rate limits based on tier
+    - Define SAFETY_FEATURES constant for features that are never gated
+    - _Requirements: 10.1, 10.4, 10.6_
+  - [ ] 3.2 Implement tier-based access checks
+    - Create canAccessRoom function checking Circle membership tier
+    - Create canAccessContent function checking creator subscription tier
+    - Create canAccessEvent function checking event tier requirements
+    - _Requirements: 2.2, 6.2_
+  - [ ] 3.3 Write property tests for access control
+    - **Property 4: Tier-Restricted Access Control**
+    - **Property 16: Free Tier Safety Access**
+    - **Property 17: Free Tier Basic Access**
+    - **Validates: Requirements 2.2, 6.2, 10.1, 10.2, 10.3, 10.4, 10.6**
+
+- [ ] 4. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 5. Implement Circle Premium Features
+  - [ ] 5.1 Create Circle tier management functions
+    - Implement enableCirclePremium mutation for Circle hosts
+    - Implement createCircleTier mutation with name, price, benefits
+    - Implement getCircleTiers query
+    - _Requirements: 2.1_
+  - [ ] 5.2 Implement Circle membership subscriptions
+    - Create subscribeToCircleTier mutation handling credit deduction
+    - Implement platform fee calculation (20% or 15% for 100+ members)
+    - Create getCircleMembership query
+    - _Requirements: 2.2, 2.3, 2.5_
+  - [ ] 5.3 Implement Circle revenue dashboard
+    - Create getCircleRevenue query with subscriber count, revenue, fees
+    - Calculate host earnings after platform fee
+    - _Requirements: 2.4_
+  - [ ] 5.4 Write property test for Circle fee calculation
+    - **Property 5: Platform Fee Reduction Threshold**
+    - **Validates: Requirements 2.5, 6.4**
+
+- [ ] 6. Implement Room Service
+  - [ ] 6.1 Create room CRUD operations
+    - Implement createRoom mutation with type, visibility, requiredTier
+    - Implement getRooms query filtered by Circle
+    - Implement updateRoom and deleteRoom mutations
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
+  - [ ] 6.2 Implement room participant management
+    - Create joinRoom mutation with tier access check
+    - Create leaveRoom mutation
+    - Implement participant count tracking
+    - _Requirements: 3.3, 3.5_
+  - [ ] 6.3 Implement room type-specific features
+    - Add chat room features (threads, reactions, polls, pins, mentions)
+    - Add video room 16-participant limit enforcement
+    - Add broadcast room 9-host limit enforcement
+    - _Requirements: 3.1, 3.3, 3.5_
+  - [ ] 6.4 Write property tests for room limits
+    - **Property 9: Video Room Participant Limit**
+    - **Property 10: Broadcast Room Host Limit**
+    - **Validates: Requirements 3.3, 3.5**
+
+- [ ] 7. Implement Gift Service
+  - [ ] 7.1 Create gift configuration and catalog
+    - Define gift categories (Hearts, Sparkles, Crowns, Aurora Special)
+    - Implement getGiftCategories query
+    - Store gift animations and metadata
+    - _Requirements: 4.1_
+  - [ ] 7.2 Implement gift sending functionality
+    - Create sendGift mutation with credit deduction and 85% creator share
+    - Support optional livestream association and message
+    - Create notification for gift recipient
+    - _Requirements: 4.2, 4.3_
+  - [ ] 7.3 Implement Super Chat functionality
+    - Create sendSuperChat mutation for 50+ credit messages
+    - Set pinnedUntil to current time + 60 seconds
+    - _Requirements: 4.5_
+  - [ ] 7.4 Implement gift leaderboard
+    - Create getGiftLeaderboard query aggregating gifts by sender
+    - Sort by total credits in descending order
+    - _Requirements: 4.4_
+  - [ ] 7.5 Write property tests for gift transactions
+    - **Property 6: Revenue Share Calculation (gifts)**
+    - **Property 7: Gift Leaderboard Ordering**
+    - **Property 8: Super Chat Pinning Duration**
+    - **Validates: Requirements 4.3, 4.4, 4.5**
+
+- [ ] 8. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 9. Implement Event Service
+  - [ ] 9.1 Create event CRUD operations
+    - Implement createEvent mutation with pricing options (free/paid/tier-exclusive)
+    - Implement getEvents query with filters for Circle, host, status
+    - Implement updateEvent and cancelEvent mutations
+    - _Requirements: 5.1, 5.4_
+  - [ ] 9.2 Implement RSVP and ticketing
+    - Create rsvpToEvent mutation handling free, paid, and tier-exclusive events
+    - Implement waitlist functionality when capacity is reached
+    - Calculate 80% host share for paid events
+    - _Requirements: 5.2, 5.3_
+  - [ ] 9.3 Implement event calendar aggregation
+    - Create getUserEventCalendar query aggregating events from joined Circles
+    - Sort by startTime ascending
+    - _Requirements: 5.6_
+  - [ ] 9.4 Implement event reviews
+    - Create submitEventReview mutation after event ends
+    - Create getEventReviews query
+    - _Requirements: 5.5_
+  - [ ] 9.5 Write property tests for events
+    - **Property 6: Revenue Share Calculation (events)**
+    - **Property 11: Event Calendar Aggregation**
+    - **Validates: Requirements 5.3, 5.6**
+
+- [ ] 10. Implement Credit Service
+  - [ ] 10.1 Create credit package configuration
+    - Define packages: 100/$1, 500/$4, 1000/$7, 5000/$30
+    - Implement getCreditPackages query
+    - _Requirements: 9.1_
+  - [ ] 10.2 Implement credit purchase flow
+    - Create purchaseCredits mutation with Stripe payment
+    - Add purchased credits to user balance immediately
+    - Log transaction in transactions table
+    - _Requirements: 9.2_
+  - [ ] 10.3 Implement engagement credit rewards
+    - Create awardEngagementCredits mutation for daily login (5), posting (10), verification (25), check-in (15)
+    - Implement cooldown tracking to prevent gaming
+    - _Requirements: 9.3_
+  - [ ] 10.4 Implement referral system
+    - Create createReferral mutation when user signs up with referral code
+    - Award 100 credits to both referrer and referee on completion
+    - _Requirements: 9.4_
+  - [ ] 10.5 Implement credit history
+    - Create getCreditHistory query returning all transactions
+    - Include earnings, purchases, and spending
+    - _Requirements: 9.5_
+  - [ ] 10.6 Write property tests for credits
+    - **Property 12: Credit Purchase Accuracy**
+    - **Property 13: Engagement Credit Awards**
+    - **Property 14: Referral Credit Distribution**
+    - **Property 15: Credit History Completeness**
+    - **Validates: Requirements 9.2, 9.3, 9.4, 9.5**
+
+- [ ] 11. Implement Global Payment Integration
+  - [ ] 11.1 Set up Stripe with regional payment methods
+    - Configure Stripe for US, UK, EU, CA, AU
+    - Enable regional methods: UPI (India), PIX (Brazil), iDEAL (Netherlands)
+    - _Requirements: 9.2_
+  - [ ] 11.2 Implement regional pricing (PPP)
+    - Create getRegionalPricing query based on user location
+    - Apply PPP multipliers for different regions
+    - _Requirements: 1.1, 9.1_
+  - [ ] 11.3 Implement creator payout system
+    - Create requestPayout mutation with minimum thresholds
+    - Integrate with Stripe Connect or Wise for global payouts
+    - _Requirements: 6.4_
+
+- [ ] 12. Implement Premium UI Components
+  - [ ] 12.1 Create subscription selection page
+    - Display three tiers with benefits comparison
+    - Show regional pricing based on user location
+    - Integrate Stripe checkout
+    - _Requirements: 1.1, 1.2, 1.3, 1.4_
+  - [ ] 12.2 Create Circle premium management UI
+    - Add tier configuration for Circle hosts
+    - Display revenue dashboard with metrics
+    - _Requirements: 2.1, 2.4_
+  - [ ] 12.3 Create room type selector and room UI
+    - Add room creation dialog with type selection
+    - Implement chat, audio, video, forum, broadcast room views
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+  - [ ] 12.4 Create gift selector and animation system
+    - Display gift categories in livestream UI
+    - Implement gift animations visible to all viewers
+    - Show Super Chat pinned messages
+    - _Requirements: 4.1, 4.2, 4.5_
+  - [ ] 12.5 Create event management UI
+    - Add event creation form with pricing options
+    - Display event calendar with RSVP functionality
+    - _Requirements: 5.1, 5.2, 5.6_
+  - [ ] 12.6 Create credit purchase and history UI
+    - Display credit packages with regional pricing
+    - Show credit history with transaction details
+    - Add celebration animations for credit earnings
+    - _Requirements: 9.1, 9.5, 9.6_
+
+- [ ] 13. Implement Creator Dashboard Enhancements
+  - [ ] 13.1 Add subscription tier management for creators
+    - Allow creators to set Basic ($3), Premium ($8), VIP ($20) tiers
+    - Enable customizable benefits per tier
+    - _Requirements: 6.1_
+  - [ ] 13.2 Add subscriber-only content controls
+    - Add tier selector when creating posts/reels
+    - Implement content access checks based on subscriber tier
+    - _Requirements: 6.2_
+  - [ ] 13.3 Enhance creator analytics
+    - Add revenue breakdown by source (subscriptions, tips, gifts)
+    - Show subscriber growth trends
+    - Display demographic insights
+    - _Requirements: 6.3_
+  - [ ] 13.4 Implement creator fee reduction
+    - Track subscriber count milestones
+    - Apply 10% fee (instead of 15%) for creators with 1000+ subscribers
+    - _Requirements: 6.4_
+
+- [ ] 14. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 15. Safety Feature Protection
+  - [ ] 15.1 Audit all safety features for paywall protection
+    - Verify panic button, emergency contacts, safety check-ins are free
+    - Verify basic routes and safety resources are free
+    - Ensure emergency mode has no premium restrictions
+    - _Requirements: 10.1, 10.4, 10.6_
+  - [ ] 15.2 Implement free tier guarantees
+    - Verify public Circle access for free users
+    - Verify 10 AI messages/day for free users
+    - Add clear free vs premium feature indicators
+    - _Requirements: 10.2, 10.3, 10.5_
+
+- [ ] 16. Final Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
