@@ -29,6 +29,8 @@ import {
   Video,
   MessageSquare,
   AlertTriangle,
+  Wallet,
+  Star,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
@@ -65,9 +67,9 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
   // Auto-expand section based on current path
   useEffect(() => {
     const safetyPaths = ['/map', '/routes', '/emergency', '/resources', '/report'];
-    const socialPaths = ['/circles', '/reels', '/live', '/opportunities', '/messages'];
+    const socialPaths = ['/circles', '/reels', '/live', '/creator', '/opportunities', '/messages'];
     const wellnessPaths = ['/health', '/assistant'];
-    const accountPaths = ['/profile', '/settings', '/credits', '/premium'];
+    const accountPaths = ['/profile', '/settings', '/wallet', '/premium'];
     
     setExpandedSections({
       safety: safetyPaths.some(p => pathname.startsWith(p)),
@@ -145,6 +147,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
     { href: "/circles", icon: Users, label: "Circles", badge: null },
     { href: "/reels", icon: Play, label: "Reels", badge: null },
     { href: "/live", icon: Video, label: "Live", badge: "NEW" },
+    { href: "/creator", icon: Video, label: "Creator Studio", badge: "NEW" },
     { href: "/opportunities", icon: Briefcase, label: "Opportunities", badge: null },
     { href: "/messages", icon: Mail, label: "Messages", badge: null },
   ];
@@ -155,7 +158,8 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
   ];
 
   const accountNav = [
-    { href: "/credits", icon: Coins, label: "Credits", badge: null },
+    { href: "/wallet", icon: Wallet, label: "Wallet", badge: null },
+    { href: "/premium", icon: Star, label: "Premium", badge: null },
     { href: "/settings", icon: Settings, label: "Settings", badge: null },
     { href: "/profile", icon: User, label: "Profile", badge: null },
   ];

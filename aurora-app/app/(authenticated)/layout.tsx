@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { GlobalHeader } from "@/components/global-header";
-import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { PWAInstallBanner } from "@/components/pwa-install-banner";
+import { NotificationPermissionPrompt } from "@/components/notification-permission-prompt";
 import { useCreditsCelebration } from "@/hooks/use-credits-celebration";
 import { Id } from "@/convex/_generated/dataModel";
 
@@ -75,7 +76,11 @@ export default function AuthenticatedLayout({
         </main>
       </div>
       
-      <PWAInstallPrompt />
+      {/* PWA Install Banner - Floating style for better visibility */}
+      <PWAInstallBanner variant="floating" />
+      
+      {/* Notification Permission Prompt - Shows after 5 seconds */}
+      <NotificationPermissionPrompt variant="modal" delay={8000} />
     </div>
   );
 }

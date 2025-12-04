@@ -230,10 +230,10 @@ self.addEventListener('push', (event) => {
   console.log('[Aurora SW] Push received');
   
   let data = {
-    title: 'Aurora',
+    title: 'Aurora App',
     body: 'You have a new notification',
-    icon: '/icon.png',
-    badge: '/icon.png',
+    icon: '/icon-192.png',
+    badge: '/icon-96.png',
     tag: 'aurora-notification',
     data: {},
   };
@@ -246,16 +246,39 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  const options = {
+  // Customize notification based on type
+  const notificationType = data.data?.type || 'system';
+  let options = {
     body: data.body,
     icon: data.icon,
     badge: data.badge,
-    tag: data.tag,
+    tag: data.tag || notificationType,
     data: data.data,
     vibrate: [200, 100, 200],
     requireInteraction: data.requireInteraction || false,
     actions: data.actions || [],
+    silent: data.silent || false,
   };
+
+  // Safety-critical notifications get special treatment
+  if (['safety_alert', 'emergency', 'safety_checkin'].includes(notificationType)) {
+    options.requireInteraction = true;
+    options.vibrate = [500, 200, 500, 200, 500];
+    options.actions = [
+      { action: 'view', title: 'View Details' },
+      { action: 'safe', title: "I'm Safe" },
+    ];
+  }
+
+  // Gift notifications
+  if (notificationType === 'gift_received') {
+    options.vibrate = [100, 50, 100, 50, 100];
+  }
+
+  // Achievement notifications
+  if (notificationType === 'achievement') {
+    options.vibrate = [100, 50, 100, 50, 100, 50, 100];
+  }
 
   event.waitUntil(
     self.registration.showNotification(data.title, options)
@@ -264,18 +287,42 @@ self.addEventListener('push', (event) => {
 
 // Notification click event
 self.addEventListener('notificationclick', (event) => {
-  console.log('[Aurora SW] Notification clicked');
+  console.log('[Aurora SW] Notification clicked:', event.action);
   
   event.notification.close();
 
-  const urlToOpen = event.notification.data?.url || '/';
+  const notificationData = event.notification.data || {};
+  const notificationType = notificationData.type || 'system';
+  let urlToOpen = notificationData.url || '/feed';
+
+  // Handle specific actions
+  if (event.action === 'safe') {
+    // User confirmed they're safe - could trigger API call
+    urlToOpen = '/emergency?action=confirm-safe';
+  } else if (event.action === 'help') {
+    urlToOpen = '/emergency?action=need-help';
+  } else if (event.action === 'reply') {
+    urlToOpen = notificationData.url || '/messages';
+  } else if (event.action === 'watch') {
+    urlToOpen = notificationData.url || '/live';
+  } else if (event.action === 'view') {
+    urlToOpen = notificationData.url || '/feed';
+  } else if (event.action === 'save') {
+    // Save action - could trigger API call
+    urlToOpen = notificationData.url || '/opportunities';
+  } else if (event.action === 'dismiss') {
+    // Just close, don't navigate
+    return;
+  }
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
-        // Check if there's already a window open
+        // Check if there's already a window open with Aurora App
         for (const client of clientList) {
-          if (client.url === urlToOpen && 'focus' in client) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            // Navigate existing window
+            client.navigate(urlToOpen);
             return client.focus();
           }
         }
@@ -285,6 +332,14 @@ self.addEventListener('notificationclick', (event) => {
         }
       })
   );
+});
+
+// Notification close event (for analytics)
+self.addEventListener('notificationclose', (event) => {
+  const notificationData = event.notification.data || {};
+  console.log('[Aurora SW] Notification closed:', notificationData.type);
+  
+  // Could send analytics event here
 });
 
 // Background sync for offline actions

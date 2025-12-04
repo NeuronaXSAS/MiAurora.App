@@ -17,6 +17,7 @@ import { MobileFeed } from "./mobile-feed";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { SafetyPulse } from "@/components/safety-pulse";
 import { DailyEngagement } from "@/components/daily-engagement";
+import { WelcomeExperience } from "@/components/welcome-experience";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -270,9 +271,16 @@ export default function FeedPage() {
             <SafetyPulse compact />
           </motion.div>
 
+          {/* Welcome Experience for new users */}
+          {userId && user && !user.onboardingCompleted && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+              <WelcomeExperience userId={userId} />
+            </motion.div>
+          )}
+
           {/* Daily Engagement - Streaks & Challenges */}
           {userId && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
               <DailyEngagement userId={userId} />
             </motion.div>
           )}

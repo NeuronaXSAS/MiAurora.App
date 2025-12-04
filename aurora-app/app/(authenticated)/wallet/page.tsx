@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ReelCreator } from "@/components/reels/reel-creator";
+import { AuroraWallet } from "@/components/wallet/aurora-wallet";
 import { Id } from "@/convex/_generated/dataModel";
 
-export default function CreateReelPage() {
+export default function WalletPage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const router = useRouter();
 
@@ -35,5 +35,11 @@ export default function CreateReelPage() {
     );
   }
 
-  return <ReelCreator userId={userId} onClose={() => router.back()} />;
+  return (
+    <div className="min-h-screen bg-[var(--background)] p-4 md:p-6">
+      <div className="max-w-lg mx-auto">
+        <AuroraWallet userId={userId} />
+      </div>
+    </div>
+  );
 }

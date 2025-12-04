@@ -9,13 +9,15 @@ import {
   Heart, Users, Star, Lock,
   Route, X, CheckCircle, Zap, Globe,
   ChevronRight, Brain, Smile, Ban, RefreshCw, 
-  HeartHandshake, Cpu, Network, Fingerprint
+  HeartHandshake, Cpu, Network, Fingerprint,
+  MapPin
 } from "lucide-react";
 import Link from "next/link";
 
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
+import { detectUserCountry, getRegionalPricing, formatRegionalPrice, getRegionalSavings, type RegionalPricing } from "@/lib/regional-pricing";
 
 // Animated grid background component
 const GridBackground = () => (
@@ -71,10 +73,18 @@ export default function LandingPage() {
   const [dismissedPrompt, setDismissedPrompt] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [regionalPricing, setRegionalPricing] = useState<RegionalPricing | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll();
   // Removed opacity fade - keep hero always visible
   const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.98]);
+
+  // Detect user country and get regional pricing
+  useEffect(() => {
+    const country = detectUserCountry();
+    const pricing = getRegionalPricing(country);
+    setRegionalPricing(pricing);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -550,37 +560,88 @@ export default function LandingPage() {
             </motion.div>
           </div>
 
+          {/* Regional Pricing Indicator */}
+          {regionalPricing && regionalPricing.multiplier < 1 && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }} 
+              whileInView={{ opacity: 1, y: 0 }} 
+              viewport={{ once: true }}
+              className="flex items-center justify-center gap-2 mb-8 p-3 rounded-xl bg-[#d6f4ec]/50 border border-[#22c55e]/20"
+            >
+              <MapPin className="w-4 h-4 text-[#5537a7]" />
+              <span className="text-sm text-[#3d0d73]">
+                Special pricing for <span className="font-semibold">{regionalPricing.countryName}</span>
+              </span>
+              <Badge className="bg-[#d6f4ec] text-[#3d0d73] border-0 text-xs">
+                Save {getRegionalSavings(regionalPricing)}%
+              </Badge>
+            </motion.div>
+          )}
+
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             {[
-              { name: "Plus", tier: "plus", price: "$5", features: ["Ad-free", "100 AI/day", "100 credits"], badge: "Popular" },
-              { name: "Pro", tier: "pro", price: "$12", features: ["Unlimited AI", "Priority support", "500 credits"], badge: "Best Value", highlighted: true },
-              { name: "Elite", tier: "elite", price: "$25", features: ["VIP events", "1-on-1 consults", "1500 credits"], badge: "VIP" }
-            ].map((tier, i) => (
-              <motion.div key={tier.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                className={`relative rounded-2xl p-6 backdrop-blur-sm ${tier.highlighted ? "bg-gradient-to-br from-[#3d0d73] to-[#5537a7] text-white shadow-2xl shadow-[#5537a7]/30 scale-105 border border-[#5537a7]/50" : "bg-white/80 border border-[#3d0d73]/10"}`}>
-                <Badge className={`absolute -top-3 left-1/2 -translate-x-1/2 ${tier.highlighted ? "bg-[#e5e093] text-[#3d0d73]" : "bg-[#5537a7]/10 text-[#5537a7]"} border-0 px-3 py-1`}>{tier.badge}</Badge>
-                <div className="text-center mb-6 pt-4">
-                  <h3 className={`font-bold text-xl mb-2 ${tier.highlighted ? "text-white" : "text-[#3d0d73]"}`}>Aurora {tier.name}</h3>
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className={`text-4xl font-black ${tier.highlighted ? "text-white" : "text-[#3d0d73]"}`}>{tier.price}</span>
-                    <span className={tier.highlighted ? "text-white/70" : "text-[#3d0d73]/50"}>/mo</span>
+              { 
+                name: "Plus", 
+                tier: "plus", 
+                basePrice: 5,
+                features: ["Ad-free", "100 AI/day", "100 credits"], 
+                badge: "Popular" 
+              },
+              { 
+                name: "Pro", 
+                tier: "pro", 
+                basePrice: 12,
+                features: ["Unlimited AI", "Priority support", "500 credits"], 
+                badge: "Best Value", 
+                highlighted: true 
+              },
+              { 
+                name: "Elite", 
+                tier: "elite", 
+                basePrice: 25,
+                features: ["VIP events", "1-on-1 consults", "1500 credits"], 
+                badge: "VIP" 
+              }
+            ].map((tier, i) => {
+              const price = regionalPricing 
+                ? regionalPricing.subscriptions[tier.tier as keyof typeof regionalPricing.subscriptions].monthly
+                : tier.basePrice;
+              const displayPrice = regionalPricing 
+                ? formatRegionalPrice(price, regionalPricing)
+                : `$${tier.basePrice}`;
+              
+              return (
+                <motion.div key={tier.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                  className={`relative rounded-2xl p-6 backdrop-blur-sm ${tier.highlighted ? "bg-gradient-to-br from-[#3d0d73] to-[#5537a7] text-white shadow-2xl shadow-[#5537a7]/30 scale-105 border border-[#5537a7]/50" : "bg-white/80 border border-[#3d0d73]/10"}`}>
+                  <Badge className={`absolute -top-3 left-1/2 -translate-x-1/2 ${tier.highlighted ? "bg-[#e5e093] text-[#3d0d73]" : "bg-[#5537a7]/10 text-[#5537a7]"} border-0 px-3 py-1`}>{tier.badge}</Badge>
+                  <div className="text-center mb-6 pt-4">
+                    <h3 className={`font-bold text-xl mb-2 ${tier.highlighted ? "text-white" : "text-[#3d0d73]"}`}>Aurora {tier.name}</h3>
+                    <div className="flex items-baseline justify-center gap-1">
+                      <span className={`text-4xl font-black ${tier.highlighted ? "text-white" : "text-[#3d0d73]"}`}>{displayPrice}</span>
+                      <span className={tier.highlighted ? "text-white/70" : "text-[#3d0d73]/50"}>/mo</span>
+                    </div>
+                    {regionalPricing && regionalPricing.multiplier < 1 && (
+                      <p className={`text-xs mt-1 ${tier.highlighted ? "text-white/50" : "text-[#3d0d73]/40"}`}>
+                        <span className="line-through">${tier.basePrice}</span> USD
+                      </p>
+                    )}
                   </div>
-                </div>
-                <ul className="space-y-3 mb-6">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2">
-                      <CheckCircle className={`w-4 h-4 ${tier.highlighted ? "text-[#e5e093]" : "text-[#22c55e]"}`} />
-                      <span className={`text-sm ${tier.highlighted ? "text-white/90" : "text-[#3d0d73]/70"}`}>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link href={`/api/auth/login?returnTo=/premium?tier=${tier.tier}`}>
-                  <Button className={`w-full min-h-[48px] rounded-xl font-semibold ${tier.highlighted ? "bg-white text-[#3d0d73] hover:bg-white/90" : "bg-[#5537a7] text-white hover:bg-[#3d0d73]"}`}>
-                    Get {tier.name}
-                  </Button>
-                </Link>
-              </motion.div>
-            ))}
+                  <ul className="space-y-3 mb-6">
+                    {tier.features.map((f) => (
+                      <li key={f} className="flex items-center gap-2">
+                        <CheckCircle className={`w-4 h-4 ${tier.highlighted ? "text-[#e5e093]" : "text-[#22c55e]"}`} />
+                        <span className={`text-sm ${tier.highlighted ? "text-white/90" : "text-[#3d0d73]/70"}`}>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href={`/api/auth/login?returnTo=/premium?tier=${tier.tier}`}>
+                    <Button className={`w-full min-h-[48px] rounded-xl font-semibold ${tier.highlighted ? "bg-white text-[#3d0d73] hover:bg-white/90" : "bg-[#5537a7] text-white hover:bg-[#3d0d73]"}`}>
+                      Get {tier.name}
+                    </Button>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
 
           <motion.div className="text-center" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>

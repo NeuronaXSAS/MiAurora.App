@@ -1,16 +1,25 @@
 {
-  "name": "Aurora App - Women's Safety & Opportunity Platform",
-  "short_name": "Aurora",
-  "description": "The front page of the internet for women to advance and enjoy life",
-  "start_url": "/",
+  "name": "Aurora App - Safety & Community for Women",
+  "short_name": "Aurora App",
+  "description": "The future of social networking. Non-toxic AI, privacy-first, built by women for women. Safety intelligence, safe routes, support circles, and career opportunities.",
+  "start_url": "/feed",
+  "id": "/",
   "display": "standalone",
-  "background_color": "#150F22",
-  "theme_color": "#FF6B7A",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#fffaf1",
+  "theme_color": "#5537a7",
   "scope": "/",
   "lang": "en",
+  "dir": "ltr",
   "prefer_related_applications": false,
   "orientation": "portrait-primary",
   "icons": [
+    {
+      "src": "/Au_Logo_1.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/icon-72.png",
       "sizes": "72x72",
@@ -60,39 +69,58 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["social", "lifestyle", "navigation"],
+  "categories": ["social", "lifestyle", "navigation", "health", "productivity"],
+  "iarc_rating_id": "",
   "screenshots": [
     {
-      "src": "/screenshot-1.png",
-      "sizes": "540x720",
-      "type": "image/png"
+      "src": "/screenshot-feed.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Aurora App Feed - Your personalized safety-first social feed"
     },
     {
-      "src": "/screenshot-2.png",
-      "sizes": "540x720",
-      "type": "image/png"
+      "src": "/screenshot-map.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Safety Map - Community-powered location intelligence"
+    },
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Aurora App Desktop - Full-featured web experience"
     }
   ],
   "shortcuts": [
     {
-      "name": "Track Route",
-      "short_name": "Track",
-      "description": "Start tracking a new route",
-      "url": "/routes/track",
-      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
-    },
-    {
       "name": "Safety Map",
       "short_name": "Map",
-      "description": "View safety map",
+      "description": "View safety ratings and reports near you",
       "url": "/map",
       "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
     },
     {
-      "name": "AI Assistant",
-      "short_name": "Assistant",
-      "description": "Chat with AI assistant",
+      "name": "Track Route",
+      "short_name": "Track",
+      "description": "Start tracking a safe route",
+      "url": "/routes/track",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Aurora AI",
+      "short_name": "AI",
+      "description": "Chat with your AI companion",
       "url": "/assistant",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Emergency",
+      "short_name": "SOS",
+      "description": "Quick access to emergency features",
+      "url": "/emergency",
       "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
     }
   ],
@@ -103,7 +131,33 @@
     "params": {
       "title": "title",
       "text": "text",
-      "url": "url"
+      "url": "url",
+      "files": [
+        {
+          "name": "media",
+          "accept": ["image/*", "video/*"]
+        }
+      ]
     }
-  }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+aurora",
+      "url": "/handle?url=%s"
+    }
+  ],
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "related_applications": [],
+  "features": [
+    "Cross-Origin Isolated",
+    "Notifications",
+    "Background Sync",
+    "Periodic Background Sync"
+  ]
 }

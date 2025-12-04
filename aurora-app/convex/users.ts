@@ -23,22 +23,36 @@ export const getOrCreateUser = mutation({
       return existingUser;
     }
 
-    // Create new user with signup bonus
+    // Create new user with generous welcome bonus (50 credits)
+    // This ensures users can immediately experience premium features
+    const WELCOME_BONUS = 50;
+    
     const userId = await ctx.db.insert("users", {
       workosId: args.workosId,
       email: args.email,
       name: args.name,
       profileImage: args.profileImage,
-      credits: 25, // Signup bonus
+      credits: WELCOME_BONUS,
       trustScore: 0,
       onboardingCompleted: false,
+      monthlyCreditsEarned: 0,
+      lastCreditReset: Date.now(),
     });
 
-    // Log signup bonus transaction
+    // Log welcome bonus transaction
     await ctx.db.insert("transactions", {
       userId,
-      amount: 25,
-      type: "signup_bonus",
+      amount: WELCOME_BONUS,
+      type: "welcome_bonus",
+    });
+    
+    // Create welcome notification
+    await ctx.db.insert("notifications", {
+      userId,
+      type: "tip",
+      title: "Welcome to Aurora App! 💜",
+      message: `You've received ${WELCOME_BONUS} credits to get started. Explore safety features, connect with the community, and earn more credits!`,
+      isRead: false,
     });
 
     const user = await ctx.db.get(userId);
@@ -94,6 +108,10 @@ export const completeOnboarding = mutation({
       throw new Error("User not found");
     }
 
+    // Check if this is first time completing onboarding
+    const isFirstCompletion = !user.onboardingCompleted;
+    const ONBOARDING_BONUS = 25;
+
     // Update user profile
     await ctx.db.patch(user._id, {
       industry: args.industry,
@@ -105,7 +123,31 @@ export const completeOnboarding = mutation({
       onboardingCompleted: true,
     });
 
-    return { success: true };
+    // Award onboarding completion bonus (first time only)
+    if (isFirstCompletion) {
+      await ctx.db.patch(user._id, {
+        credits: user.credits + ONBOARDING_BONUS,
+        monthlyCreditsEarned: (user.monthlyCreditsEarned || 0) + ONBOARDING_BONUS,
+      });
+
+      // Log bonus transaction
+      await ctx.db.insert("transactions", {
+        userId: user._id,
+        amount: ONBOARDING_BONUS,
+        type: "onboarding_complete",
+      });
+
+      // Create celebration notification
+      await ctx.db.insert("notifications", {
+        userId: user._id,
+        type: "tip",
+        title: "Profile Complete! 🎉",
+        message: `You earned ${ONBOARDING_BONUS} credits for completing your profile. Keep exploring to earn more!`,
+        isRead: false,
+      });
+    }
+
+    return { success: true, bonusAwarded: isFirstCompletion ? ONBOARDING_BONUS : 0 };
   },
 });
 
