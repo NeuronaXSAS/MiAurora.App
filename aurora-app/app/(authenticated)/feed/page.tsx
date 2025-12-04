@@ -15,6 +15,7 @@ import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { AIChatCompanion } from "@/components/ai-chat-companion";
 import { MobileFeed } from "./mobile-feed";
 import { useIsMobile } from "@/hooks/use-is-mobile";
+import { SafetyPulse } from "@/components/safety-pulse";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -41,7 +42,6 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import Image from "next/image";
 
 type SortOption = "best" | "hot" | "new" | "top";
 type ViewMode = "card" | "compact";
@@ -263,6 +263,11 @@ export default function FeedPage() {
               <PostCardSkeleton />
             </>
           )}
+
+          {/* Safety Pulse - Always visible at top */}
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+            <SafetyPulse compact />
+          </motion.div>
 
           {/* Gamified Empty State */}
           {sortedItems.length === 0 && feedItems !== undefined && showQuests && (

@@ -56,11 +56,26 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
   const [showPostDialog, setShowPostDialog] = useState(false);
   const [showPollDialog, setShowPollDialog] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    safety: true,
-    social: true,
+    safety: false,
+    social: false,
     wellness: false,
     account: false,
   });
+
+  // Auto-expand section based on current path
+  useEffect(() => {
+    const safetyPaths = ['/map', '/routes', '/emergency', '/resources', '/report'];
+    const socialPaths = ['/circles', '/reels', '/live', '/opportunities', '/messages'];
+    const wellnessPaths = ['/health', '/assistant'];
+    const accountPaths = ['/profile', '/settings', '/credits', '/premium'];
+    
+    setExpandedSections({
+      safety: safetyPaths.some(p => pathname.startsWith(p)),
+      social: socialPaths.some(p => pathname.startsWith(p)),
+      wellness: wellnessPaths.some(p => pathname.startsWith(p)),
+      account: accountPaths.some(p => pathname.startsWith(p)),
+    });
+  }, [pathname]);
 
   useEffect(() => {
     const getUserId = async () => {
