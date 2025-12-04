@@ -306,21 +306,34 @@ export function useLivestream(options?: UseLivestreamOptions) {
     await provider.setVideoQuality(quality);
   }, [provider]);
 
+  // Track if component is mounted to prevent state updates after unmount
+  const isMountedRef = useRef(true);
+
   // Cleanup on unmount
   useEffect(() => {
+    isMountedRef.current = true;
+    
     return () => {
-      if (provider) {
-        provider.destroy();
+      isMountedRef.current = false;
+      
+      // Cleanup provider on unmount
+      const currentProvider = providerRef.current;
+      if (currentProvider) {
+        console.log('useLivestream: Cleaning up provider on unmount');
+        currentProvider.destroy().catch(err => {
+          console.warn('useLivestream: Error during cleanup:', err);
+        });
       }
     };
-  }, [provider]);
+  }, []);
 
-  // Auto-initialize if options provided
+  // Separate effect for provider cleanup when provider changes
   useEffect(() => {
-    if (options && !provider) {
-      initialize(options);
-    }
-  }, [options, provider, initialize]);
+    return () => {
+      // This runs when provider changes (not on unmount)
+      // Don't destroy here as it might be intentional
+    };
+  }, [provider]);
 
   return {
     // State

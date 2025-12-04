@@ -25,13 +25,17 @@ export const generateAgoraToken = action({
     const appId = process.env.AGORA_APP_ID || process.env.NEXT_PUBLIC_AGORA_APP_ID;
     const appCertificate = process.env.AGORA_APP_CERTIFICATE;
     
+    console.log('Agora config check - App ID exists:', !!appId, 'Certificate exists:', !!appCertificate);
+    
     if (!appId) {
-      console.error('AGORA_APP_ID not configured in Convex environment');
-      console.error('Please add AGORA_APP_ID to your Convex dashboard environment variables');
+      console.error('❌ AGORA_APP_ID not configured in Convex environment');
+      console.error('📋 To fix: Go to Convex Dashboard > Settings > Environment Variables');
+      console.error('📋 Add: AGORA_APP_ID = your_agora_app_id');
+      console.error('📋 Add: AGORA_APP_CERTIFICATE = your_agora_certificate');
       return {
         success: false,
         error: 'not_configured',
-        message: 'Agora App ID is not configured. Please add AGORA_APP_ID to your Convex environment variables in the Convex dashboard.',
+        message: 'Livestreaming is not configured. Please add AGORA_APP_ID and AGORA_APP_CERTIFICATE to your Convex environment variables.',
         appId: null,
         token: null,
         channelName: args.channelName,

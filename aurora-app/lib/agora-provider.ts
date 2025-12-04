@@ -209,13 +209,23 @@ export class AgoraProvider implements StreamingProvider {
   async leave(): Promise<void> {
     if (!this.client) return;
 
-    // Stop broadcast if host
-    if (this.isHost) {
-      await this.stopBroadcast();
-    }
+    try {
+      // Stop broadcast if host
+      if (this.isHost) {
+        await this.stopBroadcast();
+      }
 
-    // Leave channel
-    await this.client.leave();
+      // Leave channel
+      await this.client.leave();
+    } catch (error) {
+      const errorMsg = (error as Error).message || '';
+      // Ignore OPERATION_ABORTED errors - these happen when leaving during connection
+      if (errorMsg.includes('OPERATION_ABORTED') || errorMsg.includes('cancel')) {
+        console.log('Agora: Leave cancelled (expected during cleanup)');
+      } else {
+        throw error;
+      }
+    }
 
     this.emit(StreamingEvent.DISCONNECTED);
   }
@@ -418,15 +428,38 @@ export class AgoraProvider implements StreamingProvider {
   }
 
   async destroy(): Promise<void> {
-    await this.leave();
+    console.log('Agora: Destroying provider...');
+    
+    try {
+      // Try to leave gracefully
+      await this.leave();
+    } catch (error) {
+      // Ignore OPERATION_ABORTED errors during cleanup
+      const errorMsg = (error as Error).message || '';
+      if (!errorMsg.includes('OPERATION_ABORTED') && !errorMsg.includes('cancel')) {
+        console.warn('Agora: Error during leave:', error);
+      }
+    }
 
-    this.localVideoTrack?.close();
-    this.localAudioTrack?.close();
+    // Close tracks safely
+    try {
+      this.localVideoTrack?.close();
+    } catch (e) {
+      console.warn('Agora: Error closing video track:', e);
+    }
+    
+    try {
+      this.localAudioTrack?.close();
+    } catch (e) {
+      console.warn('Agora: Error closing audio track:', e);
+    }
 
     this.localVideoTrack = null;
     this.localAudioTrack = null;
     this.client = null;
     this.config = null;
     this.eventHandlers.clear();
+    
+    console.log('Agora: Provider destroyed');
   }
 }
