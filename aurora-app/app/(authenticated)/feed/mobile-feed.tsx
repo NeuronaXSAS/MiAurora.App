@@ -15,6 +15,7 @@ import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { FeedAd } from "@/components/ads/feed-ad";
 import { useDevicePerformance } from "@/hooks/use-device-performance";
 import { ValuePropositionBanner } from "@/components/value-proposition-banner";
+import { ImmersiveFeed } from "@/components/immersive-feed";
 import { 
   Sparkles, 
   ChevronDown, 
@@ -25,6 +26,8 @@ import {
   Shield,
   Heart,
   Briefcase,
+  LayoutGrid,
+  Maximize2,
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import {
@@ -33,6 +36,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+type FeedViewMode = "cards" | "immersive";
 
 type SortOption = "best" | "hot" | "new" | "top";
 type ContentFilter = "all" | "posts" | "routes" | "polls" | "reels" | "opportunities" | "livestreams";
@@ -162,6 +167,7 @@ export function MobileFeed() {
   const [sortBy, setSortBy] = useState<SortOption>("new");
   const [contentFilter, setContentFilter] = useState<ContentFilter>("all");
   const [isPremium, setIsPremium] = useState(false);
+  const [viewMode, setViewMode] = useState<FeedViewMode>("cards");
   const [visibleItems, setVisibleItems] = useState(10); // Progressive loading
 
   // Device performance detection
@@ -320,6 +326,11 @@ export function MobileFeed() {
     [filteredItems, visibleItems]
   );
 
+  // Render immersive mode (TikTok-style full-screen)
+  if (viewMode === "immersive") {
+    return <ImmersiveFeed userId={userId} />;
+  }
+
   return (
     <div className="bg-[var(--background)] min-h-screen">
       {/* Sort & Filter Bar */}
@@ -372,6 +383,24 @@ export function MobileFeed() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* View Mode Toggle - Cards vs Immersive */}
+          <div className="ml-auto flex items-center gap-1">
+            <button
+              onClick={() => setViewMode("cards")}
+              className="p-2 rounded-lg transition-colors min-w-[36px] min-h-[36px] bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]"
+              title="Card View"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("immersive")}
+              className="p-2 rounded-lg transition-colors min-w-[36px] min-h-[36px] text-[var(--muted-foreground)] hover:bg-[var(--accent)]"
+              title="Immersive View (TikTok-style)"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
