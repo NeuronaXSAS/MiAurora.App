@@ -21,15 +21,17 @@ export const generateAgoraToken = action({
   },
   handler: async (ctx, args) => {
     // Get Agora credentials from environment
-    const appId = process.env.AGORA_APP_ID;
+    // Check both with and without NEXT_PUBLIC_ prefix for flexibility
+    const appId = process.env.AGORA_APP_ID || process.env.NEXT_PUBLIC_AGORA_APP_ID;
     const appCertificate = process.env.AGORA_APP_CERTIFICATE;
     
     if (!appId) {
-      console.error('AGORA_APP_ID not configured');
+      console.error('AGORA_APP_ID not configured in Convex environment');
+      console.error('Please add AGORA_APP_ID to your Convex dashboard environment variables');
       return {
         success: false,
         error: 'not_configured',
-        message: 'Agora App ID is not configured. Please add AGORA_APP_ID to your environment variables.',
+        message: 'Agora App ID is not configured. Please add AGORA_APP_ID to your Convex environment variables in the Convex dashboard.',
         appId: null,
         token: null,
         channelName: args.channelName,
@@ -116,7 +118,7 @@ function hashCode(str: string): number {
 export const validateAgoraConfig = action({
   args: {},
   handler: async (ctx, args) => {
-    const appId = process.env.AGORA_APP_ID;
+    const appId = process.env.AGORA_APP_ID || process.env.NEXT_PUBLIC_AGORA_APP_ID;
     const appCertificate = process.env.AGORA_APP_CERTIFICATE;
 
     return {
@@ -125,7 +127,9 @@ export const validateAgoraConfig = action({
       mode: appCertificate ? 'secure' : 'test',
       message: appCertificate
         ? '✅ Agora is configured for SECURE MODE with token authentication'
-        : '⚠️ Agora is in TEST MODE (no App Certificate). Add AGORA_APP_CERTIFICATE for production.',
+        : appId 
+          ? '⚠️ Agora is in TEST MODE (no App Certificate). Add AGORA_APP_CERTIFICATE for production.'
+          : '❌ Agora App ID not configured. Add AGORA_APP_ID to Convex environment variables.',
       appId: appId ? `${appId.substring(0, 8)}...` : 'Not configured',
     };
   },

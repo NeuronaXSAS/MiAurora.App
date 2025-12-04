@@ -657,3 +657,77 @@ textarea:focus-visible {
     animation: none;
   }
 }
+
+
+/* ============================================
+   AGORA LIVESTREAMING VIDEO STYLES
+   ============================================ */
+
+/* Ensure Agora video containers display correctly */
+#local-video-container,
+[id^="remote-video-"] {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--color-aurora-violet);
+}
+
+/* Agora injects video or canvas elements - ensure they fill container */
+#local-video-container video,
+#local-video-container canvas,
+[id^="remote-video-"] video,
+[id^="remote-video-"] canvas {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block;
+}
+
+/* Agora's internal div wrapper */
+#local-video-container > div,
+[id^="remote-video-"] > div {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* GPU acceleration for smooth video playback */
+#local-video-container,
+[id^="remote-video-"] {
+  transform: translateZ(0);
+  will-change: contents;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Prevent video flicker during initialization */
+#local-video-container:empty::after,
+[id^="remote-video-"]:empty::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-aurora-violet);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile optimizations for video */
+@media (max-width: 768px) {
+  #local-video-container,
+  [id^="remote-video-"] {
+    /* Optimize touch interactions */
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Reduce video quality on low-end devices for better performance */
+@media (prefers-reduced-motion: reduce) {
+  #local-video-container video,
+  [id^="remote-video-"] video {
+    image-rendering: optimizeSpeed;
+  }
+}

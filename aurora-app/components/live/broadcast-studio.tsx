@@ -85,33 +85,54 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
 
   // Play local video when entering live stage - with retry logic
   useEffect(() => {
-    if (stage === 'live' && localVideoRef.current) {
+    if (stage === 'live' && localVideoRef.current && isStreaming) {
       let attempts = 0;
-      const maxAttempts = 10;
+      const maxAttempts = 15;
+      let timeoutId: NodeJS.Timeout | null = null;
       
       const tryPlayVideo = () => {
         attempts++;
+        console.log(`Agora: Playing local video attempt ${attempts}/${maxAttempts}...`);
+        
         if (localVideoRef.current) {
-          console.log(`Playing local video attempt ${attempts}...`);
-          playLocalVideo(localVideoRef.current);
+          // Ensure container has explicit dimensions before playing
+          const container = localVideoRef.current;
+          container.style.width = '100%';
+          container.style.height = '100%';
+          container.style.minHeight = '400px';
+          
+          console.log('Agora: Container ready, dimensions:', container.offsetWidth, 'x', container.offsetHeight);
+          playLocalVideo(container);
         }
         
         // Retry if video container is still empty after a delay
         if (attempts < maxAttempts) {
-          setTimeout(() => {
-            if (localVideoRef.current && localVideoRef.current.children.length === 0) {
-              console.log('Video container empty, retrying...');
-              tryPlayVideo();
+          timeoutId = setTimeout(() => {
+            if (localVideoRef.current) {
+              // Check if video element was added by Agora
+              const hasVideo = localVideoRef.current.querySelector('video') !== null;
+              const hasCanvas = localVideoRef.current.querySelector('canvas') !== null;
+              
+              if (!hasVideo && !hasCanvas) {
+                console.log('Agora: No video/canvas element found, retrying...');
+                tryPlayVideo();
+              } else {
+                console.log('Agora: Video element found, playback successful!');
+              }
             }
           }, 500);
         }
       };
       
-      // Initial delay to ensure Agora is fully ready
-      const timer = setTimeout(tryPlayVideo, 500);
-      return () => clearTimeout(timer);
+      // Initial delay to ensure Agora tracks are fully ready
+      const initialTimer = setTimeout(tryPlayVideo, 300);
+      
+      return () => {
+        clearTimeout(initialTimer);
+        if (timeoutId) clearTimeout(timeoutId);
+      };
     }
-  }, [stage, playLocalVideo]);
+  }, [stage, isStreaming, playLocalVideo]);
 
   // Format duration
   const formatDuration = (seconds: number) => {
@@ -275,6 +296,16 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
       
       // Move to live stage so the video container is mounted
       setStage('live');
+      
+      // Play local video after a short delay to ensure DOM is ready
+      // The useEffect will also try, but this is a backup
+      setTimeout(() => {
+        if (localVideoRef.current && agoraProvider) {
+          console.log('Playing local video from handleStartBroadcast...');
+          (agoraProvider as any).playLocalVideo(localVideoRef.current);
+        }
+      }, 800);
+      
       setIsStartingBroadcast(false);
     } catch (error) {
       console.error('Failed to start broadcast:', error);
@@ -592,12 +623,30 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
   return (
     <div className="min-h-screen bg-[var(--color-aurora-violet)] flex flex-col">
       {/* Video Stream - Agora */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative" style={{ minHeight: '60vh' }}>
+        {/* Video container - Agora will inject video/canvas here */}
         <div
           ref={localVideoRef}
-          className="w-full h-full bg-[var(--color-aurora-violet)]"
-          style={{ minHeight: '400px' }}
+          id="local-video-container"
+          className="absolute inset-0"
+          style={{ 
+            width: '100%', 
+            height: '100%',
+            minHeight: '400px',
+            backgroundColor: 'var(--color-aurora-violet)',
+            overflow: 'hidden',
+          }}
         />
+
+        {/* Loading/Connecting overlay - shows while video is initializing */}
+        {!isStreaming && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-aurora-violet)]/90 z-5">
+            <div className="text-center text-white">
+              <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-sm">Connecting to stream...</p>
+            </div>
+          </div>
+        )}
 
         {/* Live Indicator */}
         <div className="absolute top-4 left-4 right-4 z-10">

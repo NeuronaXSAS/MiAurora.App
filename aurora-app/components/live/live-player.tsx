@@ -115,10 +115,14 @@ export function LivePlayer({ livestreamId, userId, onClose }: LivePlayerProps) {
     <div className="min-h-screen bg-black relative">
       {/* Video Player */}
       <div className="w-full h-screen relative">
-        {/* Remote video container */}
+        {/* Remote video container - Agora will inject video here */}
         <div
           id={`remote-video-${livestream.hostId}`}
-          className="w-full h-full bg-gray-900"
+          className="w-full h-full"
+          style={{
+            backgroundColor: '#1a1a2e',
+            minHeight: '100vh',
+          }}
         />
 
         {!isConnected && (

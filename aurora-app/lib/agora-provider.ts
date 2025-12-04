@@ -124,26 +124,33 @@ export class AgoraProvider implements StreamingProvider {
     await this.client.setClientRole('host');
 
     // Join the channel
+    console.log('Agora: Joining channel as host...');
     await this.client.join(
       this.config.appId,
       this.config.channelName,
       this.config.token,
       this.config.uid
     );
+    console.log('Agora: Joined channel successfully');
 
     // Create local tracks
     if (options?.video !== false) {
+      console.log('Agora: Creating camera video track...');
       this.localVideoTrack = await AgoraRTC.createCameraVideoTrack({
         cameraId: options?.cameraId,
         encoderConfig: VideoQualityPresets.high,
+        optimizationMode: 'detail', // Better quality for face
       });
+      console.log('Agora: Camera video track created, enabled:', this.localVideoTrack.enabled);
     }
 
     if (options?.audio !== false) {
+      console.log('Agora: Creating microphone audio track...');
       this.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({
         microphoneId: options?.microphoneId,
         encoderConfig: 'high_quality_stereo',
       });
+      console.log('Agora: Microphone audio track created');
     }
 
     // Publish tracks
@@ -152,7 +159,9 @@ export class AgoraProvider implements StreamingProvider {
     if (this.localAudioTrack) tracks.push(this.localAudioTrack);
 
     if (tracks.length > 0) {
+      console.log('Agora: Publishing tracks...');
       await this.client.publish(tracks);
+      console.log('Agora: Tracks published successfully');
     }
 
     this.emit(StreamingEvent.STREAM_STARTED);
@@ -296,7 +305,21 @@ export class AgoraProvider implements StreamingProvider {
    * Check if local video track is ready
    */
   hasLocalVideoTrack(): boolean {
+    return this.localVideoTrack !== null;
+  }
+
+  /**
+   * Check if local video track is enabled and playing
+   */
+  isLocalVideoEnabled(): boolean {
     return this.localVideoTrack !== null && this.localVideoTrack.enabled;
+  }
+
+  /**
+   * Get the local video track for direct access
+   */
+  getLocalVideoTrack(): ICameraVideoTrack | null {
+    return this.localVideoTrack;
   }
 
   /**
@@ -304,12 +327,66 @@ export class AgoraProvider implements StreamingProvider {
    */
   playLocalVideo(container: HTMLElement | string): void {
     if (!this.localVideoTrack) {
-      console.warn('No local video track available');
+      console.warn('Agora: No local video track available to play');
       return;
     }
     
-    console.log('Playing local video track, enabled:', this.localVideoTrack.enabled);
-    this.localVideoTrack.play(container);
+    // Ensure the track is enabled
+    if (!this.localVideoTrack.enabled) {
+      console.log('Agora: Enabling local video track before playing');
+      this.localVideoTrack.setEnabled(true);
+    }
+    
+    console.log('Agora: Playing local video track in container');
+    console.log('Agora: Track state - enabled:', this.localVideoTrack.enabled, 'muted:', this.localVideoTrack.muted);
+    
+    try {
+      // If container is an HTMLElement, ensure it has proper dimensions
+      if (typeof container !== 'string' && container instanceof HTMLElement) {
+        // Force container to have dimensions if it doesn't
+        if (!container.style.width) container.style.width = '100%';
+        if (!container.style.height) container.style.height = '100%';
+        
+        // Clear any existing content in the container
+        while (container.firstChild) {
+          container.removeChild(container.firstChild);
+        }
+        
+        console.log('Agora: Container dimensions:', container.offsetWidth, 'x', container.offsetHeight);
+        console.log('Agora: Container cleared and ready for video');
+      }
+      
+      // Play with cover fit for better appearance
+      this.localVideoTrack.play(container, { 
+        fit: 'cover',
+        mirror: true, // Mirror for selfie view
+      });
+      
+      console.log('Agora: Local video play() called successfully');
+      
+      // Verify video element was created
+      setTimeout(() => {
+        if (typeof container !== 'string' && container instanceof HTMLElement) {
+          const videoEl = container.querySelector('video');
+          const canvasEl = container.querySelector('canvas');
+          if (videoEl) {
+            console.log('Agora: Video element created successfully');
+            // Ensure video element fills container
+            videoEl.style.width = '100%';
+            videoEl.style.height = '100%';
+            videoEl.style.objectFit = 'cover';
+          } else if (canvasEl) {
+            console.log('Agora: Canvas element created (WebGL rendering)');
+            canvasEl.style.width = '100%';
+            canvasEl.style.height = '100%';
+          } else {
+            console.warn('Agora: No video/canvas element found after play()');
+          }
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Agora: Error playing local video:', error);
+    }
   }
 
   /**

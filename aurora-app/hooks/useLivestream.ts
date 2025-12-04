@@ -175,26 +175,33 @@ export function useLivestream(options?: UseLivestreamOptions) {
   const playLocalVideo = useCallback((container: HTMLElement) => {
     const currentProvider = providerRef.current;
     if (!currentProvider) {
-      console.warn('Provider not initialized, cannot play local video');
+      console.warn('useLivestream: Provider not initialized, cannot play local video');
       return;
     }
     
     try {
-      console.log('Playing local video in container:', container);
       const agoraProvider = currentProvider as AgoraProvider;
       
-      // Check if local video track exists using the method if available
-      if (typeof (agoraProvider as any).hasLocalVideoTrack === 'function') {
-        if (!(agoraProvider as any).hasLocalVideoTrack()) {
-          console.warn('Local video track not ready yet');
-          return;
-        }
+      // Check if local video track exists
+      if (!agoraProvider.hasLocalVideoTrack()) {
+        console.warn('useLivestream: Local video track not ready yet');
+        return;
       }
       
+      console.log('useLivestream: Playing local video in container');
       agoraProvider.playLocalVideo(container);
     } catch (error) {
-      console.error('Error playing local video:', error);
+      console.error('useLivestream: Error playing local video:', error);
     }
+  }, []);
+
+  // Get local video track directly for advanced use cases
+  const getLocalVideoTrack = useCallback(() => {
+    const currentProvider = providerRef.current;
+    if (!currentProvider) return null;
+    
+    const agoraProvider = currentProvider as AgoraProvider;
+    return agoraProvider.getLocalVideoTrack?.() || null;
   }, []);
 
   // Stop broadcasting
@@ -333,6 +340,7 @@ export function useLivestream(options?: UseLivestreamOptions) {
     getStats,
     setVideoQuality,
     playLocalVideo,
+    getLocalVideoTrack,
 
     // Refs for video containers
     localVideoRef,
