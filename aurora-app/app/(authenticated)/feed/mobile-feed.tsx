@@ -16,6 +16,8 @@ import { FeedAd } from "@/components/ads/feed-ad";
 import { useDevicePerformance } from "@/hooks/use-device-performance";
 import { ValuePropositionBanner } from "@/components/value-proposition-banner";
 import { ImmersiveFeed } from "@/components/immersive-feed";
+import { DailyEngagement } from "@/components/daily-engagement";
+import { MobilePostCard } from "@/components/mobile-post-card";
 import { 
   Sparkles, 
   ChevronDown, 
@@ -416,6 +418,11 @@ export function MobileFeed() {
               Loading your personalized feed...
             </p>
           </div>
+        )}
+
+        {/* Daily Engagement - Streaks & Challenges */}
+        {userId && feedItems !== undefined && (
+          <DailyEngagement userId={userId as string} />
         )}
 
         {/* Value Proposition for new/returning users */}
