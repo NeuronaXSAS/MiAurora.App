@@ -538,3 +538,122 @@ textarea:focus-visible {
 .drop-shadow-glow {
   filter: drop-shadow(0 0 8px currentColor);
 }
+
+/* ============================================
+   MAPBOX PERFORMANCE OPTIMIZATIONS
+   ============================================ */
+
+/* GPU acceleration for map container */
+.mapboxgl-map {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Optimize map canvas rendering */
+.mapboxgl-canvas {
+  image-rendering: optimizeSpeed;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Smoother marker animations */
+.mapboxgl-marker {
+  will-change: transform;
+  transition: transform 0.15s ease-out;
+}
+
+/* Custom marker optimizations */
+.custom-marker,
+.workplace-marker,
+.user-location-marker {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Optimize popup rendering */
+.mapboxgl-popup {
+  will-change: transform, opacity;
+}
+
+.mapboxgl-popup-content {
+  padding: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  overflow: hidden;
+}
+
+.mapboxgl-popup-close-button {
+  font-size: 18px;
+  padding: 4px 8px;
+  color: var(--muted-foreground);
+}
+
+.mapboxgl-popup-close-button:hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+/* Hide default Mapbox controls for cleaner mobile UI */
+.mapboxgl-ctrl-bottom-left,
+.mapboxgl-ctrl-bottom-right {
+  display: none;
+}
+
+/* Optimize touch interactions on map */
+.mapboxgl-canvas-container {
+  touch-action: pan-x pan-y;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Reduce map control visual weight on mobile */
+@media (max-width: 768px) {
+  .mapboxgl-ctrl-group {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 12px !important;
+  }
+  
+  .mapboxgl-ctrl-group button {
+    width: 40px !important;
+    height: 40px !important;
+  }
+}
+
+/* Smooth map loading transition */
+.mapboxgl-map.mapboxgl-loaded {
+  opacity: 1;
+  transition: opacity 0.2s ease-out;
+}
+
+/* Prevent map flicker during load */
+.mapboxgl-map:not(.mapboxgl-loaded) {
+  opacity: 0.95;
+}
+
+/* User location marker pulse animation - optimized */
+@keyframes location-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.user-location-marker > div {
+  animation: location-pulse 2s ease-out infinite;
+}
+
+/* Disable pulse animation on low-end devices */
+@media (prefers-reduced-motion: reduce) {
+  .user-location-marker > div {
+    animation: none;
+  }
+}

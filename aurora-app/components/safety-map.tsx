@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import mapboxgl from "mapbox-gl";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -12,6 +12,16 @@ import { Crosshair, Navigation, Plus, Search, X, MapPin as MapPinIcon, AlertTria
 // Set access token only if available
 if (process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
   mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+}
+
+// Debounce helper for search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
 }
 
 interface SafetyMapProps {
@@ -26,6 +36,7 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
   const userLocationMarker = useRef<mapboxgl.Marker | null>(null);
+  const markersCreated = useRef(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
@@ -34,6 +45,10 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [nearbyPosts, setNearbyPosts] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Debounce search query
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Fetch posts with location data
   const posts = useQuery(api.posts.getPostsForMap, {
@@ -43,15 +58,16 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
   // Fetch workplace reports with location
   const workplaceReports = useQuery(api.workplaceReports.getReportsForMap, {});
 
-  // Filter posts by rating - MUST be defined before useEffect that uses it
-  const filteredPosts = posts?.filter((post) => {
-    if (ratingFilter && post.rating < ratingFilter) {
-      return false;
-    }
-    return true;
-  }) || [];
+  // Memoize filtered posts to prevent unnecessary recalculations
+  const filteredPosts = useMemo(() => {
+    if (!posts) return [];
+    return posts.filter((post) => {
+      if (ratingFilter && post.rating < ratingFilter) return false;
+      return true;
+    });
+  }, [posts, ratingFilter]);
 
-  // Initialize map
+  // Initialize map - optimized for faster load
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
@@ -68,48 +84,44 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: MAP_STYLE,
-        center: [-98.5795, 39.8283], // Center of USA
-        zoom: 4,
+        center: mapState?.center || [-98.5795, 39.8283], // Use saved state or USA center
+        zoom: mapState?.zoom || 4,
+        attributionControl: false, // Faster init, add later if needed
+        fadeDuration: 0, // Instant tile transitions
+        trackResize: true,
+        renderWorldCopies: false, // Better performance
       });
 
-      // Handle map errors (e.g., blocked by ad-blocker)
+      // Handle map errors silently
       map.current.on("error", (e) => {
-        // Silently handle tile loading errors (common with ad-blockers)
         if (e.error?.message?.includes("Failed to fetch") || 
             e.error?.message?.includes("NetworkError")) {
-          // Don't spam console, just note it happened
-          console.debug("Map resource blocked, likely by ad-blocker");
+          console.debug("Map resource blocked");
         }
       });
-
-      // Note: We use custom controls instead of Mapbox defaults to avoid overlap
-      // and provide a cleaner mobile experience
 
       map.current.on("load", () => {
         setMapLoaded(true);
         setMapError(null);
-        
-        // Restore map state if it exists
-        if (mapState && map.current) {
-          map.current.setCenter(mapState.center);
-          map.current.setZoom(mapState.zoom);
-        }
       });
     } catch (error) {
-      // Map initialization failed (possibly blocked by ad-blocker)
       console.debug("Map initialization failed:", error);
       setMapError("Unable to load map. Try disabling ad-blocker if you have one.");
       return;
     }
 
-    // Save map state on move
+    // Debounced map state save - avoid excessive updates
+    let moveEndTimeout: NodeJS.Timeout;
     map.current?.on("moveend", () => {
-      if (map.current) {
-        setMapState({
-          center: map.current.getCenter().toArray() as [number, number],
-          zoom: map.current.getZoom(),
-        });
-      }
+      clearTimeout(moveEndTimeout);
+      moveEndTimeout = setTimeout(() => {
+        if (map.current) {
+          setMapState({
+            center: map.current.getCenter().toArray() as [number, number],
+            zoom: map.current.getZoom(),
+          });
+        }
+      }, 150);
     });
 
     // Add click handler for location selection
@@ -169,162 +181,143 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
     };
   }, [isSelectingLocation, onLocationSelect]);
 
-  // Update markers when posts or workplace reports change
+  // Incident labels - defined outside to avoid recreation
+  const incidentLabels: Record<string, string> = useMemo(() => ({
+    harassment: "Sexual Harassment",
+    discrimination: "Discrimination",
+    pay_inequality: "Pay Inequality",
+    hostile_environment: "Hostile Environment",
+    retaliation: "Retaliation",
+    other: "Workplace Issue",
+  }), []);
+
+  // Create marker element - optimized helper
+  const createPostMarker = useCallback((post: any, onClick?: () => void) => {
+    const color = post.rating >= 4 ? "#22c55e" : post.rating >= 3 ? "#eab308" : "#ef4444";
+    
+    const el = document.createElement("div");
+    el.className = "custom-marker";
+    el.style.cssText = `
+      width: 28px; height: 28px; border-radius: 50%;
+      background-color: ${color}; border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; font-size: 13px; font-weight: bold; color: white;
+    `;
+    el.textContent = post.rating.toString();
+    
+    if (onClick) el.addEventListener("click", onClick);
+    return el;
+  }, []);
+
+  const createWorkplaceMarker = useCallback(() => {
+    const el = document.createElement("div");
+    el.className = "workplace-marker";
+    el.style.cssText = `
+      width: 28px; height: 28px; background-color: #ec4c28;
+      border: 2px solid white; box-shadow: 0 2px 4px rgba(236, 76, 40, 0.4);
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; font-size: 14px; border-radius: 4px; transform: rotate(45deg);
+    `;
+    el.innerHTML = '<span style="transform: rotate(-45deg);">⚠️</span>';
+    return el;
+  }, []);
+
+  // Update markers when posts or workplace reports change - batched for performance
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
-    // Remove existing markers
+    // Clear existing markers
     markers.current.forEach((marker) => marker.remove());
     markers.current = [];
 
-    // Add post markers
-    if (filteredPosts) {
+    // Batch marker creation using requestAnimationFrame for smoother rendering
+    const createMarkers = () => {
+      if (!map.current) return;
+
+      // Add post markers
       filteredPosts.forEach((post) => {
         if (!post.location || !map.current) return;
 
-        // Determine marker color based on rating
-        const color =
-          post.rating >= 4
-            ? "#22c55e" // Green for safe (4-5)
-            : post.rating >= 3
-            ? "#eab308" // Yellow for neutral (3)
-            : "#ef4444"; // Red for unsafe (1-2)
+        const el = createPostMarker(post, onMarkerClick ? () => onMarkerClick(post._id) : undefined);
 
-        // Create marker element
-        const el = document.createElement("div");
-        el.className = "custom-marker";
-        el.style.width = "30px";
-        el.style.height = "30px";
-        el.style.borderRadius = "50%";
-        el.style.backgroundColor = color;
-        el.style.border = "3px solid white";
-        el.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
-        el.style.cursor = "pointer";
-        el.style.display = "flex";
-        el.style.alignItems = "center";
-        el.style.justifyContent = "center";
-        el.style.fontSize = "14px";
-        el.style.fontWeight = "bold";
-        el.style.color = "white";
-        el.textContent = post.rating.toString();
-
-        // Create popup
-        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-          <div style="padding: 8px; min-width: 200px;">
-            <h3 style="font-weight: bold; margin-bottom: 4px;">${post.title}</h3>
-            <p style="font-size: 12px; color: #666; margin-bottom: 8px;">${post.location.name}</p>
-            <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
-              <span style="font-size: 12px;">Rating: ${post.rating}/5</span>
-            </div>
-            <div style="font-size: 12px; color: #666;">
-              ${post.verificationCount} verification${post.verificationCount !== 1 ? "s" : ""}
-              ${post.isVerified ? ' • <span style="color: #22c55e;">✓ Verified</span>' : ""}
-            </div>
-          </div>
-        `);
-
-        // Create and add marker
+        // Lazy popup - only create on hover/click
         const marker = new mapboxgl.Marker(el)
           .setLngLat(post.location.coordinates as [number, number])
-          .setPopup(popup)
-          .addTo(map.current);
+          .addTo(map.current!);
 
-        // Add click handler
-        el.addEventListener("click", () => {
-          if (onMarkerClick) {
-            onMarkerClick(post._id);
+        // Add popup on first interaction for better performance
+        // Store location name for popup (already checked above)
+        const locationName = post.location!.name;
+        let popupAdded = false;
+        el.addEventListener("mouseenter", () => {
+          if (!popupAdded) {
+            popupAdded = true;
+            marker.setPopup(new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(`
+              <div style="padding: 6px; min-width: 180px;">
+                <h3 style="font-weight: bold; margin-bottom: 2px; font-size: 13px;">${post.title}</h3>
+                <p style="font-size: 11px; color: #666; margin-bottom: 4px;">${locationName}</p>
+                <div style="font-size: 11px; color: #666;">
+                  Rating: ${post.rating}/5 • ${post.verificationCount} verifications
+                </div>
+              </div>
+            `));
           }
         });
 
         markers.current.push(marker);
       });
-    }
 
-    // Add workplace report markers (warning triangles)
-    if (workplaceReports) {
-      const incidentLabels: Record<string, string> = {
-        harassment: "Sexual Harassment",
-        discrimination: "Discrimination",
-        pay_inequality: "Pay Inequality",
-        hostile_environment: "Hostile Environment",
-        retaliation: "Retaliation",
-        other: "Workplace Issue",
-      };
-
-      workplaceReports.forEach((report) => {
+      // Add workplace report markers
+      workplaceReports?.forEach((report) => {
         if (!report.location || !map.current) return;
 
-        // Create warning marker element
-        const el = document.createElement("div");
-        el.className = "workplace-marker";
-        el.style.width = "32px";
-        el.style.height = "32px";
-        el.style.backgroundColor = "#ec4c28"; // Aurora orange for warnings
-        el.style.border = "3px solid white";
-        el.style.boxShadow = "0 2px 6px rgba(236, 76, 40, 0.5)";
-        el.style.cursor = "pointer";
-        el.style.display = "flex";
-        el.style.alignItems = "center";
-        el.style.justifyContent = "center";
-        el.style.fontSize = "16px";
-        el.style.borderRadius = "4px";
-        el.style.transform = "rotate(45deg)";
-        el.innerHTML = '<span style="transform: rotate(-45deg);">⚠️</span>';
+        const el = createWorkplaceMarker();
 
-        // Create popup
-        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-          <div style="padding: 10px; min-width: 220px;">
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
-              <span style="font-size: 16px;">⚠️</span>
-              <span style="font-weight: bold; color: #ec4c28;">Workplace Report</span>
-            </div>
-            <h3 style="font-weight: bold; margin-bottom: 4px;">${report.companyName}</h3>
-            <p style="font-size: 12px; color: #666; margin-bottom: 6px;">${report.location.name}</p>
-            <div style="background: #fff3f0; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;">
-              <span style="font-size: 12px; color: #ec4c28; font-weight: 500;">
-                ${incidentLabels[report.incidentType] || report.incidentType}
-              </span>
-            </div>
-            <div style="font-size: 11px; color: #666;">
-              ${report.verificationCount} verification${report.verificationCount !== 1 ? "s" : ""}
-              ${report.status === "verified" ? ' • <span style="color: #ec4c28;">⚠️ Verified</span>' : ""}
-            </div>
-          </div>
-        `);
-
-        // Create and add marker
         const marker = new mapboxgl.Marker(el)
           .setLngLat(report.location.coordinates as [number, number])
-          .setPopup(popup)
-          .addTo(map.current);
+          .addTo(map.current!);
+
+        // Lazy popup
+        let popupAdded = false;
+        el.addEventListener("mouseenter", () => {
+          if (!popupAdded) {
+            popupAdded = true;
+            marker.setPopup(new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(`
+              <div style="padding: 6px; min-width: 180px;">
+                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+                  <span>⚠️</span>
+                  <span style="font-weight: bold; color: #ec4c28; font-size: 12px;">Workplace Report</span>
+                </div>
+                <h3 style="font-weight: bold; margin-bottom: 2px; font-size: 13px;">${report.companyName}</h3>
+                <p style="font-size: 11px; color: #666;">${incidentLabels[report.incidentType] || report.incidentType}</p>
+              </div>
+            `));
+          }
+        });
 
         markers.current.push(marker);
       });
-    }
 
-    // Only fit map to markers on initial load (when no map state exists)
-    const allLocations: [number, number][] = [];
-    if (filteredPosts) {
-      filteredPosts.forEach((post) => {
-        if (post.location) {
-          allLocations.push(post.location.coordinates as [number, number]);
-        }
-      });
-    }
-    if (workplaceReports) {
-      workplaceReports.forEach((report) => {
-        if (report.location) {
-          allLocations.push(report.location.coordinates as [number, number]);
-        }
-      });
-    }
+      // Fit bounds only on initial load
+      if (!markersCreated.current && !mapState) {
+        const allLocations: [number, number][] = [
+          ...filteredPosts.filter(p => p.location).map(p => p.location!.coordinates as [number, number]),
+          ...(workplaceReports?.filter(r => r.location).map(r => r.location!.coordinates as [number, number]) || [])
+        ];
 
-    if (allLocations.length > 0 && map.current && !mapState) {
-      const bounds = new mapboxgl.LngLatBounds();
-      allLocations.forEach((coords) => bounds.extend(coords));
-      map.current.fitBounds(bounds, { padding: 50, maxZoom: 12 });
-    }
-  }, [filteredPosts, workplaceReports, mapLoaded, onMarkerClick, mapState]);
+        if (allLocations.length > 0 && map.current) {
+          const bounds = new mapboxgl.LngLatBounds();
+          allLocations.forEach((coords) => bounds.extend(coords));
+          map.current.fitBounds(bounds, { padding: 50, maxZoom: 12, duration: 0 });
+        }
+        markersCreated.current = true;
+      }
+    };
+
+    // Use requestAnimationFrame for smoother marker rendering
+    requestAnimationFrame(createMarkers);
+  }, [filteredPosts, workplaceReports, mapLoaded, onMarkerClick, mapState, createPostMarker, createWorkplaceMarker, incidentLabels]);
 
   // Restore user location marker when map loads
   useEffect(() => {
@@ -354,9 +347,10 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
     }
   }, [userLocation, mapLoaded]);
 
-  // Search for location
-  const handleSearch = async () => {
+  // Search for location - memoized
+  const handleSearch = useCallback(async () => {
     if (!searchQuery.trim()) return;
+    setIsSearching(true);
 
     try {
       const response = await fetch(
@@ -366,18 +360,20 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
       setSearchResults(data.features || []);
     } catch (error) {
       console.error("Search error:", error);
+    } finally {
+      setIsSearching(false);
     }
-  };
+  }, [searchQuery]);
 
-  // Navigate to search result
-  const handleSelectSearchResult = (result: any) => {
+  // Navigate to search result - memoized
+  const handleSelectSearchResult = useCallback((result: any) => {
     if (!map.current) return;
 
     const [lng, lat] = result.center;
     map.current.flyTo({
       center: [lng, lat],
       zoom: 14,
-      duration: 2000,
+      duration: 1500, // Slightly faster for better UX
       essential: true,
     });
 
@@ -396,20 +392,19 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
       });
       setNearbyPosts(nearby);
     }
-  };
+  }, [posts]);
 
-  // Get user's GPS location with high accuracy
-  const handleGetUserLocation = () => {
+  // Get user's GPS location - memoized and optimized
+  const handleGetUserLocation = useCallback(() => {
     if (!navigator.geolocation) {
       alert("Geolocation is not supported by your browser");
       return;
     }
 
-    // Request high accuracy GPS position
+    // Request GPS position - use cached if recent for faster response
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude, accuracy } = position.coords;
-        console.log(`GPS Location: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`);
         
         setUserLocation({ lat: latitude, lng: longitude });
 
@@ -420,51 +415,32 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
             userLocationMarker.current = null;
           }
 
-          // Create a more visible user location marker with accuracy circle
+          // Create user location marker - simplified for performance
           const el = document.createElement("div");
           el.className = "user-location-marker";
-          el.innerHTML = `
-            <div style="
-              width: 24px;
-              height: 24px;
-              border-radius: 50%;
-              background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-              border: 4px solid white;
-              box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 2px 8px rgba(0,0,0,0.3);
-              animation: pulse 2s infinite;
-            "></div>
+          el.style.cssText = `
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border: 4px solid white;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.5), 0 2px 6px rgba(0,0,0,0.2);
           `;
-
-          // Add CSS animation for pulsing effect
-          const style = document.createElement('style');
-          style.textContent = `
-            @keyframes pulse {
-              0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-              70% { box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
-              100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-            }
-          `;
-          document.head.appendChild(style);
 
           userLocationMarker.current = new mapboxgl.Marker(el)
             .setLngLat([longitude, latitude])
             .setPopup(
-              new mapboxgl.Popup({ offset: 25 }).setHTML(
-                `<div style="padding: 8px;">
-                  <strong>📍 Your Location</strong>
-                  <p style="font-size: 11px; color: #666; margin-top: 4px;">
-                    Accuracy: ~${Math.round(accuracy)}m
-                  </p>
-                </div>`
+              new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(
+                `<div style="padding: 6px;"><strong>📍 Your Location</strong></div>`
               )
             )
             .addTo(map.current);
 
-          // Fly to user location with higher zoom for better precision view
+          // Fly to user location - faster animation
           map.current.flyTo({
             center: [longitude, latitude],
-            zoom: 16, // Higher zoom for better precision
-            duration: 2000,
+            zoom: 15,
+            duration: 1200,
             essential: true,
           });
 
@@ -476,21 +452,20 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
               const distance = Math.sqrt(
                 Math.pow(postLng - longitude, 2) + Math.pow(postLat - latitude, 2)
               );
-              return distance < 0.1; // Roughly 10km
+              return distance < 0.1;
             });
             setNearbyPosts(nearby);
           }
         }
       },
       (error) => {
-        console.error("Error getting location:", error);
         let errorMessage = "Unable to get your location.";
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = "Location permission denied. Please enable location access in your browser settings.";
+            errorMessage = "Location permission denied. Please enable location access.";
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = "Location information unavailable. Please try again.";
+            errorMessage = "Location unavailable. Please try again.";
             break;
           case error.TIMEOUT:
             errorMessage = "Location request timed out. Please try again.";
@@ -499,12 +474,12 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
         alert(errorMessage);
       },
       {
-        enableHighAccuracy: true, // Request high accuracy GPS
-        timeout: 15000, // Wait up to 15 seconds
-        maximumAge: 0 // Don't use cached position
+        enableHighAccuracy: false, // Faster initial response
+        timeout: 10000,
+        maximumAge: 60000 // Allow 1 minute cached position for speed
       }
     );
-  };
+  }, [posts]);
 
   // Show error state if map failed to load
   if (mapError) {
