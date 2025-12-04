@@ -40,6 +40,17 @@ Aurora is a **non-profit Global Safety Intelligence Platform** that empowers wom
 - **Opportunities Marketplace:** Jobs, mentorship, funding unlocked with credits
 - **Aurora Reels:** Short-form safety tips and experiences
 - **Live Streaming:** Real-time community events and workshops
+- **Support Circles:** Community groups with premium rooms (chat, audio, video, broadcast)
+- **Health & Wellness:** Cycle tracking, hydration logs, emotional check-ins
+
+### Premium Features (Production-Ready Monetization)
+- **Subscription Tiers:** Plus ($5), Pro ($12), Elite ($25) with annual discounts
+- **Credit Economy:** Earn credits through engagement, spend on gifts and events
+- **Virtual Gifts:** 12 gift types with 85% creator revenue share
+- **Super Chats:** Pinned messages during livestreams (50+ credits)
+- **Paid Events:** Host workshops with 80% revenue share
+- **Regional Pricing:** PPP-adjusted prices for global accessibility (India 35%, Brazil 45%)
+- **Safety Promise:** ALL safety features remain FREE forever
 
 ### B2B Intelligence
 - **Corporate Safety Index:** Workplace safety scores from employee reviews
@@ -204,13 +215,14 @@ class ConvexSchemaServer {
 
 ## 📊 Project Stats
 
-- **Lines of Code:** ~25,000 (TypeScript/TSX)
-- **Components:** 80+ React components
-- **Database Tables:** 25 Convex tables
-- **API Endpoints:** 40+ Convex functions
-- **Routes:** 35 Next.js pages
+- **Lines of Code:** ~30,000 (TypeScript/TSX)
+- **Components:** 100+ React components
+- **Database Tables:** 40+ Convex tables
+- **API Endpoints:** 60+ Convex functions
+- **Routes:** 50 Next.js pages
+- **Property Tests:** 21 passing tests
 - **E2E Tests:** 30+ Playwright tests
-- **Development Time:** 6 weeks with Kiro
+- **Development Time:** Built entirely with Kiro
 
 ## 🎯 Competition Alignment
 
