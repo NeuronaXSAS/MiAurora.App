@@ -8,9 +8,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AgoraProvider } from '@/lib/agora-provider';
 import { StreamingProvider, StreamingEvent, StreamStats } from '@/lib/streaming-provider';
-import { useAction, useMutation } from 'convex/react';
+import { useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import type { Id } from '@/convex/_generated/dataModel';
 
 interface UseLivestreamOptions {
   channelName: string;
@@ -29,7 +28,7 @@ interface LivestreamState {
   error: string | null;
 }
 
-export function useLivestream(options?: UseLivestreamOptions) {
+export function useLivestream(_options?: UseLivestreamOptions) {
   const [provider, setProvider] = useState<StreamingProvider | null>(null);
   const [state, setState] = useState<LivestreamState>({
     isConnected: false,
@@ -132,9 +131,10 @@ export function useLivestream(options?: UseLivestreamOptions) {
 
       console.log('Agora provider initialized successfully');
 
-      // Update state and ref
-      setProvider(newProvider);
+      // Update state and ref SYNCHRONOUSLY before returning
+      // This ensures providerRef is available immediately for subsequent calls
       providerRef.current = newProvider;
+      setProvider(newProvider);
       
       return newProvider;
     } catch (error) {
@@ -146,30 +146,27 @@ export function useLivestream(options?: UseLivestreamOptions) {
     }
   }, [generateToken]);
 
-  // Reference to provider for direct access
+  // Reference to provider for direct access (avoids React state timing issues)
   const providerRef = useRef<StreamingProvider | null>(null);
-
-  // Keep providerRef in sync with provider state
-  useEffect(() => {
-    providerRef.current = provider;
-  }, [provider]);
 
   // Start broadcasting (host)
   const startBroadcast = useCallback(async (options?: {
     video?: boolean;
     audio?: boolean;
   }) => {
-    if (!provider) throw new Error('Provider not initialized');
+    // Use providerRef for immediate access (avoids React state timing issues)
+    const currentProvider = providerRef.current;
+    if (!currentProvider) throw new Error('Provider not initialized');
 
     try {
-      await provider.startBroadcast(options);
+      await currentProvider.startBroadcast(options);
       console.log('Broadcast started, local video track should be ready');
     } catch (error) {
       const err = error as Error;
       setState(prev => ({ ...prev, error: err.message }));
       throw error;
     }
-  }, [provider]);
+  }, []);
 
   // Play local video in a container element
   const playLocalVideo = useCallback((container: HTMLElement) => {
@@ -206,105 +203,119 @@ export function useLivestream(options?: UseLivestreamOptions) {
 
   // Stop broadcasting
   const stopBroadcast = useCallback(async () => {
-    if (!provider) return;
+    const currentProvider = providerRef.current;
+    if (!currentProvider) return;
 
     try {
-      await provider.stopBroadcast();
+      await currentProvider.stopBroadcast();
     } catch (error) {
       const err = error as Error;
       setState(prev => ({ ...prev, error: err.message }));
       throw error;
     }
-  }, [provider]);
+  }, []);
 
   // Join as viewer
   const joinAsViewer = useCallback(async () => {
-    if (!provider) throw new Error('Provider not initialized');
+    // Use providerRef for immediate access (avoids React state timing issues)
+    const currentProvider = providerRef.current;
+    if (!currentProvider) throw new Error('Provider not initialized');
 
     try {
-      await provider.joinAsViewer();
+      await currentProvider.joinAsViewer();
     } catch (error) {
       const err = error as Error;
       setState(prev => ({ ...prev, error: err.message }));
       throw error;
     }
-  }, [provider]);
+  }, []);
 
   // Leave stream
   const leave = useCallback(async () => {
-    if (!provider) return;
+    const currentProvider = providerRef.current;
+    if (!currentProvider) return;
 
     try {
-      await provider.leave();
+      await currentProvider.leave();
     } catch (error) {
       const err = error as Error;
       setState(prev => ({ ...prev, error: err.message }));
       throw error;
     }
-  }, [provider]);
+  }, []);
 
   // Toggle camera
   const toggleCamera = useCallback(async () => {
-    if (!provider) return;
+    const currentProvider = providerRef.current;
+    if (!currentProvider) return;
 
     try {
-      const newState = !state.isCameraEnabled;
-      await provider.toggleCamera(newState);
-      setState(prev => ({ ...prev, isCameraEnabled: newState }));
+      setState(prev => {
+        const newState = !prev.isCameraEnabled;
+        currentProvider.toggleCamera(newState);
+        return { ...prev, isCameraEnabled: newState };
+      });
     } catch (error) {
       const err = error as Error;
       setState(prev => ({ ...prev, error: err.message }));
       throw error;
     }
-  }, [provider, state.isCameraEnabled]);
+  }, []);
 
   // Toggle microphone
   const toggleMicrophone = useCallback(async () => {
-    if (!provider) return;
+    const currentProvider = providerRef.current;
+    if (!currentProvider) return;
 
     try {
-      const newState = !state.isMicrophoneEnabled;
-      await provider.toggleMicrophone(newState);
-      setState(prev => ({ ...prev, isMicrophoneEnabled: newState }));
+      setState(prev => {
+        const newState = !prev.isMicrophoneEnabled;
+        currentProvider.toggleMicrophone(newState);
+        return { ...prev, isMicrophoneEnabled: newState };
+      });
     } catch (error) {
       const err = error as Error;
       setState(prev => ({ ...prev, error: err.message }));
       throw error;
     }
-  }, [provider, state.isMicrophoneEnabled]);
+  }, []);
 
   // Switch camera
   const switchCamera = useCallback(async () => {
-    if (!provider) return;
+    const currentProvider = providerRef.current;
+    if (!currentProvider) return;
 
     try {
-      await provider.switchCamera();
+      await currentProvider.switchCamera();
     } catch (error) {
       const err = error as Error;
       setState(prev => ({ ...prev, error: err.message }));
       throw error;
     }
-  }, [provider]);
+  }, []);
 
   // Get devices
   const getDevices = useCallback(async () => {
-    if (!provider) return { cameras: [], microphones: [] };
-    return await provider.getDevices();
-  }, [provider]);
+    const currentProvider = providerRef.current;
+    if (!currentProvider) return { cameras: [], microphones: [] };
+    return await currentProvider.getDevices();
+  }, []);
 
   // Get stats
   const getStats = useCallback(async () => {
-    if (!provider) return null;
-    const stats = await provider.getStats();
+    const currentProvider = providerRef.current;
+    if (!currentProvider) return null;
+    const stats = await currentProvider.getStats();
     setState(prev => ({ ...prev, stats }));
     return stats;
-  }, [provider]);
+  }, []);
 
   // Set video quality
   const setVideoQuality = useCallback(async (quality: 'low' | 'medium' | 'high') => {
-    if (!provider) return;
-    await provider.setVideoQuality(quality);
-  }, [provider]);
+    const currentProvider = providerRef.current;
+    if (!currentProvider) return;
+    await currentProvider.setVideoQuality(quality);
+  }, []);
 
   // Track if component is mounted to prevent state updates after unmount
   const isMountedRef = useRef(true);
