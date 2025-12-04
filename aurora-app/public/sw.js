@@ -1,5 +1,6 @@
-// Aurora Service Worker v2.0.0 - Updated to fix CORS issues
-const CACHE_NAME = 'aurora-cache-v2';
+// Aurora Service Worker v3.0.0 - Fixed chunk loading and cache issues
+const CACHE_VERSION = 'v3';
+const CACHE_NAME = `aurora-cache-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline';
 
 // Critical assets to cache immediately
@@ -9,6 +10,13 @@ const PRECACHE_ASSETS = [
   '/manifest.json',
   '/icon.png',
   '/favicon.ico',
+];
+
+// Paths that should NEVER be cached (dynamic chunks, etc.)
+const NEVER_CACHE_PATHS = [
+  '/_next/static/chunks/',
+  '/_next/static/webpack/',
+  '/_next/static/development/',
 ];
 
 // API routes that should use network-first strategy
@@ -37,7 +45,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches aggressively
 self.addEventListener('activate', (event) => {
   console.log('[Aurora SW] Activating...');
   
@@ -46,6 +54,8 @@ self.addEventListener('activate', (event) => {
       .then((cacheNames) => {
         return Promise.all(
           cacheNames
+            // Delete any cache that is NOT the current cache
+            // This includes old aurora caches AND any other stale caches
             .filter((name) => name !== CACHE_NAME)
             .map((name) => {
               console.log('[Aurora SW] Deleting old cache:', name);
@@ -55,7 +65,16 @@ self.addEventListener('activate', (event) => {
       })
       .then(() => {
         console.log('[Aurora SW] Activation complete');
+        // Force all clients to use the new service worker immediately
         return self.clients.claim();
+      })
+      .then(() => {
+        // Notify all clients that SW has been updated
+        return self.clients.matchAll({ type: 'window' }).then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({ type: 'SW_UPDATED', version: CACHE_VERSION });
+          });
+        });
       })
   );
 });
@@ -110,21 +129,28 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // CRITICAL: Never cache dynamic chunks - they change with each build
+  // This prevents stale chunk errors (404s, MIME type issues)
+  if (NEVER_CACHE_PATHS.some(path => url.pathname.includes(path))) {
+    event.respondWith(networkOnlyWithFallback(request));
+    return;
+  }
+
   // API routes - network first, fall back to cache
   if (API_ROUTES.some(route => url.pathname.startsWith(route))) {
     event.respondWith(networkFirst(request));
     return;
   }
 
-  // Static assets - cache first
-  if (isStaticAsset(url.pathname)) {
-    event.respondWith(cacheFirst(request));
+  // Static assets (non-chunk) - cache first, but validate
+  if (isStaticAsset(url.pathname) && !isChunkFile(url.pathname)) {
+    event.respondWith(cacheFirstWithValidation(request));
     return;
   }
 
-  // HTML pages - stale while revalidate
+  // HTML pages - network first to always get fresh content
   if (request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(staleWhileRevalidate(request));
+    event.respondWith(networkFirstForPages(request));
     return;
   }
 
@@ -223,6 +249,129 @@ function isStaticAsset(pathname) {
     '.ico', '.woff', '.woff2', '.ttf', '.eot', '.webp'
   ];
   return staticExtensions.some(ext => pathname.endsWith(ext));
+}
+
+// Check if URL is a dynamic chunk file (should not be cached)
+function isChunkFile(pathname) {
+  // Next.js chunk patterns - these change with each build
+  return pathname.includes('/_next/static/chunks/') ||
+         pathname.includes('/_next/static/webpack/') ||
+         pathname.includes('/_next/static/development/') ||
+         // Hashed chunk files (e.g., bd7ab94bf4546879.js)
+         /\/[a-f0-9]{16,}\.js$/.test(pathname);
+}
+
+// Network only with graceful fallback - for dynamic chunks
+async function networkOnlyWithFallback(request) {
+  try {
+    const response = await fetch(request);
+    
+    // If we get a 404 or non-OK response, don't cache it
+    if (!response.ok) {
+      console.warn('[Aurora SW] Chunk load failed:', request.url, response.status);
+      // Return the error response so the app can handle it
+      return response;
+    }
+    
+    // Verify it's actually JavaScript (not a 404 page served as text/html)
+    const contentType = response.headers.get('content-type') || '';
+    if (request.url.endsWith('.js') && !contentType.includes('javascript')) {
+      console.warn('[Aurora SW] Invalid content type for JS:', contentType);
+      // Return a proper error so the app knows to reload
+      return new Response('Chunk load failed - please refresh', { 
+        status: 503,
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('[Aurora SW] Network error for chunk:', error);
+    // Return error response - app should handle reload
+    return new Response('Network error - please check connection', { 
+      status: 503,
+      headers: { 'Content-Type': 'text/plain' }
+    });
+  }
+}
+
+// Cache first with validation - for stable static assets
+async function cacheFirstWithValidation(request) {
+  const cached = await caches.match(request);
+  
+  if (cached) {
+    // Validate cached response is still valid
+    const contentType = cached.headers.get('content-type') || '';
+    const isJS = request.url.endsWith('.js');
+    
+    // If it's a JS file but content-type is wrong, fetch fresh
+    if (isJS && !contentType.includes('javascript')) {
+      console.warn('[Aurora SW] Invalid cached JS, fetching fresh');
+      return fetchAndCache(request);
+    }
+    
+    return cached;
+  }
+  
+  return fetchAndCache(request);
+}
+
+// Fetch and cache helper
+async function fetchAndCache(request) {
+  try {
+    const response = await fetch(request);
+    
+    // Only cache successful responses with correct content type
+    if (response.ok && response.status !== 206) {
+      const contentType = response.headers.get('content-type') || '';
+      const isJS = request.url.endsWith('.js');
+      
+      // Don't cache if content type doesn't match
+      if (isJS && !contentType.includes('javascript')) {
+        console.warn('[Aurora SW] Not caching invalid JS response');
+        return response;
+      }
+      
+      const cache = await caches.open(CACHE_NAME);
+      try {
+        cache.put(request, response.clone());
+      } catch (cacheError) {
+        console.debug('[Aurora SW] Cache put failed:', cacheError);
+      }
+    }
+    
+    return response;
+  } catch (error) {
+    console.debug('[Aurora SW] Fetch failed:', error);
+    return new Response('Offline', { status: 503 });
+  }
+}
+
+// Network first for HTML pages - always try to get fresh content
+async function networkFirstForPages(request) {
+  try {
+    const response = await fetch(request);
+    
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      try {
+        cache.put(request, response.clone());
+      } catch (cacheError) {
+        console.debug('[Aurora SW] Cache put failed:', cacheError);
+      }
+    }
+    
+    return response;
+  } catch (error) {
+    // Offline - try cache
+    const cached = await caches.match(request);
+    if (cached) {
+      return cached;
+    }
+    
+    // Return offline page
+    return caches.match(OFFLINE_URL);
+  }
 }
 
 // Push notification event
