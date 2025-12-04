@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -745,19 +746,23 @@ function DiscoverMembers({ userId }: { userId: Id<"users"> }) {
             <Card key={member._id} className="bg-[var(--card)] border-[var(--border)] hover:shadow-lg transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-white font-bold flex-shrink-0">
-                    {member.avatarConfig ? (
-                      <img
-                        src={generateAvatarUrl(member.avatarConfig)}
-                        alt={member.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      member.name?.charAt(0) || "?"
-                    )}
-                  </div>
+                  <Link href={`/user/${member._id}`} className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-white font-bold hover:ring-2 hover:ring-[var(--color-aurora-purple)] transition-all">
+                      {member.avatarConfig ? (
+                        <img
+                          src={generateAvatarUrl(member.avatarConfig)}
+                          alt={member.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        member.name?.charAt(0) || "?"
+                      )}
+                    </div>
+                  </Link>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-[var(--foreground)] truncate">{member.name}</h3>
+                    <Link href={`/user/${member._id}`} className="hover:underline">
+                      <h3 className="font-semibold text-[var(--foreground)] truncate">{member.name}</h3>
+                    </Link>
                     {member.industry && (
                       <p className="text-xs text-[var(--muted-foreground)] truncate">{member.industry}</p>
                     )}
@@ -783,6 +788,18 @@ function DiscoverMembers({ userId }: { userId: Id<"users"> }) {
                     ))}
                   </div>
                 )}
+                {/* Message Button */}
+                <div className="mt-3 pt-3 border-t border-[var(--border)]">
+                  <Link href={`/messages/${member._id}`}>
+                    <Button 
+                      size="sm" 
+                      className="w-full bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white rounded-xl min-h-[44px]"
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Send Message
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           ))}

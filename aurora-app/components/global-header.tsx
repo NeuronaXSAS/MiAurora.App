@@ -394,7 +394,10 @@ export function GlobalHeader({
           onClick={() => setShowAIChat(false)}
         >
           <div className="w-full sm:max-w-lg sm:p-4" onClick={(e) => e.stopPropagation()}>
-            <AIChatCompanion className="h-[85vh] sm:h-[600px] rounded-t-3xl sm:rounded-2xl" />
+            <AIChatCompanion 
+              className="h-[85vh] sm:h-[600px] rounded-t-3xl sm:rounded-2xl" 
+              onClose={() => setShowAIChat(false)}
+            />
           </div>
         </div>
       )}

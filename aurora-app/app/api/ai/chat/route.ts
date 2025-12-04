@@ -210,59 +210,98 @@ function analyzeMentalHealthLocally(message: string): MentalHealthMetrics {
 }
 
 function getSystemPrompt(): string {
-  return `You are Aurora, a compassionate AI companion in the Aurora App - a safety and community platform designed specifically for women worldwide.
+  return `You are Aurora, a compassionate AI companion in Aurora App - a safety and community platform for women worldwide.
+
+CRITICAL RULES:
+1. ALWAYS respond directly to what the user said - never give generic responses
+2. If the user speaks Spanish, respond in Spanish. If English, respond in English. Match their language.
+3. If you don't understand something, ask for clarification instead of giving a generic response
+4. Be specific and helpful - reference what they actually said
 
 Your personality:
-- Warm, empathetic, and genuinely caring
-- Supportive without being patronizing
-- Culturally sensitive and inclusive
-- Knowledgeable about women's issues, safety, mental health, and career development
-- You use emojis sparingly but meaningfully (💜 🌸 ✨ 🤗)
+- Warm, empathetic, genuinely caring like a supportive best friend
+- Smart and helpful - give real advice, not platitudes
+- Culturally aware - understand Latin American, European, Asian, African contexts
+- Use emojis sparingly (💜 🌸 ✨)
 
-Your capabilities in Aurora App:
-- Emotional support and active listening
-- Safety advice and awareness
-- Mental health check-ins and coping strategies
-- Career guidance and empowerment
-- Community connection suggestions
+How to respond:
+- SHORT responses (2-3 sentences max) unless they ask for detailed help
+- ALWAYS acknowledge what they specifically said
+- Ask follow-up questions to understand better
+- Give actionable advice when appropriate
+- If they share a problem, help them think through solutions
 
-Guidelines:
-- Keep responses conversational and warm (2-4 sentences typically)
-- Validate feelings before offering advice
-- If someone mentions danger or emergency, remind them about the SOS button and emergency services
-- Never provide medical diagnoses or replace professional help
-- Encourage community connection and self-care
-- Be encouraging but realistic
+Topics you can help with:
+- Safety concerns and awareness
+- Career advice and workplace issues
+- Relationships and family
+- Mental health and emotional support
+- Health and wellness
+- Financial guidance
+- Personal growth
 
-Remember: You're talking to women who may be going through difficult times. Be their supportive friend.`;
+NEVER:
+- Give generic "I hear you" responses without addressing their specific situation
+- Repeat the same response twice
+- Ignore what they said
+- Be preachy or lecture them
+
+If someone mentions danger/emergency: Remind them about the SOS button and emergency services.
+
+Remember: Be genuinely helpful, not just supportive-sounding.`;
 }
 
 function getFallbackResponse(message: string): string {
   const lowerMessage = message.toLowerCase();
   
+  // Spanish detection
+  const spanishWords = ['hola', 'como', 'estás', 'qué', 'bien', 'mal', 'ayuda', 'necesito', 'tengo', 'siento', 'trabajo', 'ciudad', 'ruido', 'densa'];
+  const isSpanish = spanishWords.some(word => lowerMessage.includes(word));
+  
+  if (isSpanish) {
+    if (lowerMessage.includes('ciudad') || lowerMessage.includes('ruido') || lowerMessage.includes('densa')) {
+      return "Entiendo, vivir en una ciudad ruidosa puede ser agotador. ¿Qué es lo que más te afecta - el ruido, el tráfico, o algo más? Cuéntame más para poder ayudarte mejor 💜";
+    }
+    if (lowerMessage.includes('triste') || lowerMessage.includes('mal') || lowerMessage.includes('deprimida')) {
+      return "Lamento que te sientas así. ¿Qué está pasando? Cuéntame más para entender mejor tu situación 💜";
+    }
+    if (lowerMessage.includes('trabajo') || lowerMessage.includes('jefe') || lowerMessage.includes('oficina')) {
+      return "Los temas de trabajo pueden ser muy estresantes. ¿Qué está pasando específicamente? ¿Es con compañeros, tu jefe, o la carga de trabajo?";
+    }
+    if (lowerMessage.includes('hola') || lowerMessage.includes('hey')) {
+      return "¡Hola! 💜 Me alegra que estés aquí. ¿Cómo te puedo ayudar hoy?";
+    }
+    if (lowerMessage.includes('funcionando') || lowerMessage.includes('funciona')) {
+      return "¡Sí, estoy funcionando! 😊 Soy Aurora, tu compañera de IA. ¿En qué te puedo ayudar hoy?";
+    }
+    return "Cuéntame más sobre eso. ¿Qué está pasando específicamente? Quiero entenderte mejor para poder ayudarte 💜";
+  }
+  
+  // English responses
+  if (lowerMessage.includes('city') || lowerMessage.includes('noise') || lowerMessage.includes('traffic')) {
+    return "City life can be overwhelming. What's bothering you most - the noise, crowds, or something else? Tell me more 💜";
+  }
   if (lowerMessage.includes('sad') || lowerMessage.includes('depressed') || lowerMessage.includes('down')) {
-    return "I hear you, and your feelings are completely valid. It's okay to not be okay sometimes. Would you like to talk about what's weighing on your heart? I'm here to listen without judgment. 💜";
+    return "I'm sorry you're feeling this way. What's going on? Tell me more so I can understand better 💜";
   }
   if (lowerMessage.includes('anxious') || lowerMessage.includes('worried') || lowerMessage.includes('stress')) {
-    return "Anxiety can feel overwhelming, but you're not alone in this. Let's take a deep breath together. Would you like me to guide you through a quick calming exercise? 🌸";
+    return "What specifically is causing you stress? Let's talk through it together 🌸";
+  }
+  if (lowerMessage.includes('work') || lowerMessage.includes('job') || lowerMessage.includes('boss')) {
+    return "Work issues can be really stressful. What's happening - is it with coworkers, your boss, or the workload itself?";
   }
   if (lowerMessage.includes('happy') || lowerMessage.includes('good') || lowerMessage.includes('great')) {
-    return "That's wonderful to hear! Your joy is contagious ✨ What's bringing you happiness today? I'd love to celebrate with you!";
+    return "That's great! What's making you feel good today? ✨";
   }
   if (lowerMessage.includes('help') || lowerMessage.includes('emergency') || lowerMessage.includes('danger')) {
-    return "I'm here for you. If you're in immediate danger, please use the SOS button or call emergency services. If you need to talk, I'm listening. Your safety is my priority. 🛡️";
+    return "If you're in immediate danger, please use the SOS button or call emergency services. If you need to talk, I'm here. What's happening? 🛡️";
   }
   if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-    return "Hello beautiful! 💜 I'm so glad you're here. How are you feeling today? I'm all ears.";
+    return "Hey! 💜 Good to see you. How can I help you today?";
+  }
+  if (lowerMessage.includes('working') || lowerMessage.includes('function')) {
+    return "Yes, I'm working! 😊 I'm Aurora, your AI companion. What can I help you with today?";
   }
   
-  const responses = [
-    "I hear you, and your feelings are completely valid. Remember, you're stronger than you know. 💪✨",
-    "That sounds like a lot to process. Would you like to talk more about it? I'm here to listen. 🤗",
-    "You're doing amazing by reaching out. What would help you feel better right now? 💜",
-    "I'm proud of you for sharing that with me. Your feelings matter, and so do you. 🌸",
-    "Thank you for trusting me with this. Together, we can work through anything. ✨",
-  ];
-  
-  return responses[Math.floor(Math.random() * responses.length)];
+  return "Tell me more about that. What's specifically on your mind? I want to understand so I can actually help 💜";
 }

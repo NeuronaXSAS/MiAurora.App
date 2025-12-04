@@ -32,7 +32,7 @@ const navigationItems = [
     items: [
       { href: "/profile", icon: User, label: "Personal Dashboard", description: "Your wellness hub" },
       { href: "/health", icon: Heart, label: "Soul Sanctuary", description: "Cycle, mood & wellness" },
-      { href: "/assistant", icon: MessageSquare, label: "AI Therapist", description: "Digital companion" },
+      { href: "/assistant", icon: MessageSquare, label: "Aurora AI", description: "Your AI companion" },
       { href: "/settings", icon: Settings, label: "Privacy & Settings", description: "Control your data" },
     ],
   },

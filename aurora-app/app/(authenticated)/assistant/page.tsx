@@ -107,9 +107,10 @@ export default function AssistantPage() {
                 )}
               </div>
               <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">Aurora Companion</h1>
-                <p className="text-xs sm:text-sm text-[var(--muted-foreground)] truncate">
-                  Your safe space for thoughts and feelings
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">Aurora AI</h1>
+                <p className="text-xs sm:text-sm text-[var(--color-aurora-pink)] truncate flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  Always here for you
                 </p>
               </div>
             </div>

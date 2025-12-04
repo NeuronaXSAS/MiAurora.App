@@ -136,7 +136,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
 
   const wellnessNav = [
     { href: "/health", icon: Heart, label: "Health Tracker", color: "text-[var(--color-aurora-pink)]" },
-    { href: "/assistant", icon: MessageSquare, label: "AI Companion", color: null },
+    { href: "/assistant", icon: MessageSquare, label: "Aurora AI", color: "text-[var(--color-aurora-purple)]" },
   ];
 
   const accountNav = [

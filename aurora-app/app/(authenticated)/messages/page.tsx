@@ -133,19 +133,33 @@ export default function MessagesPage() {
           )}
 
           {conversations && conversations.length === 0 && (
-            <Card className="bg-[var(--card)] border-[var(--border)]">
-              <CardContent className="py-12 text-center">
-                <MessageSquare className="w-16 h-16 text-[var(--color-aurora-lavender)] mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2 text-[var(--foreground)]">No messages yet</h3>
-                <p className="text-[var(--muted-foreground)] mb-4">
-                  Start a conversation with someone from the community
-                </p>
-                <Button onClick={() => setShowSearch(true)} className="min-h-[44px] bg-[var(--color-aurora-purple)]">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Start Messaging
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              <Card className="bg-[var(--card)] border-[var(--border)]">
+                <CardContent className="py-8 text-center">
+                  <MessageSquare className="w-12 h-12 text-[var(--color-aurora-lavender)] mx-auto mb-3" />
+                  <h3 className="text-lg font-semibold mb-2 text-[var(--foreground)]">No messages yet</h3>
+                  <p className="text-[var(--muted-foreground)] mb-4">
+                    Start a conversation with someone from the community
+                  </p>
+                  <Button onClick={() => setShowSearch(true)} className="min-h-[44px] bg-[var(--color-aurora-purple)]">
+                    <Search className="w-4 h-4 mr-2" />
+                    Find Women to Connect
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              {/* Quick Tips */}
+              <Card className="bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border-[var(--color-aurora-purple)]/20">
+                <CardContent className="py-4">
+                  <h4 className="font-semibold text-[var(--foreground)] mb-2">💡 How to connect</h4>
+                  <ul className="text-sm text-[var(--muted-foreground)] space-y-1">
+                    <li>• Click "Find Women to Connect" and search by name</li>
+                    <li>• Visit Circles to find women with shared interests</li>
+                    <li>• Comment on posts to start conversations</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
           )}
 
           {conversations && conversations.length > 0 && (

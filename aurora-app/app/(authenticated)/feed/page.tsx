@@ -426,7 +426,10 @@ export default function FeedPage() {
       {showAIChat && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowAIChat(false)}>
           <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <AIChatCompanion className="h-[600px]" />
+            <AIChatCompanion 
+              className="h-[600px]" 
+              onClose={() => setShowAIChat(false)}
+            />
           </div>
         </div>
       )}
