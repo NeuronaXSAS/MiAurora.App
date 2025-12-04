@@ -7,27 +7,8 @@ import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Camera,
-  CameraOff,
-  Mic,
-  MicOff,
-  Video,
-  VideoOff,
-  AlertTriangle,
-  Users,
-  Clock,
-  Repeat,
-  X,
-  Shield,
-} from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Camera, CameraOff, Mic, MicOff, Video, Users, Clock, Repeat, X, Shield, Coins } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Id } from "@/convex/_generated/dataModel";
 
@@ -35,845 +16,408 @@ interface BroadcastStudioProps {
   userId: Id<"users">;
 }
 
-type BroadcastStage = 'setup' | 'preview' | 'live';
+type BroadcastStage = 'setup' | 'preview' | 'live' | 'ended';
 
 export function BroadcastStudio({ userId }: BroadcastStudioProps) {
   const router = useRouter();
+  
+  // All state declarations at the top
   const [stage, setStage] = useState<BroadcastStage>('setup');
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("safety-walk");
-  const [isEmergency, setIsEmergency] = useState(false);
   const [livestreamId, setLivestreamId] = useState<Id<"livestreams"> | null>(null);
-  const [channelName, setChannelName] = useState("");
   const [duration, setDuration] = useState(0);
   const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
+  const [selectedCamera, setSelectedCamera] = useState<string>("");
+  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
+  const [broadcastError, setBroadcastError] = useState<string | null>(null);
+  const [isStartingBroadcast, setIsStartingBroadcast] = useState(false);
+  const [showCameraSelector, setShowCameraSelector] = useState(false);
+  const [earnedCredits, setEarnedCredits] = useState(0);
 
+  // Refs
+  const localVideoRef = useRef<HTMLDivElement>(null);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Mutations
   const createLivestream = useMutation(api.livestreams.createLivestream);
   const endLivestream = useMutation(api.livestreams.endLivestream);
   const triggerEmergency = useMutation(api.emergency.triggerEmergencyAlert);
 
+  // Livestream hook
   const {
-    isConnected,
-    isStreaming,
-    isCameraEnabled,
-    isMicrophoneEnabled,
-    viewerCount,
-    stats,
-    error,
-    initialize,
-    startBroadcast,
-    stopBroadcast,
-    leave,
-    toggleCamera,
-    toggleMicrophone,
-    switchCamera,
-    setCamera,
-    getDevices,
-    playLocalVideo,
+    isStreaming, isCameraEnabled, isMicrophoneEnabled, viewerCount, stats,
+    initialize, stopBroadcast, leave, toggleCamera, toggleMicrophone, switchCamera,
+    setCamera, getDevices, playLocalVideo,
   } = useLivestream();
-
-  // Available devices state
-  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
-  const [microphones, setMicrophones] = useState<MediaDeviceInfo[]>([]);
-  const [selectedCamera, setSelectedCamera] = useState<string>("");
-  const [selectedMicrophone, setSelectedMicrophone] = useState<string>("");
-
-  // Local preview stream (before going live)
-  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
-  
-  // State for broadcast status
-  const [broadcastError, setBroadcastError] = useState<string | null>(null);
-  const [isStartingBroadcast, setIsStartingBroadcast] = useState(false);
-  
-  // State for live camera selection
-  const [showCameraSelector, setShowCameraSelector] = useState(false);
-
-  // Local ref for Agora video
-  const localVideoRef = useRef<HTMLDivElement>(null);
-  const previewVideoRef = useRef<HTMLVideoElement>(null);
 
   // Load devices when going live
   useEffect(() => {
     if (stage === 'live' && isStreaming) {
-      getDevices().then(({ cameras: cams, microphones: mics }) => {
-        setCameras(cams);
-        setMicrophones(mics);
-      });
+      getDevices().then(({ cameras: cams }) => setCameras(cams));
     }
   }, [stage, isStreaming, getDevices]);
 
   // Duration timer
   useEffect(() => {
     if (stage === 'live') {
-      const interval = setInterval(() => {
-        setDuration(prev => prev + 1);
-      }, 1000);
+      const interval = setInterval(() => setDuration(prev => prev + 1), 1000);
       return () => clearInterval(interval);
     }
   }, [stage]);
 
-  // Play local video when entering live stage - with retry logic
+  // Play local video with retry for older devices
   useEffect(() => {
     if (stage === 'live' && localVideoRef.current && isStreaming) {
       let attempts = 0;
-      const maxAttempts = 15;
-      let timeoutId: NodeJS.Timeout | null = null;
+      const maxAttempts = 20;
       
       const tryPlayVideo = () => {
         attempts++;
-        console.log(`Agora: Playing local video attempt ${attempts}/${maxAttempts}...`);
-        
         if (localVideoRef.current) {
-          // Ensure container has explicit dimensions before playing
           const container = localVideoRef.current;
-          container.style.width = '100%';
-          container.style.height = '100%';
-          container.style.minHeight = '400px';
-          
-          console.log('Agora: Container ready, dimensions:', container.offsetWidth, 'x', container.offsetHeight);
+          // Force dimensions for older devices
+          container.style.cssText = 'width:100%;height:100%;min-height:200px;position:absolute;inset:0;';
           playLocalVideo(container);
         }
         
-        // Retry if video container is still empty after a delay
         if (attempts < maxAttempts) {
-          timeoutId = setTimeout(() => {
-            if (localVideoRef.current) {
-              // Check if video element was added by Agora
-              const hasVideo = localVideoRef.current.querySelector('video') !== null;
-              const hasCanvas = localVideoRef.current.querySelector('canvas') !== null;
-              
-              if (!hasVideo && !hasCanvas) {
-                console.log('Agora: No video/canvas element found, retrying...');
-                tryPlayVideo();
-              } else {
-                console.log('Agora: Video element found, playback successful!');
-              }
+          setTimeout(() => {
+            if (localVideoRef.current && !localVideoRef.current.querySelector('video,canvas')) {
+              tryPlayVideo();
             }
-          }, 500);
+          }, 300);
         }
       };
       
-      // Initial delay to ensure Agora tracks are fully ready
-      const initialTimer = setTimeout(tryPlayVideo, 300);
-      
-      return () => {
-        clearTimeout(initialTimer);
-        if (timeoutId) clearTimeout(timeoutId);
-      };
+      setTimeout(tryPlayVideo, 200);
     }
   }, [stage, isStreaming, playLocalVideo]);
 
-  // Format duration
-  const formatDuration = (seconds: number) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    if (hrs > 0) {
-      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const formatDuration = (s: number) => {
+    const m = Math.floor(s / 60);
+    return `${m}:${(s % 60).toString().padStart(2, '0')}`;
   };
 
-  // Start camera preview without Agora
+  // Camera preview functions
   const startCameraPreview = async (cameraId?: string) => {
     try {
-      const videoConstraints: MediaTrackConstraints = cameraId 
-        ? { deviceId: { exact: cameraId }, width: { ideal: 1280 }, height: { ideal: 720 } }
-        : { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } };
-      
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: videoConstraints,
+      const constraints: MediaStreamConstraints = {
+        video: cameraId ? { deviceId: { exact: cameraId } } : { facingMode: 'user' },
         audio: true,
-      });
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       setPreviewStream(stream);
-      if (previewVideoRef.current) {
-        previewVideoRef.current.srcObject = stream;
-      }
+      if (previewVideoRef.current) previewVideoRef.current.srcObject = stream;
       
-      // Get available devices after permission granted
       const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(d => d.kind === 'videoinput');
-      const audioDevices = devices.filter(d => d.kind === 'audioinput');
-      setCameras(videoDevices);
-      setMicrophones(audioDevices);
+      setCameras(devices.filter(d => d.kind === 'videoinput'));
       
-      // Set current device as selected
       const videoTrack = stream.getVideoTracks()[0];
-      const audioTrack = stream.getAudioTracks()[0];
-      if (videoTrack) {
-        const settings = videoTrack.getSettings();
-        setSelectedCamera(settings.deviceId || '');
-      }
-      if (audioTrack) {
-        const settings = audioTrack.getSettings();
-        setSelectedMicrophone(settings.deviceId || '');
-      }
-      
+      if (videoTrack) setSelectedCamera(videoTrack.getSettings().deviceId || '');
       return true;
-    } catch (err) {
-      console.error('Camera access error:', err);
+    } catch {
       return false;
     }
   };
 
-  // Switch preview camera
   const switchPreviewCamera = async (deviceId: string) => {
     if (!previewStream) return;
-    
-    // Stop current video track
-    previewStream.getVideoTracks().forEach(track => track.stop());
-    
+    previewStream.getVideoTracks().forEach(t => t.stop());
     try {
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: { exact: deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false, // Keep existing audio
-      });
-      
-      const newVideoTrack = newStream.getVideoTracks()[0];
-      const audioTrack = previewStream.getAudioTracks()[0];
-      
-      // Create combined stream
-      const combinedStream = new MediaStream([newVideoTrack, audioTrack]);
-      setPreviewStream(combinedStream);
+      const newStream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } }, audio: false });
+      const combined = new MediaStream([newStream.getVideoTracks()[0], previewStream.getAudioTracks()[0]]);
+      setPreviewStream(combined);
       setSelectedCamera(deviceId);
-      
-      if (previewVideoRef.current) {
-        previewVideoRef.current.srcObject = combinedStream;
-      }
-    } catch (err) {
-      console.error('Failed to switch camera:', err);
-      // Restart with original camera
+      if (previewVideoRef.current) previewVideoRef.current.srcObject = combined;
+    } catch {
       startCameraPreview();
     }
   };
 
-  // Stop camera preview
   const stopCameraPreview = () => {
-    if (previewStream) {
-      previewStream.getTracks().forEach(track => track.stop());
-      setPreviewStream(null);
-    }
+    previewStream?.getTracks().forEach(t => t.stop());
+    setPreviewStream(null);
   };
 
-  // Handle go live - just start camera preview first
+  // Handlers
   const handleGoLive = async () => {
-    if (!title.trim()) {
-      alert("Please enter a title for your stream");
-      return;
-    }
-
-    try {
-      setPermissionError(null);
-
-      // First, request camera/mic permissions and start preview
-      const cameraOk = await startCameraPreview();
-      if (!cameraOk) {
-        setPermissionError('Camera/microphone permission denied. Please enable permissions in your browser settings.');
-        return;
-      }
-
-      // Move to preview stage - don't create livestream yet
-      setStage('preview');
-    } catch (error) {
-      console.error('Failed to start preview:', error);
-      stopCameraPreview();
-      const err = error as Error;
-      if (err.message.includes('permission') || err.message.includes('NotAllowedError')) {
-        setPermissionError('Camera/microphone permission denied. Please enable permissions and try again.');
-      } else {
-        setPermissionError('Failed to access camera. Please check your device settings.');
-      }
-    }
+    if (!title.trim()) { alert("Enter a title"); return; }
+    setPermissionError(null);
+    const ok = await startCameraPreview();
+    if (!ok) { setPermissionError('Camera permission denied'); return; }
+    setStage('preview');
   };
 
-  // Handle start broadcasting with Agora
   const handleStartBroadcast = async () => {
     if (isStartingBroadcast) return;
-    
     setIsStartingBroadcast(true);
     setBroadcastError(null);
-    let createdLivestreamId: Id<"livestreams"> | null = null;
+    let createdId: Id<"livestreams"> | null = null;
     
     try {
-      // Create livestream record in database
-      const result = await createLivestream({
-        hostId: userId,
-        title: title.trim(),
-        safetyMode: false,
-        isEmergency,
-      });
-
-      if (!result.livestreamId) {
-        throw new Error('Failed to create livestream');
-      }
-
-      createdLivestreamId = result.livestreamId;
+      const result = await createLivestream({ hostId: userId, title: title.trim(), safetyMode: false, isEmergency: false });
+      if (!result.livestreamId) throw new Error('Failed to create');
+      createdId = result.livestreamId;
       setLivestreamId(result.livestreamId);
-      setChannelName(result.channelName);
-
-      console.log('Livestream created:', result.channelName);
-
-      // Stop preview stream FIRST before initializing Agora
-      // This releases the camera so Agora can use it
+      
       stopCameraPreview();
+      await new Promise(r => setTimeout(r, 400));
       
-      // Small delay to ensure camera is released
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      console.log('Initializing Agora...');
-
-      // Initialize Agora - this returns the provider
-      const agoraProvider = await initialize({
-        channelName: result.channelName,
-        userId: userId,
-        role: 'host',
-        onError: (err) => {
-          console.error('Agora streaming error:', err);
-          setBroadcastError(err.message);
-        },
-      });
-
-      console.log('Agora initialized, provider ready:', !!agoraProvider);
-
-      // Wait a bit for provider to be fully ready
-      await new Promise(resolve => setTimeout(resolve, 300));
+      const provider = await initialize({ channelName: result.channelName, userId, role: 'host', onError: (e) => setBroadcastError(e.message) });
+      await new Promise(r => setTimeout(r, 200));
       
-      console.log('Starting Agora broadcast...');
-
-      // Start Agora broadcast - use the returned provider directly
-      // Add retry logic for robustness
-      let broadcastStarted = false;
-      let retries = 0;
-      const maxRetries = 3;
-      
-      while (!broadcastStarted && retries < maxRetries) {
-        try {
-          if (agoraProvider) {
-            await agoraProvider.startBroadcast({
-              video: true,
-              audio: true,
-            });
-            broadcastStarted = true;
-          } else {
-            throw new Error('Provider not available');
-          }
-        } catch (broadcastError) {
-          retries++;
-          console.warn(`Broadcast attempt ${retries} failed:`, broadcastError);
-          if (retries < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-          } else {
-            throw broadcastError;
-          }
-        }
-      }
-
-      console.log('Broadcast started successfully!');
-      
-      // Move to live stage so the video container is mounted
+      if (provider) await provider.startBroadcast({ video: true, audio: true });
       setStage('live');
-      
-      // Play local video after a short delay to ensure DOM is ready
-      // The useEffect will also try, but this is a backup
-      setTimeout(() => {
-        if (localVideoRef.current && agoraProvider) {
-          console.log('Playing local video from handleStartBroadcast...');
-          (agoraProvider as any).playLocalVideo(localVideoRef.current);
-        }
-      }, 800);
-      
+    } catch (e) {
+      setBroadcastError((e as Error).message);
+      if (createdId) await endLivestream({ livestreamId: createdId, hostId: userId }).catch(() => {});
+    } finally {
       setIsStartingBroadcast(false);
-    } catch (error) {
-      console.error('Failed to start broadcast:', error);
-      const errorMsg = (error as Error).message || 'Unknown error';
-      setBroadcastError(errorMsg);
-      
-      // Clean up if livestream was created
-      if (createdLivestreamId) {
-        try {
-          await endLivestream({
-            livestreamId: createdLivestreamId,
-            hostId: userId,
-          });
-        } catch (cleanupError) {
-          console.error('Failed to cleanup livestream:', cleanupError);
-        }
-      }
-      
-      setIsStartingBroadcast(false);
-      
-      // Show specific error message
-      if (errorMsg.includes('not configured') || errorMsg.includes('App ID')) {
-        alert('Livestreaming service is not configured. Please contact support.');
-      } else if (errorMsg.includes('permission') || errorMsg.includes('NotAllowedError')) {
-        alert('Camera/microphone permission denied. Please enable permissions and try again.');
-      } else {
-        alert(`Failed to start livestream: ${errorMsg}`);
-      }
     }
   };
 
-  // Handle end stream
   const handleEndStream = async () => {
-    if (!confirm('Are you sure you want to end this livestream?')) return;
-
+    if (!confirm('End this livestream?')) return;
     try {
       await stopBroadcast();
       await leave();
-
-      if (livestreamId) {
-        await endLivestream({
-          livestreamId,
-          hostId: userId,
-        });
-      }
-
-      router.push('/live');
-    } catch (error) {
-      console.error('Failed to end stream:', error);
-      alert('Failed to end stream: ' + (error as Error).message);
+      if (livestreamId) await endLivestream({ livestreamId, hostId: userId });
+      // Calculate credits based on duration and viewers
+      const credits = Math.max(10, Math.floor(duration / 60) * 5 + viewerCount * 2);
+      setEarnedCredits(credits);
+      setStage('ended');
+    } catch (e) {
+      alert('Error: ' + (e as Error).message);
     }
   };
 
-  // Handle emergency
   const handleEmergency = async () => {
-    if (!confirm('This will trigger an emergency alert to your contacts and nearby users. Continue?')) return;
-
+    if (!confirm('Trigger emergency alert?')) return;
     try {
-      // Attempt to get user location with fallback
-      const getLocation = (): Promise<{ lat: number; lng: number; accuracy?: number }> => {
-        return new Promise((resolve) => {
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                resolve({
-                  lat: position.coords.latitude,
-                  lng: position.coords.longitude,
-                  accuracy: position.coords.accuracy,
-                });
-              },
-              (error) => {
-                console.warn('Geolocation failed:', error);
-                // Fallback to unknown location
-                resolve({ lat: 0, lng: 0, accuracy: 0 });
-              },
-              { timeout: 5000, maximumAge: 0 }
-            );
-          } else {
-            // Geolocation not supported - use fallback
-            resolve({ lat: 0, lng: 0, accuracy: 0 });
-          }
-        });
-      };
-
-      const location = await getLocation();
-
-      await triggerEmergency({
-        location: {
-          lat: location.lat,
-          lng: location.lng,
-          accuracy: location.accuracy,
-          address: location.lat === 0 ? 'Location unavailable' : undefined,
-        },
-        alertType: 'manual',
-        message: `Emergency during livestream: ${title}`,
+      const loc = await new Promise<{lat:number,lng:number}>((resolve) => {
+        navigator.geolocation?.getCurrentPosition(
+          p => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+          () => resolve({ lat: 0, lng: 0 }),
+          { timeout: 5000 }
+        ) || resolve({ lat: 0, lng: 0 });
       });
-
-      alert('Emergency alert sent! Help is on the way.');
-    } catch (error) {
-      console.error('Failed to trigger emergency:', error);
-      alert('Failed to send emergency alert. Please try again.');
+      await triggerEmergency({ location: { ...loc, accuracy: 0 }, alertType: 'manual', message: `Emergency: ${title}` });
+      alert('Emergency alert sent!');
+    } catch {
+      alert('Failed to send alert');
     }
   };
 
-  // Setup Stage
-  if (stage === 'setup') {
-    return (
-      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4">
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-xl p-8 max-w-md w-full">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-full flex items-center justify-center mx-auto mb-4">
-              <Video className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold mb-2 text-[var(--foreground)]">Go Live</h1>
-            <p className="text-[var(--muted-foreground)]">Share your experience with the community</p>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="title" className="text-[var(--foreground)]">Stream Title *</Label>
-              <Input
-                id="title"
-                placeholder="e.g., Evening Safety Walk in Downtown"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                maxLength={100}
-                className="mt-1 bg-[var(--background)] border-[var(--border)] text-[var(--foreground)]"
-              />
-              <p className="text-xs text-[var(--muted-foreground)] mt-1">{title.length}/100</p>
-            </div>
-
-            <div>
-              <Label htmlFor="category" className="text-[var(--foreground)]">Category</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="mt-1 bg-[var(--background)] border-[var(--border)] text-[var(--foreground)]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-[var(--card)] border-[var(--border)]">
-                  <SelectItem value="safety-walk">🚶 Safety Walk</SelectItem>
-                  <SelectItem value="commute">🚇 Commute</SelectItem>
-                  <SelectItem value="qa">💬 Q&A</SelectItem>
-                  <SelectItem value="just-chatting">🗣️ Just Chatting</SelectItem>
-                  <SelectItem value="emergency">🚨 Emergency</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {permissionError && (
-              <div className="p-4 bg-[var(--color-aurora-yellow)]/20 border border-[var(--color-aurora-yellow)]/30 rounded-xl">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-5 h-5 text-[var(--color-aurora-yellow)] flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-[var(--foreground)] text-sm">Coming Soon</p>
-                    <p className="text-[var(--muted-foreground)] text-xs mt-1">{permissionError}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <Button
-              onClick={handleGoLive}
-              className="w-full bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
-              size="lg"
-            >
-              <Camera className="w-5 h-5 mr-2" />
-              Continue to Preview
-            </Button>
-
-            <Button
-              onClick={() => router.push('/live')}
-              variant="outline"
-              className="w-full border-[var(--border)]"
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Preview Stage - Uses native video element for camera preview
-  if (stage === 'preview') {
-    return (
-      <div className="min-h-screen bg-[var(--color-aurora-violet)] flex flex-col">
-        {/* Video Preview - Native video element */}
-        <div className="flex-1 relative">
-          <video
-            ref={previewVideoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover bg-[var(--color-aurora-violet)]"
-            style={{ minHeight: '400px', transform: 'scaleX(-1)' }}
-          />
-
-          {!previewStream && (
-            <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-aurora-violet)]">
-              <div className="text-center text-white">
-                <CameraOff className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p>Camera is loading...</p>
-              </div>
-            </div>
-          )}
-
-          {/* Preview Overlay */}
-          <div className="absolute top-4 left-4 right-4">
-            <div className="bg-black/70 backdrop-blur-sm rounded-xl p-4">
-              <h2 className="text-white font-bold text-lg mb-1">{title}</h2>
-              <p className="text-white/70 text-sm">Preview Mode - Not Live Yet</p>
-              {previewStream && (
-                <p className="text-[var(--color-aurora-mint)] text-xs mt-1">✓ Camera ready</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div className="bg-[var(--card)] border-t border-[var(--border)] p-4 space-y-4">
-          {/* Camera Selection */}
-          {cameras.length > 1 && (
-            <div>
-              <Label className="text-[var(--foreground)] text-sm mb-2 block">Camera</Label>
-              <Select value={selectedCamera} onValueChange={switchPreviewCamera}>
-                <SelectTrigger className="bg-[var(--background)] border-[var(--border)] text-[var(--foreground)]">
-                  <SelectValue placeholder="Select camera" />
-                </SelectTrigger>
-                <SelectContent className="bg-[var(--card)] border-[var(--border)]">
-                  {cameras.map((camera) => (
-                    <SelectItem key={camera.deviceId} value={camera.deviceId}>
-                      {camera.label || `Camera ${cameras.indexOf(camera) + 1}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Control Buttons */}
-          <div className="flex items-center justify-center gap-4">
-            <Button
-              onClick={() => {
-                if (previewStream) {
-                  const videoTrack = previewStream.getVideoTracks()[0];
-                  if (videoTrack) {
-                    videoTrack.enabled = !videoTrack.enabled;
-                  }
-                }
-              }}
-              variant="default"
-              size="lg"
-              className="rounded-full w-16 h-16 min-w-[64px] min-h-[64px] bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
-            >
-              <Camera className="w-6 h-6" />
-            </Button>
-
-            <Button
-              onClick={() => {
-                if (previewStream) {
-                  const audioTrack = previewStream.getAudioTracks()[0];
-                  if (audioTrack) {
-                    audioTrack.enabled = !audioTrack.enabled;
-                  }
-                }
-              }}
-              variant="default"
-              size="lg"
-              className="rounded-full w-16 h-16 min-w-[64px] min-h-[64px] bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
-            >
-              <Mic className="w-6 h-6" />
-            </Button>
-
-            {cameras.length > 1 && (
-              <Button
-                onClick={() => {
-                  // Cycle to next camera
-                  const currentIndex = cameras.findIndex(c => c.deviceId === selectedCamera);
-                  const nextIndex = (currentIndex + 1) % cameras.length;
-                  switchPreviewCamera(cameras[nextIndex].deviceId);
-                }}
-                variant="outline"
-                size="lg"
-                className="rounded-full w-16 h-16 min-w-[64px] min-h-[64px] border-[var(--border)]"
-              >
-                <Repeat className="w-6 h-6" />
-              </Button>
-            )}
-          </div>
-
-          {broadcastError && (
-            <div className="p-3 bg-[var(--color-aurora-salmon)]/20 border border-[var(--color-aurora-salmon)]/30 rounded-xl">
-              <p className="text-[var(--color-aurora-salmon)] text-sm text-center">{broadcastError}</p>
-            </div>
-          )}
-
-          <Button
-            onClick={handleStartBroadcast}
-            className="w-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:from-[var(--color-aurora-violet)] hover:to-[var(--color-aurora-purple)] text-white min-h-[48px]"
-            size="lg"
-            disabled={!previewStream || isStartingBroadcast}
-          >
-            {isStartingBroadcast ? 'Starting broadcast...' : previewStream ? 'Go Live Now' : 'Starting camera...'}
-          </Button>
-
-          <Button
-            onClick={() => {
-              stopCameraPreview();
-              leave();
-              router.push('/live');
-            }}
-            variant="outline"
-            className="w-full border-[var(--border)] min-h-[48px]"
-          >
-            Cancel
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Handle camera change while live
   const handleLiveCameraChange = async (deviceId: string) => {
     try {
       await setCamera(deviceId);
       setSelectedCamera(deviceId);
       setShowCameraSelector(false);
-    } catch (err) {
-      console.error('Failed to switch camera:', err);
-    }
+    } catch {}
   };
 
-  // Live Stage - Agora streaming
-  return (
-    <div className="min-h-screen bg-[var(--color-aurora-violet)] flex flex-col">
-      {/* Video Stream - Agora */}
-      <div className="flex-1 relative" style={{ minHeight: '60vh' }}>
-        {/* Video container - Agora will inject video/canvas here */}
-        <div
-          ref={localVideoRef}
-          id="local-video-container"
-          className="absolute inset-0"
-          style={{ 
-            width: '100%', 
-            height: '100%',
-            minHeight: '400px',
-            backgroundColor: '#3d0d73',
-            overflow: 'hidden',
-          }}
-        />
-
-        {/* Loading/Connecting overlay - shows while video is initializing */}
-        {!isStreaming && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#3d0d73]/90 z-5">
-            <div className="text-center text-white">
-              <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-sm">Connecting to stream...</p>
+  // SETUP STAGE
+  if (stage === 'setup') {
+    return (
+      <div className="h-[calc(100dvh-60px)] flex items-center justify-center p-4 bg-[var(--background)]">
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 w-full max-w-sm">
+          <div className="text-center mb-4">
+            <div className="w-14 h-14 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-full flex items-center justify-center mx-auto mb-3">
+              <Video className="w-7 h-7 text-white" />
             </div>
+            <h1 className="text-xl font-bold text-[var(--foreground)]">Go Live</h1>
           </div>
-        )}
 
-        {/* Live Indicator */}
-        <div className="absolute top-4 left-4 right-4 z-10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="bg-red-500 px-4 py-2 rounded-full flex items-center gap-2 animate-pulse">
-                <div className="w-3 h-3 bg-white rounded-full" />
-                <span className="text-white font-bold text-sm">LIVE</span>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm">Title *</Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} placeholder="Evening Safety Walk" className="mt-1" />
+            </div>
+
+            <div>
+              <Label className="text-sm">Category</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="safety-walk">🚶 Safety Walk</SelectItem>
+                  <SelectItem value="commute">🚇 Commute</SelectItem>
+                  <SelectItem value="qa">💬 Q&A</SelectItem>
+                  <SelectItem value="just-chatting">🗣️ Chatting</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {permissionError && (
+              <p className="text-sm text-[var(--color-aurora-salmon)] text-center">{permissionError}</p>
+            )}
+
+            <Button onClick={handleGoLive} className="w-full bg-[var(--color-aurora-purple)] min-h-[48px]">
+              <Camera className="w-5 h-5 mr-2" /> Continue
+            </Button>
+            <Button onClick={() => router.push('/live')} variant="outline" className="w-full">Cancel</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // PREVIEW STAGE - Fixed to fit screen
+  if (stage === 'preview') {
+    return (
+      <div className="h-[calc(100dvh-60px)] flex flex-col bg-[var(--color-aurora-violet)]">
+        {/* Video - Takes remaining space */}
+        <div className="flex-1 relative min-h-0">
+          <video ref={previewVideoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
+          {!previewStream && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center text-white">
+                <CameraOff className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Loading camera...</p>
               </div>
-              <div className="bg-black/70 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2">
-                <Users className="w-4 h-4 text-white" />
-                <span className="text-white font-medium text-sm">{viewerCount}</span>
-              </div>
-              <div className="bg-black/70 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2">
-                <Clock className="w-4 h-4 text-white" />
-                <span className="text-white font-medium text-sm">{formatDuration(duration)}</span>
-              </div>
+            </div>
+          )}
+          {/* Title overlay */}
+          <div className="absolute top-2 left-2 right-2">
+            <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
+              <p className="text-white font-semibold text-sm truncate">{title}</p>
+              <p className="text-white/60 text-xs">Preview Mode</p>
             </div>
           </div>
         </div>
 
-        {/* Emergency Button - Uses Aurora Orange ONLY for emergency */}
-        <div className="absolute top-20 right-4 z-10">
-          <Button
-            onClick={handleEmergency}
-            className="bg-[var(--color-aurora-orange)] hover:bg-[var(--color-aurora-orange)]/90 rounded-full w-14 h-14 shadow-2xl animate-pulse min-w-[56px] min-h-[56px]"
-            size="icon"
-          >
-            <Shield className="w-6 h-6 text-white" />
+        {/* Controls - Fixed height, always visible */}
+        <div className="bg-[var(--card)] p-3 space-y-3 safe-area-inset-bottom">
+          {/* Camera selector */}
+          {cameras.length > 1 && (
+            <Select value={selectedCamera} onValueChange={switchPreviewCamera}>
+              <SelectTrigger className="h-10"><SelectValue placeholder="Camera" /></SelectTrigger>
+              <SelectContent>
+                {cameras.map((c, i) => <SelectItem key={c.deviceId} value={c.deviceId}>{c.label || `Camera ${i+1}`}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Control buttons */}
+          <div className="flex justify-center gap-3">
+            <Button onClick={() => previewStream?.getVideoTracks()[0] && (previewStream.getVideoTracks()[0].enabled = !previewStream.getVideoTracks()[0].enabled)} className="rounded-full w-14 h-14 bg-[var(--color-aurora-purple)]">
+              <Camera className="w-6 h-6" />
+            </Button>
+            <Button onClick={() => previewStream?.getAudioTracks()[0] && (previewStream.getAudioTracks()[0].enabled = !previewStream.getAudioTracks()[0].enabled)} className="rounded-full w-14 h-14 bg-[var(--color-aurora-purple)]">
+              <Mic className="w-6 h-6" />
+            </Button>
+            {cameras.length > 1 && (
+              <Button onClick={() => { const i = cameras.findIndex(c => c.deviceId === selectedCamera); switchPreviewCamera(cameras[(i+1)%cameras.length].deviceId); }} variant="outline" className="rounded-full w-14 h-14">
+                <Repeat className="w-6 h-6" />
+              </Button>
+            )}
+          </div>
+
+          {broadcastError && <p className="text-sm text-[var(--color-aurora-salmon)] text-center">{broadcastError}</p>}
+
+          <Button onClick={handleStartBroadcast} disabled={!previewStream || isStartingBroadcast} className="w-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] min-h-[48px] text-base font-semibold">
+            {isStartingBroadcast ? 'Starting...' : '🔴 Go Live Now'}
+          </Button>
+          <Button onClick={() => { stopCameraPreview(); router.push('/live'); }} variant="ghost" className="w-full">Cancel</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ENDED STAGE - Show credits earned
+  if (stage === 'ended') {
+    return (
+      <div className="h-[calc(100dvh-60px)] flex items-center justify-center p-4 bg-[var(--background)]">
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 w-full max-w-sm text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-full flex items-center justify-center mx-auto mb-4">
+            <Coins className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-xl font-bold text-[var(--foreground)] mb-2">Stream Ended!</h2>
+          <p className="text-[var(--muted-foreground)] mb-4">Great job streaming for {formatDuration(duration)}</p>
+          
+          <div className="bg-[var(--color-aurora-yellow)]/20 rounded-xl p-4 mb-4">
+            <p className="text-sm text-[var(--muted-foreground)]">Credits Earned</p>
+            <p className="text-3xl font-bold text-[var(--color-aurora-yellow)]">+{earnedCredits}</p>
+          </div>
+
+          <div className="text-sm text-[var(--muted-foreground)] mb-4">
+            <p>👥 {viewerCount} viewers</p>
+            <p>⏱️ {formatDuration(duration)} streamed</p>
+          </div>
+
+          <Button onClick={() => router.push('/live')} className="w-full bg-[var(--color-aurora-purple)] min-h-[48px]">
+            Back to Live
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // LIVE STAGE
+  return (
+    <div className="h-[calc(100dvh-60px)] flex flex-col bg-black">
+      {/* Video area */}
+      <div className="flex-1 relative min-h-0">
+        <div ref={localVideoRef} className="absolute inset-0" style={{ backgroundColor: '#3d0d73' }} />
+        
+        {!isStreaming && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
+            <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+          </div>
+        )}
+
+        {/* Top overlay */}
+        <div className="absolute top-2 left-2 right-2 z-20 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="bg-red-500 px-2 py-1 rounded text-white text-xs font-bold animate-pulse">LIVE</span>
+            <span className="bg-black/60 px-2 py-1 rounded text-white text-xs flex items-center gap-1">
+              <Users className="w-3 h-3" />{viewerCount}
+            </span>
+            <span className="bg-black/60 px-2 py-1 rounded text-white text-xs flex items-center gap-1">
+              <Clock className="w-3 h-3" />{formatDuration(duration)}
+            </span>
+          </div>
+          <Button onClick={handleEmergency} className="bg-[var(--color-aurora-orange)] rounded-full w-12 h-12 min-w-[48px] animate-pulse">
+            <Shield className="w-5 h-5 text-white" />
           </Button>
         </div>
 
-        {/* Stats Overlay */}
-        {stats && (
-          <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm rounded-xl p-3 text-white text-xs z-10">
-            <p>Quality: {stats.resolution.width}x{stats.resolution.height}</p>
-            <p>FPS: {stats.fps}</p>
-            <p>Bitrate: {Math.round(stats.bitrate / 1000)}kbps</p>
+        {/* Stats */}
+        {stats && stats.resolution.width > 0 && (
+          <div className="absolute bottom-2 left-2 bg-black/60 rounded px-2 py-1 text-white text-[10px] z-20">
+            {stats.resolution.width}x{stats.resolution.height} • {stats.fps}fps
           </div>
         )}
 
-        {/* Camera Selector Overlay */}
+        {/* Camera selector */}
         {showCameraSelector && cameras.length > 1 && (
-          <div className="absolute bottom-4 right-4 bg-black/90 backdrop-blur-sm rounded-xl p-4 z-20 min-w-[200px]">
-            <p className="text-white text-sm font-medium mb-2">Select Camera</p>
-            <div className="space-y-2">
-              {cameras.map((camera, index) => (
-                <Button
-                  key={camera.deviceId}
-                  onClick={() => handleLiveCameraChange(camera.deviceId)}
-                  variant={selectedCamera === camera.deviceId ? "default" : "outline"}
-                  size="sm"
-                  className={`w-full justify-start text-left text-xs ${
-                    selectedCamera === camera.deviceId 
-                      ? 'bg-[var(--color-aurora-purple)]' 
-                      : 'border-white/30 text-white hover:bg-white/10'
-                  }`}
-                >
-                  {camera.label || `Camera ${index + 1}`}
-                </Button>
-              ))}
-            </div>
-            <Button
-              onClick={() => setShowCameraSelector(false)}
-              variant="ghost"
-              size="sm"
-              className="w-full mt-2 text-white/70 hover:text-white"
-            >
-              Close
-            </Button>
+          <div className="absolute bottom-2 right-2 bg-black/90 rounded-xl p-3 z-30 min-w-[160px]">
+            <p className="text-white text-xs font-medium mb-2">Camera</p>
+            {cameras.map((c, i) => (
+              <Button key={c.deviceId} onClick={() => handleLiveCameraChange(c.deviceId)} variant={selectedCamera === c.deviceId ? "default" : "ghost"} size="sm" className="w-full justify-start text-xs mb-1">
+                {c.label || `Camera ${i+1}`}
+              </Button>
+            ))}
           </div>
         )}
       </div>
 
       {/* Controls */}
-      <div className="bg-[var(--card)] border-t border-[var(--border)] p-4 space-y-4">
-        <div className="flex items-center justify-center gap-4">
-          <Button
-            onClick={toggleCamera}
-            variant="default"
-            size="lg"
-            className={`rounded-full w-16 h-16 min-w-[64px] min-h-[64px] ${
-              isCameraEnabled 
-                ? 'bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]' 
-                : 'bg-[var(--color-aurora-salmon)]'
-            }`}
-          >
+      <div className="bg-[var(--card)] p-3 safe-area-inset-bottom">
+        <div className="flex justify-center gap-3 mb-3">
+          <Button onClick={toggleCamera} className={`rounded-full w-14 h-14 ${isCameraEnabled ? 'bg-[var(--color-aurora-purple)]' : 'bg-[var(--color-aurora-salmon)]'}`}>
             {isCameraEnabled ? <Camera className="w-6 h-6" /> : <CameraOff className="w-6 h-6" />}
           </Button>
-
-          <Button
-            onClick={toggleMicrophone}
-            variant="default"
-            size="lg"
-            className={`rounded-full w-16 h-16 min-w-[64px] min-h-[64px] ${
-              isMicrophoneEnabled 
-                ? 'bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]' 
-                : 'bg-[var(--color-aurora-salmon)]'
-            }`}
-          >
+          <Button onClick={toggleMicrophone} className={`rounded-full w-14 h-14 ${isMicrophoneEnabled ? 'bg-[var(--color-aurora-purple)]' : 'bg-[var(--color-aurora-salmon)]'}`}>
             {isMicrophoneEnabled ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
           </Button>
-
-          {cameras.length > 1 ? (
-            <Button
-              onClick={() => setShowCameraSelector(!showCameraSelector)}
-              variant="outline"
-              size="lg"
-              className={`rounded-full w-16 h-16 min-w-[64px] min-h-[64px] border-[var(--border)] ${
-                showCameraSelector ? 'bg-[var(--color-aurora-purple)] text-white' : ''
-              }`}
-            >
-              <Repeat className="w-6 h-6" />
-            </Button>
-          ) : (
-            <Button
-              onClick={switchCamera}
-              variant="outline"
-              size="lg"
-              className="rounded-full w-16 h-16 min-w-[64px] min-h-[64px] border-[var(--border)]"
-            >
-              <Repeat className="w-6 h-6" />
-            </Button>
-          )}
+          <Button onClick={() => cameras.length > 1 ? setShowCameraSelector(!showCameraSelector) : switchCamera()} variant="outline" className="rounded-full w-14 h-14">
+            <Repeat className="w-6 h-6" />
+          </Button>
         </div>
-
-        <Button
-          onClick={handleEndStream}
-          className="w-full bg-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/90 text-white min-h-[48px]"
-          size="lg"
-        >
-          <X className="w-5 h-5 mr-2" />
-          End Stream
+        <Button onClick={handleEndStream} className="w-full bg-[var(--color-aurora-salmon)] min-h-[48px]">
+          <X className="w-5 h-5 mr-2" /> End Stream
         </Button>
       </div>
     </div>
