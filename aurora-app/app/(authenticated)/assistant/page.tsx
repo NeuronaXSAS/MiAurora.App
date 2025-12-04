@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, Sparkles, Loader2, Share2, Mic, MessageSquare, Heart, Brain, BarChart3 } from "lucide-react";
+import { Send, Sparkles, Loader2, Share2, Mic, MessageSquare, Heart, Brain, BarChart3, Search } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { AIInteractionsDashboard } from "@/components/ai-interactions-dashboard";
+import { AIAnswers } from "@/components/ai-answers";
 import { generateAvatarUrl, AvatarConfig } from "@/hooks/use-avatar";
 
 export default function AssistantPage() {
@@ -145,6 +146,13 @@ export default function AssistantPage() {
                 Voice
               </TabsTrigger>
               <TabsTrigger 
+                value="answers" 
+                className="data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                Answers
+              </TabsTrigger>
+              <TabsTrigger 
                 value="stats" 
                 className="data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white"
               >
@@ -158,7 +166,11 @@ export default function AssistantPage() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6">
-        {activeTab === "stats" && userId ? (
+        {activeTab === "answers" ? (
+          <div className="max-w-4xl mx-auto">
+            <AIAnswers userId={userId || undefined} />
+          </div>
+        ) : activeTab === "stats" && userId ? (
           <div className="max-w-4xl mx-auto">
             <AIInteractionsDashboard userId={userId} />
           </div>

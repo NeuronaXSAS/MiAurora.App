@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { CookieConsent } from "@/components/cookie-consent";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -10,7 +11,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#FF6B7A",
+  themeColor: "#3d0d73",
 };
 
 export const metadata: Metadata = {
@@ -63,7 +64,10 @@ export default function RootLayout({
         <a href="#main-content" className="skip-to-main">
           Skip to main content
         </a>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <CookieConsent />
+        </Providers>
         <script
           dangerouslySetInnerHTML={{
             __html: `

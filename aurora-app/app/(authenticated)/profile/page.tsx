@@ -34,7 +34,13 @@ import {
   BellOff,
   Bookmark,
   Crown,
+  MessageSquare,
+  Clock,
+  Shield,
+  Route,
+  Settings,
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { Id } from "@/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
@@ -51,6 +57,7 @@ export default function ProfilePage() {
   const [workosId, setWorkosId] = useState<string>("");
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAvatarCreator, setShowAvatarCreator] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
   const [editForm, setEditForm] = useState({
     name: "",
     bio: "",
@@ -309,90 +316,96 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Profile Completion & Notifications */}
-          <div className="mt-4 sm:mt-6">
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              {/* Profile Completion */}
-              <div className="flex-1 bg-white/10 border border-white/20 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-white/80">Profile Completion</span>
-                  <span className="text-sm font-bold text-white">{profileCompletion}%</span>
-                </div>
-                <div className="w-full bg-white/20 rounded-full h-3 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-[var(--color-aurora-yellow)] to-[var(--color-aurora-mint)] rounded-full transition-all duration-500"
-                    style={{ width: `${profileCompletion}%` }}
-                  />
-                </div>
-                {profileCompletion < 100 && (
-                  <p className="text-xs text-white/70 mt-2">
-                    Complete your profile to increase your Trust Score
-                  </p>
-                )}
-              </div>
-              
-              {/* Push Notifications */}
-              {pushSupported && (
-                <div className="bg-white/10 border border-white/20 rounded-xl p-4 flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${pushSubscribed ? 'bg-[var(--color-aurora-mint)]/30' : 'bg-white/20'}`}>
-                    {pushSubscribed ? (
-                      <Bell className="w-5 h-5 text-[var(--color-aurora-mint)]" />
-                    ) : (
-                      <BellOff className="w-5 h-5 text-white/60" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-white">
-                      {pushSubscribed ? "Notifications On" : "Enable Notifications"}
-                    </p>
-                    <p className="text-xs text-white/70">
-                      {pushSubscribed ? "You'll receive reminders" : "Get hydration & check-in reminders"}
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant={pushSubscribed ? "outline" : "default"}
-                    onClick={async () => {
-                      if (pushSubscribed) {
-                        await unsubscribePush();
-                      } else {
-                        // Request permission first
-                        const permission = await Notification.requestPermission();
-                        if (permission === 'granted') {
-                          // Then subscribe with VAPID key
-                          const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
-                          if (vapidKey) {
-                            await subscribePush(vapidKey);
-                          } else {
-                            // Show local notification as fallback
-                            new Notification('Aurora App', {
-                              body: 'Notifications enabled! You\'ll receive safety reminders.',
-                              icon: '/icon.png'
-                            });
-                          }
-                        }
-                      }
-                    }}
-                    disabled={pushLoading}
-                    className={`min-h-[40px] ${pushSubscribed ? 'bg-white/10 border-white/30 text-white hover:bg-white/20' : 'bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] hover:bg-[var(--color-aurora-mint)]/90'}`}
-                  >
-                    {pushLoading ? "..." : pushSubscribed ? "Disable" : "Enable"}
-                  </Button>
-                </div>
-              )}
+          {/* Reddit-style Stats Bar */}
+          <div className="mt-4 sm:mt-6 flex flex-wrap items-center gap-4 sm:gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
+              <span className="font-bold">{user.credits}</span>
+              <span className="text-white/70">credits</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4 text-[var(--color-aurora-mint)]" />
+              <span className="font-bold">{user.trustScore}</span>
+              <span className="text-white/70">trust score</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              <span className="font-bold">{stats.totalPosts}</span>
+              <span className="text-white/70">posts</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Heart className="w-4 h-4 text-[var(--color-aurora-pink)]" />
+              <span className="font-bold">{stats.womenHelped}</span>
+              <span className="text-white/70">helped</span>
+            </div>
+            <div className="hidden sm:flex items-center gap-1 ml-auto">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <span
+                  key={star}
+                  className={`text-lg ${star <= trustStars ? 'text-[var(--color-aurora-yellow)]' : 'text-white/30'}`}
+                >
+                  ★
+                </span>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Content - Mobile-first responsive layout */}
+      {/* Reddit-style Tabs Navigation */}
+      <div className="bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-20">
+        <div className="container mx-auto px-4 sm:px-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="bg-transparent border-0 h-12 p-0 gap-0">
+              <TabsTrigger 
+                value="overview" 
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[var(--color-aurora-purple)] data-[state=active]:text-[var(--color-aurora-purple)] rounded-none px-4 h-12"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger 
+                value="posts" 
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[var(--color-aurora-purple)] data-[state=active]:text-[var(--color-aurora-purple)] rounded-none px-4 h-12"
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Posts
+              </TabsTrigger>
+              <TabsTrigger 
+                value="saved" 
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[var(--color-aurora-purple)] data-[state=active]:text-[var(--color-aurora-purple)] rounded-none px-4 h-12"
+              >
+                <Bookmark className="w-4 h-4 mr-2" />
+                Saved
+              </TabsTrigger>
+              <TabsTrigger 
+                value="wellness" 
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[var(--color-aurora-purple)] data-[state=active]:text-[var(--color-aurora-purple)] rounded-none px-4 h-12"
+              >
+                <Heart className="w-4 h-4 mr-2" />
+                Wellness
+              </TabsTrigger>
+              <TabsTrigger 
+                value="history" 
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[var(--color-aurora-purple)] data-[state=active]:text-[var(--color-aurora-purple)] rounded-none px-4 h-12 hidden sm:flex"
+              >
+                <Clock className="w-4 h-4 mr-2" />
+                History
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+      </div>
+
+      {/* Content - Tab-based layout */}
       <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 pb-24 sm:pb-8">
-        {/* Desktop: Better organized 12-column grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
-          
-          {/* Left Column - Stats Overview (Desktop: 4 cols) */}
-          <div className="lg:col-span-4 space-y-4 lg:space-y-6 order-2 lg:order-1">
-            {/* Stats Section - Vertical stack on desktop for better scanning */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="mt-0">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
+              {/* Left Column - Stats Overview (Desktop: 4 cols) */}
+              <div className="lg:col-span-4 space-y-4 lg:space-y-6 order-2 lg:order-1">
+                {/* Stats Section - Vertical stack on desktop for better scanning */}
             <Card className="bg-[var(--card)] border-[var(--border)] overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 pb-3">
                 <CardTitle className="text-base lg:text-lg text-[var(--foreground)] flex items-center gap-2">
@@ -675,7 +688,7 @@ export default function ProfilePage() {
 
               {/* Recent Activity - Mobile only */}
               <Card className="bg-[var(--card)] border-[var(--border)]">
-              <CardHeader className="pb-2 sm:pb-3">
+                <CardHeader className="pb-2 sm:pb-3">
                 <CardTitle className="text-base sm:text-lg text-[var(--foreground)]">Recent Activity</CardTitle>
               </CardHeader>
               <CardContent>
@@ -789,8 +802,179 @@ export default function ProfilePage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
+            </div>
+            </div>
+          </TabsContent>
+
+          {/* Posts Tab */}
+          <TabsContent value="posts" className="mt-0">
+            <div className="max-w-3xl mx-auto space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-[var(--foreground)]">Your Posts</h2>
+                <Badge className="bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]">
+                  {stats.totalPosts} total
+                </Badge>
+              </div>
+              {recentPosts && recentPosts.length > 0 ? (
+                recentPosts.map((post) => (
+                  <Card key={post._id} className="bg-[var(--card)] border-[var(--border)] hover:border-[var(--color-aurora-purple)]/30 transition-colors">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-[var(--foreground)] mb-1">{post.title}</h3>
+                          <p className="text-sm text-[var(--muted-foreground)] line-clamp-2">{post.description}</p>
+                          <div className="flex items-center gap-3 mt-3">
+                            <Badge variant="secondary" className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)]">
+                              {post.rating}/5 ⭐
+                            </Badge>
+                            <span className="text-xs text-[var(--muted-foreground)]">
+                              {post.verificationCount} verifications
+                            </span>
+                            <span className="text-xs text-[var(--muted-foreground)]">
+                              {formatDistanceToNow(post._creationTime, { addSuffix: true })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <Card className="bg-[var(--card)] border-[var(--border)]">
+                  <CardContent className="p-8 text-center">
+                    <FileText className="w-12 h-12 text-[var(--muted-foreground)] mx-auto mb-3 opacity-50" />
+                    <p className="text-[var(--foreground)] font-medium mb-1">No posts yet</p>
+                    <p className="text-sm text-[var(--muted-foreground)]">Share your experiences to help other women</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Saved Tab */}
+          <TabsContent value="saved" className="mt-0">
+            <div className="max-w-3xl mx-auto space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-[var(--foreground)]">Saved Posts</h2>
+                <Badge className="bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]">
+                  {savedPosts?.length || 0} saved
+                </Badge>
+              </div>
+              {savedPosts && savedPosts.length > 0 ? (
+                savedPosts.map((post: any) => (
+                  <Link key={post._id} href={`/feed?post=${post._id}`}>
+                    <Card className="bg-[var(--card)] border-[var(--border)] hover:border-[var(--color-aurora-purple)]/30 transition-colors cursor-pointer">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-4">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-[var(--foreground)] mb-1">{post.title}</h3>
+                            <p className="text-sm text-[var(--muted-foreground)] line-clamp-2">{post.description}</p>
+                            <div className="flex items-center gap-3 mt-3">
+                              <Badge variant="secondary" className="bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]">
+                                {post.lifeDimension}
+                              </Badge>
+                              <span className="text-xs text-[var(--muted-foreground)]">
+                                by {post.author?.name || "Anonymous"}
+                              </span>
+                            </div>
+                          </div>
+                          <Bookmark className="w-5 h-5 text-[var(--color-aurora-purple)]" fill="currentColor" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))
+              ) : (
+                <Card className="bg-[var(--card)] border-[var(--border)]">
+                  <CardContent className="p-8 text-center">
+                    <Bookmark className="w-12 h-12 text-[var(--muted-foreground)] mx-auto mb-3 opacity-50" />
+                    <p className="text-[var(--foreground)] font-medium mb-1">No saved posts</p>
+                    <p className="text-sm text-[var(--muted-foreground)]">Bookmark posts to find them easily later</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Wellness Tab */}
+          <TabsContent value="wellness" className="mt-0">
+            <div className="max-w-4xl mx-auto space-y-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-[var(--foreground)] flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-[var(--color-aurora-pink)]" />
+                  Daily Wellness
+                </h2>
+                <Link href="/health">
+                  <Button variant="outline" size="sm" className="border-[var(--color-aurora-pink)] text-[var(--color-aurora-pink)]">
+                    View Full Dashboard →
+                  </Button>
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {userId && <HydrationTracker userId={userId} />}
+                {userId && <EmotionalCheckin userId={userId} />}
+              </div>
+              {userId && <MeditationSection userId={userId} />}
+            </div>
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history" className="mt-0">
+            <div className="max-w-3xl mx-auto space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-[var(--foreground)]">Credit History</h2>
+                <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)]">
+                  {user.credits} credits
+                </Badge>
+              </div>
+              {transactions && transactions.length > 0 ? (
+                transactions.map((tx, index) => (
+                  <Card key={index} className="bg-[var(--card)] border-[var(--border)]">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            tx.amount > 0 ? 'bg-[var(--color-aurora-mint)]/20' : 'bg-[var(--color-aurora-salmon)]/20'
+                          }`}>
+                            <span className={`text-lg font-bold ${tx.amount > 0 ? 'text-[var(--color-aurora-mint)]' : 'text-[var(--color-aurora-salmon)]'}`}>
+                              {tx.amount > 0 ? '+' : '-'}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-[var(--foreground)]">
+                              {tx.type === 'post_created' && 'Created a post'}
+                              {tx.type === 'verification' && 'Verified a post'}
+                              {tx.type === 'opportunity_unlock' && 'Unlocked opportunity'}
+                              {tx.type === 'signup_bonus' && 'Signup bonus'}
+                              {tx.type === 'meditation' && 'Meditation session'}
+                              {tx.type === 'hydration' && 'Hydration goal'}
+                              {tx.type === 'route_shared' && 'Shared a route'}
+                              {tx.type === 'tip_received' && 'Received a tip'}
+                            </p>
+                            <p className="text-xs text-[var(--muted-foreground)]">
+                              {formatDistanceToNow(tx._creationTime, { addSuffix: true })}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge className={tx.amount > 0 ? "bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)]" : "bg-[var(--color-aurora-salmon)]/20 text-[var(--color-aurora-salmon)]"}>
+                          {tx.amount > 0 ? '+' : ''}{tx.amount} credits
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <Card className="bg-[var(--card)] border-[var(--border)]">
+                  <CardContent className="p-8 text-center">
+                    <Clock className="w-12 h-12 text-[var(--muted-foreground)] mx-auto mb-3 opacity-50" />
+                    <p className="text-[var(--foreground)] font-medium mb-1">No activity yet</p>
+                    <p className="text-sm text-[var(--muted-foreground)]">Your credit history will appear here</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Edit Profile Dialog */}

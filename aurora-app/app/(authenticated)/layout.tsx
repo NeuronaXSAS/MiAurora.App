@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { GlobalHeader } from "@/components/global-header";
+import { ChatSidebar } from "@/components/chat-sidebar";
 import { PWAInstallBanner } from "@/components/pwa-install-banner";
 import { NotificationPermissionPrompt } from "@/components/notification-permission-prompt";
 import { useCreditsCelebration } from "@/hooks/use-credits-celebration";
@@ -15,6 +16,7 @@ export default function AuthenticatedLayout({
 }) {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [chatSidebarOpen, setChatSidebarOpen] = useState(false);
 
   // Get user ID for credit celebrations
   useEffect(() => {
@@ -74,6 +76,13 @@ export default function AuthenticatedLayout({
           {children}
         </main>
       </div>
+      
+      {/* Chat Sidebar - Reddit-style floating chat */}
+      <ChatSidebar 
+        userId={userId}
+        isOpen={chatSidebarOpen}
+        onToggle={() => setChatSidebarOpen(!chatSidebarOpen)}
+      />
       
       {/* PWA Install Banner */}
       <PWAInstallBanner variant="floating" />

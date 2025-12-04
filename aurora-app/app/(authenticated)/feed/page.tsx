@@ -16,7 +16,6 @@ import { AIChatCompanion } from "@/components/ai-chat-companion";
 import { MobileFeed } from "./mobile-feed";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { SafetyPulse } from "@/components/safety-pulse";
-import { DailyEngagement } from "@/components/daily-engagement";
 import { WelcomeExperience } from "@/components/welcome-experience";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +28,7 @@ import {
 import { 
   Sparkles, MapPin, Users, Target, Share2, Copy, Mail,
   ChevronDown, Flame, TrendingUp, Clock, LayoutGrid, List,
+  Shield, Heart, Briefcase, Globe, MessageSquare, ArrowRight,
 } from "lucide-react";
 import { CreateOptionsModal } from "@/components/create-options-modal";
 import { PostCreateDialog } from "@/components/post-create-dialog";
@@ -182,7 +182,7 @@ export default function FeedPage() {
     <div className="min-h-screen bg-[var(--background)]">
       {/* Sort & Filter Bar - No duplicate header, uses GlobalHeader from layout */}
       <div className="bg-[var(--card)] border-b border-[var(--border)] sticky top-0 z-30 shadow-sm">
-        <div className="max-w-3xl mx-auto px-4 py-2">
+        <div className="max-w-7xl mx-auto px-4 py-2">
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -254,10 +254,12 @@ export default function FeedPage() {
         </div>
       </div>
 
-      {/* Feed Content */}
-      <div className="max-w-3xl mx-auto px-4 py-4">
-        <div className="space-y-3">
-          {/* Loading State */}
+      {/* Feed Content - Reddit-style layout with sidebar */}
+      <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="flex gap-6">
+          {/* Main Feed Column */}
+          <div className="flex-1 max-w-3xl space-y-3">
+            {/* Loading State */}
           {feedItems === undefined && (
             <>
               <PostCardSkeleton />
@@ -266,22 +268,10 @@ export default function FeedPage() {
             </>
           )}
 
-          {/* Safety Pulse - Always visible at top */}
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-            <SafetyPulse compact />
-          </motion.div>
-
-          {/* Welcome Experience for new users */}
+          {/* Welcome Experience for new users only */}
           {userId && user && !user.onboardingCompleted && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
               <WelcomeExperience userId={userId} />
-            </motion.div>
-          )}
-
-          {/* Daily Engagement - Streaks & Challenges */}
-          {userId && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-              <DailyEngagement userId={userId} />
             </motion.div>
           )}
 
@@ -437,6 +427,137 @@ export default function FeedPage() {
                 </div>
               );
             })}
+          </div>
+
+          {/* Right Sidebar - Desktop only, Reddit-style */}
+          <aside className="hidden xl:block w-80 flex-shrink-0 space-y-4">
+            {/* Safety Pulse - Compact in sidebar */}
+            <SafetyPulse compact />
+            
+            {/* Explore Communities Card */}
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden sticky top-4">
+              <div className="bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-4">
+                <h3 className="font-bold text-white flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Explore Communities
+                </h3>
+              </div>
+              <div className="p-3 space-y-2">
+                {[
+                  { name: "c/CareerWomen", icon: "💼", members: "12.4k", desc: "Career growth & opportunities" },
+                  { name: "c/SafetyFirst", icon: "🛡️", members: "8.2k", desc: "Safety tips & alerts" },
+                  { name: "c/WellnessCircle", icon: "💗", members: "15.1k", desc: "Health & self-care" },
+                  { name: "c/SafeTravels", icon: "✈️", members: "6.8k", desc: "Travel safety & tips" },
+                  { name: "c/MomSupport", icon: "👶", members: "9.3k", desc: "Motherhood community" },
+                ].map((community) => (
+                  <Link
+                    key={community.name}
+                    href="/circles"
+                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-[var(--accent)] transition-colors group"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20 flex items-center justify-center text-lg">
+                      {community.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-[var(--foreground)] group-hover:text-[var(--color-aurora-purple)] transition-colors">
+                        {community.name}
+                      </p>
+                      <p className="text-xs text-[var(--muted-foreground)] truncate">{community.members} members</p>
+                    </div>
+                  </Link>
+                ))}
+                <Link
+                  href="/circles"
+                  className="flex items-center justify-center gap-2 p-2 mt-2 rounded-xl bg-[var(--color-aurora-purple)]/10 text-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-purple)]/20 transition-colors text-sm font-medium"
+                >
+                  View All Communities
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Quick Actions Card */}
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
+              <h3 className="font-bold text-[var(--foreground)] mb-3 text-sm">Quick Actions</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  href="/map"
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--color-aurora-mint)]/20 transition-colors group"
+                >
+                  <Shield className="w-5 h-5 text-[var(--color-aurora-mint)] group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-medium text-[var(--foreground)]">Safety Map</span>
+                </Link>
+                <Link
+                  href="/opportunities"
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--color-aurora-blue)]/20 transition-colors group"
+                >
+                  <Briefcase className="w-5 h-5 text-[var(--color-aurora-blue)] group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-medium text-[var(--foreground)]">Jobs</span>
+                </Link>
+                <Link
+                  href="/health"
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--color-aurora-pink)]/20 transition-colors group"
+                >
+                  <Heart className="w-5 h-5 text-[var(--color-aurora-pink)] group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-medium text-[var(--foreground)]">Wellness</span>
+                </Link>
+                <Link
+                  href="/assistant"
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--color-aurora-purple)]/20 transition-colors group"
+                >
+                  <MessageSquare className="w-5 h-5 text-[var(--color-aurora-purple)] group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-medium text-[var(--foreground)]">AI Help</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Trending Topics */}
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
+              <h3 className="font-bold text-[var(--foreground)] mb-3 flex items-center gap-2 text-sm">
+                <Flame className="w-4 h-4 text-[var(--color-aurora-pink)]" />
+                Trending Now
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { topic: "Remote Work Safety", posts: 234 },
+                  { topic: "Salary Negotiation", posts: 189 },
+                  { topic: "Night Running Routes", posts: 156 },
+                  { topic: "Tech Interview Tips", posts: 142 },
+                  { topic: "Self-Defense Classes", posts: 98 },
+                ].map((trend, idx) => (
+                  <div key={trend.topic} className="flex items-start gap-3">
+                    <span className="text-xs font-bold text-[var(--muted-foreground)] w-4">{idx + 1}</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-[var(--foreground)] hover:text-[var(--color-aurora-purple)] cursor-pointer transition-colors">
+                        {trend.topic}
+                      </p>
+                      <p className="text-xs text-[var(--muted-foreground)]">{trend.posts} posts</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Aurora App Info */}
+            <div className="bg-gradient-to-br from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border border-[var(--border)] rounded-2xl p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center">
+                  <Globe className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-[var(--foreground)] text-sm">Aurora App</h3>
+                  <p className="text-xs text-[var(--muted-foreground)]">Safety • Community • Growth</p>
+                </div>
+              </div>
+              <p className="text-xs text-[var(--muted-foreground)] mb-3">
+                A safe space for women to share experiences, find opportunities, and support each other.
+              </p>
+              <div className="flex items-center gap-4 text-xs text-[var(--muted-foreground)]">
+                <span>🌍 Global</span>
+                <span>💜 100k+ members</span>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
 
@@ -475,10 +596,10 @@ export default function FeedPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[var(--foreground)]">
               <Share2 className="w-5 h-5" />
-              Invite Friends to Aurora
+              Invite Friends to Aurora App
             </DialogTitle>
             <DialogDescription className="text-[var(--muted-foreground)]">
-              Share Aurora and earn 15 credits when your friends join!
+              Share Aurora App and earn 15 credits when your friends join!
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-4">
@@ -495,7 +616,7 @@ export default function FeedPage() {
             </Button>
             <Button
               onClick={() => {
-                const text = encodeURIComponent("Join me on Aurora - a safe space for women! 💜");
+                const text = encodeURIComponent("Join me on Aurora App - a safe space for women! 💜");
                 const url = encodeURIComponent(`${window.location.origin}?ref=${userId}`);
                 window.open(`https://wa.me/?text=${text}%20${url}`, '_blank');
               }}
@@ -505,7 +626,7 @@ export default function FeedPage() {
             </Button>
             <Button
               onClick={() => {
-                const subject = encodeURIComponent("Join me on Aurora!");
+                const subject = encodeURIComponent("Join me on Aurora App!");
                 const body = encodeURIComponent(`Join me on Aurora: ${window.location.origin}?ref=${userId}`);
                 window.location.href = `mailto:?subject=${subject}&body=${body}`;
               }}
