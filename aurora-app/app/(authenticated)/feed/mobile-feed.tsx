@@ -13,15 +13,18 @@ import { LivestreamFeedCard } from "@/components/livestream-feed-card";
 import { PostCardSkeleton } from "@/components/loading-skeleton";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { FeedAd } from "@/components/ads/feed-ad";
-import { useDevicePerformance, useOptimizedAnimations } from "@/hooks/use-device-performance";
+import { useDevicePerformance } from "@/hooks/use-device-performance";
+import { ValuePropositionBanner } from "@/components/value-proposition-banner";
 import { 
   Sparkles, 
   ChevronDown, 
   Flame, 
   TrendingUp, 
   Clock,
-  Wifi,
   WifiOff,
+  Shield,
+  Heart,
+  Briefcase,
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import {
@@ -162,7 +165,8 @@ export function MobileFeed() {
   const [visibleItems, setVisibleItems] = useState(10); // Progressive loading
 
   // Device performance detection
-  const { isLowEnd, isSlowNetwork, shouldReduceData } = useDevicePerformance();
+  const { isLowEnd: deviceIsLowEnd, isSlowNetwork, shouldReduceData } = useDevicePerformance();
+  const isLowEndDevice = deviceIsLowEnd;
 
   // Get user ID and premium status
   useEffect(() => {
@@ -223,8 +227,8 @@ export function MobileFeed() {
 
   // Load more items on scroll - progressive loading for performance
   const loadMoreItems = useCallback(() => {
-    setVisibleItems(prev => Math.min(prev + (isLowEnd ? 5 : 10), 50));
-  }, [isLowEnd]);
+    setVisibleItems(prev => Math.min(prev + (isLowEndDevice ? 5 : 10), 50));
+  }, [isLowEndDevice]);
 
   // Scroll handler for infinite loading
   useEffect(() => {
@@ -385,16 +389,37 @@ export function MobileFeed() {
           </div>
         )}
 
+        {/* Value Proposition for new/returning users */}
+        {feedItems !== undefined && (
+          <ValuePropositionBanner variant="minimal" dismissible={true} className="mb-2" />
+        )}
+
         {/* Empty State */}
         {sortedItems.length === 0 && feedItems !== undefined && (
-          <div className="text-center py-12 px-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-8 h-8 text-[var(--color-aurora-purple)]" />
+          <div className="text-center py-8 px-4">
+            <div className="w-14 h-14 bg-gradient-to-br from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <Sparkles className="w-7 h-7 text-[var(--color-aurora-purple)]" />
             </div>
-            <h3 className="text-lg font-semibold mb-2 text-[var(--foreground)]">No posts yet</h3>
+            <h3 className="text-lg font-semibold mb-2 text-[var(--foreground)]">Welcome to Aurora App!</h3>
             <p className="text-[var(--muted-foreground)] text-sm mb-4">
-              Be the first to share something with the community!
+              Your safe space for community, growth & opportunities
             </p>
+            
+            {/* Quick Start Actions */}
+            <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
+              <a href="/map" className="flex flex-col items-center gap-1 p-3 rounded-xl bg-[var(--color-aurora-mint)]/20 hover:bg-[var(--color-aurora-mint)]/30 transition-colors">
+                <Shield className="w-5 h-5 text-[var(--color-aurora-mint)]" />
+                <span className="text-xs font-medium text-[var(--foreground)]">Safety</span>
+              </a>
+              <a href="/circles" className="flex flex-col items-center gap-1 p-3 rounded-xl bg-[var(--color-aurora-pink)]/20 hover:bg-[var(--color-aurora-pink)]/30 transition-colors">
+                <Heart className="w-5 h-5 text-[var(--color-aurora-pink)]" />
+                <span className="text-xs font-medium text-[var(--foreground)]">Community</span>
+              </a>
+              <a href="/opportunities" className="flex flex-col items-center gap-1 p-3 rounded-xl bg-[var(--color-aurora-blue)]/20 hover:bg-[var(--color-aurora-blue)]/30 transition-colors">
+                <Briefcase className="w-5 h-5 text-[var(--color-aurora-blue)]" />
+                <span className="text-xs font-medium text-[var(--foreground)]">Jobs</span>
+              </a>
+            </div>
           </div>
         )}
 
@@ -442,7 +467,7 @@ export function MobileFeed() {
                 userId={userId}
                 onVerify={handleVerify}
                 onDelete={handleDelete}
-                isLowEnd={isLowEnd}
+                isLowEnd={isLowEndDevice}
               />
             </div>
           );

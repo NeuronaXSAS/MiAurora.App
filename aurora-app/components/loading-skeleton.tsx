@@ -1,6 +1,13 @@
+/**
+ * Optimized Loading Skeletons
+ * 
+ * Fast, smooth loading states that maintain layout stability
+ * and provide visual feedback during content loading.
+ */
+
 export function PostCardSkeleton() {
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 sm:p-6 animate-pulse">
+    <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 sm:p-6 skeleton-shimmer">
       <div className="flex items-start gap-3 sm:gap-4 mb-4">
         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--accent)] rounded-full flex-shrink-0" />
         <div className="flex-1 min-w-0">
@@ -19,6 +26,59 @@ export function PostCardSkeleton() {
         <div className="h-9 bg-[var(--accent)] rounded-xl w-16 ml-auto" />
       </div>
     </div>
+  );
+}
+
+// Compact skeleton for faster perceived loading
+export function CompactPostSkeleton() {
+  return (
+    <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 skeleton-shimmer">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 bg-[var(--accent)] rounded-full flex-shrink-0" />
+        <div className="flex-1">
+          <div className="h-3 bg-[var(--accent)] rounded w-3/4 mb-1.5" />
+          <div className="h-2.5 bg-[var(--accent)] rounded w-1/2" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Feed loading with value proposition - optimized for fast perceived loading
+export function FeedLoadingSkeleton() {
+  return (
+    <div className="space-y-3 page-transition-enter">
+      {/* Value hint while loading - shows Aurora App purpose immediately */}
+      <div className="bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 rounded-xl p-4 text-center stagger-item">
+        <div className="w-10 h-10 bg-[var(--color-aurora-purple)]/20 rounded-xl mx-auto mb-2 flex items-center justify-center">
+          <div className="w-5 h-5 bg-[var(--color-aurora-purple)]/40 rounded-full animate-pulse" />
+        </div>
+        <p className="text-sm text-[var(--foreground)] font-medium">Loading your personalized feed...</p>
+        <p className="text-xs text-[var(--muted-foreground)] mt-1">Safety • Community • Opportunities</p>
+      </div>
+      <div className="stagger-item"><PostCardSkeleton /></div>
+      <div className="stagger-item"><CompactPostSkeleton /></div>
+      <div className="stagger-item"><CompactPostSkeleton /></div>
+    </div>
+  );
+}
+
+// Quick loading indicator for instant feedback
+export function QuickLoadingIndicator() {
+  return (
+    <div className="flex items-center justify-center py-4">
+      <div className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] rounded-full">
+        <div className="w-4 h-4 border-2 border-[var(--color-aurora-purple)] border-t-transparent rounded-full animate-spin" />
+        <span className="text-sm text-[var(--muted-foreground)]">Loading...</span>
+      </div>
+    </div>
+  );
+}
+
+// Inline skeleton for small content areas
+export function InlineSkeleton({ width = "w-20", height = "h-4" }: { width?: string; height?: string }) {
+  return (
+    <div className={`${width} ${height} bg-[var(--accent)] rounded skeleton-shimmer`} />
   );
 }
 

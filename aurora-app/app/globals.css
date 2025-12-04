@@ -788,3 +788,166 @@ textarea:focus-visible {
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
+
+/* ============================================
+   SKELETON SHIMMER - FAST LOADING FEEDBACK
+   ============================================ */
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0%,
+    var(--muted) 25%,
+    var(--accent) 50%,
+    var(--muted) 75%,
+    var(--accent) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton-shimmer > * {
+  visibility: hidden;
+}
+
+/* Dark mode shimmer */
+.dark .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 250, 241, 0.05) 0%,
+    rgba(255, 250, 241, 0.1) 25%,
+    rgba(255, 250, 241, 0.05) 50%,
+    rgba(255, 250, 241, 0.1) 75%,
+    rgba(255, 250, 241, 0.05) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* ============================================
+   SMOOTH PAGE TRANSITIONS
+   ============================================ */
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes page-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.page-transition-enter {
+  animation: page-enter 0.2s ease-out forwards;
+}
+
+.page-transition-exit {
+  animation: page-exit 0.15s ease-in forwards;
+}
+
+/* Staggered content animation */
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-item {
+  opacity: 0;
+  animation: stagger-in 0.3s ease-out forwards;
+}
+
+.stagger-item:nth-child(1) { animation-delay: 0ms; }
+.stagger-item:nth-child(2) { animation-delay: 50ms; }
+.stagger-item:nth-child(3) { animation-delay: 100ms; }
+.stagger-item:nth-child(4) { animation-delay: 150ms; }
+.stagger-item:nth-child(5) { animation-delay: 200ms; }
+.stagger-item:nth-child(6) { animation-delay: 250ms; }
+
+/* Disable stagger on reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .stagger-item {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   FAST SCROLL PERFORMANCE
+   ============================================ */
+
+/* Optimize scroll containers */
+.scroll-container {
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Prevent scroll chaining */
+.scroll-lock {
+  overscroll-behavior: none;
+}
+
+/* Smooth momentum scrolling */
+.momentum-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: y proximity;
+}
+
+/* Feed item optimization */
+.feed-item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 180px;
+  contain: layout style paint;
+}
+
+/* Card hover optimization */
+.card-interactive {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  will-change: transform;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.15);
+}
+
+.card-interactive:active {
+  transform: translateY(0);
+}
+
+/* Mobile: disable hover transforms */
+@media (hover: none) {
+  .card-interactive:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}

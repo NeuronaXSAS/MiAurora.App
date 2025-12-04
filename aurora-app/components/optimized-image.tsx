@@ -79,19 +79,20 @@ export function OptimizedImage({
   if (hasError) {
     return (
       <div
-        className={`bg-gray-200 flex items-center justify-center ${className}`}
+        className={`bg-[var(--accent)] flex items-center justify-center rounded-xl ${className}`}
         style={{ width, height }}
       >
-        <span className="text-gray-400 text-sm">Failed to load image</span>
+        <span className="text-[var(--muted-foreground)] text-sm">Image unavailable</span>
       </div>
     );
   }
 
   return (
-    <div className="relative" style={{ width, height }}>
+    <div className="relative overflow-hidden" style={{ width, height }}>
+      {/* Blur placeholder with Aurora gradient */}
       {!isLoaded && (
         <div
-          className="absolute inset-0 animate-pulse rounded-md bg-gray-200"
+          className="absolute inset-0 skeleton-shimmer rounded-xl bg-gradient-to-br from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10"
           style={{ width: "100%", height: "100%" }}
         />
       )}

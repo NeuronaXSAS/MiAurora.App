@@ -17,6 +17,8 @@ import { MobileFeed } from "./mobile-feed";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { SafetyPulse } from "@/components/safety-pulse";
 import { WelcomeExperience } from "@/components/welcome-experience";
+import { ValuePropositionBanner } from "@/components/value-proposition-banner";
+import { FeedLoadingSkeleton } from "@/components/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -259,13 +261,14 @@ export default function FeedPage() {
         <div className="flex gap-6">
           {/* Main Feed Column */}
           <div className="flex-1 max-w-3xl space-y-3">
-            {/* Loading State */}
+            {/* Loading State - Fast visual feedback */}
           {feedItems === undefined && (
-            <>
-              <PostCardSkeleton />
-              <PostCardSkeleton />
-              <PostCardSkeleton />
-            </>
+            <FeedLoadingSkeleton />
+          )}
+          
+          {/* Value Proposition Banner - Shows Aurora App's value */}
+          {feedItems !== undefined && sortedItems.length > 0 && (
+            <ValuePropositionBanner variant="minimal" dismissible={true} className="mb-1" />
           )}
 
           {/* Welcome Experience for new users only */}
@@ -352,7 +355,7 @@ export default function FeedPage() {
             </div>
           )}
 
-          {/* Feed Items */}
+          {/* Feed Items - Smooth staggered loading */}
           {sortedItems
             .filter((item: any) => {
               // Safety check - skip null/undefined items
@@ -378,7 +381,13 @@ export default function FeedPage() {
               const isStandardPost = item.type === "post" && !isReel && !isPoll && !isAIChat && !isRoutePost;
               
               return (
-                <div key={item._id}>
+                <motion.div 
+                  key={item._id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.15) }}
+                  className="feed-item card-interactive"
+                >
                   {showAd && <FeedAd />}
                   {isPoll && (
                     <PollCard post={item} currentUserId={userId || undefined} onDelete={() => handleDelete(item._id as Id<"posts">)} />
@@ -424,7 +433,7 @@ export default function FeedPage() {
                   {item.type === "opportunity" && (
                     <OpportunityFeedCard opportunity={item as any} currentUserId={userId || undefined} onDelete={() => handleOpportunityDelete(item._id as Id<"opportunities">)} />
                   )}
-                </div>
+                </motion.div>
               );
             })}
           </div>
