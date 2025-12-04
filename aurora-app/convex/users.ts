@@ -696,3 +696,35 @@ export const cleanupOrphanedData = mutation({
     return { success: true, deletedCount };
   },
 });
+
+/**
+ * Get recent users for landing page social proof
+ * Returns users with profile images for avatar display
+ */
+export const getRecentUsers = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 8;
+    
+    // Get recent users who have profile images (for better social proof)
+    const users = await ctx.db
+      .query("users")
+      .order("desc")
+      .filter((q) => q.neq(q.field("isDeleted"), true))
+      .take(limit * 2); // Get more to filter
+    
+    // Prioritize users with profile images
+    const withImages = users.filter(u => u.profileImage);
+    const withoutImages = users.filter(u => !u.profileImage);
+    
+    // Return mix, prioritizing those with images
+    const result = [...withImages, ...withoutImages].slice(0, limit);
+    
+    // Return only safe public fields
+    return result.map(u => ({
+      _id: u._id,
+      name: u.name,
+      profileImage: u.profileImage,
+    }));
+  },
+});

@@ -731,3 +731,17 @@ textarea:focus-visible {
     image-rendering: optimizeSpeed;
   }
 }
+
+/* Hide scrollbar for horizontal scroll containers */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth scroll behavior */
+.snap-x {
+  scroll-behavior: smooth;
+}
