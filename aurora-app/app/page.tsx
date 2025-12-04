@@ -112,7 +112,7 @@ export default function LandingPage() {
 
   const features = [
     { id: 0, icon: Shield, title: "Safety Intelligence", subtitle: "AI-Powered Protection", desc: "Real-time safety ratings powered by community intelligence and machine learning.", color: "#f29de5", stats: "50K+ ratings" },
-    { id: 1, icon: Route, title: "Safe Routes", subtitle: "Smart Navigation", desc: "GPS-tracked routes with live safety scores and real-time journey sharing.", color: "#2e2ad6", stats: "25K+ routes" },
+    { id: 1, icon: Route, title: "Safe Routes", subtitle: "Smart Navigation", desc: "GPS-tracked routes with live safety scores and real-time journey sharing.", color: "#5537a7", stats: "25K+ routes" },
     { id: 2, icon: Users, title: "Support Circles", subtitle: "Encrypted Communities", desc: "Private, encrypted communities with AI-moderated safe spaces.", color: "#5537a7", stats: "5K+ circles" },
     { id: 3, icon: Briefcase, title: "Opportunities", subtitle: "Career Intelligence", desc: "AI-matched job listings and mentorship from verified professionals.", color: "#e5e093", stats: "2K+ jobs" }
   ];
@@ -201,7 +201,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
               <Link href="/api/auth/login?provider=GoogleOAuth">
-                <Button className="bg-gradient-to-r from-[#2e2ad6] to-[#5537a7] hover:opacity-90 text-white rounded-xl px-5 min-h-[44px] font-semibold shadow-lg shadow-[#5537a7]/20">
+                <Button className="bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-xl px-5 min-h-[44px] font-semibold shadow-lg shadow-[#5537a7]/20">
                   <span className="hidden sm:inline">Join Free</span>
                   <span className="sm:hidden">Join</span>
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -235,7 +235,7 @@ export default function LandingPage() {
             <motion.h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#3d0d73] mb-6 leading-[1.05]" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
               The{" "}
               <span className="relative inline-block">
-                <span className="bg-gradient-to-r from-[#5537a7] via-[#f29de5] to-[#2e2ad6] bg-clip-text text-transparent bg-[length:200%_auto] animate-[gradient_3s_linear_infinite]">
+                <span className="bg-gradient-to-r from-[#5537a7] via-[#f29de5] to-[#5537a7] bg-clip-text text-transparent bg-[length:200%_auto] animate-[gradient_3s_linear_infinite]">
                   Future
                 </span>
               </span>
@@ -256,7 +256,7 @@ export default function LandingPage() {
               {[
                 { icon: Brain, text: "Ethical AI", color: "#5537a7" },
                 { icon: Shield, text: "Privacy-First", color: "#22c55e" },
-                { icon: Network, text: "Decentralized Safety", color: "#2e2ad6" },
+                { icon: Network, text: "Decentralized Safety", color: "#5537a7" },
                 { icon: Fingerprint, text: "Zero Data Sales", color: "#f29de5" }
               ].map((item, i) => (
                 <motion.div key={item.text} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 + i * 0.1 }}
@@ -273,7 +273,7 @@ export default function LandingPage() {
               <p className="text-center text-[#3d0d73]/70 text-lg mb-4 font-medium">
                 Join instantly with your existing account
               </p>
-              <p className="text-center text-[#3d0d73]/50 text-sm mb-6">
+              <p className="text-center text-[#3d0d73]/70 text-sm mb-6">
                 No password needed — just one click
               </p>
               
@@ -311,7 +311,7 @@ export default function LandingPage() {
               </div>
 
               {/* Trust message */}
-              <p className="text-center text-[#3d0d73]/40 text-xs mt-4">
+              <p className="text-center text-[#3d0d73]/60 text-sm mt-4">
                 🔒 We never post without your permission
               </p>
             </motion.div>
@@ -361,53 +361,52 @@ export default function LandingPage() {
       </section>
 
 
-      {/* TOXIC VS AURORA - Futuristic Comparison */}
+      {/* WHY AURORA APP - Clean Comparison Table */}
       <section id="how-it-works" className="py-20 md:py-28 bg-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#5537a705_1px,transparent_1px),linear-gradient(to_bottom,#5537a705_1px,transparent_1px)] bg-[size:40px_40px]" />
-        <div className="relative max-w-6xl mx-auto px-4">
-          <div className="text-center mb-16">
+        <div className="relative max-w-5xl mx-auto px-4">
+          <div className="text-center mb-12">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <Badge className="bg-[#f05a6b]/10 text-[#f05a6b] border-[#f05a6b]/20 mb-4 px-4 py-1.5 text-sm font-medium">
-                <Ban className="w-3 h-3 mr-1 inline" /> The Problem
-              </Badge>
-              <h2 className="text-3xl md:text-5xl font-bold text-[#3d0d73] mb-4">
-                Legacy Social Media vs{" "}
-                <span className="bg-gradient-to-r from-[#5537a7] to-[#f29de5] bg-clip-text text-transparent">Aurora App</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#3d0d73] mb-4">
+                Why Women Choose{" "}
+                <span className="text-[#5537a7]">Aurora App</span>
               </h2>
-              <p className="text-[#3d0d73]/60 text-lg max-w-2xl mx-auto">
-                Traditional platforms profit from your anxiety. We're built different.
+              <p className="text-[#3d0d73]/70 text-lg max-w-2xl mx-auto">
+                We built the opposite of toxic social media.
               </p>
             </motion.div>
           </div>
 
-          <div className="grid gap-3 max-w-4xl mx-auto">
+          {/* Clean Comparison Table */}
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white rounded-3xl shadow-xl border border-[#3d0d73]/10 overflow-hidden">
+            {/* Header */}
+            <div className="grid grid-cols-2 bg-[#3d0d73]">
+              <div className="p-4 md:p-6 text-center border-r border-white/10">
+                <p className="text-white/70 text-sm font-medium">❌ Other Platforms</p>
+              </div>
+              <div className="p-4 md:p-6 text-center">
+                <p className="text-white text-sm font-bold">✨ Aurora App</p>
+              </div>
+            </div>
+            
+            {/* Rows */}
             {toxicVsAurora.map((item, i) => (
-              <motion.div key={i} initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-                className="grid md:grid-cols-[1fr,60px,1fr] gap-3 items-center">
-                <div className="bg-gradient-to-r from-[#f05a6b]/5 to-transparent border border-[#f05a6b]/10 rounded-xl p-4 backdrop-blur-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-[#f05a6b]/10 rounded-lg flex items-center justify-center"><Ban className="w-4 h-4 text-[#f05a6b]" /></div>
-                    <p className="text-[#3d0d73]/60 text-sm font-medium">{item.toxic}</p>
-                  </div>
+              <div key={i} className={`grid grid-cols-2 ${i % 2 === 0 ? 'bg-white' : 'bg-[#fffaf1]'}`}>
+                <div className="p-4 md:p-5 border-r border-[#3d0d73]/10 flex items-center gap-3">
+                  <Ban className="w-5 h-5 text-[#f05a6b] flex-shrink-0" />
+                  <p className="text-[#3d0d73]/70 text-sm md:text-base">{item.toxic}</p>
                 </div>
-                <div className="hidden md:flex w-10 h-10 bg-gradient-to-br from-[#3d0d73] to-[#5537a7] rounded-full items-center justify-center mx-auto shadow-lg">
-                  <span className="text-white text-[10px] font-bold">VS</span>
+                <div className="p-4 md:p-5 flex items-center gap-3">
+                  <item.icon className="w-5 h-5 text-[#22c55e] flex-shrink-0" />
+                  <p className="text-[#3d0d73] text-sm md:text-base font-medium">{item.aurora}</p>
                 </div>
-                <div className="bg-gradient-to-l from-[#22c55e]/5 to-transparent border border-[#22c55e]/10 rounded-xl p-4 backdrop-blur-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-[#22c55e]/10 rounded-lg flex items-center justify-center"><item.icon className="w-4 h-4 text-[#22c55e]" /></div>
-                    <p className="text-[#3d0d73] text-sm font-semibold">{item.aurora}</p>
-                  </div>
-                </div>
-              </motion.div>
+              </div>
             ))}
-          </div>
+          </motion.div>
 
-          <motion.div className="text-center mt-12" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <Link href="/api/auth/login">
-              <Button size="lg" className="bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:opacity-90 text-white rounded-2xl px-10 min-h-[56px] font-bold shadow-xl shadow-[#22c55e]/20">
-                <Leaf className="w-5 h-5 mr-2" />
-                Join the Revolution
+          <motion.div className="text-center mt-10" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <Link href="/api/auth/login?provider=GoogleOAuth">
+              <Button size="lg" className="bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-2xl px-10 min-h-[56px] font-bold shadow-xl shadow-[#5537a7]/20">
+                Join Aurora App Free
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
@@ -426,7 +425,7 @@ export default function LandingPage() {
               </Badge>
               <h2 className="text-3xl md:text-5xl font-bold text-[#3d0d73] mb-4">
                 Powered by{" "}
-                <span className="bg-gradient-to-r from-[#5537a7] to-[#2e2ad6] bg-clip-text text-transparent">Ethical AI</span>
+                <span className="bg-gradient-to-r from-[#5537a7] to-[#3d0d73] bg-clip-text text-transparent">Ethical AI</span>
               </h2>
               <p className="text-[#3d0d73]/60 text-lg max-w-2xl mx-auto">
                 Every feature designed with your safety and wellbeing as the primary objective.
@@ -577,8 +576,8 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/api/auth/login">
-                  <Button className={`w-full min-h-[48px] rounded-xl font-semibold ${tier.highlighted ? "bg-white text-[#5537a7] hover:bg-white/90" : "bg-[#2e2ad6] text-white hover:bg-[#5537a7]"}`}>
+                <Link href="/premium">
+                  <Button className={`w-full min-h-[48px] rounded-xl font-semibold ${tier.highlighted ? "bg-white text-[#3d0d73] hover:bg-white/90" : "bg-[#5537a7] text-white hover:bg-[#3d0d73]"}`}>
                     Get {tier.name}
                   </Button>
                 </Link>
