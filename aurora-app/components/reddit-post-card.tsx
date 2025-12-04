@@ -15,6 +15,8 @@ import {
   Trash2,
   Send,
   CheckCircle2,
+  Flame,
+  TrendingUp,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -243,7 +245,29 @@ export function RedditPostCard({
                 Verified
               </Badge>
             )}
-
+            {/* Trending/Hot badge based on engagement velocity */}
+            {(() => {
+              const ageHours = Math.max(1, (Date.now() - post._creationTime) / (1000 * 60 * 60));
+              const engagement = (displayPost.upvotes || 0) + (displayPost.commentCount || 0) * 2;
+              const velocity = engagement / ageHours;
+              
+              if (velocity > 5) {
+                return (
+                  <Badge className="bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white border-0 text-[10px] px-1.5 py-0 animate-pulse">
+                    <Flame className="w-3 h-3 mr-0.5" />
+                    Hot
+                  </Badge>
+                );
+              } else if (velocity > 2) {
+                return (
+                  <Badge className="bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)] border-0 text-[10px] px-1.5 py-0">
+                    <TrendingUp className="w-3 h-3 mr-0.5" />
+                    Trending
+                  </Badge>
+                );
+              }
+              return null;
+            })()}
           </div>
 
           {/* Title */}

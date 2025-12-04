@@ -16,6 +16,7 @@ import { AIChatCompanion } from "@/components/ai-chat-companion";
 import { MobileFeed } from "./mobile-feed";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { SafetyPulse } from "@/components/safety-pulse";
+import { DailyEngagement } from "@/components/daily-engagement";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -268,6 +269,13 @@ export default function FeedPage() {
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
             <SafetyPulse compact />
           </motion.div>
+
+          {/* Daily Engagement - Streaks & Challenges */}
+          {userId && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+              <DailyEngagement userId={userId} />
+            </motion.div>
+          )}
 
           {/* Gamified Empty State */}
           {sortedItems.length === 0 && feedItems !== undefined && showQuests && (

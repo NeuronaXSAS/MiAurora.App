@@ -72,7 +72,7 @@ export const getUnifiedFeed = query({
       .order("desc")
       .take(Math.ceil(limit * 0.4)); // 40% reels for variety
 
-    // Score posts based on user preferences
+    // Score posts based on user preferences and engagement velocity
     const scorePost = (post: typeof allPosts[0]) => {
       let score = 0;
       
@@ -93,14 +93,36 @@ export const getUnifiedFeed = query({
       }
       
       // Engagement score
-      score += (post.upvotes || 0) * 2;
-      score += (post.commentCount || 0) * 3;
-      score += (post.verificationCount || 0) * 5;
+      const upvotes = post.upvotes || 0;
+      const comments = post.commentCount || 0;
+      const verifications = post.verificationCount || 0;
+      
+      score += upvotes * 2;
+      score += comments * 3;
+      score += verifications * 5;
+      
+      // TRENDING BOOST: Calculate engagement velocity (engagement per hour)
+      const ageHours = Math.max(1, (Date.now() - post._creationTime) / (1000 * 60 * 60));
+      const engagementVelocity = (upvotes + comments * 2 + verifications * 3) / ageHours;
+      
+      // Posts with high velocity are "trending" - big boost
+      if (engagementVelocity > 5) score += 100; // Very trending
+      else if (engagementVelocity > 2) score += 50; // Trending
+      else if (engagementVelocity > 1) score += 25; // Rising
       
       // Recency bonus (posts from last 24h get boost)
-      const ageHours = (Date.now() - post._creationTime) / (1000 * 60 * 60);
-      if (ageHours < 24) score += 20;
+      if (ageHours < 6) score += 40; // Very fresh
+      else if (ageHours < 24) score += 20;
       else if (ageHours < 72) score += 10;
+      
+      // Diversity bonus: Boost different content types
+      if (post.postType === "poll") score += 15;
+      if (post.postType === "reel" || post.reelId) score += 20;
+      if (post.routeId) score += 15;
+      
+      // Quality signals
+      if (post.isVerified) score += 30;
+      if (post.media && post.media.length > 0) score += 10;
       
       return score;
     };
