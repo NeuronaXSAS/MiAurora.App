@@ -11,9 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Send, Sparkles, Loader2, Share2, Mic, MessageSquare, Heart, Brain, BarChart3 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
-import { createAvatar } from "@dicebear/core";
-import { lorelei } from "@dicebear/collection";
 import { AIInteractionsDashboard } from "@/components/ai-interactions-dashboard";
+import { generateAvatarUrl, AvatarConfig } from "@/hooks/use-avatar";
 
 export default function AssistantPage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
@@ -53,19 +52,12 @@ export default function AssistantPage() {
     userId ? { userId } : "skip"
   );
 
-  // Generate avatar for AI assistant using user's avatar config colors
-  const getAIAvatar = () => {
-    const config = user?.avatarConfig;
-    const avatar = createAvatar(lorelei, {
-      seed: "aurora-companion",
-      backgroundColor: [config?.backgroundColor?.replace("#", "") || "c9cef4"],
-      hair: ["variant01"],
-      hairColor: [config?.hairColor?.replace("#", "") || "5537a7"],
-      skinColor: ["f8d9c4"],
-      eyes: ["variant01"],
-      mouth: ["happy01"],
-    });
-    return avatar.toDataUri();
+  // Get user's avatar URL using their saved avatar config
+  const getUserAvatarUrl = () => {
+    if (user?.avatarConfig) {
+      return generateAvatarUrl(user.avatarConfig as AvatarConfig);
+    }
+    return null;
   };
 
   // Auto-scroll to bottom
@@ -108,8 +100,8 @@ export default function AssistantPage() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[var(--color-aurora-lavender)] to-[var(--color-aurora-pink)] rounded-full flex items-center justify-center flex-shrink-0 shadow-lg overflow-hidden">
-                {user?.avatarConfig ? (
-                  <img src={getAIAvatar()} alt="Aurora" className="w-full h-full" />
+                {getUserAvatarUrl() ? (
+                  <img src={getUserAvatarUrl()!} alt="Your Aurora" className="w-full h-full" />
                 ) : (
                   <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 )}
@@ -183,8 +175,8 @@ export default function AssistantPage() {
             <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-lg">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-[var(--color-aurora-lavender)] to-[var(--color-aurora-pink)] rounded-full flex items-center justify-center flex-shrink-0 shadow-lg overflow-hidden">
-                  {user?.avatarConfig ? (
-                    <img src={getAIAvatar()} alt="Aurora" className="w-full h-full" />
+                  {getUserAvatarUrl() ? (
+                    <img src={getUserAvatarUrl()!} alt="Your Aurora" className="w-full h-full" />
                   ) : (
                     <Heart className="w-6 h-6 text-white" />
                   )}
@@ -237,8 +229,8 @@ export default function AssistantPage() {
             >
               {msg.role === "assistant" ? (
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-[var(--color-aurora-lavender)] to-[var(--color-aurora-pink)] rounded-full flex items-center justify-center flex-shrink-0 shadow-md overflow-hidden">
-                  {user?.avatarConfig ? (
-                    <img src={getAIAvatar()} alt="Aurora" className="w-full h-full" />
+                  {getUserAvatarUrl() ? (
+                    <img src={getUserAvatarUrl()!} alt="Your Aurora" className="w-full h-full" />
                   ) : (
                     <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   )}
@@ -266,8 +258,8 @@ export default function AssistantPage() {
           {isLoading && (
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-aurora-lavender)] to-[var(--color-aurora-pink)] rounded-full flex items-center justify-center flex-shrink-0 shadow-md overflow-hidden">
-                {user?.avatarConfig ? (
-                  <img src={getAIAvatar()} alt="Aurora" className="w-full h-full animate-pulse" />
+                {getUserAvatarUrl() ? (
+                  <img src={getUserAvatarUrl()!} alt="Your Aurora" className="w-full h-full animate-pulse" />
                 ) : (
                   <Heart className="w-5 h-5 text-white animate-pulse" />
                 )}
