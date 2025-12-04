@@ -1,26 +1,38 @@
 "use client";
 
 /**
- * Chat Sidebar Component
+ * Aurora AI Floating Chat
  * 
- * A floating/dockable chat panel similar to Reddit's chat feature.
- * Allows quick access to conversations without leaving the current page.
+ * A floating AI chat panel that provides instant access to Aurora AI companion.
+ * The floating button opens Aurora AI chat - messages are accessed via header icon.
  */
 
-import { useState } from "react";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  MessageSquare, X, Minimize2, Maximize2, Search, Plus, ExternalLink
+import { useAvatar } from "@/hooks/use-avatar";
+import Image from "next/image";
+import { 
+  Send, Sparkles, Heart, Mic, MicOff, Volume2, VolumeX,
+  MoreHorizontal, Smile, Trash2, X, Minimize2, Maximize2
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Id } from "@/convex/_generated/dataModel";
-import { useRouter } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+
+interface Message {
+  id: string;
+  content: string;
+  isUser: boolean;
+  timestamp: Date;
+  isTyping?: boolean;
+}
 
 interface ChatSidebarProps {
   userId: Id<"users"> | null;
@@ -28,40 +40,199 @@ interface ChatSidebarProps {
   onToggle: () => void;
 }
 
+// Aurora AI Avatar Component
+function AuroraAvatar({ isTyping = false }: { isTyping?: boolean }) {
+  return (
+    <motion.div 
+      className="relative w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-aurora-pink)] via-[var(--color-aurora-purple)] to-[var(--color-aurora-blue)] p-0.5"
+      animate={isTyping ? { scale: [1, 1.05, 1] } : {}}
+      transition={{ repeat: Infinity, duration: 1.5 }}
+    >
+      <div className="w-full h-full rounded-full bg-[var(--card)] flex items-center justify-center overflow-hidden">
+        <motion.div
+          animate={isTyping ? { y: [0, -2, 0] } : {}}
+          transition={{ repeat: Infinity, duration: 0.8 }}
+        >
+          <Sparkles className="w-5 h-5 text-[var(--color-aurora-pink)]" />
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}
+
+// User Avatar Component
+function UserAvatar({ avatarUrl }: { avatarUrl?: string | null }) {
+  return (
+    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--color-aurora-lavender)] to-[var(--color-aurora-pink)] flex items-center justify-center overflow-hidden">
+      {avatarUrl ? (
+        <img src={avatarUrl} alt="You" className="w-full h-full object-cover" />
+      ) : (
+        <Heart className="w-4 h-4 text-[var(--foreground)]" />
+      )}
+    </div>
+  );
+}
+
+// Typing Indicator
+function TypingIndicator() {
+  return (
+    <div className="flex items-center gap-1 px-3 py-2">
+      {[0, 1, 2].map((i) => (
+        <motion.div
+          key={i}
+          className="w-2 h-2 rounded-full bg-[var(--color-aurora-pink)]"
+          animate={{ y: [0, -5, 0], opacity: [0.5, 1, 0.5] }}
+          transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.2 }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function ChatSidebar({ userId, isOpen, onToggle }: ChatSidebarProps) {
   const [isMinimized, setIsMinimized] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"threads" | "requests">("threads");
-  const router = useRouter();
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      content: "Hi beautiful! I'm Aurora, your AI companion. I'm here to support you, listen to you, and help you navigate life safely. How are you feeling today? 💜",
+      isUser: false,
+      timestamp: new Date(),
+    },
+  ]);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { avatarUrl } = useAvatar();
 
-  const conversations = useQuery(
-    api.directMessages.getConversations,
-    userId ? { userId } : "skip"
-  );
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
-  const searchResults = useQuery(
-    api.directMessages.searchUsers,
-    userId && searchQuery.length >= 2
-      ? { query: searchQuery, currentUserId: userId }
-      : "skip"
-  );
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
-  // Calculate total unread
-  const totalUnread = conversations?.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0) || 0;
+  const getAIResponse = async (userMessage: string): Promise<string> => {
+    try {
+      const conversationHistory = messages
+        .filter(m => !m.isTyping)
+        .map(m => ({ isUser: m.isUser, content: m.content }));
 
+      let authUserId = null;
+      let isPremium = false;
+      try {
+        const authRes = await fetch('/api/auth/me');
+        const authData = await authRes.json();
+        authUserId = authData.userId;
+        isPremium = authData.isPremium || false;
+      } catch {
+        // Continue without auth
+      }
+
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          conversationHistory,
+          userId: authUserId,
+          isPremium,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.status === 429) {
+        if (data.upgradeToPremium) {
+          return `💜 ${data.message}\n\n✨ [Upgrade to Aurora Premium](/premium) for unlimited conversations with me!`;
+        }
+        return `💜 ${data.message}`;
+      }
+
+      if (!response.ok) throw new Error('Failed to get AI response');
+      return data.response;
+    } catch {
+      const fallbacks = [
+        "I hear you, and your feelings are completely valid. Remember, you're stronger than you know. 💪✨",
+        "That sounds challenging. Would you like to talk about what's making you feel this way? I'm here to listen. 🤗",
+        "You're doing amazing by reaching out. What would help you feel better right now? 💜",
+      ];
+      return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputValue.trim()) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: inputValue,
+      isUser: true,
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputValue('');
+    setIsLoading(true);
+
+    const typingMessage: Message = {
+      id: 'typing',
+      content: '',
+      isUser: false,
+      timestamp: new Date(),
+      isTyping: true,
+    };
+    setMessages(prev => [...prev, typingMessage]);
+
+    try {
+      const response = await getAIResponse(inputValue);
+      setMessages(prev => {
+        const filtered = prev.filter(m => m.id !== 'typing');
+        return [...filtered, {
+          id: Date.now().toString(),
+          content: response,
+          isUser: false,
+          timestamp: new Date(),
+        }];
+      });
+    } catch {
+      setMessages(prev => prev.filter(m => m.id !== 'typing'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const clearChat = () => {
+    if (confirm('Are you sure you want to clear the chat history?')) {
+      setMessages([{
+        id: Date.now().toString(),
+        content: "Hi beautiful! I'm Aurora, your AI companion. I'm here to support you, listen to you, and help you navigate life safely. How are you feeling today? 💜",
+        isUser: false,
+        timestamp: new Date(),
+      }]);
+    }
+  };
+
+  // Floating button when closed
   if (!isOpen) {
     return (
       <button
         onClick={onToggle}
-        className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-[var(--color-aurora-purple)] text-white shadow-lg hover:scale-105 transition-transform flex items-center justify-center"
-        aria-label="Open chats"
+        className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white shadow-lg hover:scale-105 transition-transform flex items-center justify-center overflow-hidden p-0.5"
+        aria-label="Open Aurora AI"
       >
-        <MessageSquare className="w-6 h-6" />
-        {totalUnread > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--color-aurora-pink)] rounded-full text-xs flex items-center justify-center font-bold">
-            {totalUnread > 9 ? "9+" : totalUnread}
-          </span>
-        )}
+        <div className="w-full h-full rounded-full bg-[var(--card)] flex items-center justify-center">
+          <Image src="/Au_Logo_1.png" alt="Aurora AI" width={32} height={32} className="object-contain" />
+        </div>
       </button>
     );
   }
@@ -72,31 +243,53 @@ export function ChatSidebar({ userId, isOpen, onToggle }: ChatSidebarProps) {
         "fixed z-50 bg-[var(--card)] border border-[var(--border)] shadow-2xl transition-all duration-300",
         isMinimized
           ? "bottom-4 right-4 w-72 h-14 rounded-2xl"
-          : "bottom-4 right-4 w-80 sm:w-96 h-[500px] rounded-2xl overflow-hidden flex flex-col"
+          : "bottom-4 right-4 w-80 sm:w-96 h-[520px] rounded-2xl overflow-hidden flex flex-col"
       )}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10">
-        <div className="flex items-center gap-2">
-          <MessageSquare className="w-5 h-5 text-[var(--color-aurora-purple)]" />
-          <span className="font-semibold text-[var(--foreground)]">Chats</span>
-          {totalUnread > 0 && (
-            <Badge className="bg-[var(--color-aurora-pink)] text-white text-xs px-1.5 py-0">
-              {totalUnread}
-            </Badge>
-          )}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-0.5">
+            <div className="w-full h-full rounded-full bg-[var(--card)] flex items-center justify-center">
+              <Image src="/Au_Logo_1.png" alt="Aurora AI" width={24} height={24} className="object-contain" />
+            </div>
+          </div>
+          <div>
+            <span className="font-semibold text-[var(--foreground)]">Aurora AI</span>
+            <p className="text-xs text-[var(--color-aurora-pink)] flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+              Always here for you
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-1">
           <button
-            onClick={() => router.push("/messages")}
-            className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors"
-            title="Open full messages"
+            onClick={() => setIsMuted(!isMuted)}
+            className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+            title={isMuted ? "Unmute" : "Mute"}
           >
-            <ExternalLink className="w-4 h-4 text-[var(--muted-foreground)]" />
+            {isMuted ? (
+              <VolumeX className="w-4 h-4 text-[var(--muted-foreground)]" />
+            ) : (
+              <Volume2 className="w-4 h-4 text-[var(--muted-foreground)]" />
+            )}
           </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center">
+                <MoreHorizontal className="w-4 h-4 text-[var(--muted-foreground)]" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[var(--card)] border-[var(--border)]">
+              <DropdownMenuItem onClick={clearChat} className="text-[var(--foreground)] hover:bg-[var(--accent)] cursor-pointer">
+                <Trash2 className="w-4 h-4 mr-2 text-[var(--color-aurora-salmon)]" />
+                Clear Chat History
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <button
             onClick={() => setIsMinimized(!isMinimized)}
-            className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors"
+            className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
           >
             {isMinimized ? (
               <Maximize2 className="w-4 h-4 text-[var(--muted-foreground)]" />
@@ -106,7 +299,7 @@ export function ChatSidebar({ userId, isOpen, onToggle }: ChatSidebarProps) {
           </button>
           <button
             onClick={onToggle}
-            className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors"
+            className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
           >
             <X className="w-4 h-4 text-[var(--muted-foreground)]" />
           </button>
@@ -115,142 +308,97 @@ export function ChatSidebar({ userId, isOpen, onToggle }: ChatSidebarProps) {
 
       {!isMinimized && (
         <>
-          {/* Search */}
-          <div className="p-3 border-b border-[var(--border)]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
-              <Input
-                placeholder="Search conversations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-10 bg-[var(--background)] border-[var(--border)] rounded-xl"
-              />
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex border-b border-[var(--border)]">
-            <button
-              onClick={() => setActiveTab("threads")}
-              className={cn(
-                "flex-1 py-2 text-sm font-medium transition-colors",
-                activeTab === "threads"
-                  ? "text-[var(--color-aurora-purple)] border-b-2 border-[var(--color-aurora-purple)]"
-                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-              )}
-            >
-              Threads
-            </button>
-            <button
-              onClick={() => setActiveTab("requests")}
-              className={cn(
-                "flex-1 py-2 text-sm font-medium transition-colors",
-                activeTab === "requests"
-                  ? "text-[var(--color-aurora-purple)] border-b-2 border-[var(--color-aurora-purple)]"
-                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-              )}
-            >
-              Requests
-            </button>
-          </div>
-
-          {/* Conversations List */}
-          <div className="flex-1 overflow-y-auto">
-            {/* Search Results */}
-            {searchQuery.length >= 2 && searchResults && (
-              <div className="p-2">
-                <p className="text-xs text-[var(--muted-foreground)] px-2 mb-2">Search Results</p>
-                {searchResults.map((user: any) => (
-                  <button
-                    key={user._id}
-                    onClick={() => {
-                      router.push(`/messages/${user._id}`);
-                      setSearchQuery("");
-                    }}
-                    className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-[var(--accent)] transition-colors"
-                  >
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={user.profileImage} />
-                      <AvatarFallback className="bg-[var(--color-aurora-lavender)] text-[var(--color-aurora-violet)]">
-                        {user.name?.charAt(0).toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 text-left">
-                      <p className="font-medium text-sm text-[var(--foreground)]">{user.name}</p>
-                      <p className="text-xs text-[var(--muted-foreground)]">Start conversation</p>
-                    </div>
-                    <Plus className="w-4 h-4 text-[var(--color-aurora-purple)]" />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Conversations */}
-            {!searchQuery && conversations && conversations.length > 0 && (
-              <div className="p-2 space-y-1">
-                {conversations.map((conv: any) => (
-                  <button
-                    key={conv.partnerId}
-                    onClick={() => router.push(`/messages/${conv.partnerId}`)}
-                    className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-[var(--accent)] transition-colors"
-                  >
-                    <div className="relative">
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={conv.partner?.profileImage} />
-                        <AvatarFallback className="bg-[var(--color-aurora-lavender)] text-[var(--color-aurora-violet)]">
-                          {conv.partner?.name?.charAt(0).toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      {conv.unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--color-aurora-pink)] rounded-full text-[10px] text-white flex items-center justify-center font-bold">
-                          {conv.unreadCount}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <div className="flex items-center justify-between">
-                        <p className={cn(
-                          "font-medium text-sm truncate",
-                          conv.unreadCount > 0 ? "text-[var(--foreground)]" : "text-[var(--foreground)]/80"
-                        )}>
-                          {conv.partner?.name || "Unknown"}
-                        </p>
-                        <span className="text-[10px] text-[var(--muted-foreground)]">
-                          {formatDistanceToNow(conv.lastMessage.timestamp, { addSuffix: false })}
-                        </span>
-                      </div>
-                      <p className={cn(
-                        "text-xs truncate",
-                        conv.unreadCount > 0 ? "text-[var(--foreground)]/80 font-medium" : "text-[var(--muted-foreground)]"
-                      )}>
-                        {conv.lastMessage.isFromMe && "You: "}
-                        {conv.lastMessage.content}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Empty State */}
-            {!searchQuery && conversations && conversations.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                <div className="w-16 h-16 rounded-full bg-[var(--color-aurora-lavender)]/30 flex items-center justify-center mb-4">
-                  <MessageSquare className="w-8 h-8 text-[var(--color-aurora-purple)]" />
-                </div>
-                <p className="font-medium text-[var(--foreground)] mb-1">Welcome to chat!</p>
-                <p className="text-sm text-[var(--muted-foreground)] mb-4">
-                  Start a conversation with other women in the community
-                </p>
-                <Button
-                  onClick={() => router.push("/messages")}
-                  className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]"
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            <AnimatePresence>
+              {messages.map((message) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className={cn(
+                    "flex gap-2",
+                    message.isUser ? "flex-row-reverse" : "flex-row"
+                  )}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Start new chat
-                </Button>
+                  {message.isUser ? (
+                    <UserAvatar avatarUrl={avatarUrl} />
+                  ) : (
+                    <AuroraAvatar isTyping={message.isTyping} />
+                  )}
+                  
+                  <div className={cn(
+                    "max-w-[80%] rounded-2xl px-3 py-2",
+                    message.isUser 
+                      ? "bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white rounded-tr-sm"
+                      : "bg-[var(--accent)] text-[var(--foreground)] rounded-tl-sm border border-[var(--border)]"
+                  )}>
+                    {message.isTyping ? (
+                      <TypingIndicator />
+                    ) : (
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                    )}
+                    {!message.isTyping && (
+                      <p className={cn(
+                        "text-[10px] mt-1",
+                        message.isUser ? "text-white/70" : "text-[var(--muted-foreground)]"
+                      )}>
+                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="p-3 border-t border-[var(--border)] bg-[var(--accent)]/30">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="min-w-[40px] min-h-[40px] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)] shrink-0"
+              >
+                <Smile className="w-5 h-5" />
+              </Button>
+              
+              <div className="flex-1">
+                <Input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Ask Aurora anything..."
+                  className="bg-[var(--background)] border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] rounded-full min-h-[40px] text-sm"
+                  disabled={isLoading}
+                />
               </div>
-            )}
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsRecording(!isRecording)}
+                className={cn(
+                  "shrink-0 transition-colors min-w-[40px] min-h-[40px]",
+                  isRecording 
+                    ? "text-[var(--color-aurora-pink)] bg-[var(--color-aurora-pink)]/20 hover:bg-[var(--color-aurora-pink)]/30" 
+                    : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
+                )}
+              >
+                {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              </Button>
+
+              <Button
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim() || isLoading}
+                className="min-w-[40px] min-h-[40px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:opacity-90 text-white rounded-full shrink-0"
+                size="icon"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </>
       )}

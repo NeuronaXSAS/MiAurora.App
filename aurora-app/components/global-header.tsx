@@ -15,8 +15,10 @@ import {
   Menu, Plus, Shield, Search, User, X, Loader2,
   MapPin, Users, Heart, Route, Briefcase, Play, FileText, MessageSquare,
   Sparkles, TrendingUp, Clock, Star, Wallet, Video, Zap, BookOpen,
-  Baby, Stethoscope, Scale, Home, GraduationCap, Plane, ShoppingBag
+  Baby, Stethoscope, Scale, Home, GraduationCap, Plane, ShoppingBag,
+  Settings, LogOut, Crown, Award, Moon, Sun, Mail, ChevronRight
 } from "lucide-react";
+import { useTheme } from "@/lib/theme-context";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -128,8 +130,11 @@ export function GlobalHeader({
   const [showPostDialog, setShowPostDialog] = useState(false);
   const [showPollDialog, setShowPollDialog] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const { resolvedTheme, setTheme } = useTheme();
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Debounce search query
   useEffect(() => {
@@ -193,15 +198,36 @@ export function GlobalHeader({
         e.preventDefault();
         setShowSearch(true);
       }
-      // Escape to close search
-      if (e.key === "Escape" && showSearch) {
-        setShowSearch(false);
-        setSearchQuery("");
+      // Escape to close search or profile menu
+      if (e.key === "Escape") {
+        if (showSearch) {
+          setShowSearch(false);
+          setSearchQuery("");
+        }
+        if (showProfileMenu) {
+          setShowProfileMenu(false);
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showSearch]);
+  }, [showSearch, showProfileMenu]);
+
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+    if (showProfileMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showProfileMenu]);
+
+  // Get user data for profile menu
+  const user = useQuery(api.users.getUser, userId ? { userId } : "skip");
 
   return (
     <>
@@ -259,7 +285,7 @@ export function GlobalHeader({
             </button>
           )}
 
-          {/* Right: Emergency + Search + Notifications + Profile */}
+          {/* Right: Emergency + Search + Messages + Notifications + Profile */}
           <div className="flex items-center gap-1">
             {/* Emergency - Orange EXCLUSIVE */}
             <Link 
@@ -278,16 +304,145 @@ export function GlobalHeader({
             >
               <Search className="w-5 h-5 text-[var(--muted-foreground)]" />
             </button>
+
+            {/* Messages */}
+            <Link 
+              href="/messages"
+              className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center relative"
+              aria-label="Messages"
+            >
+              <Mail className="w-5 h-5 text-[var(--muted-foreground)]" />
+            </Link>
             
             {/* Notifications */}
             <NotificationsDropdown />
             
-            {/* Profile */}
-            <Link href="/profile" className="min-w-[44px] min-h-[44px] flex items-center justify-center">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
-              </div>
-            </Link>
+            {/* Profile with Dropdown */}
+            <div className="relative" ref={profileMenuRef}>
+              <button 
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="Profile menu"
+              >
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center ring-2 ring-transparent hover:ring-[var(--color-aurora-purple)]/30 transition-all">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+              </button>
+
+              {/* Profile Dropdown Menu */}
+              {showProfileMenu && (
+                <div className="absolute right-0 top-full mt-2 w-72 bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden z-50">
+                  {/* User Info Header */}
+                  <div className="p-4 bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border-b border-[var(--border)]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center">
+                        <User className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-[var(--foreground)] truncate">
+                          {user?.name || "Aurora User"}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-[var(--color-aurora-yellow)] flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" />
+                            {user?.credits || 0} credits
+                          </span>
+                          {user?.isPremium && (
+                            <span className="text-xs text-[var(--color-aurora-yellow)] flex items-center gap-1">
+                              <Crown className="w-3 h-3" />
+                              Premium
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Menu Items */}
+                  <div className="py-2">
+                    <Link 
+                      href="/profile" 
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--accent)] transition-colors"
+                    >
+                      <User className="w-5 h-5 text-[var(--muted-foreground)]" />
+                      <span className="text-[var(--foreground)]">View Profile</span>
+                      <ChevronRight className="w-4 h-4 text-[var(--muted-foreground)] ml-auto" />
+                    </Link>
+
+                    <Link 
+                      href="/wallet" 
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--accent)] transition-colors"
+                    >
+                      <Wallet className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
+                      <span className="text-[var(--foreground)]">My Wallet</span>
+                      <span className="text-xs text-[var(--color-aurora-yellow)] ml-auto">{user?.credits || 0}</span>
+                    </Link>
+
+                    <Link 
+                      href="/premium" 
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--accent)] transition-colors"
+                    >
+                      <Crown className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+                      <span className="text-[var(--foreground)]">
+                        {user?.isPremium ? "Manage Premium" : "Upgrade to Premium"}
+                      </span>
+                    </Link>
+
+                    <Link 
+                      href="/profile?tab=insights" 
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--accent)] transition-colors"
+                    >
+                      <Award className="w-5 h-5 text-[var(--color-aurora-mint)]" />
+                      <span className="text-[var(--foreground)]">Achievements</span>
+                    </Link>
+
+                    <div className="border-t border-[var(--border)] my-2" />
+
+                    {/* Theme Toggle */}
+                    <button 
+                      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--accent)] transition-colors"
+                    >
+                      {resolvedTheme === "dark" ? (
+                        <Sun className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
+                      ) : (
+                        <Moon className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+                      )}
+                      <span className="text-[var(--foreground)]">
+                        {resolvedTheme === "dark" ? "Light Mode" : "Dark Mode"}
+                      </span>
+                    </button>
+
+                    <Link 
+                      href="/settings" 
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--accent)] transition-colors"
+                    >
+                      <Settings className="w-5 h-5 text-[var(--muted-foreground)]" />
+                      <span className="text-[var(--foreground)]">Settings</span>
+                    </Link>
+
+                    <div className="border-t border-[var(--border)] my-2" />
+
+                    <button 
+                      onClick={async () => {
+                        setShowProfileMenu(false);
+                        await fetch("/api/auth/logout", { method: "POST" });
+                        window.location.href = "/";
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--color-aurora-salmon)]/10 transition-colors text-[var(--color-aurora-salmon)]"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
