@@ -20,6 +20,8 @@ import { useState, useEffect, useRef } from "react";
 import { detectUserCountry, getRegionalPricing, formatRegionalPrice, getRegionalSavings, type RegionalPricing } from "@/lib/regional-pricing";
 import { SignupIncentiveBanner } from "@/components/signup-incentive-banner";
 import { LandingSearch } from "@/components/landing-search";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { LocaleProvider, useLocale } from "@/lib/locale-context";
 
 // Animated grid background component
 const GridBackground = () => (
@@ -142,6 +144,7 @@ export default function LandingPage() {
   ];
 
   return (
+    <LocaleProvider>
     <div className="min-h-screen bg-[#fffaf1] overflow-x-hidden">
       {/* Cursor glow effect */}
       <div 
@@ -199,6 +202,9 @@ export default function LandingPage() {
               <Badge className="hidden sm:flex bg-gradient-to-r from-[#5537a7]/10 to-[#f29de5]/10 text-[#5537a7] border-[#5537a7]/20 text-xs">v2.0</Badge>
             </div>
             <div className="flex items-center gap-2">
+              {/* Language Switcher - Non-disruptive */}
+              <LanguageSwitcher variant="compact" />
+              
               <Link href="/api/auth/login?provider=GoogleOAuth" className="hidden md:block">
                 <Button variant="outline" className="text-[#3d0d73] border-[#3d0d73]/20 hover:bg-[#5537a7]/5 rounded-xl font-medium min-h-[44px] px-4 flex items-center gap-2">
                   <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -803,5 +809,6 @@ export default function LandingPage() {
       {/* Floating Signup Incentive Banner - follows user while scrolling */}
       <SignupIncentiveBanner credits={25} showAfterScroll={300} />
     </div>
+    </LocaleProvider>
   );
 }

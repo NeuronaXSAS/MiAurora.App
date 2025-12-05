@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { LandingAd } from "@/components/ads/landing-ad";
+import { AISearchSuggestions } from "@/components/ai-search-suggestions";
 
 interface WebSearchResult {
   title: string;
@@ -360,26 +361,15 @@ export function LandingSearch() {
           )}
         </div>
 
-        {/* Quick suggestions - More Premium Look */}
+        {/* AI-Powered Search Suggestions */}
         {!query && (
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="flex flex-wrap justify-center gap-2 mt-5"
+            className="mt-6"
           >
-            {["Is this workplace safe?", "Best cities for women", "Career advice tech", "Safe travel tips"].map((s, i) => (
-              <motion.button 
-                key={s} 
-                onClick={() => setQuery(s)}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.5 + i * 0.05 }}
-                className="px-4 py-2.5 bg-[var(--card)] hover:bg-gradient-to-r hover:from-[var(--color-aurora-purple)]/10 hover:to-[var(--color-aurora-pink)]/10 border border-[var(--border)] hover:border-[var(--color-aurora-purple)]/30 rounded-full text-sm text-[var(--foreground)] transition-all shadow-sm hover:shadow-md"
-              >
-                {s}
-              </motion.button>
-            ))}
+            <AISearchSuggestions onSuggestionClick={(q) => setQuery(q)} />
           </motion.div>
         )}
       </motion.div>
