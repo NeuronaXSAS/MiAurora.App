@@ -9,12 +9,14 @@
  * - Source credibility scoring
  * - Women-safety indicators
  * - Privacy-first search (no tracking)
+ * 
+ * REDESIGNED: Premium, empowering, modern, futuristic UI
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +24,8 @@ import {
   Search, X, FileText, MapPin as Route, Users, Briefcase, Shield, 
   Lock, ArrowRight, TrendingUp, Globe,
   Info, ExternalLink, Brain, Heart, Eye, Zap, Scale,
-  Bot, ShieldCheck, Loader2,
+  Bot, ShieldCheck, Loader2, Sparkles, CheckCircle2, AlertTriangle,
+  BarChart3, Target, Gauge,
 } from "lucide-react";
 import Link from "next/link";
 import { LandingAd } from "@/components/ads/landing-ad";
@@ -93,7 +96,7 @@ const typeLabels: Record<string, string> = {
   opportunity: "Opportunity", resource: "Resource", web: "Web",
 };
 
-// Score color helper
+// Score color helper - Enhanced with gradients
 const getScoreColor = (scoreInput: number | undefined | null, type: "bias" | "ai" | "credibility"): string => {
   const score = scoreInput ?? (type === "bias" ? 50 : type === "credibility" ? 50 : 0);
   if (type === "bias") {
@@ -113,6 +116,83 @@ const getScoreColor = (scoreInput: number | undefined | null, type: "bias" | "ai
   if (score >= 50) return "#e5e093";
   return "#f59e0b";
 };
+
+// Premium Score Badge Component - Larger, more visible
+const ScoreBadge = memo(({ 
+  icon: Icon, 
+  label, 
+  value, 
+  color, 
+  tooltip 
+}: { 
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  label: string;
+  value: string | number;
+  color: string;
+  tooltip: string;
+}) => (
+  <div 
+    className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl bg-[var(--background)]/80 border border-[var(--border)]/50 min-w-[70px] hover:scale-105 transition-transform cursor-help"
+    title={tooltip}
+  >
+    <div className="flex items-center gap-1.5">
+      <Icon className="w-4 h-4" style={{ color }} />
+      <span className="text-xs font-bold" style={{ color }}>{value}</span>
+    </div>
+    <span className="text-[9px] text-[var(--muted-foreground)] font-medium uppercase tracking-wide">{label}</span>
+  </div>
+));
+ScoreBadge.displayName = "ScoreBadge";
+
+// Circular Progress Indicator for scores
+const CircularScore = memo(({ 
+  score, 
+  label, 
+  color,
+  size = 48 
+}: { 
+  score: number; 
+  label: string; 
+  color: string;
+  size?: number;
+}) => {
+  const circumference = 2 * Math.PI * 18;
+  const strokeDashoffset = circumference - (score / 100) * circumference;
+  
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg className="transform -rotate-90" width={size} height={size}>
+          <circle
+            cx={size/2}
+            cy={size/2}
+            r="18"
+            stroke="var(--border)"
+            strokeWidth="3"
+            fill="none"
+          />
+          <circle
+            cx={size/2}
+            cy={size/2}
+            r="18"
+            stroke={color}
+            strokeWidth="3"
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            className="transition-all duration-500"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-xs font-bold" style={{ color }}>{score}</span>
+        </div>
+      </div>
+      <span className="text-[9px] text-[var(--muted-foreground)] font-medium">{label}</span>
+    </div>
+  );
+});
+CircularScore.displayName = "CircularScore";
 
 export function LandingSearch() {
   const [query, setQuery] = useState("");
@@ -210,30 +290,54 @@ export function LandingSearch() {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      {/* Search Header */}
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center gap-2 mb-3">
-          <Badge className="bg-gradient-to-r from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-purple)] border-0 px-3 py-1">
-            <Brain className="w-3 h-3 mr-1" />
+      {/* Premium Search Header - More Empowering */}
+      <div className="text-center mb-8">
+        {/* Animated Badge */}
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="inline-flex items-center gap-2 mb-4"
+        >
+          <Badge className="bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white border-0 px-4 py-1.5 shadow-lg shadow-[var(--color-aurora-purple)]/30">
+            <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse" />
             AI-Powered • Bias Detection • Privacy-First
           </Badge>
-        </div>
-        <h3 className="text-xl md:text-2xl font-bold text-[var(--foreground)] mb-2">
+        </motion.div>
+        
+        <motion.h3 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[var(--color-aurora-purple)] via-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] bg-clip-text text-transparent mb-3"
+        >
           The World's First Women-First Search Engine
-        </h3>
-        <p className="text-sm text-[var(--muted-foreground)]">
-          Search the entire web with AI content detection, bias analysis & source credibility
-        </p>
+        </motion.h3>
+        
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-sm md:text-base text-[var(--muted-foreground)] max-w-xl mx-auto"
+        >
+          Search smarter with AI content detection, gender bias analysis & source credibility scores
+        </motion.p>
       </div>
 
-      {/* Search Input */}
-      <div className="relative">
+      {/* Premium Search Input - Larger, More Prominent */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3 }}
+        className="relative"
+      >
         <div className={`relative flex items-center bg-[var(--card)] border-2 rounded-2xl transition-all duration-300 ${
           isFocused 
-            ? "border-[var(--color-aurora-purple)] shadow-xl shadow-[var(--color-aurora-purple)]/20" 
-            : "border-[var(--border)] hover:border-[var(--color-aurora-lavender)] shadow-lg"
+            ? "border-[var(--color-aurora-purple)] shadow-2xl shadow-[var(--color-aurora-purple)]/25 scale-[1.01]" 
+            : "border-[var(--border)] hover:border-[var(--color-aurora-purple)]/50 shadow-xl"
         }`}>
-          <Search className="absolute left-4 w-5 h-5 text-[var(--color-aurora-purple)]" />
+          <div className="absolute left-4 w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center">
+            <Search className="w-5 h-5 text-white" />
+          </div>
           <input
             ref={inputRef}
             type="text"
@@ -242,28 +346,43 @@ export function LandingSearch() {
             onFocus={() => { setIsFocused(true); setShowResults(true); }}
             onBlur={() => setTimeout(() => setIsFocused(false), 200)}
             placeholder="Search anything... safety tips, career advice, places, news"
-            className="w-full h-16 pl-14 pr-14 bg-transparent text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none text-lg"
+            className="w-full h-16 md:h-[72px] pl-[72px] pr-14 bg-transparent text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none text-base md:text-lg font-medium"
           />
-          {isSearching && <Loader2 className="absolute right-12 w-5 h-5 text-[var(--color-aurora-purple)] animate-spin" />}
+          {isSearching && (
+            <div className="absolute right-14 w-8 h-8 rounded-full bg-[var(--color-aurora-purple)]/10 flex items-center justify-center">
+              <Loader2 className="w-4 h-4 text-[var(--color-aurora-purple)] animate-spin" />
+            </div>
+          )}
           {query && (
-            <button onClick={handleClear} className="absolute right-4 p-2 rounded-full hover:bg-[var(--accent)]">
+            <button onClick={handleClear} className="absolute right-4 p-2.5 rounded-xl hover:bg-[var(--accent)] transition-colors">
               <X className="w-5 h-5 text-[var(--muted-foreground)]" />
             </button>
           )}
         </div>
 
-        {/* Quick suggestions */}
+        {/* Quick suggestions - More Premium Look */}
         {!query && (
-          <div className="flex flex-wrap justify-center gap-2 mt-4">
-            {["Is this workplace safe?", "Best cities for women", "Career advice tech", "Safe travel tips"].map((s) => (
-              <button key={s} onClick={() => setQuery(s)}
-                className="px-4 py-2 bg-[var(--accent)] hover:bg-[var(--color-aurora-purple)]/10 rounded-full text-sm text-[var(--foreground)] transition-colors">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex flex-wrap justify-center gap-2 mt-5"
+          >
+            {["Is this workplace safe?", "Best cities for women", "Career advice tech", "Safe travel tips"].map((s, i) => (
+              <motion.button 
+                key={s} 
+                onClick={() => setQuery(s)}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5 + i * 0.05 }}
+                className="px-4 py-2.5 bg-[var(--card)] hover:bg-gradient-to-r hover:from-[var(--color-aurora-purple)]/10 hover:to-[var(--color-aurora-pink)]/10 border border-[var(--border)] hover:border-[var(--color-aurora-purple)]/30 rounded-full text-sm text-[var(--foreground)] transition-all shadow-sm hover:shadow-md"
+              >
                 {s}
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
       {/* Results Panel */}
       {showResults && (
@@ -384,49 +503,72 @@ export function LandingSearch() {
                         </div>
                       </div>
                       
-                      {/* Aurora Intelligence Bar - Per Result Analysis */}
-                      <div className="px-4 py-2.5 bg-[var(--accent)]/50 border-t border-[var(--border)]/50">
-                        <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
-                          {/* AI Content */}
-                          <div className="flex items-center gap-1.5 flex-shrink-0" title="AI-Generated Content Detection">
-                            <Bot className="w-3.5 h-3.5" style={{ color: getScoreColor(aiScore, "ai") }} />
-                            <span className="text-[10px] font-medium" style={{ color: getScoreColor(aiScore, "ai") }}>{aiScore}% AI</span>
+                      {/* Aurora Intelligence Bar - PREMIUM Per Result Analysis */}
+                      <div className="px-4 py-3 bg-gradient-to-r from-[var(--color-aurora-purple)]/5 via-[var(--accent)]/50 to-[var(--color-aurora-pink)]/5 border-t border-[var(--color-aurora-purple)]/10">
+                        {/* Premium Analysis Header */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20">
+                            <Sparkles className="w-3 h-3 text-[var(--color-aurora-purple)]" />
+                            <span className="text-[10px] font-semibold text-[var(--color-aurora-purple)]">Aurora Analysis</span>
                           </div>
-                          <div className="w-px h-3 bg-[var(--border)]" />
+                        </div>
+                        
+                        {/* Score Badges - Larger, More Visible */}
+                        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+                          {/* AI Content - Premium Badge */}
+                          <ScoreBadge
+                            icon={Bot}
+                            label="AI Content"
+                            value={`${aiScore}%`}
+                            color={getScoreColor(aiScore, "ai")}
+                            tooltip="Percentage of AI-generated content detected"
+                          />
                           
-                          {/* Gender Bias */}
-                          <div className="flex items-center gap-1.5 flex-shrink-0" title="Gender Bias Score">
-                            <Scale className="w-3.5 h-3.5" style={{ color: getScoreColor(biasScore, "bias") }} />
-                            <span className="text-[10px] font-medium" style={{ color: getScoreColor(biasScore, "bias") }}>{biasLabel}</span>
-                          </div>
-                          <div className="w-px h-3 bg-[var(--border)]" />
+                          {/* Gender Bias - Premium Badge */}
+                          <ScoreBadge
+                            icon={Scale}
+                            label="Bias"
+                            value={biasLabel}
+                            color={getScoreColor(biasScore, "bias")}
+                            tooltip={`Gender bias score: ${biasScore}/100`}
+                          />
                           
-                          {/* Credibility */}
-                          <div className="flex items-center gap-1.5 flex-shrink-0" title="Source Credibility">
-                            <ShieldCheck className="w-3.5 h-3.5" style={{ color: getScoreColor(credScore, "credibility") }} />
-                            <span className="text-[10px] font-medium" style={{ color: getScoreColor(credScore, "credibility") }}>{credLabel}</span>
-                          </div>
-                          <div className="w-px h-3 bg-[var(--border)]" />
+                          {/* Credibility - Premium Badge */}
+                          <ScoreBadge
+                            icon={ShieldCheck}
+                            label="Trust"
+                            value={credLabel}
+                            color={getScoreColor(credScore, "credibility")}
+                            tooltip={`Source credibility: ${credScore}/100`}
+                          />
                           
-                          {/* Political Bias */}
-                          <div className="flex items-center gap-1.5 flex-shrink-0" title="Political Leaning">
-                            <span className="text-[10px] text-[var(--muted-foreground)]">📊 {politicalBias}</span>
-                          </div>
-                          <div className="w-px h-3 bg-[var(--border)]" />
+                          {/* Political Bias - Premium Badge */}
+                          <ScoreBadge
+                            icon={BarChart3}
+                            label="Political"
+                            value={politicalBias}
+                            color="#8b5cf6"
+                            tooltip="Political leaning of the source"
+                          />
                           
-                          {/* Emotional Tone */}
-                          <div className="flex items-center gap-1.5 flex-shrink-0" title="Emotional Tone">
-                            <span className="text-[10px] text-[var(--muted-foreground)]">💭 {emotionalTone}</span>
-                          </div>
+                          {/* Emotional Tone - Premium Badge */}
+                          <ScoreBadge
+                            icon={Target}
+                            label="Tone"
+                            value={emotionalTone}
+                            color="#6366f1"
+                            tooltip="Emotional tone of the content"
+                          />
                           
                           {/* Commercial Bias (if significant) */}
                           {commercialScore > 30 && (
-                            <>
-                              <div className="w-px h-3 bg-[var(--border)]" />
-                              <div className="flex items-center gap-1.5 flex-shrink-0" title="Commercial/Promotional Content">
-                                <span className="text-[10px] text-[#f59e0b]">💰 Promotional</span>
-                              </div>
-                            </>
+                            <ScoreBadge
+                              icon={AlertTriangle}
+                              label="Promo"
+                              value="Yes"
+                              color="#f59e0b"
+                              tooltip="Contains promotional/commercial content"
+                            />
                           )}
                         </div>
                       </div>
@@ -543,23 +685,47 @@ export function LandingSearch() {
         </motion.div>
       )}
 
-      {/* Value Props */}
-      <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Premium Value Props - More Empowering */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4"
+      >
         {[
-          { icon: Bot, label: "AI Detection", desc: "Spot AI content" },
-          { icon: Scale, label: "Bias Analysis", desc: "Gender bias scores" },
-          { icon: ShieldCheck, label: "Credibility", desc: "Source trust" },
-          { icon: Eye, label: "No Tracking", desc: "Private searches" },
+          { icon: Bot, label: "AI Detection", desc: "Spot AI-generated content instantly", color: "from-blue-500 to-cyan-500" },
+          { icon: Scale, label: "Bias Analysis", desc: "Gender & political bias scores", color: "from-purple-500 to-pink-500" },
+          { icon: ShieldCheck, label: "Credibility", desc: "Source trust verification", color: "from-green-500 to-emerald-500" },
+          { icon: Eye, label: "No Tracking", desc: "100% private searches", color: "from-orange-500 to-amber-500" },
         ].map((item, i) => (
-          <div key={i} className="text-center p-3">
-            <div className="w-10 h-10 rounded-xl bg-[var(--color-aurora-purple)]/10 flex items-center justify-center mx-auto mb-2">
-              <item.icon className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+          <motion.div 
+            key={i} 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 + i * 0.1 }}
+            className="text-center p-4 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--color-aurora-purple)]/30 hover:shadow-lg transition-all group"
+          >
+            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:scale-110 transition-transform`}>
+              <item.icon className="w-6 h-6 text-white" />
             </div>
-            <p className="text-sm font-medium text-[var(--foreground)]">{item.label}</p>
-            <p className="text-xs text-[var(--muted-foreground)]">{item.desc}</p>
-          </div>
+            <p className="text-sm font-semibold text-[var(--foreground)] mb-1">{item.label}</p>
+            <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">{item.desc}</p>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
+      
+      {/* Empowering Footer Message */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+        className="mt-8 text-center"
+      >
+        <p className="text-sm text-[var(--muted-foreground)] flex items-center justify-center gap-2">
+          <Heart className="w-4 h-4 text-[var(--color-aurora-pink)]" />
+          <span>Designed by women, for women. Search with confidence.</span>
+        </p>
+      </motion.div>
     </div>
   );
 }

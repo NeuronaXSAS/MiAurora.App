@@ -63,7 +63,7 @@ const navigationItems = [
     borderColor: "border-[var(--color-aurora-pink)]/30",
     items: [
       { href: "/health", icon: Heart, label: "Health Tracker", description: "Cycle, mood & wellness" },
-      { href: "/assistant", icon: MessageSquare, label: "Aurora AI", description: "Your AI companion" },
+      { href: "/assistant", icon: Sparkles, label: "Aurora AI ✨", description: "Your AI companion" },
     ],
   },
   {

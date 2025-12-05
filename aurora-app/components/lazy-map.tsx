@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense, lazy, useCallback, useRef } from "react";
-import { MapPin, Loader2, Navigation, WifiOff, Smartphone } from "lucide-react";
+import { MapPin, Loader2, Navigation, WifiOff, Smartphone, Zap } from "lucide-react";
 import { useDevicePerformance } from "@/hooks/use-device-performance";
 import { motion } from "framer-motion";
 
@@ -10,7 +10,7 @@ const SafetyMap = lazy(() =>
   import("@/components/safety-map").then(mod => ({ default: mod.SafetyMap }))
 );
 
-// Preload state and function
+// Preload state and function - aggressive preloading
 let mapPreloaded = false;
 let mapPreloadPromise: Promise<any> | null = null;
 
@@ -19,9 +19,24 @@ const preloadMap = () => {
     mapPreloaded = true;
     // Start preloading and cache the promise
     mapPreloadPromise = import("@/components/safety-map");
+    
+    // Also preload Mapbox GL CSS
+    if (typeof document !== 'undefined') {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'style';
+      link.href = 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css';
+      document.head.appendChild(link);
+    }
   }
   return mapPreloadPromise;
 };
+
+// Preload on module load for faster subsequent access
+if (typeof window !== 'undefined') {
+  // Preload after a short delay to not block initial render
+  setTimeout(preloadMap, 100);
+}
 
 interface LazyMapProps {
   lifeDimension?: string;
@@ -30,14 +45,14 @@ interface LazyMapProps {
   ratingFilter?: number;
 }
 
-// Lightweight skeleton - reduced animations for faster perceived load
+// Lightweight skeleton - optimized for fast perceived load
 function MapLoadingSkeleton() {
   const { shouldReduceMotion } = useDevicePerformance();
   
   return (
     <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-aurora-lavender)]/10 to-[var(--color-aurora-mint)]/10 overflow-hidden">
-      {/* Simple grid pattern - no animation on low-end */}
-      <div className="absolute inset-0 opacity-20">
+      {/* Simple grid pattern - static for performance */}
+      <div className="absolute inset-0 opacity-15">
         <div 
           className="w-full h-full"
           style={{
@@ -50,31 +65,31 @@ function MapLoadingSkeleton() {
         />
       </div>
 
-      {/* Center loading indicator - simplified */}
+      {/* Center loading indicator - minimal and fast */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="bg-[var(--card)]/95 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-[var(--border)] max-w-xs mx-4">
+        <div className="bg-[var(--card)]/95 backdrop-blur-sm rounded-2xl p-5 shadow-xl border border-[var(--border)] max-w-[280px] mx-4">
           <div className="flex flex-col items-center text-center">
-            <div className="w-14 h-14 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-2xl flex items-center justify-center mb-4">
-              <MapPin className="w-7 h-7 text-white" />
+            <div className="w-12 h-12 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-xl flex items-center justify-center mb-3 shadow-lg">
+              <MapPin className="w-6 h-6 text-white" />
             </div>
             
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1">
               <Loader2 className="w-4 h-4 animate-spin text-[var(--color-aurora-purple)]" />
-              <p className="font-semibold text-[var(--foreground)]">Loading Map</p>
+              <p className="font-semibold text-[var(--foreground)] text-sm">Loading Map</p>
             </div>
             
-            <p className="text-sm text-[var(--muted-foreground)]">
-              Preparing safety view...
+            <p className="text-xs text-[var(--muted-foreground)]">
+              Almost ready...
             </p>
             
-            {/* Simple progress bar */}
+            {/* Fast progress bar */}
             {!shouldReduceMotion && (
-              <div className="w-full h-1.5 bg-[var(--accent)] rounded-full mt-4 overflow-hidden">
+              <div className="w-full h-1 bg-[var(--accent)] rounded-full mt-3 overflow-hidden">
                 <motion.div
                   className="h-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-full"
-                  initial={{ width: "0%" }}
+                  initial={{ width: "20%" }}
                   animate={{ width: "100%" }}
-                  transition={{ duration: 2, ease: "easeOut" }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
                 />
               </div>
             )}
@@ -163,28 +178,27 @@ export function LazyMap(props: LazyMapProps) {
   const [shouldLoadMap, setShouldLoadMap] = useState(false);
   const hasPreloaded = useRef(false);
 
-  // Preload map using requestIdleCallback for better performance
+  // Aggressive preload - start immediately on mount
   useEffect(() => {
     if (hasPreloaded.current) return;
+    hasPreloaded.current = true;
     
-    if (!isLowEnd && !shouldReduceData) {
-      hasPreloaded.current = true;
-      
-      // Use requestIdleCallback if available, otherwise setTimeout
-      if ('requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(() => preloadMap(), { timeout: 2000 });
-      } else {
-        const timer = setTimeout(preloadMap, 500);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [isLowEnd, shouldReduceData]);
+    // Always preload, even on slow networks (just don't auto-show)
+    preloadMap();
+  }, []);
 
   // Auto-load on capable devices - immediate for good connections
   useEffect(() => {
-    if (!isLowEnd && !isSlowNetwork && !shouldReduceData) {
-      // Immediate load for capable devices
-      setShouldLoadMap(true);
+    // More aggressive: load immediately unless very slow network
+    if (!isLowEnd && !shouldReduceData) {
+      // Small delay to let initial render complete
+      const timer = setTimeout(() => setShouldLoadMap(true), 50);
+      return () => clearTimeout(timer);
+    }
+    // Even on slow networks, auto-load after a short delay
+    if (isSlowNetwork && !isLowEnd) {
+      const timer = setTimeout(() => setShouldLoadMap(true), 500);
+      return () => clearTimeout(timer);
     }
   }, [isLowEnd, isSlowNetwork, shouldReduceData]);
 
@@ -192,8 +206,8 @@ export function LazyMap(props: LazyMapProps) {
     setShouldLoadMap(true);
   }, []);
 
-  // Show static placeholder on low-end devices until user requests map
-  if ((isLowEnd || isSlowNetwork || shouldReduceData) && !shouldLoadMap) {
+  // Show static placeholder only on very low-end devices
+  if (isLowEnd && !shouldLoadMap) {
     return (
       <StaticMapPlaceholder 
         onRequestFullMap={handleRequestFullMap} 

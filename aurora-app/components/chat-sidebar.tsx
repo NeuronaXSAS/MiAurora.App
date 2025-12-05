@@ -222,19 +222,10 @@ export function ChatSidebar({ userId, isOpen, onToggle }: ChatSidebarProps) {
     }
   };
 
-  // Floating button when closed
+  // No floating button - Aurora AI is now accessed via profile menu
+  // This improves navigation usability on mobile
   if (!isOpen) {
-    return (
-      <button
-        onClick={onToggle}
-        className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white shadow-lg hover:scale-105 transition-transform flex items-center justify-center overflow-hidden p-0.5"
-        aria-label="Open Aurora AI"
-      >
-        <div className="w-full h-full rounded-full bg-[var(--card)] flex items-center justify-center">
-          <Image src="/Au_Logo_1.png" alt="Aurora AI" width={32} height={32} className="object-contain" />
-        </div>
-      </button>
-    );
+    return null;
   }
 
   return (

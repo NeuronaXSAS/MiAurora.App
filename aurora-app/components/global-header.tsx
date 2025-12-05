@@ -463,6 +463,23 @@ export function GlobalHeader({
 
                     <div className="border-t border-[var(--border)] my-2" />
 
+                    {/* Aurora AI - Moved from floating button */}
+                    <Link 
+                      href="/assistant" 
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-[var(--color-aurora-purple)]/10 hover:to-[var(--color-aurora-pink)]/10 transition-colors"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center">
+                        <Sparkles className="w-3 h-3 text-white" />
+                      </div>
+                      <span className="text-[var(--foreground)]">Aurora AI Assistant</span>
+                      <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-purple)]">
+                        Chat
+                      </span>
+                    </Link>
+
+                    <div className="border-t border-[var(--border)] my-2" />
+
                     {/* Theme Toggle */}
                     <button 
                       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}

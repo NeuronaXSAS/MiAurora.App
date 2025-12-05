@@ -394,89 +394,123 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
     }
   }, [posts]);
 
-  // Get user's GPS location - memoized and optimized
+  // Get user's GPS location - memoized and optimized with Safari/iOS support
   const handleGetUserLocation = useCallback(() => {
+    // Check if geolocation is available
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser");
+      // Show helpful message for browsers without geolocation
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
+      if (isSafari || isIOS) {
+        alert("To use location on Safari:\n\n1. Go to Settings > Privacy > Location Services\n2. Enable Location Services\n3. Scroll down and enable for Safari\n4. Refresh this page");
+      } else {
+        alert("Geolocation is not supported by your browser. Please try a different browser.");
+      }
       return;
     }
 
-    // Request GPS position - use cached if recent for faster response
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
-        
-        setUserLocation({ lat: latitude, lng: longitude });
+    // Check if we're on HTTPS (required for geolocation)
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      alert("Location requires a secure connection (HTTPS). Please access Aurora App via https://");
+      return;
+    }
 
-        if (map.current) {
-          // Remove existing user marker if any
-          if (userLocationMarker.current) {
-            userLocationMarker.current.remove();
-            userLocationMarker.current = null;
-          }
+    // Request GPS position with progressive enhancement
+    // First try with low accuracy for faster response, then upgrade
+    const successCallback = (position: GeolocationPosition) => {
+      const { latitude, longitude } = position.coords;
+      
+      setUserLocation({ lat: latitude, lng: longitude });
 
-          // Create user location marker - simplified for performance
-          const el = document.createElement("div");
-          el.className = "user-location-marker";
-          el.style.cssText = `
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            border: 4px solid white;
-            box-shadow: 0 0 12px rgba(59, 130, 246, 0.5), 0 2px 6px rgba(0,0,0,0.2);
-          `;
+      if (map.current) {
+        // Remove existing user marker if any
+        if (userLocationMarker.current) {
+          userLocationMarker.current.remove();
+          userLocationMarker.current = null;
+        }
 
-          userLocationMarker.current = new mapboxgl.Marker(el)
-            .setLngLat([longitude, latitude])
-            .setPopup(
-              new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(
-                `<div style="padding: 6px;"><strong>📍 Your Location</strong></div>`
-              )
+        // Create user location marker - simplified for performance
+        const el = document.createElement("div");
+        el.className = "user-location-marker";
+        el.style.cssText = `
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+          border: 4px solid white;
+          box-shadow: 0 0 12px rgba(59, 130, 246, 0.5), 0 2px 6px rgba(0,0,0,0.2);
+        `;
+
+        userLocationMarker.current = new mapboxgl.Marker(el)
+          .setLngLat([longitude, latitude])
+          .setPopup(
+            new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(
+              `<div style="padding: 6px;"><strong>📍 Your Location</strong></div>`
             )
-            .addTo(map.current);
+          )
+          .addTo(map.current);
 
-          // Fly to user location - faster animation
-          map.current.flyTo({
-            center: [longitude, latitude],
-            zoom: 15,
-            duration: 1200,
-            essential: true,
+        // Fly to user location - faster animation
+        map.current.flyTo({
+          center: [longitude, latitude],
+          zoom: 15,
+          duration: 1200,
+          essential: true,
+        });
+
+        // Show nearby posts
+        if (posts) {
+          const nearby = posts.filter((post) => {
+            if (!post.location) return false;
+            const [postLng, postLat] = post.location.coordinates;
+            const distance = Math.sqrt(
+              Math.pow(postLng - longitude, 2) + Math.pow(postLat - latitude, 2)
+            );
+            return distance < 0.1;
           });
+          setNearbyPosts(nearby);
+        }
+      }
+    };
 
-          // Show nearby posts
-          if (posts) {
-            const nearby = posts.filter((post) => {
-              if (!post.location) return false;
-              const [postLng, postLat] = post.location.coordinates;
-              const distance = Math.sqrt(
-                Math.pow(postLng - longitude, 2) + Math.pow(postLat - latitude, 2)
-              );
-              return distance < 0.1;
-            });
-            setNearbyPosts(nearby);
+    const errorCallback = (error: GeolocationPositionError) => {
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
+      let errorMessage = "Unable to get your location.";
+      let helpText = "";
+      
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          if (isSafari || isIOS) {
+            errorMessage = "Location access denied.";
+            helpText = "\n\nTo enable on Safari/iOS:\n1. Settings > Privacy > Location Services\n2. Enable for Safari\n3. Refresh this page";
+          } else {
+            errorMessage = "Location permission denied.";
+            helpText = "\n\nClick the location icon in your browser's address bar to enable.";
           }
-        }
-      },
-      (error) => {
-        let errorMessage = "Unable to get your location.";
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = "Location permission denied. Please enable location access.";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = "Location unavailable. Please try again.";
-            break;
-          case error.TIMEOUT:
-            errorMessage = "Location request timed out. Please try again.";
-            break;
-        }
-        alert(errorMessage);
-      },
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMessage = "Location unavailable.";
+          helpText = "\n\nMake sure GPS is enabled on your device.";
+          break;
+        case error.TIMEOUT:
+          errorMessage = "Location request timed out.";
+          helpText = "\n\nPlease try again. Make sure you have a clear view of the sky.";
+          break;
+      }
+      alert(errorMessage + helpText);
+    };
+
+    // Use progressive enhancement: start with fast/low accuracy, then upgrade
+    navigator.geolocation.getCurrentPosition(
+      successCallback,
+      errorCallback,
       {
         enableHighAccuracy: false, // Faster initial response
-        timeout: 10000,
-        maximumAge: 60000 // Allow 1 minute cached position for speed
+        timeout: 15000, // Longer timeout for mobile
+        maximumAge: 120000 // Allow 2 minute cached position for speed
       }
     );
   }, [posts]);
