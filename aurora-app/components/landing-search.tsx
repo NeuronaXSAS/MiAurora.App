@@ -14,14 +14,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { 
   Search, X, FileText, MapPin as Route, Users, Briefcase, Shield, 
-  Lock, ArrowRight, Sparkles, TrendingUp, Globe,
+  Lock, ArrowRight, TrendingUp, Globe,
   Info, ExternalLink, Brain, Heart, Eye, Zap, Scale,
   Bot, ShieldCheck, Loader2,
 } from "lucide-react";
@@ -34,25 +33,42 @@ interface WebSearchResult {
   description: string;
   domain: string;
   age?: string;
-  aiContentScore: number;
-  biasScore: number;
-  biasLabel: string;
-  credibilityScore: number;
-  credibilityLabel: string;
+  // Support both old flat structure and new nested structure
+  aiContentScore?: number;
+  biasScore?: number;
+  biasLabel?: string;
+  credibilityScore?: number;
+  credibilityLabel?: string;
+  // New nested structure
+  biasAnalysis?: {
+    genderBias: { score: number; label: string };
+    politicalBias?: { indicator: string; confidence: number };
+    commercialBias?: { score: number; hasAffiliateLinks: boolean; isSponsored: boolean };
+    emotionalTone?: string;
+  };
+  credibilityScore2?: { score: number; label: string };
+  aiContentDetection?: { percentage: number; label: string; color: string };
   isWomenFocused: boolean;
   safetyFlags: string[];
   source: "web" | "aurora";
 }
 
 interface AuroraInsights {
-  overallBiasScore: number;
-  overallBiasLabel: string;
-  aiContentAverage: number;
-  aiContentLabel: string;
-  credibilityAverage: number;
+  // Support both old and new field names for compatibility
+  overallBiasScore?: number;
+  averageGenderBias?: number;
+  overallBiasLabel?: string;
+  averageGenderBiasLabel?: string;
+  aiContentAverage?: number;
+  averageAIContent?: number;
+  aiContentLabel?: string;
+  averageAIContentLabel?: string;
+  credibilityAverage?: number;
+  averageCredibility?: number;
   womenFocusedCount: number;
   womenFocusedPercentage: number;
-  recommendation: string;
+  recommendation?: string;
+  recommendations?: string[];
 }
 
 interface CommunityResult {
@@ -78,7 +94,8 @@ const typeLabels: Record<string, string> = {
 };
 
 // Score color helper
-const getScoreColor = (score: number, type: "bias" | "ai" | "credibility") => {
+const getScoreColor = (scoreInput: number | undefined | null, type: "bias" | "ai" | "credibility"): string => {
+  const score = scoreInput ?? (type === "bias" ? 50 : type === "credibility" ? 50 : 0);
   if (type === "bias") {
     if (score >= 70) return "#22c55e";
     if (score >= 50) return "#e5e093";
@@ -252,65 +269,15 @@ export function LandingSearch() {
       {showResults && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mt-6">
           
-          {/* Aurora Insights Dashboard */}
-          {insights && hasWebResults && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6">
-              <Card className="p-4 bg-gradient-to-br from-[var(--color-aurora-purple)]/5 to-[var(--color-aurora-pink)]/5 border-[var(--color-aurora-purple)]/20">
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="w-5 h-5 text-[var(--color-aurora-purple)]" />
-                  <h4 className="font-semibold text-[var(--foreground)]">Aurora App Intelligence</h4>
-                  <Badge className="bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0 text-xs">
-                    Unique to Aurora App
-                  </Badge>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {/* Bias Score */}
-                  <div className="text-center p-3 bg-[var(--card)] rounded-xl">
-                    <div className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold"
-                      style={{ backgroundColor: `${getScoreColor(insights.overallBiasScore, "bias")}20`, color: getScoreColor(insights.overallBiasScore, "bias") }}>
-                      {insights.overallBiasScore}
-                    </div>
-                    <p className="text-xs font-medium text-[var(--foreground)]">Bias Score</p>
-                    <p className="text-[10px] text-[var(--muted-foreground)]">{insights.overallBiasLabel}</p>
-                  </div>
-                  
-                  {/* AI Content */}
-                  <div className="text-center p-3 bg-[var(--card)] rounded-xl">
-                    <div className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold"
-                      style={{ backgroundColor: `${getScoreColor(insights.aiContentAverage, "ai")}20`, color: getScoreColor(insights.aiContentAverage, "ai") }}>
-                      {insights.aiContentAverage}%
-                    </div>
-                    <p className="text-xs font-medium text-[var(--foreground)]">AI Content</p>
-                    <p className="text-[10px] text-[var(--muted-foreground)]">{insights.aiContentLabel}</p>
-                  </div>
-                  
-                  {/* Credibility */}
-                  <div className="text-center p-3 bg-[var(--card)] rounded-xl">
-                    <div className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold"
-                      style={{ backgroundColor: `${getScoreColor(insights.credibilityAverage, "credibility")}20`, color: getScoreColor(insights.credibilityAverage, "credibility") }}>
-                      {insights.credibilityAverage}
-                    </div>
-                    <p className="text-xs font-medium text-[var(--foreground)]">Credibility</p>
-                    <p className="text-[10px] text-[var(--muted-foreground)]">Source Trust</p>
-                  </div>
-                  
-                  {/* Women-Focused */}
-                  <div className="text-center p-3 bg-[var(--card)] rounded-xl">
-                    <div className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)]">
-                      {insights.womenFocusedPercentage}%
-                    </div>
-                    <p className="text-xs font-medium text-[var(--foreground)]">Women-Focused</p>
-                    <p className="text-[10px] text-[var(--muted-foreground)]">{insights.womenFocusedCount} sources</p>
-                  </div>
-                </div>
-                
-                {insights.recommendation && (
-                  <p className="text-xs text-[var(--muted-foreground)] mt-3 flex items-center gap-1">
-                    <Info className="w-3 h-3" /> {insights.recommendation}
-                  </p>
-                )}
-              </Card>
+          {/* Compact Summary Bar - Only show recommendation if needed */}
+          {insights && hasWebResults && (insights.recommendation || (insights.recommendations && insights.recommendations.length > 0)) && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-4">
+              <div className="flex items-center gap-2 px-3 py-2 bg-[var(--color-aurora-purple)]/5 rounded-lg border border-[var(--color-aurora-purple)]/10">
+                <Info className="w-4 h-4 text-[var(--color-aurora-purple)] flex-shrink-0" />
+                <p className="text-xs text-[var(--muted-foreground)]">
+                  {insights.recommendation || insights.recommendations?.[0]}
+                </p>
+              </div>
             </motion.div>
           )}
 
@@ -372,67 +339,101 @@ export function LandingSearch() {
                 <Badge className="text-xs bg-[var(--accent)] border-0">Powered by Brave Search</Badge>
               </p>
               
-              {webResults.map((result, i) => (
-                <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                  {/* Show ad after 3rd result for monetization */}
-                  {i === 3 && <LandingAd variant="search-results" className="mb-3" />}
-                  <Card className="p-4 hover:shadow-lg transition-all border-[var(--border)] hover:border-[var(--color-aurora-purple)]/30 bg-[var(--card)]">
-                    <div className="flex items-start gap-4">
-                      {/* Scores Column */}
-                      <div className="flex flex-col gap-1 items-center w-16 flex-shrink-0">
-                        {/* AI Score */}
-                        <div className="text-center" title="AI Content Detection">
-                          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold"
-                            style={{ backgroundColor: `${getScoreColor(result.aiContentScore, "ai")}15`, color: getScoreColor(result.aiContentScore, "ai") }}>
-                            <Bot className="w-4 h-4" />
+              {webResults.map((result, i) => {
+                const aiScore = result.aiContentScore ?? result.aiContentDetection?.percentage ?? 0;
+                const biasScore = result.biasScore ?? result.biasAnalysis?.genderBias?.score ?? 50;
+                const biasLabel = result.biasLabel ?? result.biasAnalysis?.genderBias?.label ?? "Neutral";
+                const credScore = result.credibilityScore ?? result.credibilityScore2?.score ?? 50;
+                const credLabel = result.credibilityLabel ?? result.credibilityScore2?.label ?? "Moderate";
+                const politicalBias = result.biasAnalysis?.politicalBias?.indicator ?? "Center";
+                const emotionalTone = result.biasAnalysis?.emotionalTone ?? "Balanced";
+                const commercialScore = result.biasAnalysis?.commercialBias?.score ?? 0;
+                
+                return (
+                  <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                    {i === 3 && <LandingAd variant="search-results" className="mb-3" />}
+                    <Card className="overflow-hidden hover:shadow-lg transition-all border-[var(--border)] hover:border-[var(--color-aurora-purple)]/30 bg-[var(--card)]">
+                      {/* Main Content */}
+                      <div className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            {/* Domain & Badges */}
+                            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                              <span className="text-xs text-[var(--color-aurora-purple)] font-medium">{result.domain}</span>
+                              {result.isWomenFocused && (
+                                <Badge className="text-[9px] bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] border-0 h-5">
+                                  <Heart className="w-2.5 h-2.5 mr-0.5" /> Women-Focused
+                                </Badge>
+                              )}
+                              {result.safetyFlags.slice(0, 2).map((flag, fi) => (
+                                <span key={fi} className="text-[9px] px-1.5 py-0.5 bg-[var(--accent)] rounded text-[var(--muted-foreground)]">{flag}</span>
+                              ))}
+                            </div>
+                            {/* Title */}
+                            <a href={result.url} target="_blank" rel="noopener noreferrer" className="group">
+                              <h4 className="font-semibold text-[var(--foreground)] line-clamp-2 group-hover:text-[var(--color-aurora-purple)] transition-colors leading-tight">
+                                {result.title}
+                              </h4>
+                            </a>
+                            {/* Description */}
+                            <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mt-1.5">{result.description}</p>
                           </div>
-                          <span className="text-[9px] text-[var(--muted-foreground)]">{result.aiContentScore}% AI</span>
-                        </div>
-                        {/* Bias Score */}
-                        <div className="text-center" title="Gender Bias Score">
-                          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold"
-                            style={{ backgroundColor: `${getScoreColor(result.biasScore, "bias")}15`, color: getScoreColor(result.biasScore, "bias") }}>
-                            {result.biasScore}
-                          </div>
-                          <span className="text-[9px] text-[var(--muted-foreground)]">Bias</span>
+                          <a href={result.url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-[var(--accent)] rounded-lg transition-colors flex-shrink-0">
+                            <ExternalLink className="w-4 h-4 text-[var(--muted-foreground)]" />
+                          </a>
                         </div>
                       </div>
                       
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className="text-xs text-[var(--color-aurora-purple)]">{result.domain}</span>
-                          {result.isWomenFocused && (
-                            <Badge className="text-[9px] bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] border-0">
-                              <Heart className="w-2 h-2 mr-0.5" /> Women-Focused
-                            </Badge>
+                      {/* Aurora Intelligence Bar - Per Result Analysis */}
+                      <div className="px-4 py-2.5 bg-[var(--accent)]/50 border-t border-[var(--border)]/50">
+                        <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
+                          {/* AI Content */}
+                          <div className="flex items-center gap-1.5 flex-shrink-0" title="AI-Generated Content Detection">
+                            <Bot className="w-3.5 h-3.5" style={{ color: getScoreColor(aiScore, "ai") }} />
+                            <span className="text-[10px] font-medium" style={{ color: getScoreColor(aiScore, "ai") }}>{aiScore}% AI</span>
+                          </div>
+                          <div className="w-px h-3 bg-[var(--border)]" />
+                          
+                          {/* Gender Bias */}
+                          <div className="flex items-center gap-1.5 flex-shrink-0" title="Gender Bias Score">
+                            <Scale className="w-3.5 h-3.5" style={{ color: getScoreColor(biasScore, "bias") }} />
+                            <span className="text-[10px] font-medium" style={{ color: getScoreColor(biasScore, "bias") }}>{biasLabel}</span>
+                          </div>
+                          <div className="w-px h-3 bg-[var(--border)]" />
+                          
+                          {/* Credibility */}
+                          <div className="flex items-center gap-1.5 flex-shrink-0" title="Source Credibility">
+                            <ShieldCheck className="w-3.5 h-3.5" style={{ color: getScoreColor(credScore, "credibility") }} />
+                            <span className="text-[10px] font-medium" style={{ color: getScoreColor(credScore, "credibility") }}>{credLabel}</span>
+                          </div>
+                          <div className="w-px h-3 bg-[var(--border)]" />
+                          
+                          {/* Political Bias */}
+                          <div className="flex items-center gap-1.5 flex-shrink-0" title="Political Leaning">
+                            <span className="text-[10px] text-[var(--muted-foreground)]">📊 {politicalBias}</span>
+                          </div>
+                          <div className="w-px h-3 bg-[var(--border)]" />
+                          
+                          {/* Emotional Tone */}
+                          <div className="flex items-center gap-1.5 flex-shrink-0" title="Emotional Tone">
+                            <span className="text-[10px] text-[var(--muted-foreground)]">💭 {emotionalTone}</span>
+                          </div>
+                          
+                          {/* Commercial Bias (if significant) */}
+                          {commercialScore > 30 && (
+                            <>
+                              <div className="w-px h-3 bg-[var(--border)]" />
+                              <div className="flex items-center gap-1.5 flex-shrink-0" title="Commercial/Promotional Content">
+                                <span className="text-[10px] text-[#f59e0b]">💰 Promotional</span>
+                              </div>
+                            </>
                           )}
-                          <Badge className="text-[9px] border-0" style={{ backgroundColor: `${getScoreColor(result.credibilityScore, "credibility")}15`, color: getScoreColor(result.credibilityScore, "credibility") }}>
-                            <ShieldCheck className="w-2 h-2 mr-0.5" /> {result.credibilityLabel}
-                          </Badge>
                         </div>
-                        <a href={result.url} target="_blank" rel="noopener noreferrer" className="group">
-                          <h4 className="font-medium text-[var(--foreground)] line-clamp-1 group-hover:text-[var(--color-aurora-purple)] transition-colors">
-                            {result.title}
-                          </h4>
-                        </a>
-                        <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mt-1">{result.description}</p>
-                        {result.safetyFlags.length > 0 && (
-                          <div className="flex gap-1 mt-2 flex-wrap">
-                            {result.safetyFlags.map((flag, fi) => (
-                              <span key={fi} className="text-[10px] px-2 py-0.5 bg-[var(--accent)] rounded-full">{flag}</span>
-                            ))}
-                          </div>
-                        )}
                       </div>
-                      
-                      <a href={result.url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-[var(--accent)] rounded-lg transition-colors">
-                        <ExternalLink className="w-4 h-4 text-[var(--muted-foreground)]" />
-                      </a>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
+                    </Card>
+                  </motion.div>
+                );
+              })}
             </div>
           )}
 

@@ -13,3 +13,6 @@ export * from './bias-analyzer';
 export * from './credibility-scorer';
 export * from './ai-detector';
 export * from './safety-analyzer';
+
+// Services
+export * from './gemini-service';

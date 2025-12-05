@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import {
   Dialog,
@@ -21,8 +21,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FileUpload } from "@/components/file-upload";
-import { Star, MapPin, Sparkles } from "lucide-react";
+import { Star, MapPin, Sparkles, Lock, Crown, Users } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
+import { Badge } from "@/components/ui/badge";
 
 interface PostCreateDialogProps {
   open: boolean;
@@ -48,6 +49,11 @@ export function PostCreateDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isGeocodingLocation, setIsGeocodingLocation] = useState(false);
+  const [contentAccess, setContentAccess] = useState<"public" | "subscribers" | "premium">("public");
+  const [requiredTier, setRequiredTier] = useState<string>("plus");
+
+  // Enable subscriber-only content for all users (creator feature)
+  const isCreator = true; // All users can create subscriber-only content
 
   // Update location when prefilled location changes
   useEffect(() => {
@@ -371,17 +377,96 @@ export function PostCreateDialog({
             />
           </div>
 
+          {/* Content Access Control - Subscriber-Only Content */}
+          <div>
+            <label className="text-sm font-medium mb-2 block flex items-center gap-2">
+              <Lock className="w-4 h-4" />
+              Content Access
+              <Badge className="bg-[var(--color-aurora-purple)]/10 text-[var(--color-aurora-purple)] border-0 text-xs">
+                Creator Feature
+              </Badge>
+            </label>
+            <Select value={contentAccess} onValueChange={(v) => setContentAccess(v as typeof contentAccess)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Who can see this post?" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-green-600" />
+                    <span>Public - Everyone can see</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="subscribers">
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                    <span>Subscribers Only</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="premium">
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
+                    <span>Premium Subscribers</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            {contentAccess !== "public" && (
+              <p className="text-xs text-[var(--color-aurora-purple)] mt-1">
+                💜 Only your {contentAccess === "premium" ? "premium " : ""}subscribers will see this content
+              </p>
+            )}
+          </div>
+
+          {/* Tier Selector for Subscriber Content */}
+          {contentAccess !== "public" && (
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                Required Tier
+              </label>
+              <Select value={requiredTier} onValueChange={setRequiredTier}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select minimum tier" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="plus">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[var(--color-aurora-lavender)]" />
+                      <span>Aurora Plus ($5/mo)</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="pro">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[var(--color-aurora-purple)]" />
+                      <span>Aurora Pro ($12/mo)</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="elite">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[var(--color-aurora-yellow)]" />
+                      <span>Aurora Elite ($25/mo)</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Anonymous Option */}
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="anonymous"
-              checked={isAnonymous}
+              checked={isAnonymous && contentAccess === "public"}
               onChange={(e) => setIsAnonymous(e.target.checked)}
               className="rounded"
+              disabled={contentAccess !== "public"}
             />
-            <label htmlFor="anonymous" className="text-sm">
+            <label htmlFor="anonymous" className={`text-sm ${contentAccess !== "public" ? "text-gray-400" : ""}`}>
               Post anonymously
+              {contentAccess !== "public" && (
+                <span className="text-xs text-gray-400 ml-1">(Not available for subscriber content)</span>
+              )}
             </label>
           </div>
 

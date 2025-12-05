@@ -72,11 +72,11 @@ Please provide a helpful AI summary that:
 Keep it concise, warm, genuinely helpful, and empowering.`;
 
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      systemInstruction: systemPrompt,
+      model: "gemini-2.0-flash",
     });
 
-    const result = await model.generateContent(userPrompt);
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+    const result = await model.generateContent(fullPrompt);
     const response = result.response;
     const summary = response.text();
 

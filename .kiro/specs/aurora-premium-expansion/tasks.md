@@ -265,9 +265,10 @@
     - Track subscriber count milestones
     - Apply 10% fee (instead of 15%) for creators with 1000+ subscribers
     - _Requirements: 6.4_
-  - [ ] 13.4 Add subscriber-only content controls (future)
+  - [x] 13.4 Add subscriber-only content controls
     - Add tier selector when creating posts/reels
     - Implement content access checks based on subscriber tier
+    - **File: aurora-app/components/post-create-dialog.tsx** ✅
     - _Requirements: 6.2_
 
 - [x] 14. Checkpoint - Ensure all tests pass
