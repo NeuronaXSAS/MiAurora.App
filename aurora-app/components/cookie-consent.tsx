@@ -130,22 +130,26 @@ export function CookieConsent() {
 
   return (
     <>
-      {/* Cookie Banner */}
+      {/* Cookie Banner - Fixed for mobile with proper z-index and touch targets */}
       <AnimatePresence>
         {showBanner && !showSettings && (
           <motion.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-0 left-0 right-0 z-[100] p-4 sm:p-6"
+            className="fixed bottom-0 left-0 right-0 z-[9999] p-3 sm:p-6 pointer-events-auto"
+            style={{ 
+              paddingBottom: "max(12px, env(safe-area-inset-bottom))",
+              isolation: "isolate"
+            }}
           >
             <div className="max-w-4xl mx-auto bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden">
               <div className="p-4 sm:p-6">
-                <div className="flex items-start gap-4">
+                <div className="flex flex-col sm:flex-row items-start gap-4">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center flex-shrink-0">
                     <Cookie className="w-6 h-6 text-white" />
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 w-full">
                     <h3 className="font-bold text-lg text-[var(--foreground)] mb-1">
                       Your Privacy Matters 💜
                     </h3>
@@ -153,10 +157,12 @@ export function CookieConsent() {
                       Aurora App uses cookies to provide a safe, personalized experience. 
                       We never sell your data. Choose what works for you.
                     </p>
-                    <div className="flex flex-wrap gap-2">
+                    {/* Buttons - Stack vertically on mobile for better touch targets */}
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
                       <Button
                         onClick={acceptAll}
-                        className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white min-h-[44px]"
+                        className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white min-h-[48px] w-full sm:w-auto touch-manipulation"
+                        style={{ WebkitTapHighlightColor: "transparent" }}
                       >
                         <Check className="w-4 h-4 mr-2" />
                         Accept All
@@ -164,14 +170,16 @@ export function CookieConsent() {
                       <Button
                         onClick={acceptEssential}
                         variant="outline"
-                        className="border-[var(--border)] min-h-[44px]"
+                        className="border-[var(--border)] min-h-[48px] w-full sm:w-auto touch-manipulation"
+                        style={{ WebkitTapHighlightColor: "transparent" }}
                       >
                         Essential Only
                       </Button>
                       <Button
                         onClick={() => setShowSettings(true)}
                         variant="ghost"
-                        className="min-h-[44px]"
+                        className="min-h-[48px] w-full sm:w-auto touch-manipulation"
+                        style={{ WebkitTapHighlightColor: "transparent" }}
                       >
                         <Settings className="w-4 h-4 mr-2" />
                         Customize
@@ -181,13 +189,13 @@ export function CookieConsent() {
                 </div>
               </div>
               <div className="px-4 sm:px-6 py-3 bg-[var(--accent)]/50 border-t border-[var(--border)]">
-                <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[var(--muted-foreground)]">
                   <span>By using Aurora App, you agree to our policies</span>
                   <div className="flex gap-3">
-                    <Link href="/legal/privacy" className="hover:text-[var(--color-aurora-purple)] flex items-center gap-1">
+                    <Link href="/legal/privacy" className="hover:text-[var(--color-aurora-purple)] flex items-center gap-1 min-h-[44px] items-center">
                       Privacy <ExternalLink className="w-3 h-3" />
                     </Link>
-                    <Link href="/legal/cookies" className="hover:text-[var(--color-aurora-purple)] flex items-center gap-1">
+                    <Link href="/legal/cookies" className="hover:text-[var(--color-aurora-purple)] flex items-center gap-1 min-h-[44px] items-center">
                       Cookies <ExternalLink className="w-3 h-3" />
                     </Link>
                   </div>

@@ -18,7 +18,7 @@ import { ValuePropositionBanner } from "@/components/value-proposition-banner";
 import { ImmersiveFeed } from "@/components/immersive-feed";
 import { DailyEngagement } from "@/components/daily-engagement";
 import { MobilePostCard } from "@/components/mobile-post-card";
-import { SisterSpotlightCompact } from "@/components/sister-spotlight-card";
+import { SisterSpotlightCompact, SisterSpotlightFeedCard } from "@/components/sister-spotlight-card";
 import { 
   Sparkles, 
   ChevronDown, 
@@ -480,12 +480,15 @@ export function MobileFeed() {
           </div>
         )}
 
-        {/* Feed Items - Progressive Loading */}
+        {/* Feed Items - Progressive Loading with Sister Spotlight integration */}
         {displayedItems.map((item: any, index: number) => {
-          const showSuggested = index === 3;
+          // Show Sister Spotlight feed card after 4th post
+          const showSisterSpotlightCard = index === 4 && userId;
           // Show ad every 5 posts for free users (less on slow networks)
           const adFrequency = isSlowNetwork ? 8 : 5;
           const showAd = !isPremium && !shouldReduceData && index > 0 && index % adFrequency === 0;
+          // Show divider at certain points
+          const showDivider = index === 8;
 
           return (
             <div 
@@ -493,10 +496,17 @@ export function MobileFeed() {
               className="content-visibility-auto touch-feedback"
               style={{ containIntrinsicSize: 'auto 200px' }}
             >
+              {/* Sister Spotlight Feed Card - appears naturally in feed */}
+              {showSisterSpotlightCard && (
+                <div className="mb-3">
+                  <SisterSpotlightFeedCard currentUserId={userId} />
+                </div>
+              )}
+
               {/* Show ad before certain posts */}
               {showAd && <FeedAd isPremium={isPremium} />}
 
-              {showSuggested && (
+              {showDivider && (
                 <div className="px-1 py-2 flex items-center gap-2">
                   <div className="flex-1 h-px bg-[var(--border)]" />
                   <span className="text-xs text-[var(--muted-foreground)]">More posts</span>

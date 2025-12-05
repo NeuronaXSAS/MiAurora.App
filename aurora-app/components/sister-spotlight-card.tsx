@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { Id } from "@/convex/_generated/dataModel";
+import { cn } from "@/lib/utils";
 
 // Generate DiceBear Lorelei avatar URL
 function getAvatarUrl(user: { 
@@ -370,6 +371,9 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
  * Compact version for mobile feed - horizontal scroll
  */
 export function SisterSpotlightCompact({ currentUserId }: { currentUserId: Id<"users"> }) {
+  const [likedUsers, setLikedUsers] = useState<Set<string>>(new Set());
+  const [showMatchToast, setShowMatchToast] = useState<string | null>(null);
+  
   const suggestedUsers = useQuery(api.users.getSuggestedUsers, { 
     userId: currentUserId,
     limit: 5,
@@ -379,37 +383,82 @@ export function SisterSpotlightCompact({ currentUserId }: { currentUserId: Id<"u
 
   if (!suggestedUsers || suggestedUsers.length === 0) return null;
 
-  const handleQuickLike = async (userId: Id<"users">) => {
+  const handleQuickLike = async (userId: Id<"users">, userName: string) => {
+    if (likedUsers.has(userId)) return;
+    
     try {
-      await likeUser({
+      const result = await likeUser({
         userId: currentUserId,
         likedUserId: userId,
       });
+      
+      setLikedUsers(prev => new Set([...prev, userId]));
+      
+      if (result.isMatch) {
+        setShowMatchToast(userName);
+        setTimeout(() => setShowMatchToast(null), 3000);
+      }
     } catch (error) {
       console.error("Error liking user:", error);
     }
   };
 
   return (
-    <div className="bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 rounded-2xl p-3 border border-[var(--color-aurora-purple)]/20">
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles className="w-4 h-4 text-[var(--color-aurora-purple)]" />
-        <span className="text-sm font-semibold text-[var(--foreground)]">Sisters to meet</span>
-        <span className="text-[10px] text-[var(--muted-foreground)]">• Like to match</span>
+    <div className="bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 rounded-2xl p-3 border border-[var(--color-aurora-purple)]/20 relative overflow-hidden">
+      {/* Match Toast */}
+      <AnimatePresence>
+        {showMatchToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute inset-0 bg-gradient-to-r from-[var(--color-aurora-mint)] to-[var(--color-aurora-lavender)] flex items-center justify-center z-10 rounded-2xl"
+          >
+            <div className="text-center">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: [0, 1.2, 1] }}
+                className="text-3xl mb-1"
+              >
+                💜
+              </motion.div>
+              <p className="font-bold text-[var(--color-aurora-violet)]">
+                It's a Match with {showMatchToast}!
+              </p>
+              <p className="text-xs text-[var(--color-aurora-purple)]">+5 credits earned</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+          <span className="text-sm font-semibold text-[var(--foreground)]">Sisters to meet</span>
+        </div>
+        <span className="text-[10px] text-[var(--muted-foreground)] bg-[var(--color-aurora-pink)]/20 px-2 py-0.5 rounded-full">
+          💜 Like to match
+        </span>
       </div>
       
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
         {suggestedUsers.map((user) => {
           const avatarUrl = getAvatarUrl(user);
+          const isLiked = likedUsers.has(user._id);
           
           return (
-            <div 
+            <motion.div 
               key={user._id} 
               className="flex-shrink-0 flex flex-col items-center gap-1 group"
+              whileTap={{ scale: 0.95 }}
             >
               <div className="relative">
                 <Link href={`/user/${user._id}`}>
-                  <div className="w-16 h-16 rounded-full border-2 border-[var(--color-aurora-lavender)] group-hover:border-[var(--color-aurora-purple)] transition-colors overflow-hidden bg-[var(--color-aurora-lavender)]">
+                  <div className={`w-16 h-16 rounded-full border-2 transition-all overflow-hidden bg-[var(--color-aurora-lavender)] ${
+                    isLiked 
+                      ? "border-[var(--color-aurora-mint)] ring-2 ring-[var(--color-aurora-mint)]/30" 
+                      : "border-[var(--color-aurora-lavender)] group-hover:border-[var(--color-aurora-purple)]"
+                  }`}>
                     <img 
                       src={avatarUrl}
                       alt={user.name || "User"}
@@ -418,18 +467,254 @@ export function SisterSpotlightCompact({ currentUserId }: { currentUserId: Id<"u
                   </div>
                 </Link>
                 <button
-                  onClick={() => handleQuickLike(user._id)}
-                  className="absolute -bottom-1 -right-1 w-6 h-6 bg-[var(--color-aurora-pink)] rounded-full flex items-center justify-center hover:bg-[var(--color-aurora-purple)] transition-colors shadow-md"
+                  onClick={() => handleQuickLike(user._id, user.name?.split(" ")[0] || "Sister")}
+                  disabled={isLiked}
+                  className={`absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-md min-w-[28px] min-h-[28px] ${
+                    isLiked 
+                      ? "bg-[var(--color-aurora-mint)] cursor-default" 
+                      : "bg-[var(--color-aurora-pink)] hover:bg-[var(--color-aurora-purple)] active:scale-110"
+                  }`}
                 >
-                  <Heart className="w-3 h-3 text-white" />
+                  {isLiked ? (
+                    <Check className="w-3.5 h-3.5 text-[var(--color-aurora-violet)]" />
+                  ) : (
+                    <Heart className="w-3.5 h-3.5 text-white" />
+                  )}
                 </button>
               </div>
               <span className="text-[10px] text-[var(--foreground)] font-medium truncate max-w-[64px]">
                 {user.name?.split(" ")[0]}
               </span>
-            </div>
+              {user.trustScore && user.trustScore > 50 && (
+                <span className="text-[8px] text-[var(--color-aurora-mint)]">
+                  ✓ Trusted
+                </span>
+              )}
+            </motion.div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Feed-integrated Sister Spotlight - Shows as a feed card
+ * More engaging version that fits naturally in the feed
+ */
+export function SisterSpotlightFeedCard({ currentUserId }: { currentUserId: Id<"users"> }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [likedUsers, setLikedUsers] = useState<Set<string>>(new Set());
+  const [showMatch, setShowMatch] = useState(false);
+  const [matchedUser, setMatchedUser] = useState<any>(null);
+  
+  const suggestedUsers = useQuery(api.users.getSuggestedUsers, { 
+    userId: currentUserId,
+    limit: 3,
+  });
+
+  const likeUser = useMutation(api.connections.likeUser);
+  const skipUser = useMutation(api.connections.skipUser);
+
+  if (!suggestedUsers || suggestedUsers.length === 0) return null;
+
+  const currentUser = suggestedUsers[currentIndex];
+  if (!currentUser) return null;
+
+  const handleLike = async () => {
+    if (likedUsers.has(currentUser._id)) {
+      goToNext();
+      return;
+    }
+
+    try {
+      const result = await likeUser({
+        userId: currentUserId,
+        likedUserId: currentUser._id,
+      });
+
+      setLikedUsers(prev => new Set([...prev, currentUser._id]));
+
+      if (result.isMatch) {
+        setMatchedUser(result.matchedUser);
+        setShowMatch(true);
+        setTimeout(() => {
+          setShowMatch(false);
+          setMatchedUser(null);
+          goToNext();
+        }, 2500);
+      } else {
+        goToNext();
+      }
+    } catch (error) {
+      console.error("Error liking user:", error);
+      goToNext();
+    }
+  };
+
+  const handleSkip = async () => {
+    try {
+      await skipUser({
+        userId: currentUserId,
+        skippedUserId: currentUser._id,
+      });
+    } catch (error) {
+      console.error("Error skipping user:", error);
+    }
+    goToNext();
+  };
+
+  const goToNext = () => {
+    if (currentIndex < suggestedUsers.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      setCurrentIndex(0);
+    }
+  };
+
+  const avatarUrl = getAvatarUrl(currentUser);
+
+  return (
+    <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-sm text-[var(--foreground)]">Sister Spotlight</h3>
+            <p className="text-[10px] text-[var(--muted-foreground)]">Swipe to connect</p>
+          </div>
+        </div>
+        <Badge className="bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] border-0 text-[10px]">
+          {currentIndex + 1}/{suggestedUsers.length}
+        </Badge>
+      </div>
+
+      {/* Match Celebration */}
+      <AnimatePresence>
+        {showMatch && matchedUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-20 flex items-center justify-center bg-gradient-to-br from-[var(--color-aurora-mint)] to-[var(--color-aurora-lavender)]"
+          >
+            <div className="text-center px-4">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: [0, 1.3, 1] }}
+                className="text-5xl mb-3"
+              >
+                💜
+              </motion.div>
+              <h3 className="text-xl font-bold text-[var(--color-aurora-violet)]">
+                It's a Match!
+              </h3>
+              <p className="text-[var(--color-aurora-purple)]">
+                You and {matchedUser.name?.split(" ")[0]} can now chat
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Profile Card */}
+      <div className="p-4">
+        <div className="flex items-center gap-4">
+          {/* Avatar */}
+          <Link href={`/user/${currentUser._id}`}>
+            <div className="w-20 h-20 rounded-full border-3 border-[var(--color-aurora-lavender)] overflow-hidden bg-[var(--color-aurora-lavender)] shadow-lg">
+              <img 
+                src={avatarUrl}
+                alt={currentUser.name || "User"}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </Link>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <Link href={`/user/${currentUser._id}`}>
+              <h4 className="font-bold text-lg text-[var(--foreground)] hover:text-[var(--color-aurora-purple)]">
+                {currentUser.name}
+              </h4>
+            </Link>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge className="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] border-0 text-xs">
+                Trust: {currentUser.trustScore || 0}
+              </Badge>
+              {currentUser.isPremium && (
+                <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0 text-xs">
+                  ⭐ Premium
+                </Badge>
+              )}
+            </div>
+            {currentUser.location && (
+              <p className="text-xs text-[var(--muted-foreground)] mt-1 flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                {currentUser.location}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Bio */}
+        {currentUser.bio && (
+          <p className="mt-3 text-sm text-[var(--foreground)] line-clamp-2 italic">
+            "{currentUser.bio}"
+          </p>
+        )}
+
+        {/* Interests */}
+        {currentUser.interests && currentUser.interests.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {currentUser.interests.slice(0, 4).map((interest, idx) => (
+              <Badge 
+                key={idx} 
+                variant="secondary" 
+                className="text-xs bg-[var(--color-aurora-lavender)]/30 text-[var(--color-aurora-purple)]"
+              >
+                {interest}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="px-4 pb-4 flex items-center justify-center gap-4">
+        <Button
+          onClick={handleSkip}
+          variant="outline"
+          className="w-14 h-14 rounded-full border-2 border-[var(--muted)] hover:border-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10"
+        >
+          <X className="w-6 h-6 text-[var(--muted-foreground)]" />
+        </Button>
+        
+        <Link href={`/user/${currentUser._id}`}>
+          <Button
+            variant="outline"
+            className="w-12 h-12 rounded-full border-2 border-[var(--color-aurora-purple)]/30 hover:border-[var(--color-aurora-purple)]"
+          >
+            <Users className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+          </Button>
+        </Link>
+        
+        <Button
+          onClick={handleLike}
+          className="w-14 h-14 rounded-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 shadow-lg"
+        >
+          <Heart className="w-6 h-6 text-white" />
+        </Button>
+      </div>
+
+      {/* Footer hint */}
+      <div className="px-4 pb-3 text-center">
+        <p className="text-[10px] text-[var(--muted-foreground)]">
+          💜 Both must like to match • Matches can chat • +5 credits on match
+        </p>
       </div>
     </div>
   );

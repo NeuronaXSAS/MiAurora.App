@@ -9,7 +9,7 @@ import { AIChatCard } from "@/components/ai-chat-card";
 import { RouteFeedCard } from "@/components/route-feed-card";
 import { ReelFeedCard } from "@/components/reel-feed-card";
 import { OpportunityFeedCard } from "@/components/opportunity-feed-card";
-import { SisterSpotlightCard } from "@/components/sister-spotlight-card";
+import { SisterSpotlightCard, SisterSpotlightFeedCard } from "@/components/sister-spotlight-card";
 import { FeedAd } from "@/components/ads/feed-ad";
 import { PostCardSkeleton } from "@/components/loading-skeleton";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
