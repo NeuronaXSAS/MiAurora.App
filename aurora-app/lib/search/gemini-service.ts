@@ -105,11 +105,11 @@ Please provide a helpful, women-first summary of these results.`;
 
     // Extract source references from summary
     const sourceMatches = summaryText.match(/\[(\d+)\]/g) || [];
-    const parsedIndices = sourceMatches.map((m: string) => parseInt(m.replace(/[\[\]]/g, '')));
-    const uniqueIndices = Array.from(new Set(parsedIndices));
+    const parsedIndices: number[] = sourceMatches.map((m: string) => parseInt(m.replace(/[\[\]]/g, '')));
+    const uniqueIndices: number[] = [...new Set(parsedIndices)];
     const sources = uniqueIndices
-      .filter((i) => i <= results.length)
-      .map((i) => results[i - 1]?.url)
+      .filter((i: number) => i <= results.length)
+      .map((i: number) => results[i - 1]?.url)
       .filter((url): url is string => Boolean(url));
 
     // Validate summary length (Property 2: max 3 paragraphs)
