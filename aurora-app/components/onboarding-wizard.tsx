@@ -245,7 +245,7 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="text-center space-y-6"
+                  className="text-center space-y-5"
                 >
                   <div>
                     <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
@@ -256,13 +256,29 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                     </p>
                   </div>
 
-                  <div className="bg-white/5 rounded-2xl p-6 border border-white/10 max-w-sm mx-auto">
-                    <div className="w-24 h-24 mx-auto bg-gradient-to-br from-[var(--color-aurora-pink)]/30 to-[var(--color-aurora-purple)]/30 rounded-full flex items-center justify-center mb-4">
-                      <Heart className="w-12 h-12 text-[var(--color-aurora-pink)]" />
+                  {/* Example Avatars Gallery */}
+                  <div className="bg-white/5 rounded-2xl p-4 border border-white/10 max-w-md mx-auto">
+                    <p className="text-xs text-[var(--color-aurora-cream)]/60 mb-3">See what other sisters created:</p>
+                    <div className="flex justify-center gap-2 mb-4">
+                      {[
+                        { bg: '#FFE8E8', hair: '#6F4E37', skin: '#EDB98A' },
+                        { bg: '#E8E4FF', hair: '#2C1B18', skin: '#D08B5B' },
+                        { bg: '#D6F4EC', hair: '#B5651D', skin: '#F5D0C5' },
+                        { bg: '#FFF0F5', hair: '#8B5CF6', skin: '#8D5524' },
+                      ].map((example, i) => (
+                        <div
+                          key={i}
+                          className="w-14 h-14 rounded-xl overflow-hidden shadow-md"
+                          style={{ backgroundColor: example.bg }}
+                        >
+                          <img 
+                            src={`https://api.dicebear.com/7.x/lorelei/svg?seed=aurora-example-${i}&backgroundColor=${example.bg.slice(1)}&hairColor=${example.hair.slice(1)}&skinColor=${example.skin.slice(1)}`}
+                            alt={`Example avatar ${i + 1}`}
+                            className="w-full h-full"
+                          />
+                        </div>
+                      ))}
                     </div>
-                    <p className="text-sm text-[var(--color-aurora-cream)]/70 mb-4">
-                      Customize your companion's look to make her uniquely yours
-                    </p>
                     <Button
                       onClick={() => setShowAvatarCreator(true)}
                       className="w-full min-h-[48px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:opacity-90"
@@ -332,12 +348,41 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                       <MapPin className="w-4 h-4 text-[var(--color-aurora-mint)]" />
                       Where are you based? (optional)
                     </Label>
-                    <Input
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      placeholder="e.g., New York, Tokyo, London..."
-                      className="min-h-[48px] bg-white/5 border-white/20 text-white placeholder:text-white/40 rounded-xl"
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        placeholder="e.g., New York, Tokyo, London..."
+                        className="flex-1 min-h-[48px] bg-white/5 border-white/20 text-white placeholder:text-white/40 rounded-xl"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+                              navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
+                            });
+                            const res = await fetch(
+                              `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`
+                            );
+                            const data = await res.json();
+                            const city = data.address?.city || data.address?.town || data.address?.village || '';
+                            const country = data.address?.country || '';
+                            setLocation(city ? `${city}, ${country}` : country);
+                          } catch {
+                            // Silently fail - user can enter manually
+                          }
+                        }}
+                        className="min-h-[48px] px-4 bg-white/10 border-white/20 text-white hover:bg-white/20 rounded-xl"
+                        title="Auto-detect my location"
+                      >
+                        <MapPin className="w-5 h-5" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-[var(--color-aurora-cream)]/50 mt-2">
+                      💡 Sharing your location helps our safety intelligence community warn others about unsafe areas
+                    </p>
                   </div>
                 </motion.div>
               )}

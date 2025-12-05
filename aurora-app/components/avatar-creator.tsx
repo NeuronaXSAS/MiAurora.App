@@ -132,14 +132,14 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
 
         {/* Content - Scrollable */}
         <div className="flex-1 overflow-y-auto px-5 py-4 min-h-0">
-          <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-5">
-            {/* Avatar Preview - Centered on mobile */}
-            <div className="flex flex-col items-center gap-3 mx-auto md:mx-0">
+          <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6 items-start">
+            {/* Avatar Preview - Properly Centered */}
+            <div className="flex flex-col items-center justify-center gap-3 mx-auto">
               <div 
-                className="w-40 h-40 rounded-2xl overflow-hidden shadow-lg flex items-center justify-center"
+                className="w-40 h-40 rounded-2xl overflow-hidden shadow-lg flex items-center justify-center mx-auto"
                 style={{ backgroundColor: `#${config.backgroundColor}` }}
               >
-                <div className="w-36 h-36">
+                <div className="w-36 h-36 flex items-center justify-center">
                   <AvatarPreview config={config} />
                 </div>
               </div>
@@ -291,14 +291,7 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
                 </div>
               </div>
 
-              {/* Freckles Toggle */}
-              <div className="flex items-center justify-between py-2 px-3 bg-white/5 rounded-xl">
-                <Label className="text-white/80 text-sm">Add Freckles</Label>
-                <Switch
-                  checked={config.freckles}
-                  onCheckedChange={(checked) => setConfig({ ...config, freckles: checked })}
-                />
-              </div>
+              {/* Freckles option removed - was non-functional */}
             </div>
           </div>
         </div>

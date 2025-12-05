@@ -1,10 +1,22 @@
 // Internationalization support for Aurora App
 // Making the platform accessible to women worldwide
+// Zero-cost i18n - all translations are built-in JSON files
+
+// Import translation JSON files
+import enTranslations from './translations/en.json';
+import esTranslations from './translations/es.json';
 
 export type SupportedLocale = 
   | 'en' | 'es' | 'fr' | 'de' | 'pt' | 'it' 
   | 'zh' | 'ja' | 'ko' | 'ar' | 'hi' | 'ru'
   | 'tr' | 'pl' | 'nl' | 'sv' | 'th' | 'vi';
+
+// Full app translations loaded from JSON files
+export const appTranslations: Record<string, Record<string, string>> = {
+  en: enTranslations,
+  es: esTranslations,
+  // Other languages will fall back to English
+};
 
 export const SUPPORTED_LOCALES: Record<SupportedLocale, { name: string; nativeName: string; rtl?: boolean }> = {
   en: { name: 'English', nativeName: 'English' },
@@ -460,4 +472,24 @@ export function t(key: string, locale: SupportedLocale = 'en'): string {
 // Check if locale is RTL
 export function isRTL(locale: SupportedLocale): boolean {
   return SUPPORTED_LOCALES[locale]?.rtl || false;
+}
+
+/**
+ * Get app translation - uses JSON translation files
+ * Falls back to English if key not found in selected locale
+ */
+export function tApp(key: string, locale: SupportedLocale = 'en'): string {
+  // First try the JSON translations
+  const localeTranslations = appTranslations[locale];
+  if (localeTranslations?.[key]) {
+    return localeTranslations[key];
+  }
+  
+  // Fall back to English JSON
+  if (appTranslations.en?.[key]) {
+    return appTranslations.en[key];
+  }
+  
+  // Fall back to legacy translations
+  return translations[locale]?.[key] || translations.en?.[key] || key;
 }

@@ -8,12 +8,13 @@
  */
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { SupportedLocale, getBrowserLocale, tLanding, SUPPORTED_LOCALES } from "./i18n";
+import { SupportedLocale, getBrowserLocale, tLanding, tApp, SUPPORTED_LOCALES } from "./i18n";
 
 interface LocaleContextType {
   locale: SupportedLocale;
   setLocale: (locale: SupportedLocale) => void;
-  t: (key: string) => string;
+  t: (key: string) => string;        // Landing page translations
+  tApp: (key: string) => string;     // Full app translations
   isRTL: boolean;
 }
 
@@ -41,6 +42,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   };
 
   const t = (key: string) => tLanding(key, locale);
+  const tAppFn = (key: string) => tApp(key, locale);
 
   const isRTL = SUPPORTED_LOCALES[locale]?.rtl || false;
 
@@ -50,7 +52,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <LocaleContext.Provider value={{ locale, setLocale, t, isRTL }}>
+    <LocaleContext.Provider value={{ locale, setLocale, t, tApp: tAppFn, isRTL }}>
       {children}
     </LocaleContext.Provider>
   );
@@ -64,6 +66,7 @@ export function useLocale() {
       locale: 'en' as SupportedLocale,
       setLocale: () => {},
       t: (key: string) => tLanding(key, 'en'),
+      tApp: (key: string) => tApp(key, 'en'),
       isRTL: false,
     };
   }

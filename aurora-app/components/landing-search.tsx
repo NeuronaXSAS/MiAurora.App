@@ -13,7 +13,7 @@
  * REDESIGNED: Premium, empowering, modern, futuristic UI
  */
 
-import { useState, useEffect, useRef, useCallback, memo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,12 +24,13 @@ import {
   Search, X, FileText, MapPin as Route, Users, Briefcase, Shield, 
   Lock, ArrowRight, TrendingUp, Globe,
   Info, ExternalLink, Brain, Heart, Eye, Zap, Scale,
-  Bot, ShieldCheck, Loader2, Sparkles, CheckCircle2, AlertTriangle,
-  BarChart3, Target, Gauge,
+  Bot, ShieldCheck, Loader2, Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { LandingAd } from "@/components/ads/landing-ad";
 import { AISearchSuggestions } from "@/components/ai-search-suggestions";
+import { TrustScoreBadge, InlineTrustScore } from "@/components/search/trust-score-badge";
+import { calculateTrustScore, TrustScoreResult } from "@/lib/search/trust-score";
 
 interface WebSearchResult {
   title: string;
@@ -97,103 +98,7 @@ const typeLabels: Record<string, string> = {
   opportunity: "Opportunity", resource: "Resource", web: "Web",
 };
 
-// Score color helper - Enhanced with gradients
-const getScoreColor = (scoreInput: number | undefined | null, type: "bias" | "ai" | "credibility"): string => {
-  const score = scoreInput ?? (type === "bias" ? 50 : type === "credibility" ? 50 : 0);
-  if (type === "bias") {
-    if (score >= 70) return "#22c55e";
-    if (score >= 50) return "#e5e093";
-    if (score >= 30) return "#f59e0b";
-    return "#f05a6b";
-  }
-  if (type === "ai") {
-    if (score <= 20) return "#22c55e";
-    if (score <= 40) return "#e5e093";
-    if (score <= 60) return "#f59e0b";
-    return "#f05a6b";
-  }
-  // credibility
-  if (score >= 70) return "#22c55e";
-  if (score >= 50) return "#e5e093";
-  return "#f59e0b";
-};
 
-// Premium Score Badge Component - Larger, more visible
-const ScoreBadge = memo(({ 
-  icon: Icon, 
-  label, 
-  value, 
-  color, 
-  tooltip 
-}: { 
-  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
-  label: string;
-  value: string | number;
-  color: string;
-  tooltip: string;
-}) => (
-  <div 
-    className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl bg-[var(--background)]/80 border border-[var(--border)]/50 min-w-[70px] hover:scale-105 transition-transform cursor-help"
-    title={tooltip}
-  >
-    <div className="flex items-center gap-1.5">
-      <Icon className="w-4 h-4" style={{ color }} />
-      <span className="text-xs font-bold" style={{ color }}>{value}</span>
-    </div>
-    <span className="text-[9px] text-[var(--muted-foreground)] font-medium uppercase tracking-wide">{label}</span>
-  </div>
-));
-ScoreBadge.displayName = "ScoreBadge";
-
-// Circular Progress Indicator for scores
-const CircularScore = memo(({ 
-  score, 
-  label, 
-  color,
-  size = 48 
-}: { 
-  score: number; 
-  label: string; 
-  color: string;
-  size?: number;
-}) => {
-  const circumference = 2 * Math.PI * 18;
-  const strokeDashoffset = circumference - (score / 100) * circumference;
-  
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg className="transform -rotate-90" width={size} height={size}>
-          <circle
-            cx={size/2}
-            cy={size/2}
-            r="18"
-            stroke="var(--border)"
-            strokeWidth="3"
-            fill="none"
-          />
-          <circle
-            cx={size/2}
-            cy={size/2}
-            r="18"
-            stroke={color}
-            strokeWidth="3"
-            fill="none"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-            className="transition-all duration-500"
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs font-bold" style={{ color }}>{score}</span>
-        </div>
-      </div>
-      <span className="text-[9px] text-[var(--muted-foreground)] font-medium">{label}</span>
-    </div>
-  );
-});
-CircularScore.displayName = "CircularScore";
 
 export function LandingSearch() {
   const [query, setQuery] = useState("");
@@ -491,14 +396,20 @@ export function LandingSearch() {
               </p>
               
               {webResults.map((result, i) => {
+                // Calculate Aurora Trust Score™ for this result
                 const aiScore = result.aiContentScore ?? result.aiContentDetection?.percentage ?? 0;
                 const biasScore = result.biasScore ?? result.biasAnalysis?.genderBias?.score ?? 50;
-                const biasLabel = result.biasLabel ?? result.biasAnalysis?.genderBias?.label ?? "Neutral";
                 const credScore = result.credibilityScore ?? result.credibilityScore2?.score ?? 50;
-                const credLabel = result.credibilityLabel ?? result.credibilityScore2?.label ?? "Moderate";
-                const politicalBias = result.biasAnalysis?.politicalBias?.indicator ?? "Center";
-                const emotionalTone = result.biasAnalysis?.emotionalTone ?? "Balanced";
-                const commercialScore = result.biasAnalysis?.commercialBias?.score ?? 0;
+                
+                const trustScore = calculateTrustScore({
+                  genderBiasScore: biasScore,
+                  credibilityScore: credScore,
+                  aiContentPercentage: aiScore,
+                  publishedDate: result.age,
+                  isWomenFocused: result.isWomenFocused,
+                  domain: result.domain,
+                  contentType: result.biasAnalysis?.emotionalTone,
+                });
                 
                 return (
                   <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
@@ -507,10 +418,35 @@ export function LandingSearch() {
                       {/* Main Content */}
                       <div className="p-4">
                         <div className="flex items-start gap-3">
+                          {/* Aurora Trust Score™ - Prominent Left Side */}
+                          <div className="flex-shrink-0 hidden sm:block">
+                            <div 
+                              className="w-14 h-14 rounded-xl flex flex-col items-center justify-center font-bold shadow-lg cursor-help"
+                              style={{ 
+                                backgroundColor: `${trustScore.color}15`,
+                                boxShadow: `0 0 20px ${trustScore.color}30`,
+                                border: `2px solid ${trustScore.color}40`
+                              }}
+                              title={`Aurora Trust Score: ${trustScore.score}/100 - ${trustScore.label}`}
+                            >
+                              <span className="text-lg">{trustScore.emoji}</span>
+                              <span 
+                                className="text-sm font-black"
+                                style={{ color: trustScore.color }}
+                              >
+                                {trustScore.score}
+                              </span>
+                            </div>
+                          </div>
+                          
                           <div className="flex-1 min-w-0">
                             {/* Domain & Badges */}
                             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                               <span className="text-xs text-[var(--color-aurora-purple)] font-medium">{result.domain}</span>
+                              {/* Mobile Trust Score */}
+                              <div className="sm:hidden">
+                                <InlineTrustScore score={trustScore.score} color={trustScore.color} emoji={trustScore.emoji} />
+                              </div>
                               {result.isWomenFocused && (
                                 <Badge className="text-[9px] bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] border-0 h-5">
                                   <Heart className="w-2.5 h-2.5 mr-0.5" /> Women-Focused
@@ -535,74 +471,9 @@ export function LandingSearch() {
                         </div>
                       </div>
                       
-                      {/* Aurora Intelligence Bar - PREMIUM Per Result Analysis */}
+                      {/* Aurora Trust Score™ Details - Expandable */}
                       <div className="px-4 py-3 bg-gradient-to-r from-[var(--color-aurora-purple)]/5 via-[var(--accent)]/50 to-[var(--color-aurora-pink)]/5 border-t border-[var(--color-aurora-purple)]/10">
-                        {/* Premium Analysis Header */}
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20">
-                            <Sparkles className="w-3 h-3 text-[var(--color-aurora-purple)]" />
-                            <span className="text-[10px] font-semibold text-[var(--color-aurora-purple)]">Aurora Analysis</span>
-                          </div>
-                        </div>
-                        
-                        {/* Score Badges - Larger, More Visible */}
-                        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
-                          {/* AI Content - Premium Badge */}
-                          <ScoreBadge
-                            icon={Bot}
-                            label="AI Content"
-                            value={`${aiScore}%`}
-                            color={getScoreColor(aiScore, "ai")}
-                            tooltip="Percentage of AI-generated content detected"
-                          />
-                          
-                          {/* Gender Bias - Premium Badge */}
-                          <ScoreBadge
-                            icon={Scale}
-                            label="Bias"
-                            value={biasLabel}
-                            color={getScoreColor(biasScore, "bias")}
-                            tooltip={`Gender bias score: ${biasScore}/100`}
-                          />
-                          
-                          {/* Credibility - Premium Badge */}
-                          <ScoreBadge
-                            icon={ShieldCheck}
-                            label="Trust"
-                            value={credLabel}
-                            color={getScoreColor(credScore, "credibility")}
-                            tooltip={`Source credibility: ${credScore}/100`}
-                          />
-                          
-                          {/* Political Bias - Premium Badge */}
-                          <ScoreBadge
-                            icon={BarChart3}
-                            label="Political"
-                            value={politicalBias}
-                            color="#8b5cf6"
-                            tooltip="Political leaning of the source"
-                          />
-                          
-                          {/* Emotional Tone - Premium Badge */}
-                          <ScoreBadge
-                            icon={Target}
-                            label="Tone"
-                            value={emotionalTone}
-                            color="#6366f1"
-                            tooltip="Emotional tone of the content"
-                          />
-                          
-                          {/* Commercial Bias (if significant) */}
-                          {commercialScore > 30 && (
-                            <ScoreBadge
-                              icon={AlertTriangle}
-                              label="Promo"
-                              value="Yes"
-                              color="#f59e0b"
-                              tooltip="Contains promotional/commercial content"
-                            />
-                          )}
-                        </div>
+                        <TrustScoreBadge trustScore={trustScore} compact={false} />
                       </div>
                     </Card>
                   </motion.div>

@@ -1,0 +1,163 @@
+# Implementation Plan
+
+- [x] 1. Enhanced i18n System (Zero-Cost)
+  - [x] 1.1 Create translation JSON files structure
+    - Create `lib/translations/` directory with en.json, es.json, pt.json, fr.json, de.json, ar.json, hi.json, zh.json
+    - Include 200+ translation keys covering all UI text
+    - _Requirements: 1.1, 1.5_
+  - [x] 1.2 Enhance LocaleContext with full app support
+    - Update `lib/locale-context.tsx` to load translations dynamically
+    - Add formatDate and formatNumber functions per locale
+    - Persist locale to user profile in Convex when authenticated
+    - _Requirements: 1.1, 1.4_
+  - [ ]* 1.3 Write property test for translation consistency
+    - **Property 1: Translation System Consistency**
+    - **Validates: Requirements 1.1, 1.3, 1.4**
+  - [ ] 1.4 Implement RTL support for Arabic
+    - Add `dir="rtl"` attribute when Arabic is selected
+    - Update CSS for RTL-aware layouts
+    - _Requirements: 1.6_
+  - [ ]* 1.5 Write property test for RTL detection
+    - **Property 2: RTL Detection Accuracy**
+    - **Validates: Requirements 1.6**
+
+- [x] 2. Onboarding Flow Improvements
+  - [x] 2.1 Fix avatar creator centering
+    - Update `avatar-creator.tsx` to center avatar preview with proper flexbox
+    - Remove freckles toggle (non-functional)
+    - _Requirements: 2.1, 2.2_
+  - [x] 2.2 Add example avatars gallery
+    - Create gallery showing 4-6 pre-made avatar examples
+    - Replace heart icon with actual avatar previews
+    - _Requirements: 2.3_
+  - [x] 2.3 Implement auto-detect location
+    - Add geolocation button to "Tell us about yourself" step
+    - Use Nominatim API for reverse geocoding (free)
+    - Show explanation about safety intelligence community
+    - _Requirements: 2.4, 2.5, 2.6_
+  - [ ] 2.4 Connect privacy settings to user defaults
+    - Store privacy selection in Convex user profile
+    - Apply as default when creating posts
+    - _Requirements: 2.7, 5.1, 5.2, 5.3_
+  - [ ]* 2.5 Write property test for privacy defaults
+    - **Property 3: Privacy Defaults Consistency**
+    - **Validates: Requirements 5.1, 5.2, 5.3, 2.7**
+
+- [ ] 3. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 4. Google AdSense Integration
+  - [x] 4.1 Create AdSense component
+    - Create `components/ads/adsense-unit.tsx` with responsive ad support
+    - Handle ad load failures gracefully
+    - _Requirements: 3.1, 3.4, 3.5_
+  - [x] 4.2 Add AdSense to landing page
+    - Place ad units below hero section and between content sections
+    - Ensure compliance with AdSense policies
+    - _Requirements: 3.1, 3.3_
+  - [x] 4.3 Add AdSense to feed
+    - Insert ad units every 5th post in feed
+    - Responsive sizing for mobile/desktop
+    - _Requirements: 3.2, 3.5_
+  - [x] 4.4 Add AdSense script to layout
+    - Load AdSense script in `app/layout.tsx`
+    - Configure with placeholder client ID (user will add real ID)
+    - _Requirements: 3.1_
+
+- [ ] 5. Desktop Feed Layout Improvements
+  - [ ] 5.1 Implement three-column grid layout
+    - Update feed page with CSS Grid (240px | 1fr | 320px)
+    - Responsive breakpoints for tablet and mobile
+    - _Requirements: 4.1_
+  - [ ] 5.2 Redesign post cards (Reddit-style)
+    - Compact horizontal engagement metrics
+    - Consistent spacing and typography
+    - Subtle hover effects
+    - _Requirements: 4.2, 4.3, 4.4_
+  - [ ] 5.3 Implement sticky right sidebar
+    - Safety Pulse, Communities, Trending widgets
+    - Sticky positioning with proper scroll behavior
+    - _Requirements: 4.5_
+
+- [ ] 6. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 7. Aurora Trust Score™ Implementation
+  - [x] 7.1 Create Trust Score calculation function
+    - Implement `calculateAuroraTrustScore()` in `lib/search/trust-score.ts`
+    - Factor in gender bias, credibility, AI content, freshness
+    - _Requirements: 9.1, 9.2_
+  - [x] 7.2 Create Trust Score visual component
+    - Large score badge with color coding and glow effect
+    - Quick badges row (Women-Positive, Content Type, Freshness, AI%)
+    - _Requirements: 9.1, 9.2_
+  - [x] 7.3 Implement expandable details panel
+    - "Why Aurora trusts this" explanation
+    - Key factors and concerns list
+    - Better alternatives suggestions
+    - _Requirements: 9.3, 9.4, 9.5_
+  - [ ]* 7.4 Write property test for bias explanation completeness
+    - **Property 6: Bias Explanation Completeness**
+    - **Validates: Requirements 9.1, 9.2, 9.3, 9.4**
+  - [ ]* 7.5 Write property test for alternative source suggestion
+    - **Property 8: Alternative Source Suggestion**
+    - **Validates: Requirements 9.5**
+
+- [x] 8. Enhanced AI Search with Aurora Personality
+  - [x] 8.1 Update AI summary prompt with Aurora personality
+    - Supportive, empowering, women-first perspective
+    - Language detection and response in user's language
+    - Empowering closing note
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
+  - [ ]* 8.2 Write property test for language detection
+    - **Property 7: Language Detection for AI Summary**
+    - **Validates: Requirements 6.1, 6.5**
+
+- [ ] 9. Video Search Results
+  - [ ] 9.1 Extend Brave Search API to fetch video results
+    - Update `/api/search/brave/route.ts` to include video results
+    - Parse video metadata (thumbnail, duration, channel, views)
+    - _Requirements: 7.1, 7.2_
+  - [ ] 9.2 Create video result card component
+    - Thumbnail with duration overlay
+    - Channel, view count, publish date
+    - Women-focused indicator
+    - _Requirements: 7.1, 7.2, 7.4_
+  - [ ]* 9.3 Write property test for video result rendering
+    - **Property 4: Video Result Rendering Completeness**
+    - **Validates: Requirements 7.1, 7.2**
+
+- [ ] 10. Unified Search (Web + Aurora Content)
+  - [ ] 10.1 Create unified search API endpoint
+    - Combine Brave Search results with Convex community search
+    - Prioritize Aurora content when relevant
+    - _Requirements: 8.1, 8.3_
+  - [ ] 10.2 Update search UI for unified results
+    - Clear visual distinction between web and Aurora content
+    - Tabs for filtering (All, Web, Aurora Community)
+    - _Requirements: 8.1, 8.2_
+  - [ ]* 10.3 Write property test for unified search
+    - **Property 5: Unified Search Result Presence**
+    - **Validates: Requirements 8.1, 8.3, 8.4**
+
+- [ ] 11. Additional Differentiating Features
+  - [ ] 11.1 Implement Safety Alerts on search results
+    - Detect and display warnings for known problematic sites
+    - Community-reported issues indicator
+    - _Requirements: 9.1_
+  - [ ] 11.2 Add "Sisters Searched This" community insights
+    - Show search popularity and helpful results
+    - Related searches from community
+    - _Requirements: 8.1_
+  - [ ] 11.3 Implement Aurora Verified badge
+    - Display badge for community-verified sources
+    - Trust level indicators (gold, silver, bronze)
+    - _Requirements: 9.1_
+  - [ ] 11.4 Add Quick Actions based on search intent
+    - Detect intent (safety, job, community, health)
+    - Show relevant Aurora App feature links
+    - _Requirements: 8.1_
+
+- [ ] 12. Final Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+

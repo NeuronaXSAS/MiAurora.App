@@ -22,6 +22,7 @@ import { SignupIncentiveBanner } from "@/components/signup-incentive-banner";
 import { LandingSearch } from "@/components/landing-search";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { LocaleProvider, useLocale } from "@/lib/locale-context";
+import { LandingPageAd } from "@/components/ads/adsense-unit";
 
 // Wrapper component that provides locale context
 export default function LandingPage() {
@@ -394,6 +395,9 @@ function LandingPageContent() {
           >
             <LandingSearch />
           </motion.div>
+          
+          {/* AdSense - Between search and stats */}
+          <LandingPageAd className="mt-12" />
         </div>
       </section>
 
