@@ -23,13 +23,14 @@ import {
 } from "@/components/ui/dialog";
 import { 
   ArrowLeft, Send, MoreVertical, Edit2, Trash2, Copy, 
-  Forward, Reply, Smile, Check, CheckCheck, X
+  Forward, Reply, Smile, Check, CheckCheck, X, Heart, Lock
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { useRouter, useParams } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { generateAvatarUrl, AvatarConfig } from "@/hooks/use-avatar";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 // Reaction emoji options
 const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍", "🙏", "💜"];
@@ -74,6 +75,15 @@ export default function ConversationPage() {
     otherUserId ? { userId: otherUserId } : "skip"
   );
 
+  // Check if users are matched (can chat)
+  const connectionStatus = useQuery(
+    api.connections.getConnectionStatus,
+    currentUserId && otherUserId 
+      ? { userId: currentUserId, otherUserId: otherUserId } 
+      : "skip"
+  );
+
+  const likeUser = useMutation(api.connections.likeUser);
   const sendMessage = useMutation(api.directMessages.send);
   const editMessage = useMutation(api.directMessages.editMessage);
   const deleteMessage = useMutation(api.directMessages.deleteMessage);
@@ -410,8 +420,56 @@ export default function ConversationPage() {
       </div>
 
 
+      {/* Not Matched - Show Like Prompt */}
+      {connectionStatus && !connectionStatus.canChat && (
+        <div className="bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border-t border-[var(--color-aurora-purple)]/20 px-4 py-6">
+          <div className="max-w-md mx-auto text-center">
+            <div className="w-16 h-16 bg-[var(--color-aurora-lavender)] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-8 h-8 text-[var(--color-aurora-purple)]" />
+            </div>
+            <h3 className="font-semibold text-lg text-[var(--foreground)] mb-2">
+              {connectionStatus.status === "liked" 
+                ? "Waiting for them to like you back 💜" 
+                : connectionStatus.status === "liked_you"
+                ? `${otherUser?.name?.split(" ")[0] || "This user"} likes you!`
+                : "Match to start chatting"}
+            </h3>
+            <p className="text-sm text-[var(--muted-foreground)] mb-4">
+              {connectionStatus.status === "liked"
+                ? "You've liked this person. Once they like you back, you can start chatting!"
+                : connectionStatus.status === "liked_you"
+                ? "Like them back to match and start a conversation!"
+                : "Both users need to like each other to unlock messaging."}
+            </p>
+            {connectionStatus.status === "liked_you" && currentUserId && (
+              <Button
+                onClick={async () => {
+                  try {
+                    await likeUser({ userId: currentUserId, likedUserId: otherUserId });
+                  } catch (error) {
+                    console.error("Error liking user:", error);
+                  }
+                }}
+                className="bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 min-h-[48px] px-8"
+              >
+                <Heart className="w-5 h-5 mr-2" />
+                Like Back & Match
+              </Button>
+            )}
+            {connectionStatus.status === "none" && (
+              <Link href="/feed">
+                <Button className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] min-h-[48px] px-8">
+                  <Heart className="w-5 h-5 mr-2" />
+                  Find in Sister Spotlight
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Reply Preview Bar */}
-      {replyingTo && (
+      {replyingTo && connectionStatus?.canChat && (
         <div className="bg-[var(--accent)] border-t border-[var(--border)] px-4 py-2 flex items-center gap-3">
           <div className="flex-1 border-l-2 border-[var(--color-aurora-purple)] pl-3">
             <p className="text-xs font-medium text-[var(--color-aurora-purple)]">
@@ -431,7 +489,7 @@ export default function ConversationPage() {
       )}
 
       {/* Edit Mode Bar */}
-      {editingMessage && (
+      {editingMessage && connectionStatus?.canChat && (
         <div className="bg-[var(--color-aurora-yellow)]/20 border-t border-[var(--color-aurora-yellow)]/50 px-4 py-2 flex items-center gap-3">
           <Edit2 className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
           <span className="text-sm font-medium text-[var(--foreground)]">Editing message</span>
@@ -447,28 +505,30 @@ export default function ConversationPage() {
         </div>
       )}
 
-      {/* Input */}
-      <div className="bg-[var(--card)] border-t border-[var(--border)] flex-shrink-0">
-        <div className="container mx-auto px-4 py-3">
-          <div className="max-w-4xl mx-auto flex gap-2">
-            <Textarea
-              placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
-              value={editingMessage ? editText : messageText}
-              onChange={(e) => editingMessage ? setEditText(e.target.value) : setMessageText(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="min-h-[52px] max-h-[120px] resize-none bg-[var(--background)] border-[var(--border)] text-[var(--foreground)]"
-              disabled={sending}
-            />
-            <Button
-              onClick={editingMessage ? handleEdit : handleSend}
-              disabled={editingMessage ? !editText.trim() : (!messageText.trim() || sending)}
-              className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] h-[52px] px-6 min-w-[52px]"
-            >
-              {editingMessage ? <Check className="w-5 h-5" /> : <Send className="w-5 h-5" />}
-            </Button>
+      {/* Input - Only show if matched */}
+      {connectionStatus?.canChat && (
+        <div className="bg-[var(--card)] border-t border-[var(--border)] flex-shrink-0">
+          <div className="container mx-auto px-4 py-3">
+            <div className="max-w-4xl mx-auto flex gap-2">
+              <Textarea
+                placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
+                value={editingMessage ? editText : messageText}
+                onChange={(e) => editingMessage ? setEditText(e.target.value) : setMessageText(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="min-h-[52px] max-h-[120px] resize-none bg-[var(--background)] border-[var(--border)] text-[var(--foreground)]"
+                disabled={sending}
+              />
+              <Button
+                onClick={editingMessage ? handleEdit : handleSend}
+                disabled={editingMessage ? !editText.trim() : (!messageText.trim() || sending)}
+                className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] h-[52px] px-6 min-w-[52px]"
+              >
+                {editingMessage ? <Check className="w-5 h-5" /> : <Send className="w-5 h-5" />}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

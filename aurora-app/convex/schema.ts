@@ -1593,4 +1593,85 @@ export default defineSchema({
     .index("by_creator", ["creatorId"])
     .index("by_subscriber", ["subscriberId"])
     .index("by_creator_subscriber", ["creatorId", "subscriberId"]),
+
+  // ============================================
+  // FINANCIAL WELLNESS AI CHAT
+  // ============================================
+
+  // Financial Chat Messages - Conversation history with Aurora App AI
+  financialChats: defineTable({
+    userId: v.id("users"),
+    userMessage: v.string(),
+    aiResponse: v.string(),
+    extractedData: v.optional(v.object({
+      income: v.optional(v.number()),
+      expenses: v.optional(v.number()),
+      savingsGoal: v.optional(v.number()),
+      currentSavings: v.optional(v.number()),
+      debtAmount: v.optional(v.number()),
+      budgetCategory: v.optional(v.string()),
+      actionType: v.optional(v.string()),
+    })),
+    timestamp: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_timestamp", ["timestamp"]),
+
+  // Financial Profile - User's financial metrics (updated via chat)
+  financialProfiles: defineTable({
+    userId: v.id("users"),
+    monthlyIncome: v.number(),
+    monthlyExpenses: v.number(),
+    savingsGoal: v.number(),
+    currentSavings: v.number(),
+    totalDebt: v.number(),
+    wellnessScore: v.number(), // 0-100
+    lastUpdated: v.number(),
+  })
+    .index("by_user", ["userId"]),
+
+  // Financial Goals - Individual savings/investment goals
+  financialGoals: defineTable({
+    userId: v.id("users"),
+    title: v.string(),
+    targetAmount: v.number(),
+    currentAmount: v.number(),
+    deadline: v.optional(v.string()),
+    category: v.string(), // "emergency", "savings", "investment", "debt", "purchase"
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_category", ["category"]),
+
+  // ============================================
+  // SISTER CONNECTIONS (Matching System)
+  // ============================================
+
+  // Connection requests - Like Tinder, both users must like each other to match
+  sisterConnections: defineTable({
+    fromUserId: v.id("users"), // User who initiated the like
+    toUserId: v.id("users"), // User who was liked
+    status: v.union(
+      v.literal("pending"), // One-sided like, waiting for other to like back
+      v.literal("matched"), // Both users liked each other - can now chat!
+      v.literal("declined"), // User explicitly declined
+      v.literal("blocked") // User blocked
+    ),
+    createdAt: v.number(),
+    matchedAt: v.optional(v.number()), // When mutual match happened
+  })
+    .index("by_from_user", ["fromUserId"])
+    .index("by_to_user", ["toUserId"])
+    .index("by_from_to", ["fromUserId", "toUserId"])
+    .index("by_status", ["status"]),
+
+  // Skipped users - Users that were swiped left on (to not show again)
+  sisterSkips: defineTable({
+    userId: v.id("users"),
+    skippedUserId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_skipped", ["userId", "skippedUserId"]),
 });

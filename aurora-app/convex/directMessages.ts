@@ -20,6 +20,7 @@ const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍", "🙏
 
 /**
  * Send a direct message
+ * IMPORTANT: Only matched users can send messages to each other
  */
 export const send = mutation({
   args: {
@@ -36,6 +37,27 @@ export const send = mutation({
     replyToId: v.optional(v.id("directMessages")), // Reply to a specific message
   },
   handler: async (ctx, args) => {
+    // Check if users are matched before allowing message
+    const connection1 = await ctx.db
+      .query("sisterConnections")
+      .withIndex("by_from_to", (q) => 
+        q.eq("fromUserId", args.senderId).eq("toUserId", args.receiverId)
+      )
+      .first();
+
+    const connection2 = await ctx.db
+      .query("sisterConnections")
+      .withIndex("by_from_to", (q) => 
+        q.eq("fromUserId", args.receiverId).eq("toUserId", args.senderId)
+      )
+      .first();
+
+    const isMatched = connection1?.status === "matched" || connection2?.status === "matched";
+    
+    if (!isMatched) {
+      throw new Error("You can only message users you've matched with. Like each other in Sister Spotlight to connect!");
+    }
+
     // Validate content
     if (!args.content.trim() && (!args.media || args.media.length === 0)) {
       throw new Error("Message must have content or media");

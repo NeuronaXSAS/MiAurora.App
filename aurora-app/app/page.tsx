@@ -351,22 +351,22 @@ export default function LandingPage() {
       </section>
 
       {/* LIVE SEARCH - Discover Aurora App Before Signing Up */}
-      <section className="py-12 md:py-16 bg-gradient-to-b from-[#fffaf1] to-white relative overflow-hidden">
+      <section className="py-16 md:py-24 bg-gradient-to-b from-[#fffaf1] to-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#5537a708_1px,transparent_1px),linear-gradient(to_bottom,#5537a708_1px,transparent_1px)] bg-[size:40px_40px]" />
-        <div className="relative max-w-4xl mx-auto px-4">
+        <div className="relative max-w-6xl mx-auto px-4">
           <motion.div 
             initial={{ opacity: 0, y: 20 }} 
             whileInView={{ opacity: 1, y: 0 }} 
             viewport={{ once: true }}
-            className="text-center mb-8"
+            className="text-center mb-10"
           >
             <Badge className="bg-[#d6f4ec] text-[#3d0d73] border-0 mb-4 px-4 py-1.5 text-sm font-medium">
               <Search className="w-3 h-3 mr-1 inline" /> Explore Before You Join
             </Badge>
-            <h2 className="text-2xl md:text-3xl font-bold text-[#3d0d73] mb-3">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#3d0d73] mb-4">
               Discover What Women Are Sharing
             </h2>
-            <p className="text-[#3d0d73]/60 text-base max-w-xl mx-auto">
+            <p className="text-[#3d0d73]/60 text-lg max-w-2xl mx-auto">
               Search our community for safety tips, career opportunities, support circles, and more.
             </p>
           </motion.div>
@@ -379,16 +379,6 @@ export default function LandingPage() {
           >
             <LandingSearch />
           </motion.div>
-
-          <motion.p 
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="text-center text-[#3d0d73]/40 text-sm mt-6"
-          >
-            🔒 Sign up free to unlock full content and join the conversation
-          </motion.p>
         </div>
       </section>
 

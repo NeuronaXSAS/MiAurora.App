@@ -1,78 +1,63 @@
 "use client";
 
 /**
- * Financial Wellness Page
+ * Financial Wellness Page - Aurora App AI Financial Advisor
  * 
- * Helps women make better financial decisions through:
- * - Budget tracking insights
- * - Savings goals
- * - Financial literacy resources
- * - Community wisdom on money matters
+ * Chat-first financial planning where:
+ * - Users talk to Aurora App AI for financial advice
+ * - Metrics update in real-time based on conversation
+ * - Financial planning is centralized in the chat
  */
 
-import { useState, useEffect } from "react";
-import { useQuery } from "convex/react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import {
   TrendingUp,
   Target,
   PiggyBank,
-  BookOpen,
-  Users,
+  Send,
   Sparkles,
-  ArrowRight,
   DollarSign,
   Shield,
-  Lightbulb,
-  ChevronRight,
-  Star,
+  BarChart3,
+  Wallet,
+  ArrowUp,
+  ArrowDown,
+  Bot,
+  User,
+  Loader2,
+  Trash2,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
-import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { Id } from "@/convex/_generated/dataModel";
+import Image from "next/image";
 
-// Financial wellness tips
-const financialTips = [
-  {
-    title: "Emergency Fund First",
-    description: "Aim for 3-6 months of expenses saved before investing",
-    icon: Shield,
-    color: "var(--color-aurora-mint)",
-  },
-  {
-    title: "50/30/20 Rule",
-    description: "50% needs, 30% wants, 20% savings & debt repayment",
-    icon: PiggyBank,
-    color: "var(--color-aurora-pink)",
-  },
-  {
-    title: "Negotiate Your Salary",
-    description: "Women who negotiate earn 7% more on average",
-    icon: TrendingUp,
-    color: "var(--color-aurora-purple)",
-  },
-  {
-    title: "Start Investing Early",
-    description: "Time in the market beats timing the market",
-    icon: Sparkles,
-    color: "var(--color-aurora-yellow)",
-  },
-];
-
-// Power skills for financial growth
-const powerSkills = [
-  { name: "Salary Negotiation", level: "Essential", credits: 50 },
-  { name: "Investment Basics", level: "Intermediate", credits: 75 },
-  { name: "Tax Planning", level: "Advanced", credits: 100 },
-  { name: "Side Income Strategies", level: "Essential", credits: 50 },
-  { name: "Debt Management", level: "Essential", credits: 50 },
+// Quick action suggestions for the chat
+const quickActions = [
+  { text: "Help me create a budget", icon: "📊" },
+  { text: "I want to save for an emergency fund", icon: "🛡️" },
+  { text: "How can I reduce my expenses?", icon: "💡" },
+  { text: "I have $500 debt, what should I do?", icon: "💳" },
+  { text: "Tips for negotiating my salary", icon: "💼" },
+  { text: "How much should I save monthly?", icon: "🎯" },
 ];
 
 export default function FinancePage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showMetrics, setShowMetrics] = useState(true);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const getUserId = async () => {
@@ -87,235 +72,378 @@ export default function FinancePage() {
     getUserId();
   }, []);
 
+  // Queries
   const user = useQuery(api.users.getUser, userId ? { userId } : "skip");
+  const chatHistory = useQuery(
+    api.financialChat.getChatHistory,
+    userId ? { userId, limit: 100 } : "skip"
+  );
+  const financialProfile = useQuery(
+    api.financialChat.getFinancialProfile,
+    userId ? { userId } : "skip"
+  );
+  const financialGoals = useQuery(
+    api.financialChat.getFinancialGoals,
+    userId ? { userId } : "skip"
+  );
+
+  // Mutations
+  const sendFinancialMessage = useMutation(api.financialChat.sendFinancialMessage);
+  const clearChatHistory = useMutation(api.financialChat.clearChatHistory);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatHistory]);
+
+  // Handle sending message
+  const handleSendMessage = useCallback(async () => {
+    if (!message.trim() || !userId || isLoading) return;
+
+    const userMessage = message.trim();
+    setMessage("");
+    setIsLoading(true);
+
+    try {
+      // Call AI API for financial advice
+      const response = await fetch("/api/ai/financial-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage, userId }),
+      });
+
+      const data = await response.json();
+
+      // Save to Convex
+      await sendFinancialMessage({
+        userId,
+        message: userMessage,
+        aiResponse: data.response || "I'm here to help with your financial planning. Could you tell me more?",
+        extractedData: data.extractedData,
+      });
+    } catch (error) {
+      console.error("Error sending message:", error);
+      // Save error response
+      await sendFinancialMessage({
+        userId,
+        message: userMessage,
+        aiResponse: "I apologize, I'm having trouble processing that right now. Please try again in a moment.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [message, userId, isLoading, sendFinancialMessage]);
+
+  // Handle quick action click
+  const handleQuickAction = (text: string) => {
+    setMessage(text);
+    textareaRef.current?.focus();
+  };
+
+  // Handle clear chat
+  const handleClearChat = async () => {
+    if (!userId) return;
+    if (confirm("Are you sure you want to clear your chat history? Your financial profile will be kept.")) {
+      await clearChatHistory({ userId });
+    }
+  };
+
+  // Handle key press
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  if (!userId) {
+    return (
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--color-aurora-purple)]" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[var(--background)] pb-20 lg:pb-8">
+    <div className="min-h-screen bg-[var(--background)] flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[var(--color-aurora-mint)] to-[var(--color-aurora-blue)] text-white">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
-              <TrendingUp className="w-7 h-7" />
+      <div className="bg-gradient-to-r from-[var(--color-aurora-yellow)]/20 to-[var(--color-aurora-mint)]/20 border-b border-[var(--border)]">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-[var(--color-aurora-yellow)] to-[var(--color-aurora-mint)] rounded-2xl flex items-center justify-center">
+                <Wallet className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-[var(--foreground)]">Financial Wellness</h1>
+                <p className="text-sm text-[var(--muted-foreground)]">Chat with Aurora App AI</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold">Financial Wellness</h1>
-              <p className="text-white/80">Build wealth & make smarter decisions</p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMetrics(!showMetrics)}
+                className="text-[var(--muted-foreground)]"
+              >
+                {showMetrics ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                Metrics
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearChat}
+                className="text-[var(--muted-foreground)]"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <Card className="bg-[var(--card)] border-[var(--border)]">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[var(--color-aurora-yellow)]/20 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-[var(--foreground)]">{user?.credits || 0}</p>
-                  <p className="text-xs text-[var(--muted-foreground)]">Aurora Credits</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Collapsible Metrics Panel */}
+      <AnimatePresence>
+        {showMetrics && financialProfile && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="border-b border-[var(--border)] overflow-hidden"
+          >
+            <div className="container mx-auto px-4 py-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {/* Wellness Score */}
+                <Card className="bg-gradient-to-br from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border-[var(--color-aurora-purple)]/20">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <BarChart3 className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                      <span className="text-xs text-[var(--muted-foreground)]">Wellness</span>
+                    </div>
+                    <p className="text-2xl font-bold text-[var(--foreground)]">{financialProfile.wellnessScore}</p>
+                    <Progress value={financialProfile.wellnessScore} className="h-1 mt-1" />
+                  </CardContent>
+                </Card>
 
-          <Card className="bg-[var(--card)] border-[var(--border)]">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[var(--color-aurora-mint)]/20 rounded-xl flex items-center justify-center">
-                  <Target className="w-5 h-5 text-[var(--color-aurora-mint)]" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-[var(--foreground)]">3</p>
-                  <p className="text-xs text-[var(--muted-foreground)]">Goals Set</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                {/* Savings Rate */}
+                <Card className="bg-[var(--card)] border-[var(--border)]">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <PiggyBank className="w-4 h-4 text-[var(--color-aurora-mint)]" />
+                      <span className="text-xs text-[var(--muted-foreground)]">Savings Rate</span>
+                    </div>
+                    <p className="text-2xl font-bold text-[var(--foreground)]">{financialProfile.savingsRate}%</p>
+                    <p className="text-xs text-[var(--color-aurora-mint)]">
+                      {financialProfile.savingsRate >= 20 ? "Excellent!" : financialProfile.savingsRate >= 10 ? "Good" : "Needs work"}
+                    </p>
+                  </CardContent>
+                </Card>
 
-          <Card className="bg-[var(--card)] border-[var(--border)]">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[var(--color-aurora-purple)]/20 rounded-xl flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-[var(--color-aurora-purple)]" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-[var(--foreground)]">12</p>
-                  <p className="text-xs text-[var(--muted-foreground)]">Lessons Done</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                {/* Monthly Income */}
+                <Card className="bg-[var(--card)] border-[var(--border)]">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <ArrowUp className="w-4 h-4 text-green-500" />
+                      <span className="text-xs text-[var(--muted-foreground)]">Income</span>
+                    </div>
+                    <p className="text-2xl font-bold text-[var(--foreground)]">${financialProfile.monthlyIncome}</p>
+                    <p className="text-xs text-[var(--muted-foreground)]">monthly</p>
+                  </CardContent>
+                </Card>
 
-          <Card className="bg-[var(--card)] border-[var(--border)]">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[var(--color-aurora-pink)]/20 rounded-xl flex items-center justify-center">
-                  <Users className="w-5 h-5 text-[var(--color-aurora-pink)]" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-[var(--foreground)]">847</p>
-                  <p className="text-xs text-[var(--muted-foreground)]">Community Tips</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                {/* Monthly Expenses */}
+                <Card className="bg-[var(--card)] border-[var(--border)]">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <ArrowDown className="w-4 h-4 text-[var(--color-aurora-salmon)]" />
+                      <span className="text-xs text-[var(--muted-foreground)]">Expenses</span>
+                    </div>
+                    <p className="text-2xl font-bold text-[var(--foreground)]">${financialProfile.monthlyExpenses}</p>
+                    <p className="text-xs text-[var(--muted-foreground)]">monthly</p>
+                  </CardContent>
+                </Card>
 
-        {/* Financial Wellness Score */}
-        <Card className="bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border-[var(--border)]">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-bold text-[var(--foreground)]">Your Financial Wellness Score</h3>
-                <p className="text-sm text-[var(--muted-foreground)]">Based on your activity & goals</p>
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold text-[var(--color-aurora-purple)]">72</p>
-                <p className="text-xs text-[var(--muted-foreground)]">out of 100</p>
-              </div>
-            </div>
-            <Progress value={72} className="h-3 mb-4" />
-            <div className="flex items-center gap-2">
-              <Lightbulb className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
-              <p className="text-sm text-[var(--muted-foreground)]">
-                <span className="font-medium text-[var(--foreground)]">Tip:</span> Complete the "Salary Negotiation" course to boost your score by 10 points
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+                {/* Emergency Fund */}
+                <Card className="bg-[var(--card)] border-[var(--border)]">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Shield className="w-4 h-4 text-[var(--color-aurora-blue)]" />
+                      <span className="text-xs text-[var(--muted-foreground)]">Emergency</span>
+                    </div>
+                    <p className="text-2xl font-bold text-[var(--foreground)]">{financialProfile.emergencyFundMonths}mo</p>
+                    <p className="text-xs text-[var(--muted-foreground)]">of expenses</p>
+                  </CardContent>
+                </Card>
 
-        {/* Power Skills Section */}
-        <Card className="bg-[var(--card)] border-[var(--border)]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
-              <Star className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
-              Power Skills for Financial Growth
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {powerSkills.map((skill, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent)]/80 transition-colors cursor-pointer group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[var(--color-aurora-purple)]/20 rounded-xl flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-[var(--color-aurora-purple)]" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-[var(--foreground)]">{skill.name}</p>
-                    <Badge variant="secondary" className="text-xs bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)]">
-                      {skill.level}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)]">
-                    +{skill.credits} credits
-                  </Badge>
-                  <ChevronRight className="w-5 h-5 text-[var(--muted-foreground)] group-hover:text-[var(--foreground)] transition-colors" />
-                </div>
+                {/* Debt Ratio */}
+                <Card className="bg-[var(--card)] border-[var(--border)]">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <DollarSign className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
+                      <span className="text-xs text-[var(--muted-foreground)]">Debt Ratio</span>
+                    </div>
+                    <p className="text-2xl font-bold text-[var(--foreground)]">{financialProfile.debtToIncomeRatio}%</p>
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      {financialProfile.debtToIncomeRatio === 0 ? "Debt free!" : financialProfile.debtToIncomeRatio < 20 ? "Healthy" : "High"}
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
-            ))}
-          </CardContent>
-        </Card>
 
-        {/* Financial Tips */}
-        <div>
-          <h2 className="text-lg font-bold text-[var(--foreground)] mb-4 flex items-center gap-2">
-            <Lightbulb className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
-            Smart Money Tips
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {financialTips.map((tip, idx) => (
-              <Card key={idx} className="bg-[var(--card)] border-[var(--border)] hover:border-[var(--color-aurora-purple)]/30 transition-colors">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: `${tip.color}20` }}
+              {/* Goals Progress */}
+              {financialGoals && financialGoals.length > 0 && (
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
+                  {financialGoals.map((goal) => (
+                    <div
+                      key={goal._id}
+                      className="flex-shrink-0 bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 min-w-[180px]"
                     >
-                      <tip.icon className="w-5 h-5" style={{ color: tip.color }} />
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-[var(--foreground)]">{goal.title}</span>
+                        <Target className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                      </div>
+                      <Progress value={(goal.currentAmount / goal.targetAmount) * 100} className="h-1.5 mb-1" />
+                      <p className="text-xs text-[var(--muted-foreground)]">
+                        ${goal.currentAmount} / ${goal.targetAmount}
+                      </p>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-[var(--foreground)] mb-1">{tip.title}</h4>
-                      <p className="text-sm text-[var(--muted-foreground)]">{tip.description}</p>
-                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Chat Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="container mx-auto px-4 py-4 max-w-3xl">
+          {/* Welcome Message if no chat history */}
+          {(!chatHistory || chatHistory.length === 0) && (
+            <div className="text-center py-8">
+              <div className="w-20 h-20 bg-gradient-to-br from-[var(--color-aurora-yellow)] to-[var(--color-aurora-mint)] rounded-3xl flex items-center justify-center mx-auto mb-4">
+                <Image src="/Au_Logo_1.png" alt="Aurora App" width={48} height={48} className="rounded-xl" />
+              </div>
+              <h2 className="text-xl font-bold text-[var(--foreground)] mb-2">
+                Hi! I'm your Aurora App Financial Advisor 💰
+              </h2>
+              <p className="text-[var(--muted-foreground)] mb-6 max-w-md mx-auto">
+                I'm here to help you plan your finances, set goals, and make smarter money decisions. 
+                Just chat with me and I'll update your financial metrics in real-time!
+              </p>
+
+              {/* Quick Actions */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-w-lg mx-auto">
+                {quickActions.map((action, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleQuickAction(action.text)}
+                    className="flex items-center gap-2 p-3 bg-[var(--card)] border border-[var(--border)] rounded-xl hover:border-[var(--color-aurora-purple)]/50 transition-colors text-left"
+                  >
+                    <span className="text-lg">{action.icon}</span>
+                    <span className="text-sm text-[var(--foreground)]">{action.text}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Chat Messages */}
+          <div className="space-y-4">
+            {chatHistory?.map((chat, idx) => (
+              <div key={chat._id || idx} className="space-y-3">
+                {/* User Message */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex justify-end"
+                >
+                  <div className="max-w-[80%] bg-[var(--color-aurora-purple)] text-white rounded-2xl rounded-br-md px-4 py-3">
+                    <p className="text-sm">{chat.userMessage}</p>
                   </div>
-                </CardContent>
-              </Card>
+                </motion.div>
+
+                {/* AI Response */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="flex gap-3"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-[var(--color-aurora-yellow)] to-[var(--color-aurora-mint)] rounded-full flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="max-w-[80%]">
+                    <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl rounded-tl-md px-4 py-3">
+                      <p className="text-sm text-[var(--foreground)] whitespace-pre-wrap">{chat.aiResponse}</p>
+                    </div>
+                    {/* Show extracted data badge if any */}
+                    {chat.extractedData && Object.keys(chat.extractedData).some(k => chat.extractedData?.[k as keyof typeof chat.extractedData] !== undefined) && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <Badge className="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] border-0 text-xs">
+                          <RefreshCw className="w-3 h-3 mr-1" />
+                          Metrics updated
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              </div>
             ))}
+
+            {/* Loading indicator */}
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex gap-3"
+              >
+                <div className="w-8 h-8 bg-gradient-to-br from-[var(--color-aurora-yellow)] to-[var(--color-aurora-mint)] rounded-full flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-4 h-4 text-white" />
+                </div>
+                <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-[var(--color-aurora-purple)]" />
+                    <span className="text-sm text-[var(--muted-foreground)]">Thinking...</span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            <div ref={chatEndRef} />
           </div>
         </div>
+      </div>
 
-        {/* Community Wisdom */}
-        <Card className="bg-[var(--card)] border-[var(--border)]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
-              <Users className="w-5 h-5 text-[var(--color-aurora-pink)]" />
-              Community Financial Wisdom
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-[var(--accent)]">
-                <p className="text-sm text-[var(--foreground)] mb-2">
-                  "I negotiated a 15% raise by documenting all my achievements over the past year. The key was showing concrete numbers!"
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-[var(--muted-foreground)]">— Sarah, Software Engineer</span>
-                  <Badge className="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)]">
-                    234 found helpful
-                  </Badge>
-                </div>
-              </div>
-              <div className="p-4 rounded-xl bg-[var(--accent)]">
-                <p className="text-sm text-[var(--foreground)] mb-2">
-                  "Started investing $50/month at 25. Now at 35, my portfolio has grown to $15k. Start small, but start now!"
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-[var(--muted-foreground)]">— Maria, Marketing Manager</span>
-                  <Badge className="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)]">
-                    189 found helpful
-                  </Badge>
-                </div>
-              </div>
-            </div>
-            <Link href="/circles">
-              <Button variant="outline" className="w-full mt-4 border-[var(--color-aurora-purple)] text-[var(--color-aurora-purple)]">
-                Join Finance Circle
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        {/* Premium CTA */}
-        {user && !user.isPremium && (
-          <Card className="bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] border-0 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
-                  <Star className="w-7 h-7" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg">Unlock Premium Financial Tools</h3>
-                  <p className="text-white/80 text-sm">Get personalized AI advice, advanced analytics & exclusive courses</p>
-                </div>
-                <Link href="/premium">
-                  <Button className="bg-white text-[var(--color-aurora-purple)] hover:bg-white/90">
-                    Upgrade
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+      {/* Input Area */}
+      <div className="border-t border-[var(--border)] bg-[var(--background)]">
+        <div className="container mx-auto px-4 py-3 max-w-3xl">
+          <div className="flex gap-2">
+            <Textarea
+              ref={textareaRef}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Ask me about budgeting, savings, investments, debt..."
+              className="min-h-[48px] max-h-[120px] resize-none rounded-xl border-[var(--border)] focus:border-[var(--color-aurora-purple)]"
+              rows={1}
+            />
+            <Button
+              onClick={handleSendMessage}
+              disabled={!message.trim() || isLoading}
+              className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-purple)]/90 text-white rounded-xl min-w-[48px] h-[48px]"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Send className="w-5 h-5" />
+              )}
+            </Button>
+          </div>
+          <p className="text-xs text-[var(--muted-foreground)] mt-2 text-center">
+            🔒 Your financial data is private and secure. Aurora App never shares your information.
+          </p>
+        </div>
       </div>
     </div>
   );
