@@ -21,19 +21,19 @@
       "purpose": "any"
     },
     {
-      "src": "/icon-72.png",
+      "src": "/Au_Logo_1.png",
       "sizes": "72x72",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-96.png",
+      "src": "/Au_Logo_1.png",
       "sizes": "96x96",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-128.png",
+      "src": "/Au_Logo_1.png",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "any"
@@ -45,25 +45,25 @@
       "purpose": "any"
     },
     {
-      "src": "/icon-152.png",
+      "src": "/Au_Logo_1.png",
       "sizes": "152x152",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-192.png",
+      "src": "/Au_Logo_1.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-384.png",
+      "src": "/Au_Logo_1.png",
       "sizes": "384x384",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/Au_Logo_1.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -100,28 +100,28 @@
       "short_name": "Map",
       "description": "View safety ratings and reports near you",
       "url": "/map",
-      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/Au_Logo_1.png", "sizes": "96x96" }]
     },
     {
       "name": "Track Route",
       "short_name": "Track",
       "description": "Start tracking a safe route",
       "url": "/routes/track",
-      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/Au_Logo_1.png", "sizes": "96x96" }]
     },
     {
       "name": "Aurora AI",
       "short_name": "AI",
       "description": "Chat with your AI companion",
       "url": "/assistant",
-      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/Au_Logo_1.png", "sizes": "96x96" }]
     },
     {
       "name": "Emergency",
       "short_name": "SOS",
       "description": "Quick access to emergency features",
       "url": "/emergency",
-      "icons": [{ "src": "/icon-96.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/Au_Logo_1.png", "sizes": "96x96" }]
     }
   ],
   "share_target": {

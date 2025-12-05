@@ -18,10 +18,19 @@ export const metadata: Metadata = {
   title: "Aurora App - The Front Page of the Internet for Women",
   description: "A community-driven platform where women share intelligence and unlock opportunities",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/Au_Logo_1.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/Au_Logo_1.png", type: "image/png" },
+    ],
+    shortcut: "/Au_Logo_1.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Aurora",
+    title: "Aurora App",
   },
   openGraph: {
     title: "Aurora App - Safety & Community for Women",
@@ -49,8 +58,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/Au_Logo_1.png" />
-        <link rel="apple-touch-icon" href="/Au_Logo_1.png" />
+        <link rel="icon" type="image/png" href="/Au_Logo_1.png" sizes="any" />
+        <link rel="icon" type="image/png" href="/Au_Logo_1.png" sizes="32x32" />
+        <link rel="icon" type="image/png" href="/Au_Logo_1.png" sizes="16x16" />
+        <link rel="apple-touch-icon" href="/Au_Logo_1.png" sizes="180x180" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="google-adsense-account" content="ca-pub-9358935810206071" />
