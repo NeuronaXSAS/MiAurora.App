@@ -951,3 +951,234 @@ textarea:focus-visible {
     box-shadow: none;
   }
 }
+
+/* ============================================
+   CRITICAL PERFORMANCE - FIRST PAINT OPTIMIZATION
+   ============================================ */
+
+/* Instant content visibility for above-fold */
+.instant-visible {
+  content-visibility: visible;
+  contain-intrinsic-size: none;
+}
+
+/* Defer rendering of below-fold content */
+.defer-render {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}
+
+/* Optimize will-change for animations */
+.will-animate {
+  will-change: transform, opacity;
+}
+
+/* Remove will-change after animation completes */
+.animation-complete {
+  will-change: auto;
+}
+
+/* Touch action optimization for scrollable areas */
+.touch-scroll {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Horizontal scroll optimization */
+.touch-scroll-x {
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent layout thrashing during scroll */
+.scroll-stable {
+  overflow-anchor: auto;
+  overscroll-behavior: contain;
+}
+
+/* ============================================
+   INSTANT LOADING STATES
+   ============================================ */
+
+/* Blur-up image loading */
+.img-blur-up {
+  filter: blur(20px);
+  transition: filter 0.3s ease-out;
+}
+
+.img-blur-up.loaded {
+  filter: blur(0);
+}
+
+/* Skeleton pulse - lighter weight than shimmer */
+@keyframes skeleton-fade {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+.skeleton-pulse {
+  animation: skeleton-fade 1.2s ease-in-out infinite;
+  background-color: var(--accent);
+}
+
+/* Instant placeholder for images */
+.img-instant-placeholder {
+  background: linear-gradient(
+    135deg,
+    var(--accent) 0%,
+    var(--muted) 50%,
+    var(--accent) 100%
+  );
+}
+
+/* ============================================
+   NETWORK-AWARE OPTIMIZATIONS
+   ============================================ */
+
+/* Reduce animations on slow connections */
+@media (prefers-reduced-data: reduce) {
+  img, video {
+    content-visibility: auto;
+  }
+  
+  .animate-shimmer,
+  .skeleton-shimmer {
+    animation: none;
+    background: var(--accent);
+  }
+}
+
+/* ============================================
+   PWA-SPECIFIC OPTIMIZATIONS
+   ============================================ */
+
+/* Standalone mode (installed PWA) */
+@media (display-mode: standalone) {
+  /* Remove browser chrome compensation */
+  .pwa-header {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  /* Optimize for full-screen experience */
+  .pwa-content {
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Fullscreen mode */
+@media (display-mode: fullscreen) {
+  .pwa-content {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+}
+
+/* ============================================
+   OFFLINE INDICATOR STYLES
+   ============================================ */
+
+.offline-indicator {
+  position: fixed;
+  bottom: calc(4rem + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 0.75rem 1.5rem;
+  background: var(--color-aurora-salmon);
+  color: white;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slide-up 0.3s ease-out;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ============================================
+   CRITICAL RENDER PATH - INLINE CRITICAL CSS
+   ============================================ */
+
+/* These styles should load immediately for fast first paint */
+.critical-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
+}
+
+.critical-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--background);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.critical-panic-btn {
+  position: fixed;
+  z-index: 60;
+  min-width: 56px;
+  min-height: 56px;
+  border-radius: 9999px;
+  background: var(--color-aurora-orange);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(236, 76, 40, 0.4);
+}
+
+/* ============================================
+   FONT LOADING OPTIMIZATION
+   ============================================ */
+
+/* Prevent FOIT (Flash of Invisible Text) */
+.font-loading {
+  font-display: swap;
+}
+
+/* Fallback font stack while loading */
+.font-fallback {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ============================================
+   INTERACTION FEEDBACK - INSTANT RESPONSE
+   ============================================ */
+
+/* Immediate visual feedback on tap */
+.tap-feedback {
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.tap-feedback:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+/* Button press state */
+.btn-press:active {
+  transform: scale(0.95);
+  transition: transform 0.05s ease;
+}
+
+/* Link highlight on mobile */
+@media (hover: none) {
+  a:active, button:active {
+    opacity: 0.8;
+  }
+}

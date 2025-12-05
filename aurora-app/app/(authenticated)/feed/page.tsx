@@ -290,14 +290,14 @@ export default function FeedPage() {
             <div className="flex items-center gap-1 ml-auto">
               <button
                 onClick={() => setViewMode("card")}
-                className={`p-2 rounded-xl transition-colors min-w-[44px] min-h-[44px] ${viewMode === "card" ? "bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]" : "hover:bg-[var(--accent)] text-[var(--muted-foreground)]"}`}
+                className="p-2 rounded-xl transition-colors min-w-[44px] min-h-[44px] bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]"
                 title="Card View"
               >
                 <LayoutGrid className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setViewMode("immersive")}
-                className={`p-2 rounded-xl transition-colors min-w-[44px] min-h-[44px] ${viewMode === "immersive" ? "bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]" : "hover:bg-[var(--accent)] text-[var(--muted-foreground)]"}`}
+                className="p-2 rounded-xl transition-colors min-w-[44px] min-h-[44px] hover:bg-[var(--accent)] text-[var(--muted-foreground)]"
                 title="Immersive View (TikTok-style)"
               >
                 <List className="w-5 h-5" />
