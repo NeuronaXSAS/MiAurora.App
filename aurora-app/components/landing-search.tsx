@@ -1,19 +1,45 @@
 "use client";
 
+/**
+ * Aurora App - Landing Page Search
+ * 
+ * A Google-competitor search experience that:
+ * - Shows AI-generated summaries from real community content
+ * - Provides honest, human-first results (no ads, no manipulation)
+ * - Encourages sign-up to see full content
+ * - Competes on algorithm quality, not engagement tricks
+ */
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Search, X, FileText, Route, Users, Briefcase, 
-  Shield, Lock, ArrowRight, Sparkles, TrendingUp,
-  Eye, MessageCircle, Star, MapPin, Clock
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Search, 
+  X, 
+  FileText, 
+  MapPin as Route, 
+  Users, 
+  Briefcase, 
+  Shield, 
+  Lock, 
+  ArrowRight, 
+  Sparkles,
+  TrendingUp,
+} from "lucide-react";
 import Link from "next/link";
 
-const typeIcons = {
+interface SearchResult {
+  type: string;
+  previewTitle: string;
+  previewSnippet: string;
+  category?: string;
+}
+
+const typeIcons: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
   post: FileText,
   route: Route,
   circle: Users,
@@ -21,7 +47,7 @@ const typeIcons = {
   resource: Shield,
 };
 
-const typeColors = {
+const typeColors: Record<string, string> = {
   post: "#5537a7",
   route: "#22c55e",
   circle: "#f29de5",
@@ -29,7 +55,7 @@ const typeColors = {
   resource: "#d6f4ec",
 };
 
-const typeLabels = {
+const typeLabels: Record<string, string> = {
   post: "Community Post",
   route: "Safe Route",
   circle: "Support Circle",
@@ -37,7 +63,7 @@ const typeLabels = {
   resource: "Safety Resource",
 };
 
-const typeDescriptions = {
+const typeDescriptions: Record<string, string> = {
   post: "Shared by community members",
   route: "Verified safe path",
   circle: "Join the conversation",
@@ -49,341 +75,268 @@ export function LandingSearch() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query);
-      if (query.length >= 2) {
-        setHasSearched(true);
-      }
     }, 300);
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Search results
-  const searchResults = useQuery(
+  // Search results from Convex
+  const searchData = useQuery(
     api.publicSearch.publicSearch,
-    debouncedQuery.length >= 2 ? { query: debouncedQuery, limit: 12 } : "skip"
+    debouncedQuery.length >= 2 ? { query: debouncedQuery, limit: 6 } : "skip"
   );
 
   // Trending content for empty state
-  const trending = useQuery(api.publicSearch.getTrendingPreview);
+  const trendingContent = useQuery(api.publicSearch.getTrendingPreview, {});
+  
+  // Extract results array from search data
+  const searchResults = searchData?.results;
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "/" && document.activeElement !== inputRef.current) {
-        e.preventDefault();
-        inputRef.current?.focus();
-      }
-      if (e.key === "Escape" && document.activeElement === inputRef.current) {
-        inputRef.current?.blur();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+  const handleClear = useCallback(() => {
+    setQuery("");
+    setDebouncedQuery("");
+    inputRef.current?.focus();
   }, []);
 
   const handleFocus = useCallback(() => {
     setIsFocused(true);
+    setShowResults(true);
   }, []);
 
   const handleBlur = useCallback(() => {
-    setIsFocused(false);
+    // Delay to allow click on results
+    setTimeout(() => {
+      setIsFocused(false);
+    }, 200);
   }, []);
 
-  const showResults = debouncedQuery.length >= 2 && searchResults?.results && searchResults.results.length > 0;
-  const showNoResults = debouncedQuery.length >= 2 && searchResults?.results && searchResults.results.length === 0;
-  const showTrending = !hasSearched && trending && trending.length > 0;
+  const hasResults = searchResults && searchResults.length > 0;
+  const showTrending = !query && trendingContent && trendingContent.length > 0;
 
   return (
-    <div className="w-full">
-      {/* Search Input - Prominent and centered */}
-      <div className="max-w-3xl mx-auto mb-8">
-        <div className={`relative transition-all duration-300 ${isFocused ? "scale-[1.01]" : ""}`}>
-          <div className={`
-            relative flex items-center gap-4 
-            bg-white backdrop-blur-xl 
-            border-2 rounded-2xl px-6 py-5
-            shadow-xl transition-all duration-300
-            ${isFocused 
-              ? "border-[#5537a7] shadow-2xl shadow-[#5537a7]/15" 
-              : "border-[#3d0d73]/10 hover:border-[#5537a7]/30 hover:shadow-xl"
-            }
-          `}>
-            <Search className={`w-6 h-6 transition-colors flex-shrink-0 ${isFocused ? "text-[#5537a7]" : "text-[#3d0d73]/40"}`} />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-              placeholder="Search safety tips, career opportunities, support circles..."
-              className="flex-1 bg-transparent text-[#3d0d73] placeholder:text-[#3d0d73]/40 outline-none text-lg"
-            />
-            {query && (
-              <button
-                onClick={() => { setQuery(""); setHasSearched(false); inputRef.current?.focus(); }}
-                className="p-2 hover:bg-[#3d0d73]/5 rounded-full transition-colors"
-              >
-                <X className="w-5 h-5 text-[#3d0d73]/40" />
-              </button>
-            )}
-            <kbd className="hidden md:flex items-center gap-1 px-3 py-1.5 bg-[#3d0d73]/5 rounded-lg text-sm text-[#3d0d73]/50 font-mono">
-              /
-            </kbd>
-          </div>
-
-          {/* Glow effect */}
-          {isFocused && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="absolute -inset-1 bg-gradient-to-r from-[#5537a7]/20 via-[#f29de5]/20 to-[#5537a7]/20 rounded-2xl blur-xl -z-10"
-            />
-          )}
-        </div>
-
-        {/* Quick search suggestions */}
-        <div className="flex flex-wrap justify-center gap-2 mt-4">
-          {["safety tips", "remote jobs", "walking routes", "support groups", "career advice", "wellness"].map((suggestion) => (
+    <div className="w-full max-w-3xl mx-auto">
+      {/* Search Input */}
+      <div className="relative">
+        <div className={`relative flex items-center bg-[var(--card)] border-2 rounded-2xl transition-all duration-300 ${
+          isFocused 
+            ? "border-[var(--color-aurora-purple)] shadow-lg shadow-[var(--color-aurora-purple)]/20" 
+            : "border-[var(--border)] hover:border-[var(--color-aurora-lavender)]"
+        }`}>
+          <Search className="absolute left-4 w-5 h-5 text-[var(--muted-foreground)]" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            placeholder="Search community wisdom, safe routes, opportunities..."
+            className="w-full h-14 pl-12 pr-12 bg-transparent text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none text-lg"
+          />
+          {query && (
             <button
-              key={suggestion}
-              onClick={() => { setQuery(suggestion); inputRef.current?.focus(); }}
-              className="px-4 py-2 bg-white/60 hover:bg-white border border-[#3d0d73]/10 hover:border-[#5537a7]/30 text-[#3d0d73]/70 hover:text-[#5537a7] text-sm rounded-full transition-all hover:shadow-md"
+              onClick={handleClear}
+              className="absolute right-4 p-1 rounded-full hover:bg-[var(--accent)] transition-colors"
             >
-              {suggestion}
+              <X className="w-5 h-5 text-[var(--muted-foreground)]" />
             </button>
-          ))}
+          )}
         </div>
       </div>
 
-      {/* Results Section - Inline, not dropdown */}
-      <AnimatePresence mode="wait">
-        {/* Search Results Grid */}
-        {showResults && (
-          <motion.div
-            key="results"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="max-w-5xl mx-auto"
-          >
-            <div className="flex items-center justify-between mb-4 px-2">
-              <div className="flex items-center gap-2">
-                <Search className="w-4 h-4 text-[#5537a7]" />
-                <span className="text-sm font-medium text-[#3d0d73]">
-                  {searchResults.total} results for "{debouncedQuery}"
-                </span>
-              </div>
-              {searchResults.hasMore && (
-                <Link href="/api/auth/login">
-                  <span className="text-sm text-[#5537a7] hover:underline cursor-pointer">
-                    Sign up to see all results →
-                  </span>
+      {/* Results Panel */}
+      {showResults && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4"
+        >
+          {/* Search Results */}
+          {hasResults && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  Found {searchResults.length} results for "{query}"
+                </p>
+                <Link href="/" className="text-sm text-[var(--color-aurora-purple)] hover:underline flex items-center gap-1">
+                  Sign up to see all
+                  <ArrowRight className="w-3 h-3" />
                 </Link>
-              )}
-            </div>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {searchResults.results.map((result, i) => {
-                const Icon = typeIcons[result.type];
-                const color = typeColors[result.type];
-                
-                return (
-                  <motion.div
-                    key={result.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                  >
-                    <Link href="/api/auth/login">
-                      <Card className="group h-full bg-white hover:bg-[#5537a7]/5 border border-[#3d0d73]/10 hover:border-[#5537a7]/30 rounded-2xl p-5 transition-all cursor-pointer hover:shadow-lg">
-                        {/* Header with type badge */}
-                        <div className="flex items-start justify-between mb-3">
-                          <div 
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
-                            style={{ backgroundColor: `${color}15`, color }}
-                          >
-                            <Icon className="w-3.5 h-3.5" />
-                            {typeLabels[result.type]}
-                          </div>
-                          <Lock className="w-4 h-4 text-[#3d0d73]/20 group-hover:text-[#5537a7] transition-colors" />
-                        </div>
+              <AnimatePresence>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {searchResults.map((result: SearchResult, i: number) => {
+                    const IconComponent = typeIcons[result.type] || FileText;
+                    const color = typeColors[result.type] || "#5537a7";
 
-                        {/* Content */}
-                        <h4 className="font-semibold text-[#3d0d73] mb-2 group-hover:text-[#5537a7] transition-colors line-clamp-2">
-                          {result.previewTitle}
-                        </h4>
-                        <p className="text-sm text-[#3d0d73]/60 mb-3 line-clamp-2">
-                          {result.previewSnippet}
-                        </p>
-
-                        {/* Footer with stats */}
-                        <div className="flex items-center justify-between pt-3 border-t border-[#3d0d73]/5">
-                          {result.stats ? (
-                            <span className="text-xs text-[#3d0d73]/50">
-                              {result.stats.value} {result.stats.label}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-[#3d0d73]/50">
-                              {typeDescriptions[result.type]}
-                            </span>
-                          )}
-                          <span className="text-xs text-[#5537a7] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                            View <ArrowRight className="w-3 h-3" />
-                          </span>
-                        </div>
-                      </Card>
-                    </Link>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* CTA Banner */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="mt-8 p-6 bg-gradient-to-r from-[#5537a7] to-[#3d0d73] rounded-2xl text-white"
-            >
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
-                    <Sparkles className="w-7 h-7" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg">Unlock Full Access</h3>
-                    <p className="text-white/80 text-sm">
-                      Sign up free to see complete content, join discussions, and connect with 10,000+ women
-                    </p>
-                  </div>
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                      >
+                        <Link href="/">
+                          <Card className="p-4 hover:shadow-lg transition-all cursor-pointer border-[var(--border)] hover:border-[var(--color-aurora-purple)]/30 bg-[var(--card)]">
+                            <div className="flex items-start gap-3">
+                              <div 
+                                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                                style={{ backgroundColor: `${color}20` }}
+                              >
+                                <span style={{ color }}>
+                                  <IconComponent className="w-5 h-5" />
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Badge 
+                                    className="text-[10px] border-0"
+                                    style={{ backgroundColor: `${color}20`, color }}
+                                  >
+                                    {typeLabels[result.type] || result.type}
+                                  </Badge>
+                                  <Lock className="w-3 h-3 text-[var(--muted-foreground)]" />
+                                </div>
+                                <h4 className="font-medium text-[var(--foreground)] line-clamp-1">
+                                  {result.previewTitle}
+                                </h4>
+                                <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mt-1">
+                                  {result.previewSnippet}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-3 pt-3 border-t border-[var(--border)] flex items-center justify-between">
+                              <span className="text-xs text-[var(--muted-foreground)]">
+                                {typeDescriptions[result.type] || "Community content"}
+                              </span>
+                              <ArrowRight className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                            </div>
+                          </Card>
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
                 </div>
-                <Link href="/api/auth/login?provider=GoogleOAuth">
-                  <Button size="lg" className="bg-white text-[#5537a7] hover:bg-white/90 rounded-xl min-h-[48px] px-6 font-semibold whitespace-nowrap">
-                    Join Free
-                    <ArrowRight className="w-5 h-5 ml-2" />
+              </AnimatePresence>
+
+              {/* CTA */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-center py-4"
+              >
+                <p className="text-sm text-[var(--muted-foreground)] mb-3">
+                  <Sparkles className="w-4 h-4 inline mr-1 text-[var(--color-aurora-yellow)]" />
+                  Join Aurora App to see full content and connect with the community
+                </p>
+                <Link href="/">
+                  <Button className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white min-h-[44px]">
+                    Join Aurora App
+                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </Link>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {/* No Results */}
-        {showNoResults && (
-          <motion.div
-            key="no-results"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="max-w-2xl mx-auto text-center py-8"
-          >
-            <div className="w-16 h-16 bg-[#3d0d73]/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Search className="w-8 h-8 text-[#3d0d73]/30" />
+              </motion.div>
             </div>
-            <h3 className="text-lg font-semibold text-[#3d0d73] mb-2">
-              No results found for "{debouncedQuery}"
-            </h3>
-            <p className="text-[#3d0d73]/60 mb-6">
-              Try different keywords or sign up to access our full community content
-            </p>
-            <Link href="/api/auth/login?provider=GoogleOAuth">
-              <Button className="bg-[#5537a7] hover:bg-[#3d0d73] text-white rounded-xl min-h-[48px] px-6">
-                Join Aurora App Free
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </motion.div>
-        )}
+          )}
 
-        {/* Trending Content - Before search */}
-        {showTrending && (
-          <motion.div
-            key="trending"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="max-w-5xl mx-auto"
-          >
-            <div className="flex items-center gap-2 mb-4 px-2">
-              <TrendingUp className="w-5 h-5 text-[#5537a7]" />
-              <span className="text-sm font-semibold text-[#3d0d73]">
-                Trending on Aurora App
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {trending.map((item, i) => {
-                const Icon = typeIcons[item.type];
-                const color = typeColors[item.type];
-                
-                return (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08 }}
-                  >
-                    <Link href="/api/auth/login">
-                      <Card className="group h-full bg-white/80 hover:bg-white border border-[#3d0d73]/10 hover:border-[#5537a7]/30 rounded-2xl p-5 transition-all cursor-pointer hover:shadow-lg">
-                        <div className="flex items-start justify-between mb-3">
-                          <div 
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
-                            style={{ backgroundColor: `${color}15`, color }}
-                          >
-                            <Icon className="w-3.5 h-3.5" />
-                            {typeLabels[item.type]}
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-[#3d0d73]/40">
-                            <TrendingUp className="w-3 h-3" />
-                            Trending
-                          </div>
-                        </div>
-
-                        <h4 className="font-semibold text-[#3d0d73] mb-2 group-hover:text-[#5537a7] transition-colors">
-                          {item.previewTitle}
-                        </h4>
-                        <p className="text-sm text-[#3d0d73]/60 mb-3 line-clamp-2">
-                          {item.previewSnippet}
-                        </p>
-
-                        <div className="flex items-center justify-between pt-3 border-t border-[#3d0d73]/5">
-                          <div className="flex items-center gap-1 text-xs text-[#3d0d73]/40">
-                            <Lock className="w-3 h-3" />
-                            Sign up to view
-                          </div>
-                          <span className="text-xs text-[#5537a7] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                            Unlock <ArrowRight className="w-3 h-3" />
-                          </span>
-                        </div>
-                      </Card>
-                    </Link>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* Subtle CTA */}
-            <div className="text-center mt-6">
-              <p className="text-sm text-[#3d0d73]/50 mb-3">
-                🔒 Sign up free to unlock full content and join the conversation
+          {/* No Results */}
+          {query && debouncedQuery && !hasResults && searchResults !== undefined && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-8"
+            >
+              <Search className="w-12 h-12 text-[var(--muted-foreground)] mx-auto mb-3" />
+              <p className="text-[var(--foreground)] font-medium">No results found</p>
+              <p className="text-sm text-[var(--muted-foreground)] mt-1">
+                Try different keywords or join to explore more
               </p>
-              <Link href="/api/auth/login?provider=GoogleOAuth">
-                <Button variant="outline" className="border-[#5537a7]/30 text-[#5537a7] hover:bg-[#5537a7]/5 rounded-xl">
-                  Join 10,000+ Women
+              <Link href="/">
+                <Button className="mt-4 bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white min-h-[44px]">
+                  Join Aurora App
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+
+          {/* Trending Content (Empty State) */}
+          {showTrending && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="space-y-4"
+            >
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-[var(--color-aurora-pink)]" />
+                <span className="text-sm font-medium text-[var(--foreground)]">Trending in the community</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {trendingContent.map((item: SearchResult, i: number) => {
+                  const IconComponent = typeIcons[item.type] || FileText;
+                  const color = typeColors[item.type] || "#5537a7";
+
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                    >
+                      <Link href="/">
+                        <Card className="p-3 hover:shadow-md transition-all cursor-pointer border-[var(--border)] hover:border-[var(--color-aurora-purple)]/30 bg-[var(--card)]">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                              style={{ backgroundColor: `${color}20` }}
+                            >
+                              <span style={{ color }}>
+                                <IconComponent className="w-4 h-4" />
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <Badge 
+                                className="text-[9px] border-0 mb-1"
+                                style={{ backgroundColor: `${color}20`, color }}
+                              >
+                                {typeLabels[item.type] || item.type}
+                              </Badge>
+                              <p className="text-sm font-medium text-[var(--foreground)] line-clamp-1">
+                                {item.previewTitle}
+                              </p>
+                            </div>
+                            <Lock className="w-4 h-4 text-[var(--muted-foreground)] flex-shrink-0" />
+                          </div>
+                          <div className="mt-2 flex items-center justify-between">
+                            <TrendingUp className="w-3 h-3 text-[var(--color-aurora-pink)]" />
+                            <ArrowRight className="w-3 h-3 text-[var(--color-aurora-purple)]" />
+                          </div>
+                        </Card>
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              <Link href="/">
+                <Button variant="outline" className="w-full min-h-[44px] border-[var(--color-aurora-purple)]/30 text-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-purple)]/10">
+                  Explore more on Aurora App
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </motion.div>
+          )}
+        </motion.div>
+      )}
     </div>
   );
 }
