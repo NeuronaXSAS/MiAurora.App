@@ -43,6 +43,7 @@ import type * as posts from "../posts.js";
 import type * as premium from "../premium.js";
 import type * as premiumConfig from "../premiumConfig.js";
 import type * as privacy from "../privacy.js";
+import type * as publicSearch from "../publicSearch.js";
 import type * as reels from "../reels.js";
 import type * as resources from "../resources.js";
 import type * as rooms from "../rooms.js";
@@ -101,6 +102,7 @@ declare const fullApi: ApiFromModules<{
   premium: typeof premium;
   premiumConfig: typeof premiumConfig;
   privacy: typeof privacy;
+  publicSearch: typeof publicSearch;
   reels: typeof reels;
   resources: typeof resources;
   rooms: typeof rooms;
