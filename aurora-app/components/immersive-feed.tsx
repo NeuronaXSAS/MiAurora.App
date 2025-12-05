@@ -370,17 +370,31 @@ function FeedItemCard({
 
   const isReel = item.reel || item.postType === "reel";
   const isRoute = item.type === "route" || item.route;
-  const hasMedia = item.mediaUrl || item.imageUrl || item.reel?.videoUrl || item.reel?.thumbnailUrl;
+  
+  // Helper to check if URL is valid (not example.com placeholder)
+  const isValidUrl = (url: string | undefined | null): boolean => {
+    if (!url) return false;
+    if (url.includes('example.com')) return false;
+    if (url.includes('placeholder')) return false;
+    return url.startsWith('http') || url.startsWith('/');
+  };
+  
+  const videoUrl = isValidUrl(item.reel?.videoUrl) ? item.reel?.videoUrl : null;
+  const thumbnailUrl = isValidUrl(item.reel?.thumbnailUrl) ? item.reel?.thumbnailUrl : null;
+  const mediaUrl = isValidUrl(item.mediaUrl) ? item.mediaUrl : null;
+  const imageUrl = isValidUrl(item.imageUrl) ? item.imageUrl : null;
+  
+  const hasMedia = mediaUrl || imageUrl || videoUrl || thumbnailUrl;
 
   return (
     <div className="relative w-full h-full snap-start snap-always">
       {/* Background - Image or Video */}
       <div className="absolute inset-0 bg-gradient-to-b from-[var(--color-aurora-violet)] to-black">
-        {isReel && item.reel?.videoUrl ? (
+        {isReel && videoUrl ? (
           <video
             ref={videoRef}
-            src={item.reel.videoUrl}
-            poster={item.reel.thumbnailUrl}
+            src={videoUrl}
+            poster={thumbnailUrl || undefined}
             loop
             muted={isMuted}
             playsInline
@@ -398,7 +412,7 @@ function FeedItemCard({
           />
         ) : hasMedia ? (
           <Image
-            src={item.mediaUrl || item.imageUrl || item.reel?.thumbnailUrl || "/placeholder.jpg"}
+            src={mediaUrl || imageUrl || thumbnailUrl || "/Au_Logo_1.png"}
             alt={item.title || "Post"}
             fill
             className="object-cover"
@@ -412,8 +426,8 @@ function FeedItemCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30" />
       </div>
 
-      {/* Video Controls */}
-      {isReel && (
+      {/* Video Controls - Only show if there's a valid video */}
+      {isReel && videoUrl && (
         <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
           <button
             onClick={() => setIsMuted(!isMuted)}
@@ -424,8 +438,8 @@ function FeedItemCard({
         </div>
       )}
 
-      {/* Play/Pause Indicator */}
-      {isReel && !isPlaying && (
+      {/* Play/Pause Indicator - Only show if there's a valid video */}
+      {isReel && videoUrl && !isPlaying && (
         <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
           <div className="w-20 h-20 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
             <Play className="w-10 h-10 text-white ml-1" />
@@ -456,7 +470,9 @@ function FeedItemCard({
                 <>
                   <span>•</span>
                   <MapPin className="w-3 h-3" />
-                  {item.location}
+                  {typeof item.location === 'string' 
+                    ? item.location 
+                    : item.location?.name || item.location?.city || 'Unknown location'}
                 </>
               )}
             </div>

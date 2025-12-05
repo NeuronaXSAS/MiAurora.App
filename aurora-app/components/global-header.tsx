@@ -14,9 +14,9 @@ import { useState, useEffect, useRef } from "react";
 import { 
   Menu, Plus, Shield, Search, User, X, Loader2,
   MapPin, Users, Heart, Route, Briefcase, Play, FileText, MessageSquare,
-  Sparkles, TrendingUp, Clock, Star, Wallet, Video, Zap, BookOpen,
-  Baby, Stethoscope, Scale, Home, GraduationCap, Plane, ShoppingBag,
-  Settings, LogOut, Crown, Award, Moon, Sun, Mail, ChevronRight
+  Sparkles, TrendingUp, Star, Wallet, Video, Zap, BookOpen,
+  GraduationCap, Settings, LogOut, Crown, Award, Moon, Sun, Mail, ChevronRight,
+  Send, UserPlus
 } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 import Image from "next/image";
@@ -25,7 +25,6 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { NotificationsDropdown } from "@/components/notifications-dropdown";
-import { AIChatCompanion } from "@/components/ai-chat-companion";
 import { CreateOptionsModal } from "@/components/create-options-modal";
 import { PostCreateDialog } from "@/components/post-create-dialog";
 import { PollCreateDialog } from "@/components/poll-create-dialog";
@@ -125,16 +124,17 @@ export function GlobalHeader({
 }: GlobalHeaderProps) {
   const router = useRouter();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [showAIChat, setShowAIChat] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPostDialog, setShowPostDialog] = useState(false);
   const [showPollDialog, setShowPollDialog] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showChatPopup, setShowChatPopup] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const { resolvedTheme, setTheme } = useTheme();
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const chatPopupRef = useRef<HTMLDivElement>(null);
 
   // Debounce search query
   useEffect(() => {
@@ -213,18 +213,21 @@ export function GlobalHeader({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [showSearch, showProfileMenu]);
 
-  // Close profile menu when clicking outside
+  // Close profile menu and chat popup when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
         setShowProfileMenu(false);
       }
+      if (chatPopupRef.current && !chatPopupRef.current.contains(e.target as Node)) {
+        setShowChatPopup(false);
+      }
     };
-    if (showProfileMenu) {
+    if (showProfileMenu || showChatPopup) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showProfileMenu]);
+  }, [showProfileMenu, showChatPopup]);
 
   // Get user data for profile menu
   const user = useQuery(api.users.getUser, userId ? { userId } : "skip");
@@ -253,17 +256,6 @@ export function GlobalHeader({
                 <span className="font-bold text-[var(--foreground)]">Aurora App</span>
               </Link>
             )}
-            
-            {/* AI Chat - Aurora Logo */}
-            <button 
-              onClick={() => setShowAIChat(true)}
-              className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-0.5 hover:scale-105 transition-transform"
-              aria-label="Aurora AI Chat"
-            >
-              <div className="w-full h-full rounded-[10px] bg-[var(--card)] flex items-center justify-center">
-                <Image src="/Au_Logo_1.png" alt="Aurora AI" width={26} height={26} className="object-contain" />
-              </div>
-            </button>
 
             {/* Page Title (optional) */}
             {title && (
@@ -305,14 +297,83 @@ export function GlobalHeader({
               <Search className="w-5 h-5 text-[var(--muted-foreground)]" />
             </button>
 
-            {/* Messages */}
-            <Link 
-              href="/messages"
-              className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center relative"
-              aria-label="Messages"
-            >
-              <Mail className="w-5 h-5 text-[var(--muted-foreground)]" />
-            </Link>
+            {/* Messages - Reddit-style popup */}
+            <div className="relative" ref={chatPopupRef}>
+              <button 
+                onClick={() => setShowChatPopup(!showChatPopup)}
+                className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center relative"
+                aria-label="Messages"
+              >
+                <Mail className="w-5 h-5 text-[var(--muted-foreground)]" />
+              </button>
+
+              {/* Chat Popup - Reddit Style */}
+              {showChatPopup && (
+                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden z-50">
+                  {/* Header */}
+                  <div className="flex items-center justify-between p-4 border-b border-[var(--border)] bg-gradient-to-r from-[var(--color-aurora-purple)]/5 to-[var(--color-aurora-pink)]/5">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+                      <h3 className="font-semibold text-[var(--foreground)]">Chats</h3>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button 
+                        onClick={() => {
+                          setShowChatPopup(false);
+                          router.push("/messages?new=true");
+                        }}
+                        className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors"
+                        title="Start new chat"
+                      >
+                        <UserPlus className="w-4 h-4 text-[var(--muted-foreground)]" />
+                      </button>
+                      <button 
+                        onClick={() => setShowChatPopup(false)}
+                        className="p-2 rounded-lg hover:bg-[var(--accent)] transition-colors"
+                      >
+                        <X className="w-4 h-4 text-[var(--muted-foreground)]" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Chat List */}
+                  <div className="max-h-[400px] overflow-y-auto">
+                    {/* Welcome message when no chats */}
+                    <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20 flex items-center justify-center mb-4">
+                        <MessageSquare className="w-10 h-10 text-[var(--color-aurora-purple)]" />
+                      </div>
+                      <h4 className="font-semibold text-[var(--foreground)] mb-2">Welcome to chat!</h4>
+                      <p className="text-sm text-[var(--muted-foreground)] mb-4">
+                        Start a direct or group chat with other Aurora App members.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setShowChatPopup(false);
+                          router.push("/messages?new=true");
+                        }}
+                        className="flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-blue)]/90 text-white font-medium transition-colors"
+                      >
+                        <Send className="w-4 h-4" />
+                        Start new chat
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="p-3 border-t border-[var(--border)] bg-[var(--accent)]/30">
+                    <Link
+                      href="/messages"
+                      onClick={() => setShowChatPopup(false)}
+                      className="flex items-center justify-center gap-2 w-full py-2 text-sm text-[var(--color-aurora-purple)] hover:text-[var(--color-aurora-purple)]/80 font-medium transition-colors"
+                    >
+                      See all messages
+                      <ChevronRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
             
             {/* Notifications */}
             <NotificationsDropdown />
@@ -641,21 +702,6 @@ export function GlobalHeader({
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* AI Chat Companion Modal */}
-      {showAIChat && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center" 
-          onClick={() => setShowAIChat(false)}
-        >
-          <div className="w-full sm:max-w-lg sm:p-4" onClick={(e) => e.stopPropagation()}>
-            <AIChatCompanion 
-              className="h-[85vh] sm:h-[600px] rounded-t-3xl sm:rounded-2xl" 
-              onClose={() => setShowAIChat(false)}
-            />
           </div>
         </div>
       )}

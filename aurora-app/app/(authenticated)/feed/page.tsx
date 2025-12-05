@@ -48,7 +48,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 type SortOption = "best" | "hot" | "new" | "top";
-type ViewMode = "card" | "compact";
+type ViewMode = "card" | "immersive";
 
 export default function FeedPage() {
   const isMobile = useIsMobile();
@@ -60,6 +60,9 @@ export default function FeedPage() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("new");
   const [viewMode, setViewMode] = useState<ViewMode>("card");
+  
+  // Import ImmersiveFeed for desktop TikTok-style view
+  const ImmersiveFeed = require("@/components/immersive-feed").ImmersiveFeed;
   const [showAIChat, setShowAIChat] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPostDialog, setShowPostDialog] = useState(false);
@@ -180,6 +183,52 @@ export default function FeedPage() {
     return <MobileFeed />;
   }
 
+  // Desktop Immersive View (TikTok-style)
+  if (viewMode === "immersive") {
+    return (
+      <div className="min-h-screen bg-[var(--background)]">
+        {/* Minimal header for immersive mode */}
+        <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/50 to-transparent p-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <button
+              onClick={() => setViewMode("card")}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 transition-colors"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span className="text-sm font-medium">Card View</span>
+            </button>
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 transition-colors">
+                    <currentSort.icon className="w-4 h-4" />
+                    {currentSort.label}
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-[var(--card)] border-[var(--border)]">
+                  {sortOptions.map((option) => (
+                    <DropdownMenuItem
+                      key={option.value}
+                      onClick={() => setSortBy(option.value as SortOption)}
+                      className={`flex items-center gap-2 text-[var(--foreground)] hover:bg-[var(--accent)] ${sortBy === option.value ? "bg-[var(--accent)]" : ""}`}
+                    >
+                      <option.icon className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                      {option.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </div>
+        
+        {/* Full-screen immersive feed */}
+        <ImmersiveFeed userId={userId} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[var(--background)]">
       {/* Sort & Filter Bar - No duplicate header, uses GlobalHeader from layout */}
@@ -241,15 +290,17 @@ export default function FeedPage() {
             <div className="flex items-center gap-1 ml-auto">
               <button
                 onClick={() => setViewMode("card")}
-                className={`p-2 rounded-lg transition-colors min-w-[40px] min-h-[40px] ${viewMode === "card" ? "bg-[var(--accent)]" : "hover:bg-[var(--accent)]"}`}
+                className={`p-2 rounded-xl transition-colors min-w-[44px] min-h-[44px] ${viewMode === "card" ? "bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]" : "hover:bg-[var(--accent)] text-[var(--muted-foreground)]"}`}
+                title="Card View"
               >
-                <LayoutGrid className="w-5 h-5 text-[var(--muted-foreground)]" />
+                <LayoutGrid className="w-5 h-5" />
               </button>
               <button
-                onClick={() => setViewMode("compact")}
-                className={`p-2 rounded-lg transition-colors min-w-[40px] min-h-[40px] ${viewMode === "compact" ? "bg-[var(--accent)]" : "hover:bg-[var(--accent)]"}`}
+                onClick={() => setViewMode("immersive")}
+                className={`p-2 rounded-xl transition-colors min-w-[44px] min-h-[44px] ${viewMode === "immersive" ? "bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)]" : "hover:bg-[var(--accent)] text-[var(--muted-foreground)]"}`}
+                title="Immersive View (TikTok-style)"
               >
-                <List className="w-5 h-5 text-[var(--muted-foreground)]" />
+                <List className="w-5 h-5" />
               </button>
             </div>
           </div>
