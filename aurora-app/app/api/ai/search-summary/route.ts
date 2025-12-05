@@ -2,14 +2,14 @@
  * Aurora App - AI Search Summary API
  * 
  * Generates AI-powered summaries from community content.
- * Competes with Google by providing more human, honest results.
+ * Uses Google AI Studio (Gemini) as the AI provider.
  * No ads, no manipulation - just real community wisdom.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const anthropic = new Anthropic();
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,18 +56,14 @@ Please provide a helpful AI summary that:
 
 Keep it concise, warm, and genuinely helpful.`;
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 500,
-      messages: [
-        { role: "user", content: userPrompt }
-      ],
-      system: systemPrompt,
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      systemInstruction: systemPrompt,
     });
 
-    const summary = response.content[0].type === "text" 
-      ? response.content[0].text 
-      : null;
+    const result = await model.generateContent(userPrompt);
+    const response = result.response;
+    const summary = response.text();
 
     return NextResponse.json({ 
       summary,
