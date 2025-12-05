@@ -55,6 +55,8 @@ import type * as safetyCheckins from "../safetyCheckins.js";
 import type * as savedPosts from "../savedPosts.js";
 import type * as scheduled_aggregateIntelligence from "../scheduled/aggregateIntelligence.js";
 import type * as search from "../search.js";
+import type * as searchApiUsage from "../searchApiUsage.js";
+import type * as searchCache from "../searchCache.js";
 import type * as seed from "../seed.js";
 import type * as seedData from "../seedData.js";
 import type * as seedDataEnhanced from "../seedDataEnhanced.js";
@@ -116,6 +118,8 @@ declare const fullApi: ApiFromModules<{
   savedPosts: typeof savedPosts;
   "scheduled/aggregateIntelligence": typeof scheduled_aggregateIntelligence;
   search: typeof search;
+  searchApiUsage: typeof searchApiUsage;
+  searchCache: typeof searchCache;
   seed: typeof seed;
   seedData: typeof seedData;
   seedDataEnhanced: typeof seedDataEnhanced;

@@ -1674,4 +1674,30 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_skipped", ["userId", "skippedUserId"]),
+
+  // ============================================
+  // AURORA AI SEARCH ENGINE - Cache & API Usage
+  // ============================================
+
+  // Search Cache - 24-hour cache to minimize Brave API calls
+  searchCache: defineTable({
+    queryHash: v.string(), // MD5 hash of normalized query
+    query: v.string(), // Original query
+    results: v.any(), // SearchResult[] - cached results
+    auroraInsights: v.any(), // AuroraInsights - cached insights
+    cachedAt: v.number(), // Timestamp when cached
+    expiresAt: v.number(), // 24 hours from cachedAt
+    hitCount: v.number(), // Number of cache hits
+  })
+    .index("by_hash", ["queryHash"])
+    .index("by_expiry", ["expiresAt"]),
+
+  // API Usage Tracking - Monitor Brave API usage for Free tier (2,000/month)
+  searchApiUsage: defineTable({
+    month: v.string(), // "2024-12" format
+    used: v.number(), // Number of API calls made
+    limit: v.number(), // 2000 for free tier
+    lastUpdated: v.number(), // Timestamp of last update
+  })
+    .index("by_month", ["month"]),
 });

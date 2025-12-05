@@ -1,59 +1,47 @@
 /**
- * Aurora App - Brave Search API Integration
+ * Aurora AI Search Engine - Brave Search API Route
  * 
  * The world's first women-first search engine powered by Brave Search.
  * Provides unique value through:
  * - AI content detection (% of AI-written content)
- * - Gender bias analysis
+ * - Gender bias analysis (multi-dimensional)
+ * - Political bias analysis
+ * - Commercial bias detection
  * - Source credibility scoring
  * - Women-safety indicators
  * - Privacy-first search (no tracking)
+ * 
+ * Requirements: 1.1, 2.1-2C, 3.1-3.5, 4.1-4.4, 7.1-7.4, 12.1-12.6
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import {
+  analyzeBias,
+  calculateCredibility,
+  detectAIContent,
+  detectSafetyFlags,
+  isContentWomenFocused,
+  getGenderBiasLabel,
+  getCredibilityLabel,
+  getAIContentLabel,
+} from "@/lib/search";
+import type {
+  SearchResult,
+  AuroraInsights,
+  BiasAnalysis,
+  CredibilityScore,
+  AIContentDetection,
+  SafetyFlag,
+  PoliticalBiasIndicator,
+  GenderBiasLabel,
+} from "@/lib/search/types";
 
 const BRAVE_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
 const BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search";
 
-// AI content detection patterns (simplified - in production use ML model)
-const AI_CONTENT_PATTERNS = [
-  /as an ai/i,
-  /i cannot/i,
-  /it's important to note/i,
-  /in conclusion/i,
-  /firstly.*secondly.*thirdly/i,
-  /comprehensive guide/i,
-  /delve into/i,
-  /it's worth noting/i,
-  /in this article/i,
-  /let's explore/i,
-];
-
-// Bias indicators
-const BIAS_POSITIVE_KEYWORDS = [
-  "women", "female", "inclusive", "equality", "diverse", "empower",
-  "support", "safe space", "gender equality", "women-led", "female-founded",
-  "maternity", "work-life balance", "flexible", "inclusive workplace"
-];
-
-const BIAS_NEGATIVE_KEYWORDS = [
-  "boys club", "male-dominated", "aggressive culture", "hostile",
-  "discrimination", "harassment", "toxic", "glass ceiling", "pay gap",
-  "sexism", "misogyny", "bro culture"
-];
-
-// Source credibility database (simplified)
-const TRUSTED_DOMAINS = [
-  "gov", "edu", "org", "who.int", "un.org", "bbc.com", "reuters.com",
-  "nytimes.com", "theguardian.com", "npr.org", "pbs.org", "nature.com",
-  "sciencedirect.com", "pubmed.gov", "harvard.edu", "stanford.edu"
-];
-
-const WOMEN_FOCUSED_DOMAINS = [
-  "womenshealth.gov", "unwomen.org", "catalyst.org", "leanin.org",
-  "girlswhocode.com", "womenintechnology.org", "sheeo.world",
-  "globalfundforwomen.org", "womendeliver.org"
-];
+// ============================================
+// BRAVE API TYPES
+// ============================================
 
 interface BraveWebResult {
   title: string;
@@ -80,141 +68,25 @@ interface BraveSearchResponse {
   };
 }
 
-interface AuroraSearchResult {
-  title: string;
-  url: string;
-  description: string;
-  domain: string;
-  age?: string;
-  // Aurora App unique metrics
-  aiContentScore: number; // 0-100, percentage likely AI-generated
-  biasScore: number; // 0-100, women-positive score
-  biasLabel: string;
-  credibilityScore: number; // 0-100
-  credibilityLabel: string;
-  isWomenFocused: boolean;
-  safetyFlags: string[];
-  source: "web" | "aurora";
-}
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
 
 function extractDomain(url: string): string {
   try {
-    const domain = new URL(url).hostname.replace("www.", "");
-    return domain;
+    return new URL(url).hostname.replace("www.", "");
   } catch {
     return url;
   }
 }
 
-function calculateAIContentScore(text: string): number {
-  let score = 0;
-  const lowerText = text.toLowerCase();
-  
-  // Check for AI patterns
-  AI_CONTENT_PATTERNS.forEach(pattern => {
-    if (pattern.test(lowerText)) score += 12;
-  });
-  
-  // Check for overly formal/structured language
-  if (lowerText.includes("furthermore")) score += 5;
-  if (lowerText.includes("moreover")) score += 5;
-  if (lowerText.includes("subsequently")) score += 5;
-  if (lowerText.includes("comprehensive")) score += 5;
-  
-  // Check for lack of personal voice
-  const personalPronouns = (lowerText.match(/\b(i|my|me|we|our)\b/g) || []).length;
-  if (personalPronouns < 2 && text.length > 200) score += 10;
-  
-  return Math.min(100, Math.max(0, score));
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 15);
 }
 
-function calculateBiasScore(text: string): { score: number; label: string } {
-  let score = 50; // Start neutral
-  const lowerText = text.toLowerCase();
-  
-  BIAS_POSITIVE_KEYWORDS.forEach(kw => {
-    if (lowerText.includes(kw)) score += 5;
-  });
-  
-  BIAS_NEGATIVE_KEYWORDS.forEach(kw => {
-    if (lowerText.includes(kw)) score -= 8;
-  });
-  
-  score = Math.min(100, Math.max(0, score));
-  
-  let label = "Neutral";
-  if (score >= 75) label = "Women-Positive";
-  else if (score >= 60) label = "Balanced";
-  else if (score >= 40) label = "Neutral";
-  else if (score >= 25) label = "Caution";
-  else label = "Potential Bias";
-  
-  return { score, label };
-}
-
-function calculateCredibilityScore(domain: string): { score: number; label: string } {
-  let score = 50;
-  
-  // Check TLD
-  if (domain.endsWith(".gov") || domain.endsWith(".edu")) score += 30;
-  else if (domain.endsWith(".org")) score += 15;
-  
-  // Check trusted domains
-  if (TRUSTED_DOMAINS.some(d => domain.includes(d))) score += 25;
-  
-  // Check women-focused domains
-  if (WOMEN_FOCUSED_DOMAINS.some(d => domain.includes(d))) score += 20;
-  
-  // Penalize suspicious patterns
-  if (domain.includes("blog") && !domain.includes("official")) score -= 10;
-  if (domain.match(/\d{4,}/)) score -= 15; // Random numbers in domain
-  
-  score = Math.min(100, Math.max(0, score));
-  
-  let label = "Unknown";
-  if (score >= 80) label = "Highly Trusted";
-  else if (score >= 60) label = "Trusted";
-  else if (score >= 40) label = "Moderate";
-  else label = "Verify Source";
-  
-  return { score, label };
-}
-
-function detectSafetyFlags(text: string, url: string): string[] {
-  const flags: string[] = [];
-  const lowerText = text.toLowerCase();
-  
-  // Positive flags
-  if (lowerText.includes("verified") || lowerText.includes("certified")) {
-    flags.push("✓ Verified Content");
-  }
-  if (lowerText.includes("women-owned") || lowerText.includes("female-founded")) {
-    flags.push("👩 Women-Led");
-  }
-  if (lowerText.includes("safe space") || lowerText.includes("inclusive")) {
-    flags.push("🛡️ Safe Space");
-  }
-  
-  // Warning flags
-  if (lowerText.includes("scam") || lowerText.includes("fraud")) {
-    flags.push("⚠️ Scam Warning");
-  }
-  if (lowerText.includes("harassment") || lowerText.includes("abuse")) {
-    flags.push("⚠️ Safety Concern");
-  }
-  
-  return flags;
-}
-
-function isWomenFocusedSource(domain: string, text: string): boolean {
-  if (WOMEN_FOCUSED_DOMAINS.some(d => domain.includes(d))) return true;
-  
-  const lowerText = text.toLowerCase();
-  const womenKeywords = ["women", "female", "girl", "mother", "sister", "feminine"];
-  const matches = womenKeywords.filter(kw => lowerText.includes(kw)).length;
-  
-  return matches >= 2;
-}
+// ============================================
+// MAIN API HANDLER
+// ============================================
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -222,21 +94,35 @@ export async function GET(request: NextRequest) {
   const count = parseInt(searchParams.get("count") || "10");
   const safesearch = searchParams.get("safesearch") || "moderate";
 
-  if (!query) {
-    return NextResponse.json({ error: "Query parameter 'q' is required" }, { status: 400 });
+  // Property 1: Query Validation - minimum 2 characters
+  if (!query || query.trim().length < 2) {
+    return NextResponse.json(
+      { error: "Query must be at least 2 characters" },
+      { status: 400 }
+    );
   }
 
+  // Check if API key is configured
   if (!BRAVE_API_KEY) {
-    // Return mock data if no API key (for development)
     return NextResponse.json({
       query,
+      totalResults: 0,
       results: [],
+      cached: false,
       auroraInsights: {
-        overallBiasScore: 0,
-        aiContentAverage: 0,
+        averageGenderBias: 0,
+        averageGenderBiasLabel: "Neutral" as GenderBiasLabel,
+        averageCredibility: 0,
+        averageCredibilityLabel: "Verify Source",
+        averageAIContent: 0,
+        averageAIContentLabel: "Mostly Human",
+        politicalDistribution: {},
         womenFocusedCount: 0,
-        message: "Brave Search API key not configured. Add BRAVE_SEARCH_API_KEY to environment variables."
-      }
+        womenFocusedPercentage: 0,
+        recommendations: ["Configure BRAVE_SEARCH_API_KEY in environment variables to enable web search."],
+      },
+      apiUsage: { used: 0, limit: 2000, remaining: 2000 },
+      error: "Brave Search API key not configured",
     });
   }
 
@@ -257,68 +143,55 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Brave API error:", response.status, errorText);
       throw new Error(`Brave Search API error: ${response.status}`);
     }
 
     const data: BraveSearchResponse = await response.json();
     const webResults = data.web?.results || [];
 
-    // Process results with Aurora App intelligence
-    const auroraResults: AuroraSearchResult[] = webResults.map((result) => {
+    // Process results with Aurora Intelligence Layer
+    const auroraResults: SearchResult[] = webResults.map((result) => {
       const domain = extractDomain(result.url);
       const fullText = `${result.title} ${result.description} ${(result.extra_snippets || []).join(" ")}`;
       
-      const aiScore = calculateAIContentScore(fullText);
-      const bias = calculateBiasScore(fullText);
-      const credibility = calculateCredibilityScore(domain);
-      const safetyFlags = detectSafetyFlags(fullText, result.url);
-      const isWomenFocused = isWomenFocusedSource(domain, fullText);
+      // Apply all analyzers
+      const biasAnalysis: BiasAnalysis = analyzeBias(fullText, domain, result.url);
+      const credibilityScore: CredibilityScore = calculateCredibility(result.url);
+      const aiContentDetection: AIContentDetection = detectAIContent(fullText);
+      const safetyFlags: SafetyFlag[] = detectSafetyFlags(fullText, result.url);
+      const isWomenFocused = isContentWomenFocused(fullText, result.url);
 
       return {
+        id: generateId(),
         title: result.title,
         url: result.url,
         description: result.description,
         domain,
         age: result.age,
-        aiContentScore: aiScore,
-        biasScore: bias.score,
-        biasLabel: bias.label,
-        credibilityScore: credibility.score,
-        credibilityLabel: credibility.label,
-        isWomenFocused,
+        biasAnalysis,
+        credibilityScore,
+        aiContentDetection,
         safetyFlags,
+        isWomenFocused,
         source: "web" as const,
       };
     });
 
-    // Calculate aggregate insights
-    const totalResults = auroraResults.length;
-    const avgBiasScore = totalResults > 0 
-      ? Math.round(auroraResults.reduce((sum, r) => sum + r.biasScore, 0) / totalResults)
-      : 0;
-    const avgAIScore = totalResults > 0
-      ? Math.round(auroraResults.reduce((sum, r) => sum + r.aiContentScore, 0) / totalResults)
-      : 0;
-    const womenFocusedCount = auroraResults.filter(r => r.isWomenFocused).length;
-    const avgCredibility = totalResults > 0
-      ? Math.round(auroraResults.reduce((sum, r) => sum + r.credibilityScore, 0) / totalResults)
-      : 0;
+    // Calculate Aurora Insights (aggregate analysis)
+    const auroraInsights = calculateAuroraInsights(auroraResults);
 
     return NextResponse.json({
       query: data.query?.original || query,
-      totalResults,
+      totalResults: auroraResults.length,
       results: auroraResults,
-      auroraInsights: {
-        overallBiasScore: avgBiasScore,
-        overallBiasLabel: avgBiasScore >= 60 ? "Women-Friendly Results" : avgBiasScore >= 40 ? "Mixed Results" : "Review Carefully",
-        aiContentAverage: avgAIScore,
-        aiContentLabel: avgAIScore >= 50 ? "High AI Content" : avgAIScore >= 25 ? "Some AI Content" : "Mostly Human",
-        credibilityAverage: avgCredibility,
-        womenFocusedCount,
-        womenFocusedPercentage: totalResults > 0 ? Math.round((womenFocusedCount / totalResults) * 100) : 0,
-        recommendation: avgBiasScore < 50 
-          ? "These results may lack women's perspectives. Consider searching Aurora App community for women-first insights."
-          : "Good representation of women-friendly content found.",
+      cached: false,
+      auroraInsights,
+      apiUsage: {
+        used: 1, // Will be updated by Convex
+        limit: 2000,
+        remaining: 1999,
       },
       locations: data.locations?.results || [],
     });
@@ -326,8 +199,108 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Brave Search error:", error);
     return NextResponse.json(
-      { error: "Search failed. Please try again." },
+      { 
+        error: "Search failed. Please try again.",
+        fallback: "community",
+      },
       { status: 500 }
     );
   }
+}
+
+// ============================================
+// AURORA INSIGHTS CALCULATION
+// ============================================
+
+function calculateAuroraInsights(results: SearchResult[]): AuroraInsights {
+  const totalResults = results.length;
+
+  if (totalResults === 0) {
+    return {
+      averageGenderBias: 0,
+      averageGenderBiasLabel: "Neutral",
+      averageCredibility: 0,
+      averageCredibilityLabel: "Verify Source",
+      averageAIContent: 0,
+      averageAIContentLabel: "Mostly Human",
+      politicalDistribution: {} as Record<PoliticalBiasIndicator, number>,
+      womenFocusedCount: 0,
+      womenFocusedPercentage: 0,
+      recommendations: [],
+    };
+  }
+
+  // Calculate averages (Property 5: Average Calculation Correctness)
+  const avgGenderBias = Math.round(
+    results.reduce((sum, r) => sum + r.biasAnalysis.genderBias.score, 0) / totalResults
+  );
+  const avgCredibility = Math.round(
+    results.reduce((sum, r) => sum + r.credibilityScore.score, 0) / totalResults
+  );
+  const avgAIContent = Math.round(
+    results.reduce((sum, r) => sum + r.aiContentDetection.percentage, 0) / totalResults
+  );
+
+  // Calculate political distribution
+  const politicalDistribution: Record<PoliticalBiasIndicator, number> = {
+    "Far Left": 0,
+    "Left": 0,
+    "Center-Left": 0,
+    "Center": 0,
+    "Center-Right": 0,
+    "Right": 0,
+    "Far Right": 0,
+  };
+  results.forEach(r => {
+    politicalDistribution[r.biasAnalysis.politicalBias.indicator]++;
+  });
+
+  // Count women-focused results
+  const womenFocusedCount = results.filter(r => r.isWomenFocused).length;
+  const womenFocusedPercentage = Math.round((womenFocusedCount / totalResults) * 100);
+
+  // Generate recommendations
+  const recommendations: string[] = [];
+  
+  // Requirement 2.5: Recommend community when bias < 50
+  if (avgGenderBias < 50) {
+    recommendations.push(
+      "These results may lack women's perspectives. Explore Aurora App community for women-first insights."
+    );
+  }
+
+  // Requirement 2B.5: Recommend alternatives when politically skewed
+  const maxPolitical = Math.max(...Object.values(politicalDistribution));
+  if (maxPolitical > totalResults * 0.6) {
+    recommendations.push(
+      "Results appear politically skewed. Consider viewing alternative perspectives for balanced information."
+    );
+  }
+
+  // High AI content warning
+  if (avgAIContent > 50) {
+    recommendations.push(
+      "High AI-generated content detected. Verify information from multiple sources."
+    );
+  }
+
+  // Low credibility warning
+  if (avgCredibility < 40) {
+    recommendations.push(
+      "Average source credibility is low. Consider verifying information from trusted sources."
+    );
+  }
+
+  return {
+    averageGenderBias: avgGenderBias,
+    averageGenderBiasLabel: getGenderBiasLabel(avgGenderBias),
+    averageCredibility: avgCredibility,
+    averageCredibilityLabel: getCredibilityLabel(avgCredibility),
+    averageAIContent: avgAIContent,
+    averageAIContentLabel: getAIContentLabel(avgAIContent),
+    politicalDistribution,
+    womenFocusedCount,
+    womenFocusedPercentage,
+    recommendations,
+  };
 }
