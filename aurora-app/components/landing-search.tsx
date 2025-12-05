@@ -21,11 +21,12 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
   Search, X, FileText, MapPin as Route, Users, Briefcase, Shield, 
-  Lock, ArrowRight, Sparkles, TrendingUp, Globe, AlertTriangle,
-  CheckCircle, Info, ExternalLink, Brain, Heart, Eye, Zap, Scale,
-  Bot, ShieldCheck, Star, Loader2,
+  Lock, ArrowRight, Sparkles, TrendingUp, Globe,
+  Info, ExternalLink, Brain, Heart, Eye, Zap, Scale,
+  Bot, ShieldCheck, Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { LandingAd } from "@/components/ads/landing-ad";
 
 interface WebSearchResult {
   title: string;
@@ -373,6 +374,8 @@ export function LandingSearch() {
               
               {webResults.map((result, i) => (
                 <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                  {/* Show ad after 3rd result for monetization */}
+                  {i === 3 && <LandingAd variant="search-results" className="mb-3" />}
                   <Card className="p-4 hover:shadow-lg transition-all border-[var(--border)] hover:border-[var(--color-aurora-purple)]/30 bg-[var(--card)]">
                     <div className="flex items-start gap-4">
                       {/* Scores Column */}
