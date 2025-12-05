@@ -16,7 +16,6 @@ import { FeedAd } from "@/components/ads/feed-ad";
 import { useDevicePerformance } from "@/hooks/use-device-performance";
 import { ValuePropositionBanner } from "@/components/value-proposition-banner";
 import { ImmersiveFeed } from "@/components/immersive-feed";
-import { DailyEngagement } from "@/components/daily-engagement";
 import { MobilePostCard } from "@/components/mobile-post-card";
 import { SisterSpotlightCompact, SisterSpotlightFeedCard } from "@/components/sister-spotlight-card";
 import { 
@@ -430,10 +429,8 @@ export function MobileFeed() {
           </div>
         )}
 
-        {/* Daily Engagement - Streaks & Challenges */}
-        {userId && feedItems !== undefined && (
-          <DailyEngagement userId={userId as string} />
-        )}
+        {/* Streak indicator - minimal, non-intrusive */}
+        {/* Note: Daily challenges moved to notifications for better UX - no addiction, focus on wellbeing */}
 
         {/* Sister Spotlight - Fun people discovery */}
         {userId && feedItems !== undefined && (

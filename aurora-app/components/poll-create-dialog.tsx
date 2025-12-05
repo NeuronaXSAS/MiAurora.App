@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, X, BarChart3 } from "lucide-react";
+import { Plus, X, BarChart3, MapPin, Loader2 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 
 interface PollCreateDialogProps {
@@ -40,10 +40,44 @@ export function PollCreateDialog({
   const [options, setOptions] = useState(["", ""]);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [lifeDimension, setLifeDimension] = useState<string>("social");
+  const [locationName, setLocationName] = useState("");
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const createPoll = useMutation(api.polls.createPoll);
+
+  // Get current location
+  const getCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your browser");
+      return;
+    }
+    
+    setIsGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const response = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&limit=1`
+          );
+          const data = await response.json();
+          if (data.features && data.features.length > 0) {
+            setLocationName(data.features[0].place_name);
+          }
+        } catch (err) {
+          console.error("Reverse geocoding error:", err);
+        }
+        setIsGettingLocation(false);
+      },
+      (err) => {
+        console.error("Geolocation error:", err);
+        setError("Could not get your location");
+        setIsGettingLocation(false);
+      }
+    );
+  };
 
   const handleSubmit = async () => {
     // Validation
@@ -80,6 +114,7 @@ export function PollCreateDialog({
         options: validOptions.map(opt => opt.trim()),
         isAnonymous,
         lifeDimension: lifeDimension as any,
+        location: locationName.trim() || undefined,
       });
 
       if (result.success) {
@@ -89,6 +124,7 @@ export function PollCreateDialog({
         setOptions(["", ""]);
         setIsAnonymous(false);
         setLifeDimension("social");
+        setLocationName("");
         onOpenChange(false);
       }
     } catch (err: any) {
@@ -220,6 +256,37 @@ export function PollCreateDialog({
                 <SelectItem value="financial">Financial</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Location */}
+          <div>
+            <label className="text-sm font-medium mb-2 block flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              Location (Optional)
+            </label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g., San Francisco, CA"
+                value={locationName}
+                onChange={(e) => setLocationName(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={getCurrentLocation}
+                disabled={isGettingLocation}
+                title="Use my current location"
+                className="min-w-[44px] min-h-[44px]"
+              >
+                {isGettingLocation ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <MapPin className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
           </div>
 
           {/* Anonymous */}

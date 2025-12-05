@@ -19,6 +19,7 @@ export const createPoll = mutation({
       v.literal("financial")
     ),
     isAnonymous: v.optional(v.boolean()),
+    location: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Validation
@@ -51,6 +52,8 @@ export const createPoll = mutation({
       upvotes: 0,
       downvotes: 0,
       commentCount: 0,
+      // Add location if provided (text only for polls)
+      ...(args.location ? { location: { name: args.location, coordinates: [0, 0] as [number, number] } } : {}),
     });
 
     // Award credits for creating poll

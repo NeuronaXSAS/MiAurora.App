@@ -345,12 +345,44 @@ export function ReelCreator({ userId, onClose }: ReelCreatorProps) {
                   <MapPin className="w-4 h-4 text-[var(--color-aurora-blue)]" />
                   <span className="text-sm font-medium text-[var(--foreground)]">Location (optional)</span>
                 </div>
-                <Input
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Add location"
-                  className="h-10 rounded-xl"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="Add location"
+                    className="h-11 rounded-xl flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={async () => {
+                      if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                          async (position) => {
+                            const { latitude, longitude } = position.coords;
+                            try {
+                              const response = await fetch(
+                                `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&limit=1`
+                              );
+                              const data = await response.json();
+                              if (data.features && data.features.length > 0) {
+                                setLocation(data.features[0].place_name);
+                              }
+                            } catch (err) {
+                              console.error("Reverse geocoding error:", err);
+                            }
+                          },
+                          (err) => console.error("Geolocation error:", err)
+                        );
+                      }
+                    }}
+                    title="Use my current location"
+                    className="min-w-[44px] min-h-[44px] rounded-xl"
+                  >
+                    <MapPin className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
 
               {/* Anonymous Toggle */}
