@@ -31,7 +31,9 @@ import {
   Briefcase,
   LayoutGrid,
   Maximize2,
+  Radio,
 } from "lucide-react";
+import { FeedStoriesCompact } from "@/components/feed-stories";
 import { Id } from "@/convex/_generated/dataModel";
 import {
   DropdownMenu,
@@ -418,6 +420,13 @@ export function MobileFeed() {
             <p className="text-center text-sm text-[var(--muted-foreground)] py-2">
               Loading your personalized feed...
             </p>
+          </div>
+        )}
+
+        {/* Stories Bar - Instagram/TikTok style */}
+        {userId && feedItems !== undefined && (
+          <div className="-mx-3 -mt-3 mb-3">
+            <FeedStoriesCompact userId={userId} />
           </div>
         )}
 
