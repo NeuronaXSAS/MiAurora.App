@@ -770,3 +770,92 @@ export const getRecentUsers = query({
     }));
   },
 });
+
+/**
+ * Get suggested users for Sister Spotlight feature
+ * Returns users that the current user might want to connect with
+ * Based on similar interests, location, industry, and activity
+ */
+export const getSuggestedUsers = query({
+  args: { 
+    userId: v.id("users"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 5;
+    const currentUser = await ctx.db.get(args.userId);
+    
+    if (!currentUser) return [];
+    
+    // Get all active users except current user
+    const allUsers = await ctx.db
+      .query("users")
+      .filter((q) => 
+        q.and(
+          q.neq(q.field("_id"), args.userId),
+          q.neq(q.field("isDeleted"), true)
+        )
+      )
+      .take(100);
+    
+    // Score users based on compatibility
+    const scoredUsers = allUsers.map(user => {
+      let score = 0;
+      
+      // Same industry = +30 points
+      if (currentUser.industry && user.industry === currentUser.industry) {
+        score += 30;
+      }
+      
+      // Same location = +25 points
+      if (currentUser.location && user.location === currentUser.location) {
+        score += 25;
+      }
+      
+      // Shared interests = +10 points each
+      if (currentUser.interests && user.interests) {
+        const shared = currentUser.interests.filter(i => 
+          user.interests?.includes(i)
+        );
+        score += shared.length * 10;
+      }
+      
+      // Higher trust score = +1 point per 10 trust
+      score += Math.floor((user.trustScore || 0) / 10);
+      
+      // Has profile image = +15 points (more engaging)
+      if (user.profileImage) score += 15;
+      
+      // Has bio = +10 points
+      if (user.bio) score += 10;
+      
+      // Premium user = +5 points
+      if (user.isPremium) score += 5;
+      
+      // Active user (has credits) = +5 points
+      if ((user.credits || 0) > 25) score += 5;
+      
+      // Add some randomness to keep it fresh
+      score += Math.random() * 20;
+      
+      return { user, score };
+    });
+    
+    // Sort by score and take top matches
+    scoredUsers.sort((a, b) => b.score - a.score);
+    
+    // Return only safe public fields
+    return scoredUsers.slice(0, limit).map(({ user }) => ({
+      _id: user._id,
+      name: user.name,
+      profileImage: user.profileImage,
+      bio: user.bio,
+      location: user.location,
+      industry: user.industry,
+      interests: user.interests,
+      trustScore: user.trustScore,
+      credits: user.credits,
+      isPremium: user.isPremium,
+    }));
+  },
+});

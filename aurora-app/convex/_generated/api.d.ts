@@ -12,6 +12,7 @@ import type * as accompaniment from "../accompaniment.js";
 import type * as actions_agora from "../actions/agora.js";
 import type * as actions_analyzeReel from "../actions/analyzeReel.js";
 import type * as actions_twilio from "../actions/twilio.js";
+import type * as admin from "../admin.js";
 import type * as ai from "../ai.js";
 import type * as aiAnalytics from "../aiAnalytics.js";
 import type * as aiSharing from "../aiSharing.js";
@@ -69,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   "actions/agora": typeof actions_agora;
   "actions/analyzeReel": typeof actions_analyzeReel;
   "actions/twilio": typeof actions_twilio;
+  admin: typeof admin;
   ai: typeof ai;
   aiAnalytics: typeof aiAnalytics;
   aiSharing: typeof aiSharing;

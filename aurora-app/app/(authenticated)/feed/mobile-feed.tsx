@@ -18,6 +18,7 @@ import { ValuePropositionBanner } from "@/components/value-proposition-banner";
 import { ImmersiveFeed } from "@/components/immersive-feed";
 import { DailyEngagement } from "@/components/daily-engagement";
 import { MobilePostCard } from "@/components/mobile-post-card";
+import { SisterSpotlightCompact } from "@/components/sister-spotlight-card";
 import { 
   Sparkles, 
   ChevronDown, 
@@ -423,6 +424,11 @@ export function MobileFeed() {
         {/* Daily Engagement - Streaks & Challenges */}
         {userId && feedItems !== undefined && (
           <DailyEngagement userId={userId as string} />
+        )}
+
+        {/* Sister Spotlight - Fun people discovery */}
+        {userId && feedItems !== undefined && (
+          <SisterSpotlightCompact currentUserId={userId} />
         )}
 
         {/* Value Proposition for new/returning users */}

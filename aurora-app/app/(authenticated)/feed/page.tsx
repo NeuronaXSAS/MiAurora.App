@@ -9,6 +9,7 @@ import { AIChatCard } from "@/components/ai-chat-card";
 import { RouteFeedCard } from "@/components/route-feed-card";
 import { ReelFeedCard } from "@/components/reel-feed-card";
 import { OpportunityFeedCard } from "@/components/opportunity-feed-card";
+import { SisterSpotlightCard } from "@/components/sister-spotlight-card";
 import { FeedAd } from "@/components/ads/feed-ad";
 import { PostCardSkeleton } from "@/components/loading-skeleton";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
@@ -425,6 +426,7 @@ export default function FeedPage() {
               if (!item || !item._id) return null;
               
               const showAd = index > 0 && index % 5 === 0;
+              const showSisterSpotlight = index === 3; // Show after 3rd post
               const isReel = item.type === "post" && (item.reel || item.reelId || item.postType === "reel");
               const isPoll = item.type === "post" && item.postType === "poll";
               const isAIChat = item.type === "post" && item.postType === "ai_chat";
@@ -439,6 +441,12 @@ export default function FeedPage() {
                   transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.15) }}
                   className="feed-item card-interactive"
                 >
+                  {/* Sister Spotlight - Fun people discovery */}
+                  {showSisterSpotlight && userId && (
+                    <div className="mb-3">
+                      <SisterSpotlightCard currentUserId={userId} />
+                    </div>
+                  )}
                   {showAd && <FeedAd />}
                   {isPoll && (
                     <PollCard post={item} currentUserId={userId || undefined} onDelete={() => handleDelete(item._id as Id<"posts">)} />
