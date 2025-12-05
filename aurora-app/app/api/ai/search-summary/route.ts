@@ -12,64 +12,55 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
 
+// Language-specific prompts for international users
+const LANGUAGE_PROMPTS: Record<string, { instruction: string; tone: string }> = {
+  en: { instruction: "Respond in English.", tone: "warm and supportive" },
+  es: { instruction: "Responde en español. Usa un tono cálido y cercano.", tone: "cálido y solidario" },
+  pt: { instruction: "Responda em português. Use um tom acolhedor e solidário.", tone: "acolhedor e solidário" },
+  fr: { instruction: "Réponds en français. Utilise un ton chaleureux et bienveillant.", tone: "chaleureux et bienveillant" },
+  de: { instruction: "Antworte auf Deutsch. Verwende einen warmen und unterstützenden Ton.", tone: "warm und unterstützend" },
+  ar: { instruction: "أجب باللغة العربية. استخدم نبرة دافئة وداعمة.", tone: "دافئ وداعم" },
+  hi: { instruction: "हिंदी में जवाब दें। गर्मजोशी और सहायक स्वर का उपयोग करें।", tone: "गर्मजोशी और सहायक" },
+  zh: { instruction: "用中文回答。使用温暖和支持的语气。", tone: "温暖和支持" },
+};
+
 export async function POST(request: NextRequest) {
   try {
-    const { query, results } = await request.json();
+    const { query, results, language = 'en' } = await request.json();
 
     if (!query || !results || results.length === 0) {
       return NextResponse.json({ summary: null });
     }
 
-    // Build context from search results
-    const contextParts = results.slice(0, 8).map((r: any, i: number) => {
-      return `[${i + 1}] ${r.type.toUpperCase()}: "${r.previewTitle}"
-Content: ${r.previewSnippet}
-Category: ${r.category || "General"}`;
+    // Build context from search results with source numbers for citations
+    const contextParts = results.slice(0, 6).map((r: any, i: number) => {
+      return `[${i + 1}] "${r.previewTitle}" - ${r.previewSnippet?.slice(0, 150)}...`;
     });
 
-    const context = contextParts.join("\n\n");
+    const context = contextParts.join("\n");
+    const langPrompt = LANGUAGE_PROMPTS[language] || LANGUAGE_PROMPTS.en;
 
-    const systemPrompt = `You are Aurora App's AI search assistant - the world's first women-first search engine.
+    const systemPrompt = `You are Aurora App's AI - the world's first women-first search engine.
 
-YOUR MISSION:
-- Provide honest, helpful, bias-aware search summaries
-- Prioritize women's safety, wellbeing, and empowerment
-- Highlight potential gender bias in information
-- Offer practical, actionable insights
-- Be warm, supportive, and empowering
+${langPrompt.instruction}
 
-IMPORTANT RULES:
-1. Always consider the woman's perspective first
-2. Flag any content that might be biased against women
-3. Highlight safety-relevant information prominently
-4. Provide balanced, honest assessments
-5. Never be condescending or preachy
-6. Keep responses concise (2-3 short paragraphs max)
-7. Reference specific sources when relevant
-8. End with an encouraging note
+CRITICAL RULES:
+1. Be CONCISE - maximum 3-4 sentences total
+2. Give ONE clear, actionable answer
+3. Use [1], [2], etc. to cite sources - these will become clickable links
+4. Focus on what's most useful for women
+5. Skip generic advice - be specific
+6. No fluff, no filler words
+7. End with a brief empowering note
 
-BIAS AWARENESS:
-- Note if sources seem male-dominated or lack women's perspectives
-- Highlight women-positive resources and communities
-- Flag potential safety concerns for women
-- Recommend Aurora App community for verified, women-first information
+FORMAT: Short paragraph with inline citations like [1], [2]. No bullet points.`;
 
-TONE: Like a knowledgeable friend who genuinely wants to help and protect you.`;
+    const userPrompt = `Search: "${query}"
 
-    const userPrompt = `A woman is searching for: "${query}"
-
-Here's what our community and web sources have shared:
-
+Sources:
 ${context}
 
-Please provide a helpful AI summary that:
-1. Directly answers or addresses her search query from a women-first perspective
-2. Highlights any safety considerations relevant to women
-3. Notes if there's potential gender bias in the available information
-4. Synthesizes the most helpful and relevant insights
-5. Encourages her to explore more on Aurora App for verified, women-first content
-
-Keep it concise, warm, genuinely helpful, and empowering.`;
+Give a brief, helpful summary (3-4 sentences max) with source citations [1], [2], etc.`;
 
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.0-flash",

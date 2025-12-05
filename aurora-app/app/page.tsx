@@ -23,6 +23,15 @@ import { LandingSearch } from "@/components/landing-search";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { LocaleProvider, useLocale } from "@/lib/locale-context";
 
+// Wrapper component that provides locale context
+export default function LandingPage() {
+  return (
+    <LocaleProvider>
+      <LandingPageContent />
+    </LocaleProvider>
+  );
+}
+
 // Animated grid background component
 const GridBackground = () => (
   <div className="absolute inset-0 overflow-hidden">
@@ -72,7 +81,8 @@ const GlowingLine = ({ className = "" }: { className?: string }) => (
   />
 );
 
-export default function LandingPage() {
+function LandingPageContent() {
+  const { t, locale } = useLocale();
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
   const [dismissedPrompt, setDismissedPrompt] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
@@ -144,7 +154,6 @@ export default function LandingPage() {
   ];
 
   return (
-    <LocaleProvider>
     <div className="min-h-screen bg-[#fffaf1] overflow-x-hidden">
       {/* Cursor glow effect */}
       <div 
@@ -249,22 +258,22 @@ export default function LandingPage() {
 
             {/* Main Headline */}
             <motion.h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#3d0d73] mb-6 leading-[1.05]" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-              The{" "}
+              {t('landing.hero.title1')}{" "}
               <span className="relative inline-block">
                 <span className="bg-gradient-to-r from-[#5537a7] via-[#f29de5] to-[#5537a7] bg-clip-text text-transparent bg-[length:200%_auto] animate-[gradient_3s_linear_infinite]">
-                  Future
+                  {t('landing.hero.title2')}
                 </span>
               </span>
-              {" "}of
+              {" "}
               <br />
-              Social Networking
+              {t('landing.hero.title3')}
             </motion.h1>
 
             {/* Subheadline */}
             <motion.p className="text-lg sm:text-xl md:text-2xl text-[#3d0d73]/70 mb-8 max-w-3xl mx-auto leading-relaxed" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-              The first <span className="font-bold text-[#5537a7]">non-toxic algorithm</span> that cares for your wellbeing.
+              {t('landing.hero.subtitle')}
               <br className="hidden sm:block" />
-              Built by women. Powered by ethical AI. Zero manipulation.
+              {t('landing.hero.subtitle2')}
             </motion.p>
 
             {/* Tech Pills */}
@@ -287,10 +296,10 @@ export default function LandingPage() {
             <motion.div className="max-w-md mx-auto mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
               {/* Clear instruction */}
               <p className="text-center text-[#3d0d73]/70 text-lg mb-4 font-medium">
-                Join instantly with your existing account
+                {t('landing.hero.joinInstantly')}
               </p>
               <p className="text-center text-[#3d0d73]/70 text-sm mb-6">
-                No password needed — just one click
+                {t('landing.hero.noPassword')}
               </p>
               
               {/* SSO Buttons - Apple Style */}
@@ -303,7 +312,7 @@ export default function LandingPage() {
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
-                    Continue with Google
+                    {t('landing.hero.continueGoogle')}
                   </Button>
                 </Link>
                 
@@ -315,7 +324,7 @@ export default function LandingPage() {
                       <path fill="#7FBA00" d="M13 1h10v10H13z"/>
                       <path fill="#FFB900" d="M13 13h10v10H13z"/>
                     </svg>
-                    Continue with Microsoft
+                    {t('landing.hero.continueMicrosoft')}
                   </Button>
                 </Link>
 
@@ -809,6 +818,5 @@ export default function LandingPage() {
       {/* Floating Signup Incentive Banner - follows user while scrolling */}
       <SignupIncentiveBanner credits={25} showAfterScroll={300} />
     </div>
-    </LocaleProvider>
   );
 }

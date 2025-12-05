@@ -5,54 +5,39 @@
  * 
  * Non-disruptive language selector for the landing page.
  * Auto-detects user's browser language and allows manual override.
- * Stores preference in localStorage for persistence.
+ * Uses LocaleContext for state management to ensure proper re-renders.
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe, Check, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   SUPPORTED_LOCALES, 
   SupportedLocale, 
-  getBrowserLocale 
 } from "@/lib/i18n";
+import { useLocale } from "@/lib/locale-context";
 
 // Priority languages for the landing page (most common for women's safety)
 const PRIORITY_LOCALES: SupportedLocale[] = ['en', 'es', 'pt', 'fr', 'de', 'ar', 'hi', 'zh'];
 
 interface LanguageSwitcherProps {
-  onLocaleChange?: (locale: SupportedLocale) => void;
   variant?: 'compact' | 'full';
   className?: string;
 }
 
 export function LanguageSwitcher({ 
-  onLocaleChange, 
   variant = 'compact',
   className = '' 
 }: LanguageSwitcherProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentLocale, setCurrentLocale] = useState<SupportedLocale>('en');
   const [showAllLanguages, setShowAllLanguages] = useState(false);
-
-  // Initialize locale from localStorage or browser
-  useEffect(() => {
-    const stored = localStorage.getItem('aurora-locale') as SupportedLocale;
-    if (stored && SUPPORTED_LOCALES[stored]) {
-      setCurrentLocale(stored);
-      onLocaleChange?.(stored);
-    } else {
-      const browserLocale = getBrowserLocale();
-      setCurrentLocale(browserLocale);
-      onLocaleChange?.(browserLocale);
-    }
-  }, [onLocaleChange]);
+  
+  // Use the locale context for state management
+  const { locale: currentLocale, setLocale } = useLocale();
 
   const handleLocaleChange = (locale: SupportedLocale) => {
-    setCurrentLocale(locale);
-    localStorage.setItem('aurora-locale', locale);
-    onLocaleChange?.(locale);
+    setLocale(locale);
     setIsOpen(false);
     setShowAllLanguages(false);
   };

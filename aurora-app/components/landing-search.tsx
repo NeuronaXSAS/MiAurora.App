@@ -251,7 +251,13 @@ export function LandingSearch() {
     fetchWebResults();
   }, [debouncedQuery]);
 
-  // Fetch AI summary
+  // Get user's language preference
+  const getUserLanguage = useCallback(() => {
+    if (typeof window === 'undefined') return 'en';
+    return localStorage.getItem('aurora-locale') || navigator.language.split('-')[0] || 'en';
+  }, []);
+
+  // Fetch AI summary with language support
   useEffect(() => {
     if (webResults.length > 0 && debouncedQuery) {
       setIsLoadingSummary(true);
@@ -262,10 +268,12 @@ export function LandingSearch() {
         category: r.domain,
       }));
       
+      const language = getUserLanguage();
+      
       fetch("/api/ai/search-summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: debouncedQuery, results: summaryResults }),
+        body: JSON.stringify({ query: debouncedQuery, results: summaryResults, language }),
       })
         .then(res => res.json())
         .then(data => { setAiSummary(data.summary); setIsLoadingSummary(false); })
@@ -273,7 +281,39 @@ export function LandingSearch() {
     } else {
       setAiSummary(null);
     }
-  }, [webResults, debouncedQuery]);
+  }, [webResults, debouncedQuery, getUserLanguage]);
+
+  // Convert citation numbers [1], [2] etc. to clickable links
+  const renderSummaryWithCitations = useCallback((text: string) => {
+    if (!text) return null;
+    
+    // Split by citation pattern [1], [2], etc.
+    const parts = text.split(/(\[\d+\])/g);
+    
+    return parts.map((part, index) => {
+      const match = part.match(/\[(\d+)\]/);
+      if (match) {
+        const citationNum = parseInt(match[1], 10) - 1;
+        const result = webResults[citationNum];
+        if (result) {
+          return (
+            <a
+              key={index}
+              href={result.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-1.5 py-0.5 mx-0.5 text-xs font-medium bg-[var(--color-aurora-purple)]/10 text-[var(--color-aurora-purple)] rounded hover:bg-[var(--color-aurora-purple)]/20 transition-colors"
+              title={result.title}
+            >
+              {part}
+              <ExternalLink className="w-2.5 h-2.5 ml-0.5" />
+            </a>
+          );
+        }
+      }
+      return <span key={index}>{part}</span>;
+    });
+  }, [webResults]);
 
   const handleClear = useCallback(() => {
     setQuery("");
@@ -409,7 +449,9 @@ export function LandingSearch() {
                         <div className="h-4 bg-[var(--accent)] rounded animate-pulse w-3/4" />
                       </div>
                     ) : (
-                      <p className="text-[var(--foreground)]/80 text-sm leading-relaxed">{aiSummary}</p>
+                      <div className="text-[var(--foreground)]/80 text-sm leading-relaxed">
+                        {renderSummaryWithCitations(aiSummary || '')}
+                      </div>
                     )}
                   </div>
                 </div>
