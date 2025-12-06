@@ -31,10 +31,10 @@ import { LandingAd } from "@/components/ads/landing-ad";
 import { AISearchSuggestions } from "@/components/ai-search-suggestions";
 import { TrustScoreBadge, InlineTrustScore } from "@/components/search/trust-score-badge";
 import { calculateTrustScore } from "@/lib/search/trust-score";
-import { CommunityVoteButtons } from "@/components/search/community-vote-buttons";
-import { AIvsCommunityScore } from "@/components/search/community-truth-badge";
-import { generateUrlHash } from "@/lib/anonymous-session";
+// Community voting removed per Task 5.3 - doesn't contribute to business model
+// Enhanced bias visualization now shows metrics inline
 import { DailyNewsPanel } from "@/components/search/daily-news-panel";
+import { DailyDebatesPanel } from "@/components/search/daily-debates-panel";
 
 interface WebSearchResult {
   title: string;
@@ -115,8 +115,7 @@ export function LandingSearch() {
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [activeTab, setActiveTab] = useState<"all" | "web" | "community">("all");
-  const [urlHashes, setUrlHashes] = useState<Record<string, string>>({});
-  const [communityScores, setCommunityScores] = useState<Record<string, { score: number | null; totalVotes: number; confidenceLevel: string }>>({});
+  // Community voting state removed - using enhanced bias visualization instead
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Debounce search query
@@ -168,25 +167,7 @@ export function LandingSearch() {
     return localStorage.getItem('aurora-locale') || navigator.language.split('-')[0] || 'en';
   }, []);
 
-  // Generate URL hashes for community voting
-  useEffect(() => {
-    if (webResults.length === 0) {
-      setUrlHashes({});
-      setCommunityScores({});
-      return;
-    }
-
-    const computeHashes = async () => {
-      const hashes: Record<string, string> = {};
-      for (const result of webResults) {
-        const hash = await generateUrlHash(result.url);
-        hashes[result.url] = hash;
-      }
-      setUrlHashes(hashes);
-    };
-
-    computeHashes();
-  }, [webResults]);
+  // URL hash computation removed - community voting replaced with enhanced bias visualization
 
   // Fetch AI summary with language support
   useEffect(() => {
@@ -498,18 +479,36 @@ export function LandingSearch() {
                         </div>
                       </div>
                       
-                      {/* Aurora Trust Score™ Details + Community Voting */}
+                      {/* Aurora Trust Score™ Details - Enhanced Bias Visualization */}
                       <div className="px-4 py-3 bg-gradient-to-r from-[var(--color-aurora-purple)]/5 via-[var(--accent)]/50 to-[var(--color-aurora-pink)]/5 border-t border-[var(--color-aurora-purple)]/10">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                           <TrustScoreBadge trustScore={trustScore} compact={false} />
                           
-                          {/* Community Truth Score™ Voting */}
-                          <div className="flex items-center gap-3">
-                            <CommunityVoteButtons 
-                              url={result.url}
-                              urlHash={urlHashes[result.url]}
-                              compact={false}
-                            />
+                          {/* Enhanced Bias Metrics */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* Gender Bias Indicator */}
+                            {biasScore > 60 && (
+                              <Badge className="text-[9px] bg-[var(--color-aurora-salmon)]/20 text-[var(--color-aurora-salmon)] border-0">
+                                ⚠️ Gender Bias {biasScore}%
+                              </Badge>
+                            )}
+                            {biasScore <= 30 && (
+                              <Badge className="text-[9px] bg-[var(--color-aurora-mint)]/30 text-[var(--color-aurora-violet)] border-0">
+                                💚 Low Bias
+                              </Badge>
+                            )}
+                            {/* AI Content Indicator */}
+                            {aiScore > 50 && (
+                              <Badge className="text-[9px] bg-[var(--color-aurora-lavender)] text-[var(--color-aurora-violet)] border-0">
+                                🤖 {aiScore}% AI
+                              </Badge>
+                            )}
+                            {/* Credibility */}
+                            {credScore >= 70 && (
+                              <Badge className="text-[9px] bg-[var(--color-aurora-mint)]/30 text-[var(--color-aurora-violet)] border-0">
+                                ✓ Credible
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -588,9 +587,13 @@ export function LandingSearch() {
             </motion.div>
           )}
 
-          {/* Daily News Panels - "What Sisters Think" */}
+          {/* Daily Debates - "What Sisters Think" */}
           {!query && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6 space-y-6">
+              {/* 6 Daily Debates - Main engagement feature */}
+              <DailyDebatesPanel userId={null} />
+              
+              {/* Daily News - Secondary content */}
               <DailyNewsPanel variant="landing" />
             </motion.div>
           )}

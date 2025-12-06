@@ -132,5 +132,36 @@
   
   "credits.earned": "Créditos Ganados",
   "credits.balance": "Saldo de Créditos",
-  "credits.spend": "Gastar Créditos"
+  "credits.spend": "Gastar Créditos",
+
+  "debates.title": "Lo Que Piensan Las Hermanas",
+  "debates.subtitle": "6 debates diarios • Comparte tu voz",
+  "debates.agree": "De acuerdo",
+  "debates.disagree": "En desacuerdo",
+  "debates.neutral": "Neutral",
+  "debates.comments": "comentarios",
+  "debates.joinDebate": "Únete al debate",
+  "debates.enterPseudonym": "Ingresa tu nombre para participar",
+  "debates.pseudonymPlaceholder": "Tu nombre o seudónimo",
+  "debates.startDebating": "Comenzar a Debatir",
+  "debates.writeComment": "Comparte tus pensamientos...",
+  "debates.signupPrompt": "¡Has estado activa! Únete a Aurora App para guardar tu historial",
+  "debates.signupCTA": "Crear Cuenta Gratis",
+  "debates.creditsEarned": "créditos ganados",
+  "debates.category.safety": "Seguridad",
+  "debates.category.career": "Carrera",
+  "debates.category.health": "Salud",
+  "debates.category.rights": "Derechos",
+  "debates.category.tech": "Tech",
+  "debates.category.world": "Mundo",
+
+  "bias.genderBias": "Sesgo de Género",
+  "bias.politicalBias": "Sesgo Político",
+  "bias.fakeNewsRisk": "Riesgo de Noticias Falsas",
+  "bias.aiContent": "Contenido IA",
+  "bias.sourceIntent": "Intención de la Fuente",
+  "bias.alert.sister": "Hermana, ten cuidado",
+  "bias.alert.genderBias": "Esta fuente muestra señales de sesgo de género",
+  "bias.alert.safe": "Fuente segura para mujeres",
+  "bias.alert.verified": "Verificado por nuestra comunidad"
 }

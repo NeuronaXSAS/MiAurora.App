@@ -1,0 +1,167 @@
+{
+  "nav.feed": "الرئيسية",
+  "nav.safetyMap": "خريطة الأمان",
+  "nav.routes": "المسارات",
+  "nav.safety": "الأمان",
+  "nav.community": "المجتمع",
+  "nav.wellness": "العافية",
+  "nav.finance": "المالية",
+  "nav.growth": "النمو",
+  "nav.intelligence": "الذكاء",
+  "nav.messages": "الرسائل",
+  "nav.profile": "الملف الشخصي",
+  "nav.settings": "الإعدادات",
+  "nav.premium": "بريميوم",
+  "nav.create": "إنشاء",
+
+  "onboarding.welcome.title": "مرحباً بك في Aurora App!",
+  "onboarding.welcome.subtitle": "منصتك للأمان والمجتمع والنمو، صُممت من قبل النساء للنساء حول العالم.",
+  "onboarding.welcome.safetyFirst": "الأمان أولاً",
+  "onboarding.welcome.community": "المجتمع",
+  "onboarding.welcome.opportunities": "الفرص",
+  "onboarding.welcome.wellness": "العافية",
+  "onboarding.welcome.globalPlatform": "منصة عالمية",
+  "onboarding.welcome.globalDesc": "Aurora App باللغة الإنجليزية لخدمة النساء حول العالم. تحتاجين لغة أخرى؟ استخدمي مترجم المتصفح.",
+
+  "onboarding.avatar.title": "أنشئي رفيقتك في Aurora",
+  "onboarding.avatar.subtitle": "ستكون صديقتك الذكية، متتبعة عافيتك ورفيقة أمانك",
+  "onboarding.avatar.seeExamples": "شاهدي ما أنشأته الأخوات الأخريات:",
+  "onboarding.avatar.designButton": "تصميم رفيقتي",
+  "onboarding.avatar.created": "✓ تم إنشاء الرفيقة! يمكنك تعديلها في أي وقت.",
+
+  "onboarding.about.title": "أخبرينا عن نفسك",
+  "onboarding.about.subtitle": "هذا يساعدنا على تخصيص تجربتك",
+  "onboarding.about.whatDescribes": "ما الذي يصفك أفضل؟",
+  "onboarding.about.location": "أين أنتِ؟ (اختياري)",
+  "onboarding.about.locationPlaceholder": "مثال: القاهرة، دبي، الرياض...",
+  "onboarding.about.locationHelp": "💡 مشاركة موقعك تساعد مجتمع الأمان لدينا على تحذير الأخريات من المناطق غير الآمنة",
+  "onboarding.about.autoDetect": "اكتشاف تلقائي",
+
+  "onboarding.interests.title": "ما الذي يهمك؟",
+  "onboarding.interests.subtitle": "اختاري حتى 5 اهتمامات لتخصيص خلاصتك",
+  "onboarding.interests.selected": "مختارة",
+
+  "onboarding.privacy.title": "خصوصيتك مهمة",
+  "onboarding.privacy.subtitle": "اختاري مدى ظهورك",
+  "onboarding.privacy.public": "عام",
+  "onboarding.privacy.publicDesc": "تواصلي بشكل مفتوح مع المجتمع",
+  "onboarding.privacy.anonymous": "مجهول",
+  "onboarding.privacy.anonymousDesc": "شاركي دون الكشف عن هويتك",
+  "onboarding.privacy.private": "خاص",
+  "onboarding.privacy.privateDesc": "احتفظي بنشاطك لنفسك",
+  "onboarding.privacy.changeAnytime": "يمكنك تغيير هذا في أي وقت من الإعدادات",
+
+  "onboarding.buttons.continue": "متابعة",
+  "onboarding.buttons.back": "رجوع",
+  "onboarding.buttons.letsGo": "هيا بنا!",
+  "onboarding.buttons.skip": "تخطي الآن",
+  "onboarding.buttons.createCompanion": "إنشاء الرفيقة",
+
+  "roles.student": "طالبة",
+  "roles.studentDesc": "أتعلم وأنمو",
+  "roles.professional": "محترفة",
+  "roles.professionalDesc": "أبني مسيرتي المهنية",
+  "roles.traveler": "مسافرة",
+  "roles.travelerDesc": "أستكشف العالم",
+  "roles.entrepreneur": "رائدة أعمال",
+  "roles.entrepreneurDesc": "أخلق شيئاً جديداً",
+  "roles.jobSeeker": "باحثة عن عمل",
+  "roles.jobSeekerDesc": "أجد الفرص",
+
+  "interests.safeCommuting": "تنقل آمن",
+  "interests.nightlifeSafety": "أمان الحياة الليلية",
+  "interests.careerMentorship": "إرشاد مهني",
+  "interests.b2bNetworking": "شبكات الأعمال",
+  "interests.workplaceSafety": "أمان مكان العمل",
+  "interests.travelSafety": "أمان السفر",
+  "interests.financialGrowth": "النمو المالي",
+  "interests.skillBuilding": "بناء المهارات",
+
+  "feed.newPost": "منشور جديد",
+  "feed.all": "الكل",
+  "feed.safetyFirst": "الأمان أولاً",
+  "feed.safetyDesc": "ذكاء أمان مدعوم من المجتمع",
+  "feed.safetyPulse": "نبض الأمان",
+  "feed.safeZones": "مناطق آمنة حول العالم",
+  "feed.exploreCommunities": "استكشاف المجتمعات",
+  "feed.viewAll": "عرض جميع المجتمعات",
+  "feed.members": "أعضاء",
+
+  "post.like": "إعجاب",
+  "post.comment": "تعليق",
+  "post.share": "مشاركة",
+  "post.save": "حفظ",
+  "post.report": "إبلاغ",
+  "post.delete": "حذف",
+  "post.edit": "تعديل",
+
+  "search.placeholder": "ابحثي عن أي شيء... الأمان، المهنة، الأماكن، الأخبار",
+  "search.aiSummary": "ملخص Aurora",
+  "search.womenFirst": "منظور للنساء",
+  "search.webResults": "نتائج الويب",
+  "search.auroraResults": "مجتمع Aurora",
+  "search.verifiedWomen": "موثق من النساء",
+  "search.trustScore": "درجة الثقة",
+  "search.whyTrust": "لماذا تثق Aurora",
+  "search.whyFlag": "لماذا تُعلّم Aurora هذا",
+
+  "debates.title": "ما تفكر به الأخوات",
+  "debates.subtitle": "6 نقاشات يومية • شاركي صوتك",
+  "debates.agree": "موافقة",
+  "debates.disagree": "غير موافقة",
+  "debates.neutral": "محايدة",
+  "debates.comments": "تعليقات",
+  "debates.joinDebate": "انضمي للنقاش",
+  "debates.enterPseudonym": "أدخلي اسمك للمشاركة",
+  "debates.pseudonymPlaceholder": "اسمك أو اسم مستعار",
+  "debates.startDebating": "ابدئي النقاش",
+  "debates.writeComment": "شاركي أفكارك...",
+  "debates.signupPrompt": "كنتِ نشطة! انضمي إلى Aurora App لحفظ سجلك",
+  "debates.signupCTA": "إنشاء حساب مجاني",
+  "debates.creditsEarned": "رصيد مكتسب",
+  "debates.category.safety": "الأمان",
+  "debates.category.career": "المهنة",
+  "debates.category.health": "الصحة",
+  "debates.category.rights": "الحقوق",
+  "debates.category.tech": "التقنية",
+  "debates.category.world": "العالم",
+
+  "bias.genderBias": "تحيز جنسي",
+  "bias.politicalBias": "تحيز سياسي",
+  "bias.fakeNewsRisk": "خطر الأخبار الكاذبة",
+  "bias.aiContent": "محتوى ذكاء اصطناعي",
+  "bias.sourceIntent": "نية المصدر",
+  "bias.alert.sister": "أختي، كوني حذرة",
+  "bias.alert.genderBias": "هذا المصدر يُظهر علامات تحيز جنسي",
+  "bias.alert.safe": "مصدر آمن للنساء",
+  "bias.alert.verified": "موثق من مجتمعنا",
+
+  "common.loading": "جاري التحميل...",
+  "common.error": "حدث خطأ ما",
+  "common.retry": "إعادة المحاولة",
+  "common.save": "حفظ",
+  "common.cancel": "إلغاء",
+  "common.confirm": "تأكيد",
+  "common.delete": "حذف",
+  "common.edit": "تعديل",
+  "common.close": "إغلاق",
+  "common.next": "التالي",
+  "common.previous": "السابق",
+  "common.submit": "إرسال",
+  "common.search": "بحث",
+
+  "emergency.panic": "طوارئ",
+  "emergency.imSafe": "أنا بأمان",
+  "emergency.help": "المساعدة في الطريق",
+  "emergency.contacts": "جهات اتصال الطوارئ",
+  "emergency.addContact": "إضافة جهة اتصال",
+
+  "safety.checkin": "تسجيل الوصول",
+  "safety.imOk": "أنا بخير",
+  "safety.schedule": "جدولة تسجيل الوصول",
+  "safety.missed": "تسجيل وصول فائت",
+
+  "credits.earned": "الرصيد المكتسب",
+  "credits.balance": "رصيد الائتمان",
+  "credits.spend": "إنفاق الرصيد"
+}

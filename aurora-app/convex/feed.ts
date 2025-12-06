@@ -67,10 +67,20 @@ export const getUnifiedFeed = query({
       .take(limit * 4); // Get more to filter by type and preferences
 
     // Also fetch reels directly to ensure they appear in feed
-    const allReels = await ctx.db
+    // Filter out empty/low-engagement reels to avoid "fake" looking content
+    const rawReels = await ctx.db
       .query("reels")
       .order("desc")
-      .take(Math.ceil(limit * 0.4)); // 40% reels for variety
+      .take(Math.ceil(limit * 0.6)); // Get more to filter
+    
+    // Task 14.3: Filter reels with actual engagement or content
+    // Keep reels that have: views > 0, OR likes > 0, OR comments > 0, OR have a caption
+    const allReels = rawReels.filter(reel => 
+      (reel.views && reel.views > 0) || 
+      (reel.likes && reel.likes > 0) || 
+      (reel.comments && reel.comments > 0) ||
+      (reel.caption && reel.caption.length > 10)
+    ).slice(0, Math.ceil(limit * 0.4)); // 40% reels for variety
 
     // Score posts based on user preferences and engagement velocity
     const scorePost = (post: typeof allPosts[0]) => {
@@ -225,14 +235,21 @@ export const getUnifiedFeed = query({
     );
 
     // Fetch active livestreams to show in feed
-    const activeLivestreams = await ctx.db
+    // Task 14.3: Only show livestreams with actual viewers or emergency streams
+    const rawLivestreams = await ctx.db
       .query("livestreams")
       .filter((q) => q.and(
         q.eq(q.field("status"), "live"),
         q.neq(q.field("isPrivate"), true)
       ))
       .order("desc")
-      .take(Math.ceil(limit * 0.2));
+      .take(Math.ceil(limit * 0.4)); // Get more to filter
+    
+    // Filter livestreams: show only those with viewers > 0 OR emergency streams
+    const activeLivestreams = rawLivestreams.filter(stream =>
+      (stream.viewerCount && stream.viewerCount > 0) ||
+      stream.isEmergency === true
+    ).slice(0, Math.ceil(limit * 0.2));
 
     const livestreamsWithHosts = await Promise.all(
       activeLivestreams.map(async (stream) => {

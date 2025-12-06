@@ -132,5 +132,36 @@
   
   "credits.earned": "Credits Earned",
   "credits.balance": "Credit Balance",
-  "credits.spend": "Spend Credits"
+  "credits.spend": "Spend Credits",
+
+  "debates.title": "What Sisters Think",
+  "debates.subtitle": "6 daily debates • Share your voice",
+  "debates.agree": "Agree",
+  "debates.disagree": "Disagree",
+  "debates.neutral": "Neutral",
+  "debates.comments": "comments",
+  "debates.joinDebate": "Join the debate",
+  "debates.enterPseudonym": "Enter your name to participate",
+  "debates.pseudonymPlaceholder": "Your name or pseudonym",
+  "debates.startDebating": "Start Debating",
+  "debates.writeComment": "Share your thoughts...",
+  "debates.signupPrompt": "You've been active! Join Aurora App to save your history",
+  "debates.signupCTA": "Create Free Account",
+  "debates.creditsEarned": "credits earned",
+  "debates.category.safety": "Safety",
+  "debates.category.career": "Career",
+  "debates.category.health": "Health",
+  "debates.category.rights": "Rights",
+  "debates.category.tech": "Tech",
+  "debates.category.world": "World",
+
+  "bias.genderBias": "Gender Bias",
+  "bias.politicalBias": "Political Bias",
+  "bias.fakeNewsRisk": "Fake News Risk",
+  "bias.aiContent": "AI Content",
+  "bias.sourceIntent": "Source Intent",
+  "bias.alert.sister": "Sister, be aware",
+  "bias.alert.genderBias": "This source shows signs of gender bias",
+  "bias.alert.safe": "Safe source for women",
+  "bias.alert.verified": "Verified by our community"
 }
