@@ -34,6 +34,7 @@ import { calculateTrustScore } from "@/lib/search/trust-score";
 import { CommunityVoteButtons } from "@/components/search/community-vote-buttons";
 import { AIvsCommunityScore } from "@/components/search/community-truth-badge";
 import { generateUrlHash } from "@/lib/anonymous-session";
+import { DailyNewsPanel } from "@/components/search/daily-news-panel";
 
 interface WebSearchResult {
   title: string;
@@ -584,6 +585,13 @@ export function LandingSearch() {
                 </Button>
               </Link>
               <p className="text-xs text-[var(--muted-foreground)] mt-3">🔒 No ads • No data selling • 100% privacy-first</p>
+            </motion.div>
+          )}
+
+          {/* Daily News Panels - "What Sisters Think" */}
+          {!query && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6">
+              <DailyNewsPanel variant="landing" />
             </motion.div>
           )}
 

@@ -1741,4 +1741,72 @@ export default defineSchema({
     voteCount: v.number(),
   })
     .index("by_session_hour", ["sessionHash", "hourKey"]),
+
+  // ============================================
+  // DAILY NEWS PANELS - "What Sisters Think" 💜
+  // 2 curated news stories daily for community discussion
+  // ============================================
+
+  // Daily curated news stories (admin-selected)
+  dailyNewsStories: defineTable({
+    date: v.string(), // "2024-12-05" format
+    slot: v.union(v.literal(1), v.literal(2)), // 2 stories per day
+    title: v.string(),
+    summary: v.string(), // Brief summary for display
+    sourceUrl: v.string(),
+    sourceName: v.string(), // "BBC", "Reuters", etc.
+    imageUrl: v.optional(v.string()),
+    category: v.union(
+      v.literal("safety"),
+      v.literal("rights"),
+      v.literal("health"),
+      v.literal("career"),
+      v.literal("finance"),
+      v.literal("tech"),
+      v.literal("world")
+    ),
+    // Voting stats (denormalized for fast display)
+    agreeCount: v.number(),
+    disagreeCount: v.number(),
+    neutralCount: v.number(),
+    totalVotes: v.number(),
+    commentCount: v.number(),
+    isActive: v.boolean(), // Can be deactivated
+  })
+    .index("by_date", ["date"])
+    .index("by_date_slot", ["date", "slot"])
+    .index("by_active", ["isActive"]),
+
+  // User votes on daily news (one vote per user per story)
+  dailyNewsVotes: defineTable({
+    storyId: v.id("dailyNewsStories"),
+    sessionHash: v.string(), // Anonymous voting supported
+    userId: v.optional(v.id("users")), // Optional - logged in users
+    vote: v.union(
+      v.literal("agree"),
+      v.literal("disagree"),
+      v.literal("neutral")
+    ),
+    timestamp: v.number(),
+  })
+    .index("by_story", ["storyId"])
+    .index("by_session_story", ["sessionHash", "storyId"])
+    .index("by_user_story", ["userId", "storyId"]),
+
+  // Comments on daily news stories
+  dailyNewsComments: defineTable({
+    storyId: v.id("dailyNewsStories"),
+    authorId: v.optional(v.id("users")), // Optional for anonymous
+    sessionHash: v.string(), // For anonymous tracking
+    content: v.string(),
+    isAnonymous: v.boolean(),
+    upvotes: v.number(),
+    downvotes: v.number(),
+    replyCount: v.number(),
+    parentCommentId: v.optional(v.id("dailyNewsComments")),
+    isHidden: v.boolean(), // Moderation
+  })
+    .index("by_story", ["storyId"])
+    .index("by_author", ["authorId"])
+    .index("by_parent", ["parentCommentId"]),
 });

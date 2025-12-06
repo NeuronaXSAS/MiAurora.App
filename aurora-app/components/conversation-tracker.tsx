@@ -90,8 +90,8 @@ export function ConversationTracker({ userId, isOpen, onClose }: ConversationTra
     userId ? { userId } : "skip"
   );
 
-  // Combine local and server tracked posts
-  const trackedPosts = userId ? (userTrackedPosts || []) : localPosts;
+  // Combine local and server tracked posts, filtering out nulls
+  const trackedPosts = (userId ? (userTrackedPosts || []) : localPosts).filter((p): p is TrackedPost => p !== null);
   const hasNewReplies = trackedPosts.some(p => p.newReplies > 0);
 
   // Show signup prompt after 3 interactions without account

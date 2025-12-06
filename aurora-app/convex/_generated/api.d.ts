@@ -25,6 +25,7 @@ import type * as connections from "../connections.js";
 import type * as creator from "../creator.js";
 import type * as credits from "../credits.js";
 import type * as cycleTracker from "../cycleTracker.js";
+import type * as dailyNews from "../dailyNews.js";
 import type * as directMessages from "../directMessages.js";
 import type * as emergency from "../emergency.js";
 import type * as events from "../events.js";
@@ -89,6 +90,7 @@ declare const fullApi: ApiFromModules<{
   creator: typeof creator;
   credits: typeof credits;
   cycleTracker: typeof cycleTracker;
+  dailyNews: typeof dailyNews;
   directMessages: typeof directMessages;
   emergency: typeof emergency;
   events: typeof events;
