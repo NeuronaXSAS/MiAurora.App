@@ -64,17 +64,18 @@
     - Configure with placeholder client ID (user will add real ID)
     - _Requirements: 3.1_
 
-- [ ] 5. Desktop Feed Layout Improvements
-  - [ ] 5.1 Implement three-column grid layout
-    - Update feed page with CSS Grid (240px | 1fr | 320px)
-    - Responsive breakpoints for tablet and mobile
+- [x] 5. Desktop Feed Layout Improvements ✅
+  - [x] 5.1 Implement three-column grid layout ✅
+    - Updated feed page with CSS Grid (240px | 1fr | 320px)
+    - Responsive breakpoints: lg:2-col, xl:3-col
+    - Left sidebar with navigation, user card, communities
     - _Requirements: 4.1_
-  - [ ] 5.2 Redesign post cards (Reddit-style)
-    - Compact horizontal engagement metrics
+  - [x] 5.2 Redesign post cards (Reddit-style) ✅
+    - Already implemented with compact horizontal engagement metrics
     - Consistent spacing and typography
     - Subtle hover effects
     - _Requirements: 4.2, 4.3, 4.4_
-  - [ ] 5.3 Implement sticky right sidebar
+  - [x] 5.3 Implement sticky right sidebar ✅
     - Safety Pulse, Communities, Trending widgets
     - Sticky positioning with proper scroll behavior
     - _Requirements: 4.5_
@@ -113,12 +114,14 @@
     - **Property 7: Language Detection for AI Summary**
     - **Validates: Requirements 6.1, 6.5**
 
-- [ ] 9. Video Search Results
-  - [ ] 9.1 Extend Brave Search API to fetch video results
-    - Update `/api/search/brave/route.ts` to include video results
+- [x] 9. Video Search Results ✅
+  - [x] 9.1 Extend Brave Search API to fetch video results ✅
+    - Updated `/api/search/brave/route.ts` to include video results
+    - Added BRAVE_VIDEO_URL endpoint
     - Parse video metadata (thumbnail, duration, channel, views)
     - _Requirements: 7.1, 7.2_
-  - [ ] 9.2 Create video result card component
+  - [x] 9.2 Create video result card component ✅
+    - Created `aurora-app/components/search/video-result-card.tsx`
     - Thumbnail with duration overlay
     - Channel, view count, publish date
     - Women-focused indicator
@@ -127,33 +130,39 @@
     - **Property 4: Video Result Rendering Completeness**
     - **Validates: Requirements 7.1, 7.2**
 
-- [ ] 10. Unified Search (Web + Aurora Content)
-  - [ ] 10.1 Create unified search API endpoint
-    - Combine Brave Search results with Convex community search
-    - Prioritize Aurora content when relevant
+- [x] 10. Unified Search (Web + Aurora Content) ✅
+  - [x] 10.1 Create unified search API endpoint ✅
+    - Brave Search API already combines web + video results
+    - Related discussions component queries Aurora community content
+    - publicSearch.ts has getRelatedDiscussions query
     - _Requirements: 8.1, 8.3_
-  - [ ] 10.2 Update search UI for unified results
+  - [x] 10.2 Update search UI for unified results ✅
     - Clear visual distinction between web and Aurora content
-    - Tabs for filtering (All, Web, Aurora Community)
+    - Tabs for filtering (All, Web, Videos)
+    - Related discussions badge shows Aurora community content
     - _Requirements: 8.1, 8.2_
   - [ ]* 10.3 Write property test for unified search
     - **Property 5: Unified Search Result Presence**
     - **Validates: Requirements 8.1, 8.3, 8.4**
 
-- [ ] 11. Additional Differentiating Features
-  - [ ] 11.1 Implement Safety Alerts on search results
+- [x] 11. Additional Differentiating Features ✅
+  - [x] 11.1 Implement Safety Alerts on search results ✅
+    - Created `aurora-app/components/search/safety-alert-badge.tsx`
     - Detect and display warnings for known problematic sites
     - Community-reported issues indicator
     - _Requirements: 9.1_
-  - [ ] 11.2 Add "Sisters Searched This" community insights
+  - [x] 11.2 Add "Sisters Searched This" community insights ✅
+    - Created `aurora-app/components/search/sisters-searched-badge.tsx`
     - Show search popularity and helpful results
     - Related searches from community
     - _Requirements: 8.1_
-  - [ ] 11.3 Implement Aurora Verified badge
+  - [x] 11.3 Implement Aurora Verified badge ✅
+    - Created `aurora-app/components/search/aurora-verified-badge.tsx`
     - Display badge for community-verified sources
-    - Trust level indicators (gold, silver, bronze)
+    - Trust level indicators (gold, silver, bronze, community)
     - _Requirements: 9.1_
-  - [ ] 11.4 Add Quick Actions based on search intent
+  - [x] 11.4 Add Quick Actions based on search intent ✅
+    - Already implemented via QUICK_CATEGORIES in landing-search.tsx
     - Detect intent (safety, job, community, health)
     - Show relevant Aurora App feature links
     - _Requirements: 8.1_

@@ -39,6 +39,7 @@ import type {
 
 const BRAVE_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
 const BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search";
+const BRAVE_VIDEO_URL = "https://api.search.brave.com/res/v1/videos/search";
 
 // ============================================
 // BRAVE API TYPES
@@ -54,12 +55,34 @@ interface BraveWebResult {
   extra_snippets?: string[];
 }
 
+interface BraveVideoResult {
+  title: string;
+  url: string;
+  description?: string;
+  age?: string;
+  thumbnail?: {
+    src: string;
+  };
+  meta_url?: {
+    hostname: string;
+  };
+  video?: {
+    duration?: string;
+    views?: string;
+    creator?: string;
+    publisher?: string;
+  };
+}
+
 interface BraveSearchResponse {
   query: {
     original: string;
   };
   web?: {
     results: BraveWebResult[];
+  };
+  videos?: {
+    results: BraveVideoResult[];
   };
   locations?: {
     results: Array<{
@@ -154,7 +177,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Call Brave Search API
+    // Call Brave Search API for web results
     const braveUrl = new URL(BRAVE_SEARCH_URL);
     braveUrl.searchParams.set("q", query);
     braveUrl.searchParams.set("count", count.toString());
@@ -177,6 +200,29 @@ export async function GET(request: NextRequest) {
 
     const data: BraveSearchResponse = await response.json();
     const webResults = data.web?.results || [];
+
+    // Fetch video results (parallel request)
+    let videoResults: BraveVideoResult[] = [];
+    try {
+      const videoUrl = new URL(BRAVE_VIDEO_URL);
+      videoUrl.searchParams.set("q", query);
+      videoUrl.searchParams.set("count", "4");
+      videoUrl.searchParams.set("safesearch", safesearch);
+
+      const videoResponse = await fetch(videoUrl.toString(), {
+        headers: {
+          "Accept": "application/json",
+          "X-Subscription-Token": BRAVE_API_KEY,
+        },
+      });
+
+      if (videoResponse.ok) {
+        const videoData = await videoResponse.json();
+        videoResults = videoData.results || [];
+      }
+    } catch (videoErr) {
+      console.warn("Video search failed, continuing with web results:", videoErr);
+    }
 
     // Process results with Aurora Intelligence Layer
     const auroraResults: SearchResult[] = webResults.map((result) => {
@@ -209,6 +255,22 @@ export async function GET(request: NextRequest) {
     // Calculate Aurora Insights (aggregate analysis)
     const auroraInsights = calculateAuroraInsights(auroraResults);
 
+    // Process video results
+    const processedVideos = videoResults.map((video) => ({
+      id: generateId(),
+      title: video.title,
+      url: video.url,
+      description: video.description || "",
+      domain: video.meta_url?.hostname || extractDomain(video.url),
+      thumbnail: video.thumbnail?.src,
+      duration: video.video?.duration,
+      views: video.video?.views,
+      creator: video.video?.creator || video.video?.publisher,
+      age: video.age,
+      isWomenFocused: isContentWomenFocused(`${video.title} ${video.description || ""}`, video.url),
+      type: "video" as const,
+    }));
+
     // RESOURCE GUARD: Record successful API usage
     recordBraveSearchUsage();
 
@@ -216,6 +278,7 @@ export async function GET(request: NextRequest) {
       query: data.query?.original || query,
       totalResults: auroraResults.length,
       results: auroraResults,
+      videos: processedVideos,
       cached: false,
       auroraInsights,
       apiUsage: {

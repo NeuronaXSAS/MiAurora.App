@@ -308,11 +308,86 @@ export default function FeedPage() {
         </div>
       </div>
 
-      {/* Feed Content - Reddit-style layout with sidebar */}
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <div className="flex gap-6">
+      {/* Feed Content - Three-column layout (Left Nav | Feed | Right Sidebar) */}
+      <div className="max-w-[1400px] mx-auto px-4 py-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_1fr_320px] gap-6">
+          {/* Left Sidebar - Navigation & Quick Actions (Desktop only) */}
+          <aside className="hidden lg:block space-y-4">
+            {/* User Quick Card */}
+            {user && (
+              <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-white font-bold">
+                    {user.name?.charAt(0) || "A"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-[var(--foreground)] truncate">{user.name}</p>
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      <span className="text-[var(--color-aurora-yellow)]">✦</span> {user.credits || 0} credits
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => setShowCreateModal(true)}
+                  className="w-full bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-purple)] text-white"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Create Post
+                </Button>
+              </div>
+            )}
+
+            {/* Navigation Links */}
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-3">
+              <nav className="space-y-1">
+                {[
+                  { href: "/feed", icon: Flame, label: "Home Feed", active: true },
+                  { href: "/map", icon: MapPin, label: "Safety Map" },
+                  { href: "/circles", icon: Users, label: "Communities" },
+                  { href: "/opportunities", icon: Briefcase, label: "Opportunities" },
+                  { href: "/health", icon: Heart, label: "Wellness" },
+                  { href: "/assistant", icon: MessageSquare, label: "AI Assistant" },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
+                      item.active 
+                        ? "bg-[var(--color-aurora-purple)]/10 text-[var(--color-aurora-purple)]" 
+                        : "text-[var(--foreground)] hover:bg-[var(--accent)]"
+                    }`}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span className="font-medium text-sm">{item.label}</span>
+                  </Link>
+                ))}
+              </nav>
+            </div>
+
+            {/* My Communities */}
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
+              <h3 className="font-bold text-sm text-[var(--foreground)] mb-3">My Communities</h3>
+              <div className="space-y-2">
+                {[
+                  { name: "c/SafetyFirst", icon: "🛡️" },
+                  { name: "c/CareerWomen", icon: "💼" },
+                  { name: "c/WellnessCircle", icon: "💗" },
+                ].map((community) => (
+                  <Link
+                    key={community.name}
+                    href="/circles"
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[var(--accent)] transition-colors"
+                  >
+                    <span>{community.icon}</span>
+                    <span className="text-sm text-[var(--foreground)]">{community.name}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </aside>
+
           {/* Main Feed Column */}
-          <div className="flex-1 max-w-3xl space-y-3">
+          <div className="space-y-3 min-w-0">
             {/* Loading State - Fast visual feedback */}
           {feedItems === undefined && (
             <FeedLoadingSkeleton />
@@ -498,7 +573,7 @@ export default function FeedPage() {
           </div>
 
           {/* Right Sidebar - Desktop only, Reddit-style */}
-          <aside className="hidden xl:block w-80 flex-shrink-0 space-y-4">
+          <aside className="hidden xl:block space-y-4">
             {/* Safety Pulse - Compact in sidebar */}
             <SafetyPulse compact />
             
