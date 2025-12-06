@@ -175,17 +175,25 @@ export const voteOnDebate = mutation({
 
     await ctx.db.patch(args.debateId, updates);
 
-    // Award credits to logged-in users (2 credits per vote)
+    // Only award credits to REGISTERED users (not anonymous)
+    // Anonymous users get gamified messages but no real credits
     if (args.memberId && !existingVote) {
       const user = await ctx.db.get(args.memberId);
       if (user) {
         await ctx.db.patch(args.memberId, {
           credits: (user.credits || 0) + 2,
         });
+        return { success: true, creditsAwarded: 2, isRegistered: true };
       }
     }
 
-    return { success: true };
+    // For anonymous users - return gamified response without storing credits
+    return { 
+      success: true, 
+      creditsAwarded: 0, 
+      isRegistered: false,
+      message: "Your voice matters! Join Aurora App to earn credits and save your history."
+    };
   },
 });
 
@@ -236,17 +244,25 @@ export const addComment = mutation({
       }
     }
 
-    // Award credits to logged-in users (3 credits per comment)
+    // Only award credits to REGISTERED users (not anonymous)
+    // Anonymous users get gamified messages but no real credits
     if (args.memberId) {
       const user = await ctx.db.get(args.memberId);
       if (user) {
         await ctx.db.patch(args.memberId, {
           credits: (user.credits || 0) + 3,
         });
+        return { commentId, creditsAwarded: 3, isRegistered: true };
       }
     }
 
-    return commentId;
+    // For anonymous users - return gamified response
+    return { 
+      commentId, 
+      creditsAwarded: 0, 
+      isRegistered: false,
+      message: "Great insight! Join Aurora App to earn 3 credits for every comment."
+    };
   },
 });
 
@@ -472,5 +488,280 @@ export const deleteDebatesForDate = mutation({
     }
 
     return { success: true, deleted: debates.length };
+  },
+});
+
+
+// ============================================
+// ADMIN MONITORING & ANALYTICS
+// ============================================
+
+/**
+ * Get debate analytics for admin dashboard
+ */
+export const getDebateAnalytics = query({
+  args: { date: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const targetDate = args.date || new Date().toISOString().split("T")[0];
+    
+    const debates = await ctx.db
+      .query("dailyDebates")
+      .withIndex("by_date", (q) => q.eq("date", targetDate))
+      .collect();
+
+    // Get all votes for these debates
+    const debateIds = debates.map(d => d._id);
+    const allVotes = await Promise.all(
+      debateIds.map(async (debateId) => {
+        const votes = await ctx.db
+          .query("debateVotes")
+          .withIndex("by_debate", (q) => q.eq("debateId", debateId))
+          .collect();
+        return { debateId, votes };
+      })
+    );
+
+    // Get all comments for these debates
+    const allComments = await Promise.all(
+      debateIds.map(async (debateId) => {
+        const comments = await ctx.db
+          .query("debateComments")
+          .withIndex("by_debate", (q) => q.eq("debateId", debateId))
+          .collect();
+        return { debateId, comments };
+      })
+    );
+
+    // Calculate analytics
+    const analytics = debates.map((debate) => {
+      const debateVotes = allVotes.find(v => v.debateId === debate._id)?.votes || [];
+      const debateComments = allComments.find(c => c.debateId === debate._id)?.comments || [];
+      
+      const memberVotes = debateVotes.filter(v => v.voterType === "member").length;
+      const anonymousVotes = debateVotes.filter(v => v.voterType === "anonymous").length;
+      const memberComments = debateComments.filter(c => c.authorType === "member").length;
+      const anonymousComments = debateComments.filter(c => c.authorType === "anonymous").length;
+
+      return {
+        ...debate,
+        totalVotes: debate.agreeCount + debate.disagreeCount + debate.neutralCount,
+        memberVotes,
+        anonymousVotes,
+        memberComments,
+        anonymousComments,
+        engagementScore: (debate.agreeCount + debate.disagreeCount + debate.neutralCount) + (debate.commentCount * 2),
+        conversionPotential: anonymousVotes + anonymousComments, // Users who could convert
+      };
+    });
+
+    // Summary stats
+    const totalVotes = analytics.reduce((sum, d) => sum + d.totalVotes, 0);
+    const totalComments = analytics.reduce((sum, d) => sum + d.commentCount, 0);
+    const totalMemberEngagement = analytics.reduce((sum, d) => sum + d.memberVotes + d.memberComments, 0);
+    const totalAnonymousEngagement = analytics.reduce((sum, d) => sum + d.anonymousVotes + d.anonymousComments, 0);
+
+    return {
+      date: targetDate,
+      debates: analytics.sort((a, b) => b.engagementScore - a.engagementScore),
+      summary: {
+        totalDebates: debates.length,
+        totalVotes,
+        totalComments,
+        totalMemberEngagement,
+        totalAnonymousEngagement,
+        conversionOpportunity: totalAnonymousEngagement,
+        avgEngagementPerDebate: debates.length > 0 ? Math.round((totalVotes + totalComments) / debates.length) : 0,
+      },
+    };
+  },
+});
+
+/**
+ * Get archived debates (historical data)
+ */
+export const getArchivedDebates = query({
+  args: { 
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const today = new Date().toISOString().split("T")[0];
+    const endDate = args.endDate || today;
+    const limit = args.limit || 30;
+
+    // Get all debates, sorted by date descending
+    let debates = await ctx.db
+      .query("dailyDebates")
+      .order("desc")
+      .collect();
+
+    // Filter by date range
+    debates = debates.filter(d => {
+      if (args.startDate && d.date < args.startDate) return false;
+      if (d.date > endDate) return false;
+      return true;
+    });
+
+    // Group by date
+    const groupedByDate: Record<string, typeof debates> = {};
+    for (const debate of debates.slice(0, limit * 6)) {
+      if (!groupedByDate[debate.date]) {
+        groupedByDate[debate.date] = [];
+      }
+      groupedByDate[debate.date].push(debate);
+    }
+
+    // Calculate daily stats
+    const dailyStats = Object.entries(groupedByDate)
+      .map(([date, dayDebates]) => ({
+        date,
+        debateCount: dayDebates.length,
+        totalVotes: dayDebates.reduce((sum, d) => sum + d.agreeCount + d.disagreeCount + d.neutralCount, 0),
+        totalComments: dayDebates.reduce((sum, d) => sum + d.commentCount, 0),
+        topDebate: dayDebates.sort((a, b) => 
+          (b.agreeCount + b.disagreeCount + b.neutralCount + b.commentCount) - 
+          (a.agreeCount + a.disagreeCount + a.neutralCount + a.commentCount)
+        )[0],
+        debates: dayDebates.sort((a, b) => a.slot - b.slot),
+      }))
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, limit);
+
+    return {
+      archives: dailyStats,
+      totalDays: dailyStats.length,
+      dateRange: {
+        start: dailyStats[dailyStats.length - 1]?.date || today,
+        end: dailyStats[0]?.date || today,
+      },
+    };
+  },
+});
+
+/**
+ * Get detailed debate with all votes and comments (for admin)
+ */
+export const getDebateDetails = query({
+  args: { debateId: v.id("dailyDebates") },
+  handler: async (ctx, args) => {
+    const debate = await ctx.db.get(args.debateId);
+    if (!debate) return null;
+
+    // Get all votes with voter info
+    const votes = await ctx.db
+      .query("debateVotes")
+      .withIndex("by_debate", (q) => q.eq("debateId", args.debateId))
+      .collect();
+
+    const enrichedVotes = await Promise.all(
+      votes.map(async (vote) => {
+        let voterInfo = { name: "Anonymous", flag: "🌍" };
+        
+        if (vote.voterType === "member" && vote.memberId) {
+          const member = await ctx.db.get(vote.memberId);
+          if (member) {
+            voterInfo = { name: member.name, flag: "" };
+          }
+        } else if (vote.anonymousId) {
+          const anon = await ctx.db.get(vote.anonymousId);
+          if (anon) {
+            voterInfo = { name: anon.pseudonym, flag: anon.countryFlag };
+          }
+        }
+
+        return {
+          ...vote,
+          voterInfo,
+          timestamp: vote.timestamp,
+        };
+      })
+    );
+
+    // Get all comments with author info
+    const comments = await ctx.db
+      .query("debateComments")
+      .withIndex("by_debate", (q) => q.eq("debateId", args.debateId))
+      .collect();
+
+    const enrichedComments = await Promise.all(
+      comments.map(async (comment) => {
+        let authorInfo = { name: "Anonymous", flag: "🌍", badge: null as string | null };
+        
+        if (comment.authorType === "member" && comment.memberId) {
+          const member = await ctx.db.get(comment.memberId);
+          if (member) {
+            authorInfo = { 
+              name: member.name, 
+              flag: "", 
+              badge: member.isPremium ? "premium" : null 
+            };
+          }
+        } else if (comment.anonymousId) {
+          const anon = await ctx.db.get(comment.anonymousId);
+          if (anon) {
+            authorInfo = { name: anon.pseudonym, flag: anon.countryFlag, badge: null };
+          }
+        }
+
+        return {
+          ...comment,
+          authorInfo,
+        };
+      })
+    );
+
+    return {
+      debate,
+      votes: enrichedVotes.sort((a, b) => b.timestamp - a.timestamp),
+      comments: enrichedComments.sort((a, b) => (b._creationTime || 0) - (a._creationTime || 0)),
+      stats: {
+        totalVotes: votes.length,
+        memberVotes: votes.filter(v => v.voterType === "member").length,
+        anonymousVotes: votes.filter(v => v.voterType === "anonymous").length,
+        totalComments: comments.length,
+        memberComments: comments.filter(c => c.authorType === "member").length,
+        anonymousComments: comments.filter(c => c.authorType === "anonymous").length,
+      },
+    };
+  },
+});
+
+/**
+ * Export debate data for archiving (admin only)
+ */
+export const exportDebateData = query({
+  args: { date: v.string() },
+  handler: async (ctx, args) => {
+    const debates = await ctx.db
+      .query("dailyDebates")
+      .withIndex("by_date", (q) => q.eq("date", args.date))
+      .collect();
+
+    const fullData = await Promise.all(
+      debates.map(async (debate) => {
+        const votes = await ctx.db
+          .query("debateVotes")
+          .withIndex("by_debate", (q) => q.eq("debateId", debate._id))
+          .collect();
+
+        const comments = await ctx.db
+          .query("debateComments")
+          .withIndex("by_debate", (q) => q.eq("debateId", debate._id))
+          .collect();
+
+        return {
+          debate,
+          votes,
+          comments,
+        };
+      })
+    );
+
+    return {
+      date: args.date,
+      exportedAt: new Date().toISOString(),
+      data: fullData,
+    };
   },
 });

@@ -204,6 +204,24 @@ export function DailyDebatesPanel({ userId }: DailyDebatesPanelProps) {
     setShowPseudonymPrompt(false);
   };
 
+  // Gamified messages for anonymous users
+  const [showGamifiedMessage, setShowGamifiedMessage] = useState<string | null>(null);
+
+  const GAMIFIED_MESSAGES = {
+    en: [
+      "Your voice matters! 💜 Join Aurora App to earn credits",
+      "Great insight! Sign up to save your debate history",
+      "You're on fire! 🔥 Create an account to unlock rewards",
+      "Sisters are listening! Join to connect with them",
+      "Your opinion counts! Sign up to earn 2 credits per vote",
+    ],
+    es: [
+      "¡Tu voz importa! 💜 Únete a Aurora App para ganar créditos",
+      "¡Gran perspectiva! Regístrate para guardar tu historial",
+      "¡Estás en racha! 🔥 Crea una cuenta para desbloquear recompensas",
+    ],
+  };
+
   // Handle vote
   const handleVote = async (debateId: Id<"dailyDebates">, vote: "agree" | "disagree" | "neutral") => {
     if (!userId && !anonymousId) {
@@ -211,7 +229,7 @@ export function DailyDebatesPanel({ userId }: DailyDebatesPanelProps) {
       return;
     }
 
-    await voteOnDebate({
+    const result = await voteOnDebate({
       debateId,
       vote,
       anonymousId: anonymousId || undefined,
@@ -219,6 +237,14 @@ export function DailyDebatesPanel({ userId }: DailyDebatesPanelProps) {
     });
 
     setInteractionCount((c) => c + 1);
+
+    // Show gamified message for anonymous users (no real credits stored)
+    if (!userId && result && !result.isRegistered) {
+      const messages = GAMIFIED_MESSAGES[locale as keyof typeof GAMIFIED_MESSAGES] || GAMIFIED_MESSAGES.en;
+      const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+      setShowGamifiedMessage(randomMessage);
+      setTimeout(() => setShowGamifiedMessage(null), 4000);
+    }
   };
 
   if (!debates || debates.length === 0) {
@@ -285,6 +311,29 @@ export function DailyDebatesPanel({ userId }: DailyDebatesPanelProps) {
         )}
       </AnimatePresence>
 
+      {/* Gamified Message Toast for Anonymous Users */}
+      <AnimatePresence>
+        {showGamifiedMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white shadow-xl"
+          >
+            <div className="flex items-center gap-3">
+              <Sparkles className="w-5 h-5 animate-pulse" />
+              <p className="font-medium text-sm">{showGamifiedMessage}</p>
+              <a 
+                href="/api/auth/login" 
+                className="ml-2 px-3 py-1 rounded-full bg-white/20 hover:bg-white/30 text-xs font-medium transition-colors"
+              >
+                Join Free →
+              </a>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Signup Prompt after 10+ interactions */}
       {interactionCount >= 10 && !userId && (
         <motion.div
@@ -292,19 +341,21 @@ export function DailyDebatesPanel({ userId }: DailyDebatesPanelProps) {
           animate={{ opacity: 1 }}
           className="p-4 rounded-xl bg-gradient-to-r from-[var(--color-aurora-yellow)]/20 to-[var(--color-aurora-mint)]/20 border border-[var(--color-aurora-yellow)]"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
               <Crown className="w-6 h-6 text-[var(--color-aurora-yellow)]" />
               <div>
                 <p className="font-medium text-[var(--foreground)]">{t.signupPrompt}</p>
                 <p className="text-sm text-[var(--muted-foreground)]">
-                  {interactionCount * 2} {t.creditsEarned}
+                  You could have earned {interactionCount * 2} credits! Join to start earning.
                 </p>
               </div>
             </div>
-            <Button className="bg-[var(--color-aurora-purple)]">
-              {t.signupCTA}
-            </Button>
+            <a href="/api/auth/login">
+              <Button className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)]">
+                {t.signupCTA}
+              </Button>
+            </a>
           </div>
         </motion.div>
       )}
@@ -572,11 +623,6 @@ function DebateComments({
               {comment.authorBadge === "verified" && (
                 <Badge className="text-[9px] bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0 h-4">
                   ✓ Verified
-                </Badge>
-              )}
-              {comment.trustScore && comment.trustScore >= 80 && (
-                <Badge className="text-[9px] bg-[var(--color-aurora-blue)]/20 text-[var(--color-aurora-blue)] border-0 h-4">
-                  Trust {comment.trustScore}
                 </Badge>
               )}
             </div>

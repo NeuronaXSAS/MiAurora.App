@@ -30,6 +30,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { ResourceMonitor } from "@/components/admin/resource-monitor";
 import { DailyNewsAdmin } from "@/components/admin/daily-news-admin";
 import { DailyDebatesAdmin } from "@/components/admin/daily-debates-admin";
+import { DebatesMonitor } from "@/components/admin/debates-monitor";
 
 export default function AdminDashboard() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
@@ -137,10 +138,14 @@ export default function AdminDashboard() {
 
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-5 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl p-1">
+          <TabsList className="grid grid-cols-6 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl p-1">
             <TabsTrigger value="overview" className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="debates" className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg">
+              <MessageSquare className="w-4 h-4" />
+              <span className="hidden sm:inline">Debates</span>
             </TabsTrigger>
             <TabsTrigger value="broadcast" className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg">
               <Megaphone className="w-4 h-4" />
@@ -148,7 +153,7 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger value="news" className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg">
               <Newspaper className="w-4 h-4" />
-              <span className="hidden sm:inline">Daily News</span>
+              <span className="hidden sm:inline">Content</span>
             </TabsTrigger>
             <TabsTrigger value="resources" className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg">
               <Zap className="w-4 h-4" />
@@ -163,6 +168,11 @@ export default function AdminDashboard() {
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6 mt-6">
             <OverviewStats stats={stats} />
+          </TabsContent>
+
+          {/* Debates Monitor Tab - Real-time analytics & archive */}
+          <TabsContent value="debates" className="mt-6">
+            <DebatesMonitor />
           </TabsContent>
 
           {/* Broadcast Tab */}
