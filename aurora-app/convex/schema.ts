@@ -1700,4 +1700,45 @@ export default defineSchema({
     lastUpdated: v.number(), // Timestamp of last update
   })
     .index("by_month", ["month"]),
+
+  // ============================================
+  // COMMUNITY TRUTH SCORE™ - Crowdsourced Search Intelligence
+  // ============================================
+
+  // Anonymous votes on search results - NO PII stored
+  searchVotes: defineTable({
+    urlHash: v.string(), // SHA-256 hash of normalized URL
+    sessionHash: v.string(), // One-way hash of session (not user ID)
+    vote: v.union(v.literal("trust"), v.literal("flag")),
+    timestamp: v.number(),
+    // NO PII stored - completely anonymous
+  })
+    .index("by_url", ["urlHash"])
+    .index("by_session_url", ["sessionHash", "urlHash"]),
+
+  // Real-time vote aggregates for fast lookups
+  searchVoteAggregates: defineTable({
+    urlHash: v.string(), // SHA-256 hash of normalized URL
+    trustCount: v.number(),
+    flagCount: v.number(),
+    totalVotes: v.number(),
+    communityScore: v.number(), // 0-100 calculated score
+    confidenceLevel: v.union(
+      v.literal("building"), // < 5 votes
+      v.literal("low"), // 5-14 votes
+      v.literal("medium"), // 15-49 votes
+      v.literal("high") // 50+ votes
+    ),
+    lastUpdated: v.number(),
+  })
+    .index("by_url", ["urlHash"])
+    .index("by_score", ["communityScore"]),
+
+  // Rate limiting for vote spam prevention
+  searchVoteRateLimits: defineTable({
+    sessionHash: v.string(),
+    hourKey: v.string(), // "2024-12-05-14" format (date + hour)
+    voteCount: v.number(),
+  })
+    .index("by_session_hour", ["sessionHash", "hourKey"]),
 });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit, getRateLimitStatus } from '@/lib/rate-limit';
+import { canUseGemini, recordGeminiUsage, DEV_MODE } from '@/lib/resource-guard';
 
 // Mental health metrics tracking
 interface MentalHealthMetrics {
@@ -41,11 +42,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Check resource limits BEFORE making API call
+    const resourceCheck = canUseGemini();
+    if (!resourceCheck.allowed) {
+      console.warn('⚠️ Gemini limit reached:', resourceCheck.reason);
+      return NextResponse.json({
+        response: getFallbackResponse(message),
+        userId,
+        metrics: analyzeMentalHealthLocally(message),
+        limitReached: true,
+      });
+    }
+
     // Get Gemini API key from environment
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
     
-    if (!apiKey) {
-      console.error('GEMINI_API_KEY not configured');
+    if (!apiKey || DEV_MODE.disableGemini) {
+      console.log('Gemini disabled or not configured - using fallback');
       return NextResponse.json({
         response: getFallbackResponse(message),
         userId,
@@ -124,6 +137,9 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
     const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || getFallbackResponse(message);
+
+    // Record successful API usage
+    recordGeminiUsage();
 
     // Analyze mental health metrics from conversation
     const metrics = analyzeMentalHealthLocally(message);

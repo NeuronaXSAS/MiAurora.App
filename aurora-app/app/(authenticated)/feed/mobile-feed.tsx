@@ -18,6 +18,8 @@ import { ValuePropositionBanner } from "@/components/value-proposition-banner";
 import { ImmersiveFeed } from "@/components/immersive-feed";
 import { MobilePostCard } from "@/components/mobile-post-card";
 import { SisterSpotlightCompact, SisterSpotlightFeedCard } from "@/components/sister-spotlight-card";
+import { GuardianDiscoveryCard } from "@/components/guardian-discovery-card";
+import { ConversationTracker, ConversationTrackerButton } from "@/components/conversation-tracker";
 import { 
   Sparkles, 
   ChevronDown, 
@@ -173,6 +175,7 @@ export function MobileFeed() {
   const [isPremium, setIsPremium] = useState(false);
   const [viewMode, setViewMode] = useState<FeedViewMode>("cards");
   const [visibleItems, setVisibleItems] = useState(10); // Progressive loading
+  const [showConversationTracker, setShowConversationTracker] = useState(false);
 
   // Device performance detection
   const { isLowEnd: deviceIsLowEnd, isSlowNetwork, shouldReduceData } = useDevicePerformance();
@@ -408,8 +411,8 @@ export function MobileFeed() {
         </div>
       </div>
 
-      {/* Feed Content */}
-      <div className="py-3 space-y-3 px-3">
+      {/* Feed Content - Edge-to-edge on mobile */}
+      <div className="py-2 space-y-2 px-2 sm:px-3">
         {/* Loading State */}
         {feedItems === undefined && (
           <div className="space-y-3">
@@ -435,6 +438,11 @@ export function MobileFeed() {
         {/* Sister Spotlight - Fun people discovery */}
         {userId && feedItems !== undefined && (
           <SisterSpotlightCompact currentUserId={userId} />
+        )}
+
+        {/* Guardian Discovery - Build safety circle naturally */}
+        {userId && feedItems !== undefined && (
+          <GuardianDiscoveryCard currentUserId={userId} variant="compact" />
         )}
 
         {/* Value Proposition for new/returning users */}
@@ -557,6 +565,21 @@ export function MobileFeed() {
           userId={userId}
         />
       )}
+
+      {/* Conversation Tracker Panel */}
+      <ConversationTracker
+        userId={userId}
+        isOpen={showConversationTracker}
+        onClose={() => setShowConversationTracker(false)}
+      />
+
+      {/* Floating Conversation Tracker Button */}
+      <div className="fixed bottom-20 right-4 z-40">
+        <ConversationTrackerButton
+          onClick={() => setShowConversationTracker(true)}
+          hasNew={false}
+        />
+      </div>
     </div>
   );
 }

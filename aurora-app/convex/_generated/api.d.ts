@@ -20,6 +20,7 @@ import type * as analytics from "../analytics.js";
 import type * as badges from "../badges.js";
 import type * as circles from "../circles.js";
 import type * as comments from "../comments.js";
+import type * as communityTruth from "../communityTruth.js";
 import type * as connections from "../connections.js";
 import type * as creator from "../creator.js";
 import type * as credits from "../credits.js";
@@ -83,6 +84,7 @@ declare const fullApi: ApiFromModules<{
   badges: typeof badges;
   circles: typeof circles;
   comments: typeof comments;
+  communityTruth: typeof communityTruth;
   connections: typeof connections;
   creator: typeof creator;
   credits: typeof credits;

@@ -610,3 +610,75 @@ export const updatePostModeration = mutation({
 });
 
 
+
+/**
+ * Get posts that user has commented on (for conversation tracking)
+ */
+export const getTrackedPosts = query({
+  args: {
+    userId: v.id("users"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 50;
+
+    // Get user's comments
+    const userComments = await ctx.db
+      .query("comments")
+      .withIndex("by_author", (q) => q.eq("authorId", args.userId))
+      .order("desc")
+      .take(100);
+
+    // Group by post and count
+    const postCommentCounts = new Map<string, { count: number; lastComment: number }>();
+    for (const comment of userComments) {
+      const existing = postCommentCounts.get(comment.postId);
+      if (existing) {
+        existing.count++;
+        existing.lastComment = Math.max(existing.lastComment, comment._creationTime);
+      } else {
+        postCommentCounts.set(comment.postId, {
+          count: 1,
+          lastComment: comment._creationTime,
+        });
+      }
+    }
+
+    // Get post details and count new replies
+    const trackedPosts = await Promise.all(
+      Array.from(postCommentCounts.entries()).slice(0, limit).map(async ([postId, data]) => {
+        // Query the post directly from posts table
+        const post = await ctx.db
+          .query("posts")
+          .filter((q) => q.eq(q.field("_id"), postId as any))
+          .first();
+        if (!post) return null;
+
+        // Count replies after user's last comment
+        const newReplies = await ctx.db
+          .query("comments")
+          .withIndex("by_post", (q) => q.eq("postId", postId as any))
+          .filter((q) => 
+            q.and(
+              q.gt(q.field("_creationTime"), data.lastComment),
+              q.neq(q.field("authorId"), args.userId)
+            )
+          )
+          .collect();
+
+        return {
+          postId: post._id,
+          title: post.title || (post.description ? post.description.substring(0, 100) : "Untitled"),
+          lastSeen: data.lastComment,
+          newReplies: newReplies.length,
+          isFollowing: true,
+          myCommentCount: data.count,
+        };
+      })
+    );
+
+    return trackedPosts
+      .filter(Boolean)
+      .sort((a, b) => (b?.newReplies || 0) - (a?.newReplies || 0));
+  },
+});

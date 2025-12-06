@@ -16,7 +16,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +30,10 @@ import Link from "next/link";
 import { LandingAd } from "@/components/ads/landing-ad";
 import { AISearchSuggestions } from "@/components/ai-search-suggestions";
 import { TrustScoreBadge, InlineTrustScore } from "@/components/search/trust-score-badge";
-import { calculateTrustScore, TrustScoreResult } from "@/lib/search/trust-score";
+import { calculateTrustScore } from "@/lib/search/trust-score";
+import { CommunityVoteButtons } from "@/components/search/community-vote-buttons";
+import { AIvsCommunityScore } from "@/components/search/community-truth-badge";
+import { generateUrlHash } from "@/lib/anonymous-session";
 
 interface WebSearchResult {
   title: string;
@@ -111,6 +114,8 @@ export function LandingSearch() {
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [activeTab, setActiveTab] = useState<"all" | "web" | "community">("all");
+  const [urlHashes, setUrlHashes] = useState<Record<string, string>>({});
+  const [communityScores, setCommunityScores] = useState<Record<string, { score: number | null; totalVotes: number; confidenceLevel: string }>>({});
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Debounce search query
@@ -161,6 +166,26 @@ export function LandingSearch() {
     if (typeof window === 'undefined') return 'en';
     return localStorage.getItem('aurora-locale') || navigator.language.split('-')[0] || 'en';
   }, []);
+
+  // Generate URL hashes for community voting
+  useEffect(() => {
+    if (webResults.length === 0) {
+      setUrlHashes({});
+      setCommunityScores({});
+      return;
+    }
+
+    const computeHashes = async () => {
+      const hashes: Record<string, string> = {};
+      for (const result of webResults) {
+        const hash = await generateUrlHash(result.url);
+        hashes[result.url] = hash;
+      }
+      setUrlHashes(hashes);
+    };
+
+    computeHashes();
+  }, [webResults]);
 
   // Fetch AI summary with language support
   useEffect(() => {
@@ -409,6 +434,7 @@ export function LandingSearch() {
                   isWomenFocused: result.isWomenFocused,
                   domain: result.domain,
                   contentType: result.biasAnalysis?.emotionalTone,
+                  title: result.title, // For context-aware explanations
                 });
                 
                 return (
@@ -471,9 +497,20 @@ export function LandingSearch() {
                         </div>
                       </div>
                       
-                      {/* Aurora Trust Score™ Details - Expandable */}
+                      {/* Aurora Trust Score™ Details + Community Voting */}
                       <div className="px-4 py-3 bg-gradient-to-r from-[var(--color-aurora-purple)]/5 via-[var(--accent)]/50 to-[var(--color-aurora-pink)]/5 border-t border-[var(--color-aurora-purple)]/10">
-                        <TrustScoreBadge trustScore={trustScore} compact={false} />
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <TrustScoreBadge trustScore={trustScore} compact={false} />
+                          
+                          {/* Community Truth Score™ Voting */}
+                          <div className="flex items-center gap-3">
+                            <CommunityVoteButtons 
+                              url={result.url}
+                              urlHash={urlHashes[result.url]}
+                              compact={false}
+                            />
+                          </div>
+                        </div>
                       </div>
                     </Card>
                   </motion.div>

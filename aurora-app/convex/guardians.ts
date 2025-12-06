@@ -469,3 +469,119 @@ export const markNotificationActioned = mutation({
     return { success: true };
   },
 });
+
+/**
+ * Get suggested guardians based on mutual connections and activity
+ */
+export const getSuggestedGuardians = query({
+  args: {
+    userId: v.id("users"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 5;
+    const currentUser = await ctx.db.get(args.userId);
+    if (!currentUser) return [];
+
+    // Get existing guardian connections (to exclude)
+    const existingConnections = await ctx.db
+      .query("auroraGuardians")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+    
+    const excludeIds = new Set([
+      args.userId,
+      ...existingConnections.map(c => c.guardianId),
+    ]);
+
+    // Get user's matches (sister connections) as potential guardians
+    const matchesFrom = await ctx.db
+      .query("sisterConnections")
+      .withIndex("by_from_user", (q) => q.eq("fromUserId", args.userId))
+      .filter((q) => q.eq(q.field("status"), "matched"))
+      .collect();
+
+    const matchesTo = await ctx.db
+      .query("sisterConnections")
+      .withIndex("by_to_user", (q) => q.eq("toUserId", args.userId))
+      .filter((q) => q.eq(q.field("status"), "matched"))
+      .collect();
+
+    const matchedUserIds = new Set<string>();
+    matchesFrom.forEach(m => matchedUserIds.add(m.toUserId));
+    matchesTo.forEach(m => matchedUserIds.add(m.fromUserId));
+
+    // Get active users with high trust scores
+    const activeUsers = await ctx.db
+      .query("users")
+      .order("desc")
+      .take(50);
+
+    // Score and rank potential guardians
+    const candidates: Array<{
+      user: typeof activeUsers[0];
+      score: number;
+      mutualConnections: number;
+      isMatch: boolean;
+    }> = [];
+
+    for (const user of activeUsers) {
+      if (excludeIds.has(user._id)) continue;
+
+      let score = 0;
+      const isMatch = matchedUserIds.has(user._id);
+
+      // Prioritize matched users (already connected)
+      if (isMatch) score += 50;
+
+      // Trust score bonus
+      score += (user.trustScore || 0) * 0.5;
+
+      // Activity bonus (has credits = active user)
+      if ((user.credits || 0) > 10) score += 10;
+
+      // Same location bonus (if available)
+      if (currentUser.location && user.location) {
+        if (currentUser.location.includes(user.location.split(",")[0])) {
+          score += 20;
+        }
+      }
+
+      // Count mutual connections
+      let mutualConnections = 0;
+      const userMatches = await ctx.db
+        .query("sisterConnections")
+        .withIndex("by_from_user", (q) => q.eq("fromUserId", user._id))
+        .filter((q) => q.eq(q.field("status"), "matched"))
+        .take(20);
+      
+      for (const match of userMatches) {
+        if (matchedUserIds.has(match.toUserId)) {
+          mutualConnections++;
+        }
+      }
+      score += mutualConnections * 5;
+
+      candidates.push({
+        user,
+        score,
+        mutualConnections,
+        isMatch,
+      });
+    }
+
+    // Sort by score and return top candidates
+    candidates.sort((a, b) => b.score - a.score);
+
+    return candidates.slice(0, limit).map(c => ({
+      _id: c.user._id,
+      name: c.user.name,
+      email: c.user.email,
+      avatarConfig: c.user.avatarConfig,
+      trustScore: c.user.trustScore,
+      location: c.user.location,
+      mutualConnections: c.mutualConnections,
+      isMatch: c.isMatch,
+    }));
+  },
+});

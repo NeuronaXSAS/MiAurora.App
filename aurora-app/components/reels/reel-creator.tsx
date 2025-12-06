@@ -83,8 +83,17 @@ export function ReelCreator({ userId, onClose }: ReelCreatorProps) {
       }
       
       setVideoFile(file);
-      setVideoPreview(URL.createObjectURL(file));
+      // Create blob URL for preview - will play inline in browser
+      const blobUrl = URL.createObjectURL(file);
+      setVideoPreview(blobUrl);
       setStep("edit");
+      
+      // Auto-play after a short delay to ensure video element is mounted
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.play().catch(() => {});
+        }
+      }, 100);
     }
   }, []);
 
@@ -244,22 +253,32 @@ export function ReelCreator({ userId, onClose }: ReelCreatorProps) {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-4"
             >
-              {/* Video Preview */}
-              <div className="relative aspect-[9/16] max-h-[400px] bg-black rounded-2xl overflow-hidden">
+              {/* Video Preview - Custom in-browser player, prevents native player */}
+              <div className="relative aspect-[9/16] max-h-[400px] bg-black rounded-2xl overflow-hidden touch-none">
                 <video
                   ref={videoRef}
                   src={videoPreview}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover pointer-events-none"
                   loop
                   playsInline
-                  onClick={togglePlayback}
+                  muted={false}
+                  autoPlay
+                  disablePictureInPicture
+                  disableRemotePlayback
+                  controlsList="nodownload nofullscreen noremoteplayback"
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onContextMenu={(e) => e.preventDefault()}
+                  style={{ WebkitTouchCallout: 'none' } as React.CSSProperties}
                 />
+                {/* Custom play/pause overlay - prevents native controls */}
                 <button
                   onClick={togglePlayback}
-                  className="absolute inset-0 flex items-center justify-center"
+                  className="absolute inset-0 flex items-center justify-center z-10"
+                  type="button"
                 >
                   {!isPlaying && (
-                    <div className="bg-black/50 rounded-full p-4">
+                    <div className="bg-black/50 rounded-full p-4 backdrop-blur-sm">
                       <Play className="w-8 h-8 text-white fill-white" />
                     </div>
                   )}

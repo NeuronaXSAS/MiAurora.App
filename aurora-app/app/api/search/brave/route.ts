@@ -25,6 +25,7 @@ import {
   getCredibilityLabel,
   getAIContentLabel,
 } from "@/lib/search";
+import { canUseBraveSearch, recordBraveSearchUsage } from "@/lib/resource-guard";
 import type {
   SearchResult,
   AuroraInsights,
@@ -100,6 +101,32 @@ export async function GET(request: NextRequest) {
       { error: "Query must be at least 2 characters" },
       { status: 400 }
     );
+  }
+
+  // RESOURCE GUARD: Check if we have quota remaining
+  const searchQuotaCheck = canUseBraveSearch();
+  if (!searchQuotaCheck.allowed) {
+    console.warn('⚠️ Brave Search limit reached:', searchQuotaCheck.reason);
+    return NextResponse.json({
+      query,
+      totalResults: 0,
+      results: [],
+      cached: false,
+      auroraInsights: {
+        averageGenderBias: 0,
+        averageGenderBiasLabel: "Neutral" as GenderBiasLabel,
+        averageCredibility: 0,
+        averageCredibilityLabel: "Verify Source",
+        averageAIContent: 0,
+        averageAIContentLabel: "Mostly Human",
+        politicalDistribution: {},
+        womenFocusedCount: 0,
+        womenFocusedPercentage: 0,
+        recommendations: ["Search limit reached. Please try again later."],
+      },
+      apiUsage: { used: searchQuotaCheck.remaining, limit: 1500, remaining: 0 },
+      error: searchQuotaCheck.reason,
+    });
   }
 
   // Check if API key is configured
@@ -182,6 +209,9 @@ export async function GET(request: NextRequest) {
     // Calculate Aurora Insights (aggregate analysis)
     const auroraInsights = calculateAuroraInsights(auroraResults);
 
+    // RESOURCE GUARD: Record successful API usage
+    recordBraveSearchUsage();
+
     return NextResponse.json({
       query: data.query?.original || query,
       totalResults: auroraResults.length,
@@ -189,9 +219,9 @@ export async function GET(request: NextRequest) {
       cached: false,
       auroraInsights,
       apiUsage: {
-        used: 1, // Will be updated by Convex
-        limit: 2000,
-        remaining: 1999,
+        used: 1,
+        limit: 1500,
+        remaining: searchQuotaCheck.remaining - 1,
       },
       locations: data.locations?.results || [],
     });

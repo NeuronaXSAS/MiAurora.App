@@ -1,0 +1,115 @@
+# Implementation Plan
+
+- [x] 1. Database Schema & Security Foundation
+  - [x] 1.1 Create Convex schema for anonymous voting
+    - Add `searchVotes` table with urlHash, sessionHash, vote, timestamp
+    - Add `searchVoteAggregates` table for real-time aggregation
+    - Create indexes for fast lookups by urlHash
+    - _Requirements: 3.1, 3.2, 3.4_
+  - [x] 1.2 Implement anonymous session hash generation
+    - Create `lib/anonymous-session.ts` with SHA-256 hashing
+    - Generate session ID stored only in sessionStorage (not cookies)
+    - Implement daily rotation for extra privacy
+    - _Requirements: 3.2, 3.3_
+  - [ ]* 1.3 Write property test for anonymity preservation
+    - **Property 1: Vote Anonymity Preservation**
+    - **Validates: Requirements 3.1, 3.2, 3.4**
+
+- [x] 2. Vote Recording System
+  - [x] 2.1 Create Convex mutation for recording votes
+    - Implement `recordSearchVote` mutation with rate limiting
+    - Validate inputs and prevent duplicate votes
+    - Update aggregates in real-time
+    - _Requirements: 1.2, 1.3, 4.1_
+  - [x] 2.2 Implement rate limiting logic
+    - Track votes per session per hour
+    - Return friendly error when limit exceeded
+    - _Requirements: 4.1, 4.2_
+  - [ ]* 2.3 Write property test for duplicate prevention
+    - **Property 2: Duplicate Vote Prevention**
+    - **Validates: Requirements 1.4, 4.1**
+  - [ ]* 2.4 Write property test for rate limiting
+    - **Property 5: Rate Limiting Enforcement**
+    - **Validates: Requirements 4.1**
+
+- [x] 3. Community Score Calculation
+  - [x] 3.1 Implement score calculation function
+    - Create `calculateCommunityScore()` with weighted averaging
+    - Handle minimum vote threshold (5 votes)
+    - Calculate confidence level based on vote count
+    - _Requirements: 2.5, 4.3, 4.4_
+  - [x] 3.2 Create Convex query for fetching aggregates
+    - Implement `getVoteAggregates` query by URL hash
+    - Return real-time aggregated data
+    - _Requirements: 2.1, 2.2_
+  - [ ]* 3.3 Write property test for score consistency
+    - **Property 3: Score Calculation Consistency**
+    - **Validates: Requirements 2.1, 4.3**
+  - [ ]* 3.4 Write property test for minimum threshold
+    - **Property 6: Minimum Vote Threshold**
+    - **Validates: Requirements 2.5**
+
+- [ ] 4. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 5. Vote UI Component (Warm & Stylish)
+  - [x] 5.1 Create CommunityVoteButtons component
+    - Design warm, inviting vote buttons with Aurora colors
+    - 👍 Trust button with Aurora Mint accent
+    - 👎 Flag button with subtle Aurora Salmon
+    - Minimum 44x44px touch targets
+    - _Requirements: 1.1, 5.4_
+  - [x] 5.2 Add vote celebration animation
+    - Hearts/sparkles micro-animation on vote
+    - Smooth 300ms transitions
+    - Respect prefers-reduced-motion
+    - _Requirements: 5.5_
+  - [x] 5.3 Implement vote state management
+    - Track user's vote in component state
+    - Show selected state after voting
+    - Optimistic UI updates
+    - _Requirements: 1.4_
+
+- [x] 6. AI vs Community Comparison Visualization
+  - [x] 6.1 Create PerceptionGapIndicator component
+    - Dual-bar or gauge visualization
+    - Aurora Purple to Pink gradient for gap
+    - Animated score updates
+    - _Requirements: 5.1, 5.2, 5.3_
+  - [x] 6.2 Create CommunityTruthBadge component
+    - Show Community Score with vote count
+    - Display confidence level indicator
+    - "Building consensus" state for low votes
+    - _Requirements: 2.1, 2.5_
+  - [x] 6.3 Integrate into TrustScoreBadge
+    - Add Community Score alongside AI Score
+    - Show Perception Gap when significant (>15 points)
+    - Display "AI trusts more" or "Sisters trust more" labels
+    - _Requirements: 2.2, 2.3, 2.4_
+
+- [x] 7. Real-time Updates
+  - [x] 7.1 Implement Convex subscription for vote updates
+    - Subscribe to vote aggregate changes
+    - Update UI in real-time when others vote
+    - _Requirements: 1.3_
+  - [ ]* 7.2 Write property test for real-time propagation
+    - **Property 4: Real-time Update Propagation**
+    - **Validates: Requirements 1.3, 2.1**
+
+- [x] 8. Integration with Landing Search
+  - [x] 8.1 Add voting to search result cards
+    - Integrate CommunityVoteButtons into landing-search.tsx
+    - Position below Trust Score badge
+    - _Requirements: 1.1_
+  - [x] 8.2 Add Community Score to result display
+    - Show AI vs Community comparison
+    - Display Perception Gap indicator
+    - _Requirements: 2.1, 2.2_
+  - [ ] 8.3 Add "Hot Debates" section (optional)
+    - Show results with largest perception gaps
+    - "Sisters are discussing this" indicator
+    - _Requirements: 6.1, 6.2_
+
+- [ ] 9. Final Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+

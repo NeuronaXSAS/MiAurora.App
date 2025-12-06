@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Id } from "@/convex/_generated/dataModel";
+import { ResourceMonitor } from "@/components/admin/resource-monitor";
 
 export default function AdminDashboard() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
@@ -294,6 +295,9 @@ export default function AdminDashboard() {
             </Card>
           </div>
         )}
+
+        {/* Resource Monitor - CRITICAL for free tier */}
+        <ResourceMonitor />
 
         {/* Recent Activity Feed */}
         <Card className="bg-[var(--card)] border-[var(--border)]">

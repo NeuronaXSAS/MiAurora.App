@@ -3,13 +3,13 @@
 /**
  * Value Proposition Banner
  * 
- * Shows Aurora App's core value to users in a beautiful, non-intrusive way.
- * Appears contextually to reinforce the platform's mission.
+ * Shows Aurora App's core value to users in a beautiful, WARM, premium way.
+ * REDESIGNED: More feminine, warmer colors, better icons, premium feel.
  */
 
 import { useState, useEffect } from "react";
-import { Shield, Users, Briefcase, Heart, X, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
+import { Shield, Users, Briefcase, Heart, X, Sparkles, MapPin, MessageCircle, Compass, Star } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
 interface ValuePropositionBannerProps {
@@ -21,31 +21,39 @@ interface ValuePropositionBannerProps {
 const valueProps = [
   {
     icon: Shield,
-    title: "Safety First",
-    description: "Community-powered safety intelligence",
-    color: "var(--color-aurora-mint)",
+    emoji: "🛡️",
+    title: "Safety Intelligence",
+    description: "Real-time safety ratings by women, for women",
+    color: "#22c55e", // Aurora Mint
+    bgGradient: "from-emerald-500/20 to-teal-500/10",
     href: "/map",
   },
   {
-    icon: Users,
-    title: "Supportive Community",
-    description: "Connect with women worldwide",
-    color: "var(--color-aurora-pink)",
+    icon: Heart,
+    emoji: "💜",
+    title: "Sister Circles",
+    description: "Private communities that truly understand",
+    color: "#a855f7", // Aurora Purple
+    bgGradient: "from-purple-500/20 to-pink-500/10",
     href: "/circles",
   },
   {
-    icon: Briefcase,
-    title: "Career Growth",
-    description: "Unlock opportunities & mentorship",
-    color: "var(--color-aurora-blue)",
-    href: "/opportunities",
+    icon: Compass,
+    emoji: "✨",
+    title: "Safe Routes",
+    description: "Navigate confidently with community insights",
+    color: "#f29de5", // Aurora Pink
+    bgGradient: "from-pink-500/20 to-rose-500/10",
+    href: "/map",
   },
   {
-    icon: Heart,
-    title: "Wellness Hub",
-    description: "Track health & emotional wellbeing",
-    color: "var(--color-aurora-pink)",
-    href: "/health",
+    icon: Star,
+    emoji: "💼",
+    title: "Opportunities",
+    description: "Career growth with women who lift each other",
+    color: "#eab308", // Aurora Yellow
+    bgGradient: "from-amber-500/20 to-yellow-500/10",
+    href: "/opportunities",
   },
 ];
 
@@ -82,107 +90,183 @@ export function ValuePropositionBanner({
 
   if (!isVisible) return null;
 
+  // MINIMAL VARIANT - Warm, rotating banner
   if (variant === "minimal") {
     const activeProp = valueProps[activeIndex];
     return (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className={`bg-gradient-to-r from-[var(--color-aurora-purple)]/5 to-[var(--color-aurora-pink)]/5 rounded-xl p-3 ${className}`}
+        className={`relative overflow-hidden rounded-2xl ${className}`}
       >
-        <Link href={activeProp.href} className="flex items-center gap-3">
-          <div 
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: `${activeProp.color}20` }}
+        {/* Warm gradient background */}
+        <div className={`absolute inset-0 bg-gradient-to-r ${activeProp.bgGradient} opacity-50`} />
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-aurora-purple)]/5 to-[var(--color-aurora-pink)]/5" />
+        
+        <Link href={activeProp.href} className="relative flex items-center gap-4 p-4 group">
+          {/* Animated Icon Container */}
+          <motion.div 
+            key={activeIndex}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110"
+            style={{ 
+              background: `linear-gradient(135deg, ${activeProp.color}30, ${activeProp.color}15)`,
+              border: `2px solid ${activeProp.color}30`
+            }}
           >
-            <activeProp.icon className="w-4 h-4" style={{ color: activeProp.color }} />
-          </div>
+            <span className="text-xl">{activeProp.emoji}</span>
+          </motion.div>
+          
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-[var(--foreground)]">{activeProp.title}</p>
-            <p className="text-xs text-[var(--muted-foreground)] truncate">{activeProp.description}</p>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeIndex}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <p className="text-sm font-semibold text-[var(--foreground)]">{activeProp.title}</p>
+                <p className="text-xs text-[var(--muted-foreground)] truncate">{activeProp.description}</p>
+              </motion.div>
+            </AnimatePresence>
           </div>
-          <Sparkles className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+          
+          {/* Progress dots */}
+          <div className="flex gap-1.5">
+            {valueProps.map((_, i) => (
+              <div 
+                key={i}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  i === activeIndex 
+                    ? 'bg-[var(--color-aurora-purple)] w-4' 
+                    : 'bg-[var(--color-aurora-purple)]/30'
+                }`}
+              />
+            ))}
+          </div>
         </Link>
+        
+        {dismissible && (
+          <button
+            onClick={(e) => { e.preventDefault(); handleDismiss(); }}
+            className="absolute top-2 right-2 p-1.5 rounded-full hover:bg-[var(--accent)] transition-colors opacity-50 hover:opacity-100"
+          >
+            <X className="w-3 h-3 text-[var(--muted-foreground)]" />
+          </button>
+        )}
       </motion.div>
     );
   }
 
+  // HERO VARIANT - Premium, warm welcome
   if (variant === "hero") {
     return (
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-2xl p-6 text-white relative overflow-hidden ${className}`}
+        className={`relative overflow-hidden rounded-3xl ${className}`}
       >
-        {dismissible && (
-          <button
-            onClick={handleDismiss}
-            className="absolute top-3 right-3 p-1 rounded-full hover:bg-white/20 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
+        {/* Premium gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-aurora-purple)] via-[var(--color-aurora-violet)] to-[var(--color-aurora-pink)]" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
         
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-            <Sparkles className="w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold">Welcome to Aurora App</h2>
-            <p className="text-white/80 text-sm">Your Safety. Your Community. Your Growth.</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          {valueProps.map((prop) => (
-            <Link
-              key={prop.title}
-              href={prop.href}
-              className="bg-white/10 hover:bg-white/20 rounded-xl p-3 transition-colors"
+        <div className="relative p-6 text-white">
+          {dismissible && (
+            <button
+              onClick={handleDismiss}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/20 transition-colors"
             >
-              <prop.icon className="w-5 h-5 mb-2" />
-              <p className="font-medium text-sm">{prop.title}</p>
-              <p className="text-xs text-white/70">{prop.description}</p>
-            </Link>
-          ))}
+              <X className="w-4 h-4" />
+            </button>
+          )}
+          
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
+              <Sparkles className="w-7 h-7" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Welcome to Aurora App 💜</h2>
+              <p className="text-white/80 text-sm">Your Safety. Your Community. Your Growth.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {valueProps.map((prop, i) => (
+              <motion.div
+                key={prop.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Link
+                  href={prop.href}
+                  className="block bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl p-4 transition-all hover:scale-[1.02] border border-white/10"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">{prop.emoji}</span>
+                    <p className="font-semibold text-sm">{prop.title}</p>
+                  </div>
+                  <p className="text-xs text-white/70 leading-relaxed">{prop.description}</p>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </motion.div>
     );
   }
 
-  // Inline variant (default)
+  // INLINE VARIANT - Warm, horizontal scroll
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 relative ${className}`}
+      className={`relative overflow-hidden bg-gradient-to-r from-[var(--color-aurora-purple)]/5 via-[var(--card)] to-[var(--color-aurora-pink)]/5 border border-[var(--color-aurora-purple)]/10 rounded-2xl p-4 ${className}`}
     >
       {dismissible && (
         <button
           onClick={handleDismiss}
-          className="absolute top-2 right-2 p-1 rounded-full hover:bg-[var(--accent)] transition-colors"
+          className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-[var(--accent)] transition-colors z-10"
         >
-          <X className="w-4 h-4 text-[var(--muted-foreground)]" />
+          <X className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
         </button>
       )}
 
-      <p className="text-xs font-medium text-[var(--color-aurora-purple)] mb-3">DISCOVER AURORA APP</p>
+      <div className="flex items-center gap-2 mb-4">
+        <Sparkles className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+        <p className="text-xs font-semibold text-[var(--color-aurora-purple)] uppercase tracking-wide">Discover Aurora App</p>
+      </div>
       
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-        {valueProps.map((prop) => (
-          <Link
+      <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+        {valueProps.map((prop, i) => (
+          <motion.div
             key={prop.title}
-            href={prop.href}
-            className="flex-shrink-0 w-28 bg-[var(--accent)] hover:bg-[var(--accent)]/80 rounded-xl p-3 transition-colors text-center"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.1 }}
           >
-            <div 
-              className="w-10 h-10 rounded-xl mx-auto mb-2 flex items-center justify-center"
-              style={{ backgroundColor: `${prop.color}20` }}
+            <Link
+              href={prop.href}
+              className="flex-shrink-0 w-36 group"
             >
-              <prop.icon className="w-5 h-5" style={{ color: prop.color }} />
-            </div>
-            <p className="font-medium text-xs text-[var(--foreground)]">{prop.title}</p>
-          </Link>
+              <div 
+                className={`bg-gradient-to-br ${prop.bgGradient} rounded-xl p-4 transition-all group-hover:scale-[1.02] group-hover:shadow-lg border border-transparent group-hover:border-[var(--color-aurora-purple)]/20`}
+              >
+                <div 
+                  className="w-10 h-10 rounded-xl mb-3 flex items-center justify-center shadow-sm transition-transform group-hover:scale-110"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${prop.color}25, ${prop.color}10)`,
+                    border: `1.5px solid ${prop.color}30`
+                  }}
+                >
+                  <span className="text-lg">{prop.emoji}</span>
+                </div>
+                <p className="font-semibold text-xs text-[var(--foreground)] mb-1">{prop.title}</p>
+                <p className="text-[10px] text-[var(--muted-foreground)] leading-relaxed line-clamp-2">{prop.description}</p>
+              </div>
+            </Link>
+          </motion.div>
         ))}
       </div>
     </motion.div>

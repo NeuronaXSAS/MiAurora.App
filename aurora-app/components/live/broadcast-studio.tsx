@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, CameraOff, Mic, MicOff, Video, Users, Clock, Repeat, X, Shield, Coins } from "lucide-react";
+import { Camera, CameraOff, Mic, MicOff, Video, Users, Clock, Repeat, X, Shield, Coins, AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Id } from "@/convex/_generated/dataModel";
+import { canUseAgora, DEV_MODE } from "@/lib/resource-guard";
 
 interface BroadcastStudioProps {
   userId: Id<"users">;
@@ -152,6 +153,20 @@ export function BroadcastStudio({ userId }: BroadcastStudioProps) {
 
   const handleStartBroadcast = async () => {
     if (isStartingBroadcast) return;
+    
+    // RESOURCE GUARD: Check if Agora is allowed
+    if (DEV_MODE.disableAgora) {
+      setBroadcastError('Livestreaming is temporarily disabled to conserve resources. Coming soon!');
+      return;
+    }
+    
+    // Check resource limits - require real user intent
+    const agoraCheck = canUseAgora(true); // true = user clicked "Go Live" intentionally
+    if (!agoraCheck.allowed) {
+      setBroadcastError(agoraCheck.reason || 'Livestreaming unavailable');
+      return;
+    }
+    
     setIsStartingBroadcast(true);
     setBroadcastError(null);
     let createdId: Id<"livestreams"> | null = null;
