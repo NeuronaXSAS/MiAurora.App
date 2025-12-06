@@ -82,59 +82,99 @@ export const getUnifiedFeed = query({
       (reel.caption && reel.caption.length > 10)
     ).slice(0, Math.ceil(limit * 0.4)); // 40% reels for variety
 
-    // Score posts based on user preferences and engagement velocity
+    // IMPROVED FEED ALGORITHM v2.0
+    // Prioritizes: Fresh content > Engagement velocity > Accumulated engagement
+    // Goal: Let new genuine posts shine while keeping engaging content visible
+    
     const scorePost = (post: typeof allPosts[0]) => {
-      let score = 0;
+      const ageHours = Math.max(0.1, (Date.now() - post._creationTime) / (1000 * 60 * 60));
+      const ageDays = ageHours / 24;
       
-      // Boost posts matching user's preferred dimensions
-      if (preferredDimensions.length > 0 && post.lifeDimension) {
-        if (preferredDimensions.includes(post.lifeDimension)) {
-          score += 50;
-        }
-      }
+      // === FRESHNESS SCORE (Primary factor) ===
+      // New posts get massive initial boost that decays over time
+      let freshnessScore = 0;
+      if (ageHours < 1) freshnessScore = 200;        // Brand new (< 1 hour)
+      else if (ageHours < 3) freshnessScore = 150;   // Very fresh (1-3 hours)
+      else if (ageHours < 6) freshnessScore = 100;   // Fresh (3-6 hours)
+      else if (ageHours < 12) freshnessScore = 70;   // Recent (6-12 hours)
+      else if (ageHours < 24) freshnessScore = 50;   // Today (12-24 hours)
+      else if (ageDays < 3) freshnessScore = 30;     // This week
+      else if (ageDays < 7) freshnessScore = 15;     // Last week
+      else freshnessScore = 5;                        // Older content
       
-      // Boost posts from user's location
-      if (userLocation && post.location?.name) {
-        const postCity = post.location.name.split(",")[0].toLowerCase();
-        const userCity = userLocation.split(",")[0].toLowerCase();
-        if (postCity.includes(userCity) || userCity.includes(postCity)) {
-          score += 30;
-        }
-      }
-      
-      // Engagement score
+      // === ENGAGEMENT VELOCITY (Secondary factor) ===
+      // Rewards posts that are gaining traction quickly
       const upvotes = post.upvotes || 0;
       const comments = post.commentCount || 0;
       const verifications = post.verificationCount || 0;
       
-      score += upvotes * 2;
-      score += comments * 3;
-      score += verifications * 5;
+      const totalEngagement = upvotes + comments * 2 + verifications * 3;
+      const engagementVelocity = totalEngagement / ageHours;
       
-      // TRENDING BOOST: Calculate engagement velocity (engagement per hour)
-      const ageHours = Math.max(1, (Date.now() - post._creationTime) / (1000 * 60 * 60));
-      const engagementVelocity = (upvotes + comments * 2 + verifications * 3) / ageHours;
+      let velocityScore = 0;
+      if (engagementVelocity > 10) velocityScore = 150;  // Viral
+      else if (engagementVelocity > 5) velocityScore = 100;  // Hot
+      else if (engagementVelocity > 2) velocityScore = 60;   // Trending
+      else if (engagementVelocity > 1) velocityScore = 30;   // Rising
+      else if (engagementVelocity > 0.5) velocityScore = 15; // Active
       
-      // Posts with high velocity are "trending" - big boost
-      if (engagementVelocity > 5) score += 100; // Very trending
-      else if (engagementVelocity > 2) score += 50; // Trending
-      else if (engagementVelocity > 1) score += 25; // Rising
+      // === ACCUMULATED ENGAGEMENT (Tertiary factor) ===
+      // Still matters but with diminishing returns and time decay
+      const engagementDecay = Math.pow(0.85, ageDays); // 15% decay per day
+      const rawEngagementScore = Math.min(100, upvotes * 1.5 + comments * 2 + verifications * 3);
+      const engagementScore = rawEngagementScore * engagementDecay;
       
-      // Recency bonus (posts from last 24h get boost)
-      if (ageHours < 6) score += 40; // Very fresh
-      else if (ageHours < 24) score += 20;
-      else if (ageHours < 72) score += 10;
+      // === PERSONALIZATION BONUS ===
+      let personalizationScore = 0;
       
-      // Diversity bonus: Boost different content types
-      if (post.postType === "poll") score += 15;
-      if (post.postType === "reel" || post.reelId) score += 20;
-      if (post.routeId) score += 15;
+      // Match user's preferred dimensions
+      if (preferredDimensions.length > 0 && post.lifeDimension) {
+        if (preferredDimensions.includes(post.lifeDimension)) {
+          personalizationScore += 40;
+        }
+      }
       
-      // Quality signals
-      if (post.isVerified) score += 30;
-      if (post.media && post.media.length > 0) score += 10;
+      // Location relevance
+      if (userLocation && post.location?.name) {
+        const postCity = post.location.name.split(",")[0].toLowerCase();
+        const userCity = userLocation.split(",")[0].toLowerCase();
+        if (postCity.includes(userCity) || userCity.includes(postCity)) {
+          personalizationScore += 25;
+        }
+      }
       
-      return score;
+      // === CONTENT TYPE DIVERSITY BONUS ===
+      let diversityScore = 0;
+      if (post.postType === "poll") diversityScore = 20;
+      else if (post.postType === "reel" || post.reelId) diversityScore = 25;
+      else if (post.routeId) diversityScore = 20;
+      
+      // === QUALITY SIGNALS ===
+      let qualityScore = 0;
+      if (post.isVerified) qualityScore += 25;
+      if (post.media && post.media.length > 0) qualityScore += 15;
+      if (post.description && post.description.length > 100) qualityScore += 10; // Thoughtful content
+      
+      // === NEW USER BOOST ===
+      // Give new users' first posts extra visibility to encourage participation
+      // (This would need author creation time, approximating with low engagement + fresh)
+      let newUserBoost = 0;
+      if (ageHours < 24 && totalEngagement < 5) {
+        newUserBoost = 30; // Help new genuine posts get discovered
+      }
+      
+      // === FINAL SCORE CALCULATION ===
+      // Weighted combination prioritizing freshness and velocity
+      const finalScore = 
+        freshnessScore * 1.5 +      // Freshness is king
+        velocityScore * 1.2 +        // Velocity shows quality
+        engagementScore * 0.8 +      // Engagement matters but less
+        personalizationScore * 1.0 + // Personalization is important
+        diversityScore * 0.8 +       // Encourage variety
+        qualityScore * 0.6 +         // Quality signals
+        newUserBoost;                // Help newcomers
+      
+      return Math.round(finalScore);
     };
 
     // Sort each category by personalized score
@@ -251,6 +291,21 @@ export const getUnifiedFeed = query({
       stream.isEmergency === true
     ).slice(0, Math.ceil(limit * 0.2));
 
+    // Task 11.1: Fetch trending debates to include in feed
+    const today = new Date().toISOString().split('T')[0];
+    const trendingDebates = await ctx.db
+      .query("dailyDebates")
+      .withIndex("by_date", (q) => q.eq("date", today))
+      .take(6);
+    
+    // Filter debates with high engagement
+    const hotDebates = trendingDebates
+      .filter(d => {
+        const totalVotes = (d.agreeCount || 0) + (d.disagreeCount || 0) + (d.neutralCount || 0);
+        return totalVotes >= 5; // Only show debates with 5+ votes
+      })
+      .slice(0, 2); // Max 2 debates in feed
+
     const livestreamsWithHosts = await Promise.all(
       activeLivestreams.map(async (stream) => {
         const host = await ctx.db.get(stream.hostId);
@@ -273,6 +328,24 @@ export const getUnifiedFeed = query({
         };
       })
     );
+
+    // Task 11.1: Process trending debates for feed
+    const debatesForFeed = hotDebates.map((debate) => ({
+      _id: debate._id,
+      _creationTime: debate._creationTime,
+      type: "debate" as const,
+      timestamp: debate._creationTime,
+      title: debate.title,
+      summary: debate.summary,
+      category: debate.category,
+      sourceUrl: debate.sourceUrl,
+      sourceName: debate.sourceName,
+      imageUrl: debate.imageUrl,
+      agreeCount: debate.agreeCount || 0,
+      disagreeCount: debate.disagreeCount || 0,
+      neutralCount: debate.neutralCount || 0,
+      totalVotes: (debate.agreeCount || 0) + (debate.disagreeCount || 0) + (debate.neutralCount || 0),
+    }));
 
     // Fetch recent active opportunities with creator data
     const allOpportunities = await ctx.db
@@ -371,25 +444,25 @@ export const getUnifiedFeed = query({
       })
     );
 
-    // Combine all items - include reels and livestreams directly
+    // Combine all items - include reels, livestreams, and debates
     const allItems = [
       ...postsWithAuthors,
       ...reelsWithAuthors,
       ...routesWithCreators,
       ...opportunitiesWithCreators,
       ...livestreamsWithHosts,
+      ...debatesForFeed, // Task 11.1: Include trending debates
     ];
 
-    // Smart shuffle: Sort by timestamp but interleave content types
-    // First sort by timestamp
-    allItems.sort((a, b) => b.timestamp - a.timestamp);
-
-    // Then interleave to avoid clusters of same type
-    const interleaved: typeof allItems = [];
-    const byType: Record<string, typeof allItems> = {};
+    // IMPROVED FEED MIXING ALGORITHM v2.0
+    // Goals: 
+    // 1. Show variety of content types
+    // 2. Mix fresh content with trending content
+    // 3. Ensure new genuine posts get visibility
+    // 4. Keep the feed feeling alive and dynamic
     
-    for (const item of allItems) {
-      // Categorize by content type for better interleaving
+    // Categorize items by type and freshness
+    const categorizeItem = (item: typeof allItems[0]) => {
       let typeKey: string = item.type;
       if (item.type === "post") {
         const postItem = item as any;
@@ -402,27 +475,103 @@ export const getUnifiedFeed = query({
         } else {
           typeKey = "post_standard";
         }
+      } else if (item.type === "debate") {
+        typeKey = "debate"; // Task 11.1: Debates as separate category
       }
-      if (!byType[typeKey]) byType[typeKey] = [];
-      byType[typeKey].push(item);
+      
+      // Also categorize by freshness
+      const ageHours = (Date.now() - item.timestamp) / (1000 * 60 * 60);
+      const freshnessKey = ageHours < 6 ? "fresh" : ageHours < 24 ? "recent" : "older";
+      
+      return { typeKey, freshnessKey };
+    };
+    
+    // Separate items into buckets
+    const freshItems: typeof allItems = [];
+    const recentItems: typeof allItems = [];
+    const olderItems: typeof allItems = [];
+    
+    for (const item of allItems) {
+      const { freshnessKey } = categorizeItem(item);
+      if (freshnessKey === "fresh") freshItems.push(item);
+      else if (freshnessKey === "recent") recentItems.push(item);
+      else olderItems.push(item);
     }
-
-    // Round-robin interleave
-    let hasMore = true;
-    let idx = 0;
-    const typeKeys = Object.keys(byType);
-    while (hasMore && interleaved.length < limit) {
-      hasMore = false;
-      for (const key of typeKeys) {
-        if (byType[key].length > idx) {
-          interleaved.push(byType[key][idx]);
-          hasMore = true;
-          if (interleaved.length >= limit) break;
+    
+    // Sort each bucket by score (already calculated in posts)
+    // For non-posts, sort by timestamp
+    const sortBucket = (bucket: typeof allItems) => {
+      return bucket.sort((a, b) => {
+        // Posts have scores, others use timestamp
+        const scoreA = (a as any).score ?? b.timestamp;
+        const scoreB = (b as any).score ?? a.timestamp;
+        return scoreB - scoreA;
+      });
+    };
+    
+    sortBucket(freshItems);
+    sortBucket(recentItems);
+    sortBucket(olderItems);
+    
+    // Build final feed with smart mixing
+    // Pattern: Fresh, Fresh, Recent, Fresh, Older, Fresh, Recent, Recent, Older...
+    // This ensures new content dominates but older quality content still appears
+    const interleaved: typeof allItems = [];
+    const pattern = ["fresh", "fresh", "recent", "fresh", "older", "fresh", "recent", "recent", "older", "fresh"];
+    
+    const buckets = {
+      fresh: [...freshItems],
+      recent: [...recentItems],
+      older: [...olderItems],
+    };
+    
+    let patternIndex = 0;
+    let consecutiveSameType = 0;
+    let lastTypeKey = "";
+    
+    while (interleaved.length < limit) {
+      const bucketKey = pattern[patternIndex % pattern.length] as keyof typeof buckets;
+      let bucket = buckets[bucketKey];
+      
+      // If preferred bucket is empty, try others
+      if (bucket.length === 0) {
+        const fallbackOrder = ["fresh", "recent", "older"];
+        for (const fallback of fallbackOrder) {
+          if (buckets[fallback as keyof typeof buckets].length > 0) {
+            bucket = buckets[fallback as keyof typeof buckets];
+            break;
+          }
         }
       }
-      idx++;
+      
+      // If all buckets empty, we're done
+      if (bucket.length === 0) break;
+      
+      // Find an item that doesn't create too many consecutive same-type items
+      let selectedIndex = 0;
+      for (let i = 0; i < Math.min(5, bucket.length); i++) {
+        const { typeKey } = categorizeItem(bucket[i]);
+        if (typeKey !== lastTypeKey || consecutiveSameType < 2) {
+          selectedIndex = i;
+          break;
+        }
+      }
+      
+      const selectedItem = bucket.splice(selectedIndex, 1)[0];
+      const { typeKey } = categorizeItem(selectedItem);
+      
+      // Track consecutive same-type items
+      if (typeKey === lastTypeKey) {
+        consecutiveSameType++;
+      } else {
+        consecutiveSameType = 1;
+        lastTypeKey = typeKey;
+      }
+      
+      interleaved.push(selectedItem);
+      patternIndex++;
     }
-
+    
     return interleaved.slice(0, limit);
   },
 });

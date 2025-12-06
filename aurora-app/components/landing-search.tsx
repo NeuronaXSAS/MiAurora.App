@@ -35,6 +35,7 @@ import { calculateTrustScore } from "@/lib/search/trust-score";
 // Enhanced bias visualization now shows metrics inline
 import { DailyNewsPanel } from "@/components/search/daily-news-panel";
 import { DailyDebatesPanel } from "@/components/search/daily-debates-panel";
+import { RelatedDiscussions } from "@/components/search/related-discussions";
 
 interface WebSearchResult {
   title: string;
@@ -369,6 +370,14 @@ export function LandingSearch() {
                 </div>
               </Card>
             </motion.div>
+          )}
+
+          {/* Task 10.1: Related Aurora App Discussions */}
+          {hasWebResults && debouncedQuery && (
+            <RelatedDiscussions 
+              searchQuery={debouncedQuery} 
+              className="mb-6 p-4 bg-gradient-to-r from-[var(--color-aurora-purple)]/5 to-[var(--color-aurora-pink)]/5 rounded-2xl border border-[var(--color-aurora-purple)]/10"
+            />
           )}
 
           {/* Tabs */}

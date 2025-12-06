@@ -544,17 +544,40 @@ function DebateComments({
         {topLevelComments.map((comment) => (
           <div
             key={comment._id}
-            className="p-3 rounded-lg bg-[var(--card)] border border-[var(--border)]"
+            className={`p-3 rounded-lg border ${
+              comment.authorType === "member" 
+                ? "bg-gradient-to-r from-[var(--color-aurora-purple)]/5 to-[var(--color-aurora-pink)]/5 border-[var(--color-aurora-purple)]/20" 
+                : "bg-[var(--card)] border-[var(--border)]"
+            }`}
           >
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               {comment.authorFlag && (
                 <span className="text-sm">{comment.authorFlag}</span>
               )}
               <span className="font-medium text-sm text-[var(--foreground)]">
                 {comment.authorName}
               </span>
+              {/* Task 11.2: Member badges visible to anonymous users */}
+              {comment.authorType === "member" && (
+                <Badge className="text-[9px] bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)] border-0 h-4">
+                  Member
+                </Badge>
+              )}
               {comment.authorBadge === "premium" && (
-                <Crown className="w-3 h-3 text-[var(--color-aurora-yellow)]" />
+                <Badge className="text-[9px] bg-[var(--color-aurora-yellow)]/30 text-[var(--color-aurora-violet)] border-0 h-4 flex items-center gap-0.5">
+                  <Crown className="w-2.5 h-2.5" />
+                  Premium
+                </Badge>
+              )}
+              {comment.authorBadge === "verified" && (
+                <Badge className="text-[9px] bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0 h-4">
+                  ✓ Verified
+                </Badge>
+              )}
+              {comment.trustScore && comment.trustScore >= 80 && (
+                <Badge className="text-[9px] bg-[var(--color-aurora-blue)]/20 text-[var(--color-aurora-blue)] border-0 h-4">
+                  Trust {comment.trustScore}
+                </Badge>
               )}
             </div>
             <p className="text-sm text-[var(--muted-foreground)]">

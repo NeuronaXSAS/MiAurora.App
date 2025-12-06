@@ -166,3 +166,141 @@ export function setLocalVote(urlHash: string, vote: "trust" | "flag"): void {
     // Ignore localStorage errors
   }
 }
+
+// ============================================
+// Task 10.3: Anonymous → Member Migration
+// ============================================
+
+const ANON_PROFILE_KEY = "aurora-anon-profile";
+const MIGRATION_PENDING_KEY = "aurora-migration-pending";
+
+/**
+ * Anonymous user profile stored locally
+ */
+export interface AnonymousProfile {
+  sessionHash: string;
+  pseudonym: string;
+  countryCode: string;
+  countryFlag: string;
+  interactionCount: number;
+  firstSeen: number;
+  debateVotes: number;
+  debateComments: number;
+}
+
+/**
+ * Save anonymous profile locally for migration
+ */
+export function saveAnonymousProfile(profile: Partial<AnonymousProfile>): void {
+  if (typeof window === "undefined") return;
+  
+  try {
+    const existing = getAnonymousProfile();
+    const updated = { ...existing, ...profile };
+    localStorage.setItem(ANON_PROFILE_KEY, JSON.stringify(updated));
+  } catch {
+    // Ignore errors
+  }
+}
+
+/**
+ * Get saved anonymous profile
+ */
+export function getAnonymousProfile(): AnonymousProfile | null {
+  if (typeof window === "undefined") return null;
+  
+  try {
+    const data = localStorage.getItem(ANON_PROFILE_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Increment anonymous interaction count
+ */
+export function incrementAnonymousInteraction(type: "vote" | "comment"): void {
+  if (typeof window === "undefined") return;
+  
+  try {
+    const profile = getAnonymousProfile();
+    if (profile) {
+      profile.interactionCount = (profile.interactionCount || 0) + 1;
+      if (type === "vote") {
+        profile.debateVotes = (profile.debateVotes || 0) + 1;
+      } else {
+        profile.debateComments = (profile.debateComments || 0) + 1;
+      }
+      saveAnonymousProfile(profile);
+    }
+  } catch {
+    // Ignore errors
+  }
+}
+
+/**
+ * Mark migration as pending (user just signed up)
+ */
+export function markMigrationPending(): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(MIGRATION_PENDING_KEY, "true");
+}
+
+/**
+ * Check if migration is pending
+ */
+export function isMigrationPending(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(MIGRATION_PENDING_KEY) === "true";
+}
+
+/**
+ * Clear migration pending flag
+ */
+export function clearMigrationPending(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(MIGRATION_PENDING_KEY);
+}
+
+/**
+ * Clear anonymous profile after successful migration
+ */
+export function clearAnonymousProfile(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(ANON_PROFILE_KEY);
+  localStorage.removeItem(MIGRATION_PENDING_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
+}
+
+/**
+ * Get migration data for display to user
+ */
+export function getMigrationSummary(): {
+  hasPendingMigration: boolean;
+  pseudonym?: string;
+  countryFlag?: string;
+  totalInteractions: number;
+  debateVotes: number;
+  debateComments: number;
+} {
+  const profile = getAnonymousProfile();
+  
+  if (!profile || !profile.sessionHash) {
+    return {
+      hasPendingMigration: false,
+      totalInteractions: 0,
+      debateVotes: 0,
+      debateComments: 0,
+    };
+  }
+  
+  return {
+    hasPendingMigration: true,
+    pseudonym: profile.pseudonym,
+    countryFlag: profile.countryFlag,
+    totalInteractions: profile.interactionCount || 0,
+    debateVotes: profile.debateVotes || 0,
+    debateComments: profile.debateComments || 0,
+  };
+}

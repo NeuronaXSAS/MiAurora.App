@@ -267,6 +267,145 @@ export const getTrendingPreview = query({
   },
 });
 
+/**
+ * Task 10.1: Get related Aurora App discussions for search results
+ * Shows "X members discussing this" badge to encourage engagement
+ */
+export const getRelatedDiscussions = query({
+  args: {
+    searchQuery: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const query = args.searchQuery.toLowerCase().trim();
+    const limit = Math.min(args.limit || 5, 10);
+
+    if (query.length < 2) {
+      return { discussions: [], totalMembers: 0, totalDiscussions: 0 };
+    }
+
+    // Extract keywords from search query
+    const keywords = query.split(/\s+/).filter(w => w.length > 2);
+    
+    const discussions: Array<{
+      type: "post" | "debate" | "circle";
+      id: string;
+      title: string;
+      snippet: string;
+      participantCount: number;
+      recentActivity: number;
+      category?: string;
+    }> = [];
+
+    let totalParticipants = 0;
+
+    // Search Posts for related discussions
+    const posts = await ctx.db
+      .query("posts")
+      .order("desc")
+      .take(100);
+
+    for (const post of posts) {
+      if (post.isAnonymous) continue;
+      
+      const titleLower = post.title.toLowerCase();
+      const descLower = post.description.toLowerCase();
+      
+      // Check if any keyword matches
+      const matches = keywords.some(kw => 
+        titleLower.includes(kw) || descLower.includes(kw)
+      ) || titleLower.includes(query) || descLower.includes(query);
+      
+      if (matches) {
+        const engagement = (post.upvotes || 0) + (post.commentCount || 0);
+        discussions.push({
+          type: "post",
+          id: post._id,
+          title: truncateText(post.title, 60),
+          snippet: truncateText(post.description, 80),
+          participantCount: Math.max(1, Math.ceil(engagement / 2)), // Estimate participants
+          recentActivity: post._creationTime,
+          category: post.lifeDimension,
+        });
+        totalParticipants += Math.max(1, Math.ceil(engagement / 2));
+      }
+    }
+
+    // Search Daily Debates for related discussions
+    const today = new Date().toISOString().split('T')[0];
+    const debates = await ctx.db
+      .query("dailyDebates")
+      .withIndex("by_date", (q) => q.eq("date", today))
+      .take(6);
+
+    for (const debate of debates) {
+      const titleLower = debate.title.toLowerCase();
+      const summaryLower = (debate.summary || "").toLowerCase();
+      
+      const matches = keywords.some(kw => 
+        titleLower.includes(kw) || summaryLower.includes(kw)
+      ) || titleLower.includes(query) || summaryLower.includes(query);
+      
+      if (matches) {
+        const totalVotes = (debate.agreeCount || 0) + (debate.disagreeCount || 0) + (debate.neutralCount || 0);
+        discussions.push({
+          type: "debate",
+          id: debate._id,
+          title: truncateText(debate.title, 60),
+          snippet: truncateText(debate.summary || "", 80),
+          participantCount: totalVotes,
+          recentActivity: debate._creationTime,
+          category: debate.category,
+        });
+        totalParticipants += totalVotes;
+      }
+    }
+
+    // Search Circles for related communities
+    const circles = await ctx.db
+      .query("circles")
+      .take(50);
+
+    for (const circle of circles) {
+      if (circle.isPrivate) continue;
+      
+      const nameLower = circle.name.toLowerCase();
+      const descLower = circle.description.toLowerCase();
+      
+      const matches = keywords.some(kw => 
+        nameLower.includes(kw) || descLower.includes(kw)
+      ) || nameLower.includes(query) || descLower.includes(query);
+      
+      if (matches) {
+        discussions.push({
+          type: "circle",
+          id: circle._id,
+          title: truncateText(circle.name, 60),
+          snippet: truncateText(circle.description, 80),
+          participantCount: circle.memberCount || 0,
+          recentActivity: circle._creationTime,
+          category: circle.category,
+        });
+        totalParticipants += circle.memberCount || 0;
+      }
+    }
+
+    // Sort by participant count and recency
+    discussions.sort((a, b) => {
+      // Prioritize active discussions
+      const aScore = a.participantCount * 2 + (a.recentActivity / 1000000000);
+      const bScore = b.participantCount * 2 + (b.recentActivity / 1000000000);
+      return bScore - aScore;
+    });
+
+    return {
+      discussions: discussions.slice(0, limit),
+      totalMembers: totalParticipants,
+      totalDiscussions: discussions.length,
+    };
+  },
+});
+
 // Helper function to truncate text safely
 function truncateText(text: string, maxLength: number): string {
   if (!text) return "";

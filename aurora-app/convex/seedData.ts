@@ -1,307 +1,434 @@
-import { mutation } from "./_generated/server";
+/**
+ * Task 14.1 & 14.2: Seed Data Scripts
+ * 
+ * Creates realistic multilingual content for Aurora App:
+ * - Posts in 6 languages (EN, ES, FR, PT, DE, AR)
+ * - Safety routes from major cities worldwide
+ * - Diverse user profiles with international names
+ */
+
+import { v } from "convex/values";
+import { mutation, internalMutation } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
+
+// ============================================
+// MULTILINGUAL POSTS SEED DATA
+// ============================================
+
+const SEED_POSTS = [
+  // English Posts
+  {
+    title: "Late night commute safety tips from NYC",
+    description: "After 3 years of taking the subway after midnight, here are my best tips: Always stand near the conductor car, keep your phone charged, share your location with a friend. The MTA has improved lighting in many stations. Stay safe, sisters! 💜",
+    lifeDimension: "daily" as const,
+    language: "en",
+    location: { name: "New York, USA", coordinates: [-74.006, 40.7128] },
+    tags: ["safety", "commute", "nyc", "subway"],
+  },
+  {
+    title: "How I negotiated a 30% raise as a woman in tech",
+    description: "I was terrified to ask for more money, but I did my research on Glassdoor, practiced with friends, and came prepared with my achievements. The key was framing it as market adjustment, not personal need. You deserve fair pay! 💪",
+    lifeDimension: "professional" as const,
+    language: "en",
+    location: { name: "San Francisco, USA", coordinates: [-122.4194, 37.7749] },
+    tags: ["career", "salary", "negotiation", "tech"],
+  },
+  {
+    title: "Found an amazing women-only coworking space",
+    description: "Just discovered The Wing alternative in my city - it's called HerSpace and it's incredible. Safe environment, networking events, childcare options. Perfect for freelancers and remote workers. Highly recommend checking if there's one near you!",
+    lifeDimension: "professional" as const,
+    language: "en",
+    location: { name: "London, UK", coordinates: [-0.1278, 51.5074] },
+    tags: ["coworking", "networking", "remote-work"],
+  },
+  
+  // Spanish Posts
+  {
+    title: "Rutas seguras para correr en Ciudad de México",
+    description: "Después de probar muchos lugares, mis favoritos son: Bosque de Chapultepec (temprano en la mañana), Parque México en la Condesa, y la pista del Estadio Olímpico. Siempre voy con mi grupo de running de mujeres. ¡Únanse! 🏃‍♀️",
+    lifeDimension: "daily" as const,
+    language: "es",
+    location: { name: "Ciudad de México, México", coordinates: [-99.1332, 19.4326] },
+    tags: ["running", "seguridad", "cdmx", "deporte"],
+  },
+  {
+    title: "Experiencia con acoso laboral y cómo lo denuncié",
+    description: "Quiero compartir mi experiencia porque sé que muchas pasan por lo mismo. Documenté todo, busqué apoyo legal gratuito, y finalmente la empresa tomó acción. No están solas, hay recursos disponibles. Compartiré los contactos en comentarios.",
+    lifeDimension: "professional" as const,
+    language: "es",
+    location: { name: "Buenos Aires, Argentina", coordinates: [-58.3816, -34.6037] },
+    tags: ["acoso", "trabajo", "derechos", "denuncia"],
+  },
+  {
+    title: "Grupo de apoyo para madres emprendedoras",
+    description: "Creamos un círculo de madres que estamos emprendiendo. Nos reunimos cada sábado para compartir experiencias, cuidar a los niños juntas mientras trabajamos, y apoyarnos mutuamente. Si están en Madrid, ¡únanse! 💜",
+    lifeDimension: "social" as const,
+    language: "es",
+    location: { name: "Madrid, España", coordinates: [-3.7038, 40.4168] },
+    tags: ["emprendimiento", "madres", "comunidad", "apoyo"],
+  },
+
+  // French Posts
+  {
+    title: "Conseils de sécurité pour le métro parisien la nuit",
+    description: "Après 5 ans à Paris, voici mes conseils: évitez les wagons vides, restez près des sorties, utilisez l'app Citymapper pour les trajets les plus sûrs. La ligne 14 est la plus moderne et sécurisée. Prenez soin de vous! 💜",
+    lifeDimension: "daily" as const,
+    language: "fr",
+    location: { name: "Paris, France", coordinates: [2.3522, 48.8566] },
+    tags: ["sécurité", "métro", "paris", "transport"],
+  },
+  {
+    title: "Comment j'ai créé mon entreprise à 25 ans",
+    description: "Je partage mon parcours d'entrepreneure. Les défis: financement, crédibilité, équilibre vie pro/perso. Les victoires: liberté, impact, communauté. Si vous avez des questions sur la création d'entreprise en France, je suis là pour aider!",
+    lifeDimension: "professional" as const,
+    language: "fr",
+    location: { name: "Lyon, France", coordinates: [4.8357, 45.764] },
+    tags: ["entrepreneuriat", "startup", "femmes", "business"],
+  },
+
+  // Portuguese Posts
+  {
+    title: "Melhores bairros para mulheres em São Paulo",
+    description: "Depois de morar em vários bairros, recomendo: Vila Madalena (vida noturna segura), Pinheiros (boa iluminação), Moema (tranquilo). Evitem andar sozinhas tarde em certas áreas. Compartilhem suas experiências! 🇧🇷",
+    lifeDimension: "daily" as const,
+    language: "pt",
+    location: { name: "São Paulo, Brasil", coordinates: [-46.6333, -23.5505] },
+    tags: ["segurança", "bairros", "sp", "moradia"],
+  },
+  {
+    title: "Rede de mulheres na tecnologia - Brasil",
+    description: "Criamos uma comunidade para mulheres em tech no Brasil. Mentoria, vagas de emprego, eventos online e presenciais. Já somos mais de 500 membras! Se você trabalha com tecnologia, junte-se a nós. Link nos comentários 💻",
+    lifeDimension: "professional" as const,
+    language: "pt",
+    location: { name: "Rio de Janeiro, Brasil", coordinates: [-43.1729, -22.9068] },
+    tags: ["tecnologia", "mulheres", "comunidade", "carreira"],
+  },
+
+  // German Posts
+  {
+    title: "Sichere Jogging-Routen in Berlin",
+    description: "Meine Lieblingsstrecken: Tiergarten (morgens), Tempelhofer Feld (gut beleuchtet), Mauerpark (am Wochenende). Ich laufe immer mit meiner Laufgruppe - wir treffen uns jeden Mittwoch um 18 Uhr. Neue Mitglieder willkommen! 🏃‍♀️",
+    lifeDimension: "daily" as const,
+    language: "de",
+    location: { name: "Berlin, Deutschland", coordinates: [13.405, 52.52] },
+    tags: ["joggen", "sicherheit", "berlin", "sport"],
+  },
+  {
+    title: "Gehaltsverhandlung als Frau - meine Erfahrung",
+    description: "Nach 10 Jahren im Beruf habe ich endlich gelernt, meinen Wert zu kennen. Tipps: Recherchiert Gehälter, dokumentiert eure Erfolge, übt das Gespräch. Ihr verdient faire Bezahlung! Teilt eure Erfahrungen in den Kommentaren.",
+    lifeDimension: "professional" as const,
+    language: "de",
+    location: { name: "München, Deutschland", coordinates: [11.582, 48.1351] },
+    tags: ["gehalt", "karriere", "verhandlung", "frauen"],
+  },
+
+  // Arabic Posts
+  {
+    title: "نصائح للسلامة في القاهرة",
+    description: "بعد سنوات من العيش في القاهرة، أشارك نصائحي: استخدمي تطبيقات النقل الموثوقة، شاركي موقعك مع صديقة، تجنبي المناطق المزدحمة وحدك ليلاً. السلامة أولاً يا بنات! 💜",
+    lifeDimension: "daily" as const,
+    language: "ar",
+    location: { name: "القاهرة، مصر", coordinates: [31.2357, 30.0444] },
+    tags: ["سلامة", "القاهرة", "نصائح", "مواصلات"],
+  },
+  {
+    title: "تجربتي في ريادة الأعمال كامرأة عربية",
+    description: "بدأت مشروعي الخاص قبل 3 سنوات. التحديات كانت كثيرة لكن الدعم من مجتمع النساء كان مذهلاً. إذا كنتِ تفكرين في بدء مشروعك، أنا هنا للمساعدة والإرشاد. معاً نستطيع! 💪",
+    lifeDimension: "professional" as const,
+    language: "ar",
+    location: { name: "دبي، الإمارات", coordinates: [55.2708, 25.2048] },
+    tags: ["ريادة", "أعمال", "نساء", "دعم"],
+  },
+];
+
+// ============================================
+// SAFETY ROUTES SEED DATA
+// ============================================
+
+// Helper to create route coordinates in correct format
+const makeCoords = (points: [number, number][]) => 
+  points.map(([lng, lat], i) => ({ lat, lng, timestamp: Date.now() + i * 1000 }));
+
+const SEED_ROUTES = [
+  // Paris Routes
+  {
+    title: "Safe Evening Walk - Marais to Bastille",
+    routeType: "walking" as const,
+    startLocation: { name: "Place des Vosges, Paris", lat: 48.8555, lng: 2.3654 },
+    endLocation: { name: "Place de la Bastille, Paris", lat: 48.8533, lng: 2.3692 },
+    distance: 1200,
+    duration: 900, // 15 min in seconds
+    rating: 4.8,
+    tags: ["well-lit", "busy-area", "evening-safe"],
+    journalEntry: "Beautiful walk through the historic Marais district. Well-lit streets, many cafes open late, always people around. Verified safe by 50+ Aurora App members.",
+    coordinates: makeCoords([[2.3654, 48.8555], [2.3670, 48.8545], [2.3692, 48.8533]]),
+  },
+  {
+    title: "Morning Jog - Bois de Boulogne Safe Loop",
+    routeType: "running" as const,
+    startLocation: { name: "Porte Dauphine, Paris", lat: 48.8714, lng: 2.2769 },
+    endLocation: { name: "Porte Dauphine, Paris", lat: 48.8714, lng: 2.2769 },
+    distance: 5000,
+    duration: 1800, // 30 min
+    rating: 4.5,
+    tags: ["morning-only", "running-group", "nature"],
+    journalEntry: "Safe morning running route. Best before 9am when many joggers are present. Avoid after dark. Women's running group meets here Saturdays 7am.",
+    coordinates: makeCoords([[2.2769, 48.8714], [2.2650, 48.8680], [2.2600, 48.8720], [2.2769, 48.8714]]),
+  },
+
+  // Tokyo Routes
+  {
+    title: "Safe Night Walk - Shibuya to Harajuku",
+    routeType: "walking" as const,
+    startLocation: { name: "Shibuya Station, Tokyo", lat: 35.6580, lng: 139.7016 },
+    endLocation: { name: "Harajuku Station, Tokyo", lat: 35.6702, lng: 139.7027 },
+    distance: 1800,
+    duration: 1320, // 22 min
+    rating: 4.9,
+    tags: ["24h-safe", "well-lit", "police-boxes"],
+    journalEntry: "One of the safest night walks in Tokyo. Extremely well-lit, koban (police boxes) every few blocks, busy until late. Perfect for solo women travelers.",
+    coordinates: makeCoords([[139.7016, 35.6580], [139.7020, 35.6640], [139.7027, 35.6702]]),
+  },
+  {
+    title: "Peaceful Morning - Yoyogi Park Loop",
+    routeType: "running" as const,
+    startLocation: { name: "Yoyogi Park, Tokyo", lat: 35.6714, lng: 139.6949 },
+    endLocation: { name: "Yoyogi Park, Tokyo", lat: 35.6714, lng: 139.6949 },
+    distance: 3500,
+    duration: 1500, // 25 min
+    rating: 4.7,
+    tags: ["morning", "nature", "family-friendly"],
+    journalEntry: "Beautiful park loop, very safe at all hours. Popular with local women joggers. Clean facilities, water fountains available.",
+    coordinates: makeCoords([[139.6949, 35.6714], [139.6900, 35.6750], [139.6980, 35.6780], [139.6949, 35.6714]]),
+  },
+
+  // São Paulo Routes
+  {
+    title: "Safe Walk - Paulista Avenue",
+    routeType: "walking" as const,
+    startLocation: { name: "MASP, São Paulo", lat: -23.5614, lng: -46.6558 },
+    endLocation: { name: "Consolação Metro, São Paulo", lat: -23.5576, lng: -46.6603 },
+    distance: 800,
+    duration: 600, // 10 min
+    rating: 4.3,
+    tags: ["daytime", "busy", "cultural"],
+    journalEntry: "Avenida Paulista is safest during day and early evening. Many security guards, cameras, and police presence. Sundays the avenue is closed to cars - perfect for walking!",
+    coordinates: makeCoords([[-46.6558, -23.5614], [-46.6580, -23.5595], [-46.6603, -23.5576]]),
+  },
+  {
+    title: "Ibirapuera Park Morning Run",
+    routeType: "running" as const,
+    startLocation: { name: "Ibirapuera Park Gate 3, SP", lat: -23.5874, lng: -46.6576 },
+    endLocation: { name: "Ibirapuera Park Gate 3, SP", lat: -23.5874, lng: -46.6576 },
+    distance: 4200,
+    duration: 1680, // 28 min
+    rating: 4.6,
+    tags: ["morning", "guards", "popular"],
+    journalEntry: "Best running spot in São Paulo. Security guards patrol, well-maintained paths, water fountains. Women's running group meets 6am weekdays.",
+    coordinates: makeCoords([[-46.6576, -23.5874], [-46.6520, -23.5850], [-46.6480, -23.5900], [-46.6576, -23.5874]]),
+  },
+
+  // Cairo Routes
+  {
+    title: "Safe Walk - Zamalek Island",
+    routeType: "walking" as const,
+    startLocation: { name: "Gezira Club, Cairo", lat: 30.0561, lng: 31.2243 },
+    endLocation: { name: "Cairo Opera House", lat: 30.0428, lng: 31.2244 },
+    distance: 2000,
+    duration: 1500, // 25 min
+    rating: 4.4,
+    tags: ["upscale", "embassies", "safe-area"],
+    journalEntry: "Zamalek is one of Cairo's safest neighborhoods. Tree-lined streets, embassy area, many expats. Safe for evening walks. Recommended by local women.",
+    coordinates: makeCoords([[31.2243, 30.0561], [31.2240, 30.0500], [31.2244, 30.0428]]),
+  },
+
+  // Berlin Routes
+  {
+    title: "Evening Walk - Prenzlauer Berg",
+    routeType: "walking" as const,
+    startLocation: { name: "Kollwitzplatz, Berlin", lat: 52.5347, lng: 13.4183 },
+    endLocation: { name: "Mauerpark, Berlin", lat: 52.5432, lng: 13.4024 },
+    distance: 1500,
+    duration: 1080, // 18 min
+    rating: 4.6,
+    tags: ["family-area", "cafes", "evening-safe"],
+    journalEntry: "Very safe family neighborhood. Many cafes, restaurants, always people around. Popular with young families and women. Safe until late.",
+    coordinates: makeCoords([[13.4183, 52.5347], [13.4100, 52.5390], [13.4024, 52.5432]]),
+  },
+  {
+    title: "Tiergarten Morning Jog",
+    routeType: "running" as const,
+    startLocation: { name: "Brandenburg Gate, Berlin", lat: 52.5163, lng: 13.3777 },
+    endLocation: { name: "Victory Column, Berlin", lat: 52.5145, lng: 13.3501 },
+    distance: 2800,
+    duration: 1200, // 20 min
+    rating: 4.5,
+    tags: ["morning", "nature", "central"],
+    journalEntry: "Beautiful run through Berlin's central park. Best in morning when many joggers are out. Well-maintained paths, emergency phones along route.",
+    coordinates: makeCoords([[13.3777, 52.5163], [13.3650, 52.5150], [13.3501, 52.5145]]),
+  },
+
+  // Mexico City Routes
+  {
+    title: "Safe Walk - Condesa Neighborhood",
+    routeType: "walking" as const,
+    startLocation: { name: "Parque México, CDMX", lat: 19.4117, lng: -99.1707 },
+    endLocation: { name: "Parque España, CDMX", lat: 19.4178, lng: -99.1736 },
+    distance: 1000,
+    duration: 720, // 12 min
+    rating: 4.5,
+    tags: ["trendy", "cafes", "dog-friendly"],
+    journalEntry: "La Condesa is one of CDMX's safest neighborhoods. Beautiful art deco buildings, many cafes, always people walking dogs. Safe day and evening.",
+    coordinates: makeCoords([[-99.1707, 19.4117], [-99.1720, 19.4150], [-99.1736, 19.4178]]),
+  },
+];
+
+// ============================================
+// SEED FUNCTIONS
+// ============================================
 
 /**
- * Seed database with demo content for demonstrations
- * Run this manually from Convex dashboard
+ * Seed posts in multiple languages
+ * Run with: npx convex run seedData:seedPosts
  */
-export const seedDemoData = mutation({
+export const seedPosts = mutation({
+  args: {},
   handler: async (ctx) => {
-    // Create demo users
-    const demoUsers = [
-      {
-        workosId: "demo_user_1",
-        email: "sarah@example.com",
-        name: "Sarah Chen",
-        credits: 150,
-        trustScore: 450,
-        industry: "Technology",
-        location: "San Francisco, CA",
-        careerGoals: "Senior Software Engineer at a mission-driven company",
-        onboardingCompleted: true,
-        bio: "Tech lead passionate about building inclusive products",
-        interests: ["coding", "mentorship", "hiking"],
-        monthlyCreditsEarned: 75,
-        lastCreditReset: Date.now(),
-      },
-      {
-        workosId: "demo_user_2",
-        email: "maria@example.com",
-        name: "Maria Rodriguez",
-        credits: 200,
-        trustScore: 680,
-        industry: "Healthcare",
-        location: "Austin, TX",
-        careerGoals: "Open my own wellness clinic",
-        onboardingCompleted: true,
-        bio: "Nurse practitioner and women's health advocate",
-        interests: ["healthcare", "wellness", "community"],
-        monthlyCreditsEarned: 120,
-        lastCreditReset: Date.now(),
-      },
-      {
-        workosId: "demo_user_3",
-        email: "aisha@example.com",
-        name: "Aisha Patel",
-        credits: 95,
-        trustScore: 320,
-        industry: "Finance",
-        location: "New York, NY",
-        careerGoals: "VP of Finance at a Fortune 500",
-        onboardingCompleted: true,
-        bio: "Financial analyst breaking barriers in fintech",
-        interests: ["investing", "networking", "travel"],
-        monthlyCreditsEarned: 45,
-        lastCreditReset: Date.now(),
-      },
-    ];
+    // Get a sample user to be the author (or create a seed user)
+    let seedUser = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), "seed@aurora-app.com"))
+      .first();
 
-    const userIds = [];
-    for (const user of demoUsers) {
-      const userId = await ctx.db.insert("users", user);
-      userIds.push(userId);
+    if (!seedUser) {
+      // Create seed user
+      const seedUserId = await ctx.db.insert("users", {
+        workosId: "seed-aurora-community",
+        name: "Aurora Community",
+        email: "seed@aurora-app.com",
+        profileImage: "/Au_Logo_1.png",
+        bio: "Official Aurora App community account",
+        location: "Global",
+        interests: ["safety", "career", "community"],
+        onboardingCompleted: true,
+        credits: 1000,
+        trustScore: 500,
+        isPremium: false,
+      });
+      seedUser = await ctx.db.get(seedUserId);
     }
 
-    // Create demo posts across all life dimensions
-    const demoPosts = [
-      {
-        authorId: userIds[0],
-        lifeDimension: "professional" as const,
-        title: "Amazing Tech Company Culture at Stripe",
-        description: "Just completed my first year at Stripe and the culture is incredible. Flexible work hours, generous parental leave, and genuine commitment to diversity. The engineering team is 40% women and leadership actively mentors junior developers. Highly recommend for anyone in tech!",
-        rating: 5,
-        location: {
-          name: "Stripe HQ, San Francisco",
-          coordinates: [-122.3964, 37.7897],
-        },
-        verificationCount: 8,
-        isVerified: true,
-        isAnonymous: false,
-        upvotes: 24,
-        downvotes: 1,
-        commentCount: 5,
-        postType: "standard" as const,
-      },
-      {
-        authorId: userIds[1],
-        lifeDimension: "daily" as const,
-        title: "Safe and Welcoming Gym - Women Only Hours",
-        description: "Equinox Downtown Austin has women-only hours from 6-8am daily. Clean facilities, great equipment, and respectful staff. Never felt uncomfortable. They also have excellent childcare services.",
-        rating: 5,
-        location: {
-          name: "Equinox, Austin",
-          coordinates: [-97.7431, 30.2672],
-        },
-        verificationCount: 12,
-        isVerified: true,
-        isAnonymous: false,
-        upvotes: 45,
-        downvotes: 2,
-        commentCount: 8,
-        postType: "standard" as const,
-      },
-      {
-        authorId: userIds[2],
-        lifeDimension: "financial" as const,
-        title: "Excellent Financial Advisor for Women",
-        description: "Morgan Stanley advisor Lisa Thompson specializes in helping women build wealth. She understands the unique challenges we face and provides judgment-free advice. Helped me negotiate a 30% raise!",
-        rating: 5,
-        location: {
-          name: "Morgan Stanley, NYC",
-          coordinates: [-74.0060, 40.7128],
-        },
-        verificationCount: 6,
-        isVerified: true,
-        isAnonymous: false,
-        upvotes: 18,
-        downvotes: 0,
-        commentCount: 3,
-        postType: "standard" as const,
-      },
-      {
-        authorId: userIds[0],
-        lifeDimension: "social" as const,
-        title: "Women in Tech Meetup - Highly Recommend",
-        description: "Monthly meetup at Galvanize SF. Great for networking, finding mentors, and making friends. Everyone is supportive and welcoming. They also have a Slack channel for job postings.",
-        rating: 5,
-        location: {
-          name: "Galvanize, San Francisco",
-          coordinates: [-122.3988, 37.7897],
-        },
-        verificationCount: 15,
-        isVerified: true,
-        isAnonymous: false,
-        upvotes: 67,
-        downvotes: 1,
-        commentCount: 12,
-        postType: "standard" as const,
-      },
-      {
-        authorId: userIds[1],
-        lifeDimension: "travel" as const,
-        title: "Solo Travel: Iceland is Incredibly Safe",
-        description: "Just returned from 2 weeks solo traveling in Iceland. Felt completely safe everywhere I went. People are friendly and helpful. Highly recommend for first-time solo travelers. The Blue Lagoon and Golden Circle are must-sees!",
-        rating: 5,
-        location: {
-          name: "Reykjavik, Iceland",
-          coordinates: [-21.8174, 64.1265],
-        },
-        verificationCount: 9,
-        isVerified: true,
-        isAnonymous: false,
-        upvotes: 89,
-        downvotes: 3,
-        commentCount: 15,
-        postType: "standard" as const,
-      },
-      {
-        authorId: userIds[2],
-        lifeDimension: "professional" as const,
-        title: "Avoid: Toxic Workplace Culture",
-        description: "Worked at [Company] for 6 months. Constant microaggressions, pay gap issues, and zero work-life balance. Management doesn't listen to concerns. Left for my mental health. Interview carefully and ask about DEI initiatives.",
-        rating: 1,
-        verificationCount: 4,
-        isVerified: false,
-        isAnonymous: true,
-        upvotes: 34,
-        downvotes: 5,
-        commentCount: 7,
-        postType: "standard" as const,
-      },
-      {
-        authorId: userIds[0],
-        lifeDimension: "daily" as const,
-        title: "Great Coffee Shop for Remote Work",
-        description: "Sightglass Coffee in SF has excellent wifi, plenty of outlets, and comfortable seating. Staff is friendly and it's in a safe neighborhood. Perfect for remote work days. Gets busy around 10am so arrive early!",
-        rating: 4,
-        location: {
-          name: "Sightglass Coffee, San Francisco",
-          coordinates: [-122.4194, 37.7749],
-        },
-        verificationCount: 7,
-        isVerified: true,
-        isAnonymous: false,
-        upvotes: 28,
-        downvotes: 2,
-        commentCount: 4,
-        postType: "standard" as const,
-      },
-    ];
+    if (!seedUser) throw new Error("Failed to create seed user");
 
-    const postIds = [];
-    for (const post of demoPosts) {
-      const postId = await ctx.db.insert("posts", post);
-      postIds.push(postId);
+    let created = 0;
+    for (const post of SEED_POSTS) {
+      // Check if similar post exists
+      const existing = await ctx.db
+        .query("posts")
+        .filter((q) => q.eq(q.field("title"), post.title))
+        .first();
+
+      if (!existing) {
+        await ctx.db.insert("posts", {
+          authorId: seedUser._id,
+          title: post.title,
+          description: post.description,
+          lifeDimension: post.lifeDimension,
+          location: post.location,
+          rating: 5,
+          isVerified: true,
+          isAnonymous: false,
+          verificationCount: Math.floor(Math.random() * 20) + 5,
+          upvotes: Math.floor(Math.random() * 50) + 10,
+          commentCount: Math.floor(Math.random() * 15) + 2,
+          postType: "standard",
+        });
+        created++;
+      }
     }
 
-    // Create demo opportunities
-    const demoOpportunities = [
-      {
-        creatorId: userIds[0],
-        title: "Senior Software Engineer - Remote",
-        description: "Join our mission-driven startup building tools for social good. Competitive salary ($150-200k), equity, unlimited PTO, and flexible remote work. We're looking for a senior engineer with React and Node.js experience.",
-        category: "job" as const,
-        creditCost: 25,
-        company: "TechForGood Inc",
-        location: "Remote (US)",
-        salary: "$150,000 - $200,000",
-        contactEmail: "hiring@techforgood.com",
-        externalLink: "https://techforgood.com/careers",
-        isActive: true,
-      },
-      {
-        creatorId: userIds[1],
-        title: "Free Career Mentorship - Healthcare",
-        description: "Offering 1-hour mentorship sessions for women entering healthcare. I've been a nurse practitioner for 10 years and can help with career planning, interview prep, and navigating workplace challenges.",
-        category: "mentorship" as const,
-        creditCost: 10,
-        company: "Independent",
-        location: "Virtual",
-        contactEmail: "maria.mentorship@example.com",
-        isActive: true,
-      },
-      {
-        creatorId: userIds[2],
-        title: "Women in Finance Scholarship - $5000",
-        description: "Annual scholarship for women pursuing finance careers. Covers tuition, books, and conference attendance. Open to undergrad and grad students. Application deadline: March 31st.",
-        category: "funding" as const,
-        creditCost: 15,
-        company: "Women in Finance Foundation",
-        location: "National",
-        externalLink: "https://wif.org/scholarship",
-        isActive: true,
-      },
-      {
-        creatorId: userIds[0],
-        title: "Product Manager Role - Series B Startup",
-        description: "Fast-growing healthtech startup seeking PM with 3-5 years experience. Lead product strategy for our women's health platform. Salary $130-160k + equity. Hybrid in SF.",
-        category: "job" as const,
-        creditCost: 30,
-        company: "HealthTech Innovations",
-        location: "San Francisco, CA (Hybrid)",
-        salary: "$130,000 - $160,000 + equity",
-        contactEmail: "jobs@healthtech.com",
-        isActive: true,
-      },
-      {
-        creatorId: userIds[1],
-        title: "Women's Leadership Conference - May 2026",
-        description: "3-day conference featuring keynotes from Fortune 500 executives, networking sessions, and workshops. Early bird tickets available. Great for career growth and making connections.",
-        category: "event" as const,
-        creditCost: 20,
-        company: "Leadership Summit",
-        location: "Chicago, IL",
-        externalLink: "https://womensleadership.com",
-        isActive: true,
-      },
-    ];
-
-    for (const opportunity of demoOpportunities) {
-      await ctx.db.insert("opportunities", opportunity);
-    }
-
-    return {
-      message: "Demo data seeded successfully!",
-      usersCreated: userIds.length,
-      postsCreated: postIds.length,
-      opportunitiesCreated: demoOpportunities.length,
-    };
+    return { success: true, created, total: SEED_POSTS.length };
   },
 });
 
 /**
- * Clear all demo data (use with caution!)
+ * Seed safety routes from major cities
+ * Run with: npx convex run seedData:seedRoutes
  */
-export const clearDemoData = mutation({
+export const seedRoutes = mutation({
+  args: {},
   handler: async (ctx) => {
-    // Delete demo users and their related data
-    const demoUsers = await ctx.db
+    // Get seed user
+    let seedUser = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("email"), "sarah@example.com"))
-      .collect();
+      .filter((q) => q.eq(q.field("email"), "seed@aurora-app.com"))
+      .first();
 
-    for (const user of demoUsers) {
-      // Delete user's posts
-      const posts = await ctx.db
-        .query("posts")
-        .withIndex("by_author", (q) => q.eq("authorId", user._id))
-        .collect();
-      for (const post of posts) {
-        await ctx.db.delete(post._id);
-      }
-
-      // Delete user's opportunities
-      const opportunities = await ctx.db
-        .query("opportunities")
-        .withIndex("by_creator", (q) => q.eq("creatorId", user._id))
-        .collect();
-      for (const opp of opportunities) {
-        await ctx.db.delete(opp._id);
-      }
-
-      // Delete user
-      await ctx.db.delete(user._id);
+    if (!seedUser) {
+      const seedUserId = await ctx.db.insert("users", {
+        workosId: "seed-aurora-community",
+        name: "Aurora Community",
+        email: "seed@aurora-app.com",
+        profileImage: "/Au_Logo_1.png",
+        bio: "Official Aurora App community account",
+        location: "Global",
+        interests: ["safety", "routes", "community"],
+        onboardingCompleted: true,
+        credits: 1000,
+        trustScore: 500,
+        isPremium: false,
+      });
+      seedUser = await ctx.db.get(seedUserId);
     }
 
-    return { message: "Demo data cleared" };
+    if (!seedUser) throw new Error("Failed to create seed user");
+
+    let created = 0;
+    for (const route of SEED_ROUTES) {
+      // Check if similar route exists
+      const existing = await ctx.db
+        .query("routes")
+        .filter((q) => q.eq(q.field("title"), route.title))
+        .first();
+
+      if (!existing) {
+        await ctx.db.insert("routes", {
+          creatorId: seedUser._id,
+          title: route.title,
+          routeType: route.routeType,
+          startLocation: route.startLocation,
+          endLocation: route.endLocation,
+          coordinates: route.coordinates,
+          distance: route.distance,
+          duration: route.duration,
+          elevationGain: 0,
+          rating: route.rating,
+          tags: route.tags,
+          journalEntry: route.journalEntry,
+          sharingLevel: "public",
+          isPrivate: false,
+          isAnonymous: false,
+          completionCount: Math.floor(Math.random() * 30) + 5,
+          totalRating: route.rating * (Math.floor(Math.random() * 10) + 5),
+          verificationCount: Math.floor(Math.random() * 15) + 3,
+          creditsEarned: 15,
+        });
+        created++;
+      }
+    }
+
+    return { success: true, created, total: SEED_ROUTES.length };
+  },
+});
+
+/**
+ * Seed all data at once
+ * Run with: npx convex run seedData:seedAll
+ */
+export const seedAll = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // This will be called from the individual functions
+    return { message: "Use seedPosts and seedRoutes separately" };
   },
 });
