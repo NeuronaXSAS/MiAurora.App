@@ -13,9 +13,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  MessageSquare, Bell, BellOff, Bookmark, 
-  ChevronRight, Sparkles, UserPlus, X,
-  TrendingUp, Clock, Heart, Eye
+  MessageSquare, Bell, BellOff, 
+  ChevronRight, Sparkles, UserPlus, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

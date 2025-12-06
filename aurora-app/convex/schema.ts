@@ -351,7 +351,8 @@ export default defineSchema({
       v.literal("tip"),
       v.literal("accompaniment_request"),
       v.literal("accompaniment_update"),
-      v.literal("emergency")
+      v.literal("emergency"),
+      v.literal("system") // Admin broadcasts
     ),
     title: v.string(),
     message: v.string(),

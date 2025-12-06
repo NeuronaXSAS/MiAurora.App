@@ -270,3 +270,94 @@ export const addAdminEmail = mutation({
     return { success: true, message: "Admin email addition logged. Update ADMIN_EMAILS array in code." };
   },
 });
+
+/**
+ * Send broadcast notification to users
+ * Strategic tool for admin engagement with community
+ */
+export const sendBroadcast = mutation({
+  args: {
+    adminId: v.id("users"),
+    targetAudience: v.union(
+      v.literal("all"),
+      v.literal("premium"),
+      v.literal("new")
+    ),
+    title: v.string(),
+    message: v.string(),
+    actionUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // Verify admin access
+    const admin = await ctx.db.get(args.adminId);
+    if (!admin || !ADMIN_EMAILS.includes(admin.email.toLowerCase())) {
+      throw new Error("Unauthorized: Admin access required");
+    }
+
+    // Get target users based on audience
+    let users = await ctx.db.query("users").collect();
+    
+    if (args.targetAudience === "premium") {
+      users = users.filter(u => u.isPremium);
+    } else if (args.targetAudience === "new") {
+      // Users who joined in the last 7 days
+      const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      users = users.filter(u => u._creationTime > weekAgo);
+    }
+
+    // Create notifications for each user
+    let sentCount = 0;
+    for (const user of users) {
+      await ctx.db.insert("notifications", {
+        userId: user._id,
+        type: "system",
+        title: args.title,
+        message: args.message,
+        actionUrl: args.actionUrl,
+        isRead: false,
+      });
+      sentCount++;
+    }
+
+    // Log the broadcast
+    console.log(`[BROADCAST] Admin ${admin.email} sent "${args.title}" to ${sentCount} ${args.targetAudience} users`);
+
+    return { success: true, sentTo: sentCount };
+  },
+});
+
+/**
+ * Get broadcast history
+ */
+export const getBroadcastHistory = query({
+  args: { userId: v.id("users"), limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    // Verify admin access
+    const user = await ctx.db.get(args.userId);
+    if (!user || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+      throw new Error("Unauthorized: Admin access required");
+    }
+
+    // Get recent system notifications (broadcasts)
+    const broadcasts = await ctx.db
+      .query("notifications")
+      .filter((q) => q.eq(q.field("type"), "system"))
+      .order("desc")
+      .take(args.limit || 20);
+
+    // Group by title to show unique broadcasts
+    const uniqueBroadcasts = new Map();
+    for (const b of broadcasts) {
+      if (!uniqueBroadcasts.has(b.title)) {
+        uniqueBroadcasts.set(b.title, {
+          title: b.title,
+          message: b.message,
+          sentAt: b._creationTime,
+          actionUrl: b.actionUrl,
+        });
+      }
+    }
+
+    return Array.from(uniqueBroadcasts.values());
+  },
+});
