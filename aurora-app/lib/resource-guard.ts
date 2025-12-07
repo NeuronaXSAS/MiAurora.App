@@ -11,35 +11,43 @@
  * - Brave Search: 2,000 queries/month (free tier)
  */
 
-// Daily limits for free tier
+// Daily limits for free tier - CRITICAL: $0 budget!
 export const RESOURCE_LIMITS = {
   gemini: {
-    dailyRequests: 150, // Leave buffer from 200 limit
-    maxTokensPerRequest: 300,
-    model: 'gemini-2.0-flash-lite', // Most economical
+    dailyRequests: 100, // Conservative: leave 50% buffer from 200 limit
+    maxTokensPerRequest: 250, // Reduced to save tokens
+    model: 'gemini-2.0-flash-lite', // Most economical - ALWAYS use this!
   },
   agora: {
-    monthlyMinutes: 8000, // Leave buffer from 10,000
-    maxSessionMinutes: 30, // Max 30 min per session
+    monthlyMinutes: 5000, // Conservative: leave 50% buffer from 10,000
+    maxSessionMinutes: 15, // Reduced max session time
     requireRealUser: true, // Don't start without real user
   },
   cloudinary: {
-    monthlyCredits: 20, // Leave buffer from 25
-    maxFileSizeMB: 10,
-    maxVideoLengthSeconds: 60,
+    monthlyCredits: 15, // Conservative: leave 40% buffer from 25
+    maxFileSizeMB: 5, // Reduced max file size
+    maxVideoLengthSeconds: 30, // Reduced max video length
   },
   braveSearch: {
-    monthlyQueries: 1500, // Leave buffer from 2,000
-    cacheHours: 24, // Cache results for 24 hours
+    // CRITICAL: Each search = 4 API calls (web + video + news + images)
+    // 2,000 / 4 = 500 effective searches, we limit to 300 for safety
+    monthlyQueries: 300, // This is FULL searches, not API calls
+    cacheHours: 48, // Extended cache to 48 hours to reduce API calls
+  },
+  mapbox: {
+    monthlyLoads: 40000, // Leave buffer from 50,000
+    staticImagesPerDay: 100, // Limit static image API calls
   },
 };
 
-// In-memory counters (reset on server restart, but better than nothing)
+// In-memory counters (reset on server restart)
+// TODO: For production, persist these to Convex for accurate tracking across serverless instances
 const usageCounters = {
   gemini: { count: 0, lastReset: Date.now() },
   agora: { minutes: 0, lastReset: Date.now() },
   cloudinary: { credits: 0, lastReset: Date.now() },
   braveSearch: { count: 0, lastReset: Date.now() },
+  mapbox: { loads: 0, staticImages: 0, lastReset: Date.now() },
 };
 
 // Check if we should reset daily counters
@@ -194,6 +202,59 @@ export function recordBraveSearchUsage() {
 }
 
 /**
+ * Check if Mapbox usage is allowed
+ */
+export function canUseMapbox(): { allowed: boolean; reason?: string } {
+  checkMonthlyReset(usageCounters.mapbox);
+  
+  if (usageCounters.mapbox.loads >= RESOURCE_LIMITS.mapbox.monthlyLoads) {
+    return {
+      allowed: false,
+      reason: 'Monthly Mapbox limit reached. Maps will use cached data.',
+    };
+  }
+  
+  return { allowed: true };
+}
+
+/**
+ * Check if Mapbox static image is allowed (more restrictive)
+ */
+export function canUseMapboxStaticImage(): { allowed: boolean; reason?: string } {
+  checkDailyReset(usageCounters.mapbox);
+  
+  if (usageCounters.mapbox.staticImages >= RESOURCE_LIMITS.mapbox.staticImagesPerDay) {
+    return {
+      allowed: false,
+      reason: 'Daily static image limit reached. Using placeholder.',
+    };
+  }
+  
+  return { allowed: true };
+}
+
+/**
+ * Record Mapbox usage
+ */
+export function recordMapboxUsage(isStaticImage: boolean = false) {
+  usageCounters.mapbox.loads++;
+  if (isStaticImage) {
+    usageCounters.mapbox.staticImages++;
+  }
+  console.log(`📊 Mapbox usage: ${usageCounters.mapbox.loads}/${RESOURCE_LIMITS.mapbox.monthlyLoads} loads`);
+}
+
+// Check monthly reset for counters
+function checkMonthlyReset(counter: { loads?: number; lastReset: number }) {
+  const now = Date.now();
+  const monthMs = 30 * 24 * 60 * 60 * 1000;
+  if (now - counter.lastReset > monthMs) {
+    if ('loads' in counter) counter.loads = 0;
+    counter.lastReset = now;
+  }
+}
+
+/**
  * Get current usage stats (for admin dashboard)
  */
 export function getUsageStats() {
@@ -217,6 +278,14 @@ export function getUsageStats() {
       used: usageCounters.braveSearch.count,
       limit: RESOURCE_LIMITS.braveSearch.monthlyQueries,
       percentage: Math.round((usageCounters.braveSearch.count / RESOURCE_LIMITS.braveSearch.monthlyQueries) * 100),
+      note: 'Each search = 4 API calls (web + video + news + images)',
+    },
+    mapbox: {
+      used: usageCounters.mapbox.loads,
+      limit: RESOURCE_LIMITS.mapbox.monthlyLoads,
+      percentage: Math.round((usageCounters.mapbox.loads / RESOURCE_LIMITS.mapbox.monthlyLoads) * 100),
+      staticImagesUsed: usageCounters.mapbox.staticImages,
+      staticImagesLimit: RESOURCE_LIMITS.mapbox.staticImagesPerDay,
     },
   };
 }

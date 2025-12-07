@@ -71,8 +71,9 @@ ${context}
 
 Give a brief, helpful summary (3-4 sentences max) with source citations [1], [2], etc.`;
 
+    // COST OPTIMIZATION: Use gemini-2.0-flash-lite (most economical)
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.0-flash",
+      model: "gemini-2.0-flash-lite",
     });
 
     const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;

@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
         womenFocusedPercentage: 0,
         recommendations: ["Search limit reached. Please try again later."],
       },
-      apiUsage: { used: searchQuotaCheck.remaining, limit: 1500, remaining: 0 },
+      apiUsage: { used: searchQuotaCheck.remaining, limit: 300, remaining: 0 },
       error: searchQuotaCheck.reason,
     });
   }
@@ -201,7 +201,7 @@ export async function GET(request: NextRequest) {
         womenFocusedPercentage: 0,
         recommendations: ["Configure BRAVE_SEARCH_API_KEY in environment variables to enable web search."],
       },
-      apiUsage: { used: 0, limit: 2000, remaining: 2000 },
+      apiUsage: { used: 0, limit: 300, remaining: 300 },
       error: "Brave Search API key not configured",
     });
   }
@@ -231,31 +231,38 @@ export async function GET(request: NextRequest) {
     const data: BraveSearchResponse = await response.json();
     const webResults = data.web?.results || [];
 
-    // Fetch video, news, and image results in parallel
+    // COST OPTIMIZATION: Only fetch additional results if explicitly requested
+    // This reduces API calls from 4 to 1 for most searches
+    const includeMedia = searchParams.get("includeMedia") === "true";
+    
     let videoResults: BraveVideoResult[] = [];
     let newsResults: BraveNewsResult[] = [];
     let imageResults: BraveImageResult[] = [];
 
-    const fetchPromises = [
-      // Videos
-      fetch(`${BRAVE_VIDEO_URL}?q=${encodeURIComponent(query)}&count=4&safesearch=${safesearch}`, {
-        headers: { "Accept": "application/json", "X-Subscription-Token": BRAVE_API_KEY },
-      }).then(r => r.ok ? r.json() : null).catch(() => null),
-      // News
-      fetch(`${BRAVE_NEWS_URL}?q=${encodeURIComponent(query)}&count=6&safesearch=${safesearch}`, {
-        headers: { "Accept": "application/json", "X-Subscription-Token": BRAVE_API_KEY },
-      }).then(r => r.ok ? r.json() : null).catch(() => null),
-      // Images
-      fetch(`${BRAVE_IMAGES_URL}?q=${encodeURIComponent(query)}&count=8&safesearch=${safesearch}`, {
-        headers: { "Accept": "application/json", "X-Subscription-Token": BRAVE_API_KEY },
-      }).then(r => r.ok ? r.json() : null).catch(() => null),
-    ];
+    // Only fetch media results when user explicitly switches to those tabs
+    // This saves 3 API calls per search (75% reduction!)
+    if (includeMedia) {
+      const fetchPromises = [
+        // Videos
+        fetch(`${BRAVE_VIDEO_URL}?q=${encodeURIComponent(query)}&count=4&safesearch=${safesearch}`, {
+          headers: { "Accept": "application/json", "X-Subscription-Token": BRAVE_API_KEY },
+        }).then(r => r.ok ? r.json() : null).catch(() => null),
+        // News
+        fetch(`${BRAVE_NEWS_URL}?q=${encodeURIComponent(query)}&count=6&safesearch=${safesearch}`, {
+          headers: { "Accept": "application/json", "X-Subscription-Token": BRAVE_API_KEY },
+        }).then(r => r.ok ? r.json() : null).catch(() => null),
+        // Images
+        fetch(`${BRAVE_IMAGES_URL}?q=${encodeURIComponent(query)}&count=8&safesearch=${safesearch}`, {
+          headers: { "Accept": "application/json", "X-Subscription-Token": BRAVE_API_KEY },
+        }).then(r => r.ok ? r.json() : null).catch(() => null),
+      ];
 
-    const [videoData, newsData, imageData] = await Promise.all(fetchPromises);
-    
-    if (videoData?.results) videoResults = videoData.results;
-    if (newsData?.results) newsResults = newsData.results;
-    if (imageData?.results) imageResults = imageData.results;
+      const [videoData, newsData, imageData] = await Promise.all(fetchPromises);
+      
+      if (videoData?.results) videoResults = videoData.results;
+      if (newsData?.results) newsResults = newsData.results;
+      if (imageData?.results) imageResults = imageData.results;
+    }
 
     // Process results with Aurora Intelligence Layer
     const auroraResults: SearchResult[] = webResults.map((result) => {
@@ -342,7 +349,7 @@ export async function GET(request: NextRequest) {
       auroraInsights,
       apiUsage: {
         used: 1,
-        limit: 1500,
+        limit: 300,
         remaining: searchQuotaCheck.remaining - 1,
       },
       locations: data.locations?.results || [],

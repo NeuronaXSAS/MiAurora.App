@@ -10,7 +10,9 @@
 import type { SearchResult, SummaryResponse } from './types';
 
 const GEMINI_API_KEY = process.env.GOOGLE_AI_API_KEY;
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+// COST OPTIMIZATION: Use gemini-2.0-flash-lite (most economical model)
+// Free tier: 30 RPM, 1,000,000 TPM, 200 RPD
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent';
 
 /**
  * Women-first perspective prompt

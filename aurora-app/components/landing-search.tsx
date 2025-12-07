@@ -95,6 +95,7 @@ export function LandingSearch() {
     return () => clearTimeout(timer);
   }, [query]);
 
+  // Fetch web results only on initial search (saves 75% API calls!)
   useEffect(() => {
     if (debouncedQuery.length < 2) {
       setWebResults([]); setVideoResults([]); setNewsResults([]); setImageResults([]);
@@ -104,17 +105,40 @@ export function LandingSearch() {
     const fetchResults = async () => {
       setIsSearching(true);
       try {
+        // Only fetch web results initially - media fetched on-demand when tab clicked
         const res = await fetch(`/api/search/brave?q=${encodeURIComponent(debouncedQuery)}&count=8`);
         const data = await res.json();
         if (data.results) setWebResults(data.results);
-        if (data.videos) setVideoResults(data.videos);
-        if (data.news) setNewsResults(data.news);
-        if (data.images) setImageResults(data.images);
+        // Clear media results - will be fetched when user clicks those tabs
+        setVideoResults([]);
+        setNewsResults([]);
+        setImageResults([]);
       } catch (err) { console.error("Search error:", err); }
       finally { setIsSearching(false); }
     };
     fetchResults();
   }, [debouncedQuery]);
+
+  // Fetch media results only when user switches to those tabs (cost optimization)
+  const fetchMediaResults = useCallback(async (tab: SearchTab) => {
+    if (!debouncedQuery || debouncedQuery.length < 2) return;
+    if (tab === "all" || tab === "web") return; // No need to fetch for these tabs
+    
+    // Check if we already have results for this tab
+    if (tab === "videos" && videoResults.length > 0) return;
+    if (tab === "news" && newsResults.length > 0) return;
+    if (tab === "images" && imageResults.length > 0) return;
+    
+    setIsSearching(true);
+    try {
+      const res = await fetch(`/api/search/brave?q=${encodeURIComponent(debouncedQuery)}&count=8&includeMedia=true`);
+      const data = await res.json();
+      if (data.videos) setVideoResults(data.videos);
+      if (data.news) setNewsResults(data.news);
+      if (data.images) setImageResults(data.images);
+    } catch (err) { console.error("Media search error:", err); }
+    finally { setIsSearching(false); }
+  }, [debouncedQuery, videoResults.length, newsResults.length, imageResults.length]);
 
   // Generate Aurora AI insight with personality
   useEffect(() => {
@@ -249,7 +273,7 @@ export function LandingSearch() {
                 { id: "images" as SearchTab, label: "Images", count: imageResults.length, icon: ImageIcon },
                 { id: "videos" as SearchTab, label: "Videos", count: videoResults.length, icon: PlayCircle },
               ].map((tab) => (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                <button key={tab.id} onClick={() => { setActiveTab(tab.id); fetchMediaResults(tab.id); }}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-colors whitespace-nowrap min-h-[36px] ${
                     activeTab === tab.id ? "bg-[var(--color-aurora-purple)] text-white" : "bg-[var(--accent)] text-[var(--foreground)] hover:bg-[var(--color-aurora-purple)]/20"
                   }`}>
