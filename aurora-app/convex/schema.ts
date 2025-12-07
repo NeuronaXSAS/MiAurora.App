@@ -57,6 +57,15 @@ export default defineSchema({
       analyticsConsentAt: v.optional(v.number()),
     })),
     
+    // Life Canvas - Life visualization
+    birthYear: v.optional(v.number()), // Year of birth for life visualization
+    lifeExpectancy: v.optional(v.number()), // Expected years to live (default: 80)
+    gender: v.optional(v.union(
+      v.literal("female"),
+      v.literal("non-binary"),
+      v.literal("prefer-not-to-say")
+    )),
+    
     // Account deletion
     deletionRequested: v.optional(v.boolean()),
     deletionRequestedAt: v.optional(v.number()),
@@ -1893,4 +1902,56 @@ export default defineSchema({
     .index("by_parent", ["parentId"])
     .index("by_anonymous", ["anonymousId"])
     .index("by_member", ["memberId"]),
+
+  // ============================================
+  // LIFE CANVAS - Life Visualization & Daily Journal
+  // GitHub-style contribution graph for life tracking
+  // ============================================
+
+  // Life Entries - Daily journal entries for life visualization
+  lifeEntries: defineTable({
+    userId: v.id("users"),
+    date: v.string(), // YYYY-MM-DD format
+    
+    // Core journal entry
+    journalText: v.optional(v.string()), // Main diary entry (max 2000 chars)
+    
+    // Quick wellness data (consolidated from other trackers)
+    mood: v.optional(v.number()), // 1-5 scale
+    energy: v.optional(v.number()), // 1-5 scale
+    gratitude: v.optional(v.array(v.string())), // Up to 3 gratitude items
+    
+    // Health tracking
+    hydrationGlasses: v.optional(v.number()),
+    hasPeriod: v.optional(v.boolean()),
+    sleepHours: v.optional(v.number()),
+    exerciseMinutes: v.optional(v.number()),
+    
+    // Life dimensions (what areas did you focus on today?)
+    dimensions: v.optional(v.array(v.union(
+      v.literal("career"),
+      v.literal("health"),
+      v.literal("relationships"),
+      v.literal("growth"),
+      v.literal("creativity"),
+      v.literal("adventure"),
+      v.literal("rest")
+    ))),
+    
+    // Tags for filtering/searching
+    tags: v.optional(v.array(v.string())),
+    
+    // Media attachments
+    photoStorageId: v.optional(v.id("_storage")),
+    voiceNoteStorageId: v.optional(v.id("_storage")),
+    
+    // Intensity score (auto-calculated based on entry completeness)
+    intensityScore: v.optional(v.number()), // 0-4 for GitHub-style coloring
+    
+    // Privacy
+    isPrivate: v.boolean(), // Always true for now - personal journal
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_date", ["userId", "date"])
+    .index("by_date", ["date"]),
 });

@@ -45,6 +45,10 @@ const ROLES = [
   { id: "Job Seeker", emoji: "🎯", desc: "Finding opportunities" },
 ];
 
+// Generate birth years (13-80 years old)
+const currentYear = new Date().getFullYear();
+const BIRTH_YEARS = Array.from({ length: 68 }, (_, i) => currentYear - 13 - i);
+
 const INTERESTS = [
   { id: "Safe Commuting", emoji: "🚶‍♀️", color: "from-blue-500 to-cyan-500" },
   { id: "Nightlife Safety", emoji: "🌙", color: "from-purple-500 to-pink-500" },
@@ -69,10 +73,12 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
   const [showAvatarCreator, setShowAvatarCreator] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [location, setLocation] = useState("");
+  const [birthYear, setBirthYear] = useState<number | null>(null);
 
   const completeOnboarding = useMutation(api.users.completeOnboarding);
   const updatePrivacy = useMutation(api.privacy.updatePrivacySettings);
   const updateAvatar = useMutation(api.users.updateAvatar);
+  const updateLifeSettings = useMutation(api.lifeCanvas.updateLifeSettings);
 
   useEffect(() => {
     const getWorkosId = async () => {
@@ -123,6 +129,15 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
           await updateAvatar({ userId: _userId, avatarConfig });
         } catch (e) {
           console.warn("Avatar save failed:", e);
+        }
+      }
+
+      // Save birth year for Life Canvas
+      if (birthYear && _userId) {
+        try {
+          await updateLifeSettings({ userId: _userId, birthYear, lifeExpectancy: 80 });
+        } catch (e) {
+          console.warn("Life settings save failed:", e);
         }
       }
 
@@ -238,7 +253,7 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                 </motion.div>
               )}
 
-              {/* Step 1: Avatar */}
+              {/* Step 1: Avatar & Birth Year */}
               {step === 1 && (
                 <motion.div
                   key="avatar"
@@ -293,6 +308,34 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                       ✓ Companion created! You can edit her anytime.
                     </p>
                   )}
+
+                  {/* Birth Year - For Life Canvas */}
+                  <div className="bg-white/5 rounded-2xl p-4 border border-white/10 max-w-md mx-auto">
+                    <Label className="text-white font-medium mb-2 flex items-center justify-center gap-2">
+                      <Heart className="w-4 h-4 text-[var(--color-aurora-pink)]" />
+                      When were you born? (optional)
+                    </Label>
+                    <p className="text-xs text-[var(--color-aurora-cream)]/60 mb-3">
+                      This unlocks your Life Canvas - a beautiful visualization of your journey
+                    </p>
+                    <select
+                      value={birthYear || ""}
+                      onChange={(e) => setBirthYear(e.target.value ? parseInt(e.target.value) : null)}
+                      className="w-full h-12 px-4 rounded-xl bg-white/10 border border-white/20 text-white appearance-none cursor-pointer"
+                    >
+                      <option value="" className="bg-[var(--color-aurora-violet)]">Select year (optional)</option>
+                      {BIRTH_YEARS.map((year) => (
+                        <option key={year} value={year} className="bg-[var(--color-aurora-violet)]">
+                          {year} ({currentYear - year} years old)
+                        </option>
+                      ))}
+                    </select>
+                    {birthYear && (
+                      <p className="text-xs text-[var(--color-aurora-mint)] mt-2">
+                        ✨ You've lived ~{Math.floor((currentYear - birthYear) * 365.25).toLocaleString()} amazing days!
+                      </p>
+                    )}
+                  </div>
                 </motion.div>
               )}
 

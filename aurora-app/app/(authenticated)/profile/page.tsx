@@ -52,6 +52,7 @@ import { SmartAd, useIsPremium } from "@/components/ads/smart-ad";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { AvatarCreator } from "@/components/avatar-creator";
 import { BadgesShowcase } from "@/components/badges-showcase";
+import { LifeCanvas } from "@/components/life-canvas";
 
 export default function ProfilePage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
@@ -561,6 +562,9 @@ export default function ProfilePage() {
 
           {/* Center/Right Column - Wellness & Activity (Desktop: 8 cols) */}
           <div className="lg:col-span-8 space-y-4 lg:space-y-6 order-1 lg:order-2">
+            {/* Life Canvas - GitHub-style life visualization */}
+            {userId && <LifeCanvas userId={userId} />}
+
             {/* Wellness Section - Your Personal Evolution Journal */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
