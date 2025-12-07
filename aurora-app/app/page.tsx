@@ -403,7 +403,7 @@ function LandingPageContent() {
 
       {/* Stats Bar - Futuristic */}
       <section className="relative py-8 bg-[#3d0d73] overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#5537a720_1px,transparent_1px)] bg-[size:40px_40px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#5537a720_1px,transparent_1px)] bg-[size:20px_20px] sm:bg-[size:30px_30px] md:bg-[size:40px_40px]" />
         <GlowingLine className="absolute top-0 left-0 right-0" />
         <GlowingLine className="absolute bottom-0 left-0 right-0" />
         <div className="relative max-w-6xl mx-auto px-4">
