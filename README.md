@@ -296,7 +296,7 @@ These seemingly incompatible technologies (real-time DB + video streaming + AI +
 **🏢 Organization Details:**
 - **Type:** Non-Profit Startup
 - **Mission:** Empower women globally through safety intelligence and opportunity access
-- **Founded:** 2025
+- **Founded:** 2022
 - **Status:** Production-ready MVP with active development
 
 **💡 Startup Viability:**
