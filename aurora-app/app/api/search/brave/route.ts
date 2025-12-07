@@ -40,6 +40,8 @@ import type {
 const BRAVE_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
 const BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search";
 const BRAVE_VIDEO_URL = "https://api.search.brave.com/res/v1/videos/search";
+const BRAVE_NEWS_URL = "https://api.search.brave.com/res/v1/news/search";
+const BRAVE_IMAGES_URL = "https://api.search.brave.com/res/v1/images/search";
 
 // ============================================
 // BRAVE API TYPES
@@ -72,6 +74,34 @@ interface BraveVideoResult {
     creator?: string;
     publisher?: string;
   };
+}
+
+interface BraveNewsResult {
+  title: string;
+  url: string;
+  description?: string;
+  age?: string;
+  thumbnail?: {
+    src: string;
+  };
+  meta_url?: {
+    hostname: string;
+  };
+  source?: {
+    name: string;
+  };
+}
+
+interface BraveImageResult {
+  title: string;
+  url: string;
+  thumbnail?: {
+    src: string;
+  };
+  properties?: {
+    url: string;
+  };
+  source?: string;
 }
 
 interface BraveSearchResponse {
@@ -201,28 +231,31 @@ export async function GET(request: NextRequest) {
     const data: BraveSearchResponse = await response.json();
     const webResults = data.web?.results || [];
 
-    // Fetch video results (parallel request)
+    // Fetch video, news, and image results in parallel
     let videoResults: BraveVideoResult[] = [];
-    try {
-      const videoUrl = new URL(BRAVE_VIDEO_URL);
-      videoUrl.searchParams.set("q", query);
-      videoUrl.searchParams.set("count", "4");
-      videoUrl.searchParams.set("safesearch", safesearch);
+    let newsResults: BraveNewsResult[] = [];
+    let imageResults: BraveImageResult[] = [];
 
-      const videoResponse = await fetch(videoUrl.toString(), {
-        headers: {
-          "Accept": "application/json",
-          "X-Subscription-Token": BRAVE_API_KEY,
-        },
-      });
+    const fetchPromises = [
+      // Videos
+      fetch(`${BRAVE_VIDEO_URL}?q=${encodeURIComponent(query)}&count=4&safesearch=${safesearch}`, {
+        headers: { "Accept": "application/json", "X-Subscription-Token": BRAVE_API_KEY },
+      }).then(r => r.ok ? r.json() : null).catch(() => null),
+      // News
+      fetch(`${BRAVE_NEWS_URL}?q=${encodeURIComponent(query)}&count=6&safesearch=${safesearch}`, {
+        headers: { "Accept": "application/json", "X-Subscription-Token": BRAVE_API_KEY },
+      }).then(r => r.ok ? r.json() : null).catch(() => null),
+      // Images
+      fetch(`${BRAVE_IMAGES_URL}?q=${encodeURIComponent(query)}&count=8&safesearch=${safesearch}`, {
+        headers: { "Accept": "application/json", "X-Subscription-Token": BRAVE_API_KEY },
+      }).then(r => r.ok ? r.json() : null).catch(() => null),
+    ];
 
-      if (videoResponse.ok) {
-        const videoData = await videoResponse.json();
-        videoResults = videoData.results || [];
-      }
-    } catch (videoErr) {
-      console.warn("Video search failed, continuing with web results:", videoErr);
-    }
+    const [videoData, newsData, imageData] = await Promise.all(fetchPromises);
+    
+    if (videoData?.results) videoResults = videoData.results;
+    if (newsData?.results) newsResults = newsData.results;
+    if (imageData?.results) imageResults = imageData.results;
 
     // Process results with Aurora Intelligence Layer
     const auroraResults: SearchResult[] = webResults.map((result) => {
@@ -271,6 +304,30 @@ export async function GET(request: NextRequest) {
       type: "video" as const,
     }));
 
+    // Process news results
+    const processedNews = newsResults.map((news) => ({
+      id: generateId(),
+      title: news.title,
+      url: news.url,
+      description: news.description || "",
+      domain: news.meta_url?.hostname || extractDomain(news.url),
+      thumbnail: news.thumbnail?.src,
+      source: news.source?.name || extractDomain(news.url),
+      age: news.age,
+      isWomenFocused: isContentWomenFocused(`${news.title} ${news.description || ""}`, news.url),
+      type: "news" as const,
+    }));
+
+    // Process image results
+    const processedImages = imageResults.map((img) => ({
+      id: generateId(),
+      title: img.title,
+      url: img.properties?.url || img.url,
+      thumbnail: img.thumbnail?.src,
+      source: img.source || extractDomain(img.url),
+      type: "image" as const,
+    }));
+
     // RESOURCE GUARD: Record successful API usage
     recordBraveSearchUsage();
 
@@ -279,6 +336,8 @@ export async function GET(request: NextRequest) {
       totalResults: auroraResults.length,
       results: auroraResults,
       videos: processedVideos,
+      news: processedNews,
+      images: processedImages,
       cached: false,
       auroraInsights,
       apiUsage: {

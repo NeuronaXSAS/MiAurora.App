@@ -4,14 +4,7 @@
  * Aurora App - Revolutionary Women-First Search Engine
  * 
  * THE ANTI-TOXIC SEARCH: Get informed fast, debate constructively, continue with life.
- * No attention-draining algorithms. Just truth, community, and empowerment.
- * 
- * Features:
- * - Instant bias visibility on every result
- * - Aurora App community discussions integration
- * - AI summary with Aurora App branding
- * - Mobile-first responsive two-column layout
- * - Hot debates for engagement without toxicity
+ * Features: Web, News, Images, Videos - all with Aurora bias analysis
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -22,8 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Search, X, Globe, ExternalLink, Brain, Heart, 
   Loader2, Shield, Clock, Users, MessageCircle,
-  CheckCircle, Bot, Scale, Building2, Newspaper,
-  Flame, ArrowRight, Eye, TrendingUp, Zap
+  CheckCircle, Bot, Scale, Building2, Newspaper, ImageIcon,
+  Flame, ArrowRight, Eye, Zap, PlayCircle, Lightbulb
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -58,20 +51,22 @@ interface WebSearchResult {
 }
 
 interface VideoResult {
-  id: string;
-  title: string;
-  url: string;
-  description: string;
-  domain: string;
-  thumbnail?: string;
-  duration?: string;
-  views?: string;
-  creator?: string;
-  age?: string;
+  id: string; title: string; url: string; description: string; domain: string;
+  thumbnail?: string; duration?: string; views?: string; creator?: string; age?: string;
   isWomenFocused: boolean;
 }
 
-// Quick category buttons - what women search for most
+interface NewsResult {
+  id: string; title: string; url: string; description: string; domain: string;
+  thumbnail?: string; source: string; age?: string; isWomenFocused: boolean;
+}
+
+interface ImageResult {
+  id: string; title: string; url: string; thumbnail?: string; source: string;
+}
+
+type SearchTab = "all" | "web" | "news" | "images" | "videos";
+
 const QUICK_CATEGORIES = [
   { id: "news", label: "Today's News", icon: Newspaper, color: "var(--color-aurora-purple)" },
   { id: "safety", label: "Safety", icon: Shield, color: "var(--color-aurora-mint)" },
@@ -87,50 +82,45 @@ export function LandingSearch() {
   const [isSearching, setIsSearching] = useState(false);
   const [webResults, setWebResults] = useState<WebSearchResult[]>([]);
   const [videoResults, setVideoResults] = useState<VideoResult[]>([]);
+  const [newsResults, setNewsResults] = useState<NewsResult[]>([]);
+  const [imageResults, setImageResults] = useState<ImageResult[]>([]);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [criticalThought, setCriticalThought] = useState<string | null>(null);
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
-  const [activeTab, setActiveTab] = useState<"all" | "web" | "videos" | "news">("all");
+  const [activeTab, setActiveTab] = useState<SearchTab>("all");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query), 400);
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Fetch web results
   useEffect(() => {
     if (debouncedQuery.length < 2) {
-      setWebResults([]);
-      setVideoResults([]);
+      setWebResults([]); setVideoResults([]); setNewsResults([]); setImageResults([]);
       return;
     }
-
-    const fetchWebResults = async () => {
+    const fetchResults = async () => {
       setIsSearching(true);
       try {
         const res = await fetch(`/api/search/brave?q=${encodeURIComponent(debouncedQuery)}&count=8`);
         const data = await res.json();
         if (data.results) setWebResults(data.results);
         if (data.videos) setVideoResults(data.videos);
-      } catch (err) {
-        console.error("Search error:", err);
-      } finally {
-        setIsSearching(false);
-      }
+        if (data.news) setNewsResults(data.news);
+        if (data.images) setImageResults(data.images);
+      } catch (err) { console.error("Search error:", err); }
+      finally { setIsSearching(false); }
     };
-    fetchWebResults();
+    fetchResults();
   }, [debouncedQuery]);
 
-  // Fetch AI summary
+  // Fetch AI summary with critical thinking prompt
   useEffect(() => {
     if (webResults.length > 0 && debouncedQuery) {
       setIsLoadingSummary(true);
       const summaryResults = webResults.slice(0, 4).map(r => ({
-        type: "web",
-        previewTitle: r.title,
-        previewSnippet: r.description,
-        category: r.domain,
+        type: "web", previewTitle: r.title, previewSnippet: r.description, category: r.domain,
       }));
       
       fetch("/api/ai/search-summary", {
@@ -139,68 +129,56 @@ export function LandingSearch() {
         body: JSON.stringify({ query: debouncedQuery, results: summaryResults, language: locale }),
       })
         .then(res => res.json())
-        .then(data => { setAiSummary(data.summary); setIsLoadingSummary(false); })
+        .then(data => { 
+          setAiSummary(data.summary); 
+          // Generate critical thinking question
+          setCriticalThought(generateCriticalThought(debouncedQuery, webResults));
+          setIsLoadingSummary(false); 
+        })
         .catch(() => setIsLoadingSummary(false));
     } else {
       setAiSummary(null);
+      setCriticalThought(null);
     }
   }, [webResults, debouncedQuery, locale]);
 
   const handleClear = useCallback(() => {
-    setQuery("");
-    setDebouncedQuery("");
-    setWebResults([]);
-    setVideoResults([]);
-    setAiSummary(null);
-    setActiveTab("all");
-    inputRef.current?.focus();
+    setQuery(""); setDebouncedQuery(""); setWebResults([]); setVideoResults([]);
+    setNewsResults([]); setImageResults([]); setAiSummary(null); setCriticalThought(null);
+    setActiveTab("all"); inputRef.current?.focus();
   }, []);
 
   const handleQuickSearch = (category: string) => {
     const queries: Record<string, string> = {
-      news: "women news today",
-      safety: "women safety tips",
-      career: "career advice for women",
-      health: "women health wellness",
+      news: "women news today", safety: "women safety tips",
+      career: "career advice for women", health: "women health wellness",
     };
     setQuery(queries[category] || category);
   };
 
   const hasResults = webResults.length > 0;
+  const totalResults = webResults.length + videoResults.length + newsResults.length + imageResults.length;
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
-      {/* Search Header with Aurora App Branding */}
+      {/* Search Header */}
       <div className="text-center mb-6">
         <div className="flex items-center justify-center gap-3 mb-3">
           <div className="relative">
-            <Image 
-              src="/Au_Logo_1.png" 
-              alt="Aurora App" 
-              width={56}
-              height={56}
-              className="w-12 h-12 md:w-14 md:h-14 object-contain"
-            />
+            <Image src="/Au_Logo_1.png" alt="Aurora App" width={56} height={56} className="w-12 h-12 md:w-14 md:h-14 object-contain" />
             <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[var(--color-aurora-mint)] rounded-full flex items-center justify-center shadow-sm">
               <Search className="w-3 h-3 text-[var(--color-aurora-violet)]" />
             </div>
           </div>
           <div className="text-left">
-            <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-aurora-violet)] dark:text-[var(--color-aurora-cream)]">
-              Aurora App
-            </h1>
-            <p className="text-[10px] md:text-xs text-[var(--color-aurora-purple)] font-semibold tracking-widest uppercase">
-              Search Engine
-            </p>
+            <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-aurora-violet)] dark:text-[var(--color-aurora-cream)]">Aurora App</h1>
+            <p className="text-[10px] md:text-xs text-[var(--color-aurora-purple)] font-semibold tracking-widest uppercase">Search Engine</p>
           </div>
         </div>
-        
         <p className="text-sm text-[var(--muted-foreground)] mb-3 max-w-lg mx-auto">
           The world&apos;s first search engine designed for women.{" "}
           <span className="text-[var(--color-aurora-purple)] font-medium">See the truth behind every result.</span>
         </p>
-        
-        {/* Feature Pills - Scrollable on mobile */}
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--color-aurora-mint)]/20 text-xs font-medium" style={{ color: 'var(--color-aurora-mint)' }}>
             <Shield className="w-3 h-3" /> Bias Detection
@@ -214,26 +192,16 @@ export function LandingSearch() {
         </div>
       </div>
 
-      {/* Search Input - Clean & Prominent */}
+      {/* Search Input */}
       <div className="relative mb-4">
-        <div className={`flex items-center bg-[var(--card)] border-2 rounded-2xl transition-all ${
-          isFocused 
-            ? "border-[var(--color-aurora-purple)] shadow-lg shadow-[var(--color-aurora-purple)]/15" 
-            : "border-[var(--border)] hover:border-[var(--color-aurora-purple)]/40"
-        }`}>
+        <div className={`flex items-center bg-[var(--card)] border-2 rounded-2xl transition-all ${isFocused ? "border-[var(--color-aurora-purple)] shadow-lg shadow-[var(--color-aurora-purple)]/15" : "border-[var(--border)] hover:border-[var(--color-aurora-purple)]/40"}`}>
           <div className="w-11 h-11 ml-2 rounded-xl bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center flex-shrink-0">
             <Search className="w-5 h-5 text-white" />
           </div>
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+          <input ref={inputRef} type="text" value={query} onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => setIsFocused(true)} onBlur={() => setTimeout(() => setIsFocused(false), 200)}
             placeholder="Search anything... see the truth behind every result"
-            className="flex-1 h-14 px-4 bg-transparent text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none text-base"
-          />
+            className="flex-1 h-14 px-4 bg-transparent text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none text-base" />
           {isSearching && <Loader2 className="w-5 h-5 mr-3 text-[var(--color-aurora-purple)] animate-spin" />}
           {query && !isSearching && (
             <button onClick={handleClear} className="p-2 mr-2 rounded-lg hover:bg-[var(--accent)] min-w-[44px] min-h-[44px] flex items-center justify-center">
@@ -243,15 +211,12 @@ export function LandingSearch() {
         </div>
       </div>
 
-      {/* Quick Categories - Only when no results */}
+      {/* Quick Categories */}
       {!hasResults && (
         <div className="flex justify-center gap-2 mb-6 flex-wrap">
           {QUICK_CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => handleQuickSearch(cat.id)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[var(--card)] border border-[var(--border)] hover:border-[var(--color-aurora-purple)]/50 hover:shadow-md transition-all min-h-[44px]"
-            >
+            <button key={cat.id} onClick={() => handleQuickSearch(cat.id)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[var(--card)] border border-[var(--border)] hover:border-[var(--color-aurora-purple)]/50 hover:shadow-md transition-all min-h-[44px]">
               <cat.icon className="w-4 h-4" style={{ color: cat.color }} />
               <span className="text-sm font-medium text-[var(--foreground)]">{cat.label}</span>
             </button>
@@ -259,94 +224,96 @@ export function LandingSearch() {
         </div>
       )}
 
-      {/* Results Section */}
       <AnimatePresence mode="wait">
         {hasResults ? (
-          <motion.div
-            key="results"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="space-y-4"
-          >
-            {/* AI Summary with Aurora App Logo */}
-            {(isLoadingSummary || aiSummary) && (
-              <Card className="p-4 bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border-[var(--color-aurora-purple)]/20">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-[var(--color-aurora-violet)] flex items-center justify-center flex-shrink-0 shadow-sm border border-[var(--border)]">
-                    <Image src="/Au_Logo_1.png" alt="Aurora App" width={28} height={28} className="w-7 h-7" />
+          <motion.div key="results" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
+            
+            {/* AI Summary Bar - Replaces useless purple stats bar */}
+            <div className="bg-[var(--color-aurora-violet)] rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <Image src="/Au_Logo_1.png" alt="Aurora App" width={28} height={28} className="w-7 h-7" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Brain className="w-3.5 h-3.5 text-[var(--color-aurora-pink)]" />
+                    <span className="text-xs font-semibold text-white/90">Aurora App AI Insight</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Brain className="w-3.5 h-3.5 text-[var(--color-aurora-purple)]" />
-                      <span className="text-xs font-semibold text-[var(--color-aurora-purple)]">Aurora App AI Summary</span>
-                    </div>
-                    {isLoadingSummary ? (
-                      <div className="space-y-2">
-                        <div className="h-4 bg-[var(--accent)] rounded animate-pulse w-full" />
-                        <div className="h-4 bg-[var(--accent)] rounded animate-pulse w-3/4" />
+                  {isLoadingSummary ? (
+                    <div className="h-4 bg-white/20 rounded animate-pulse w-3/4" />
+                  ) : (
+                    <p className="text-sm text-white/90 leading-relaxed">{aiSummary || "Analyzing results..."}</p>
+                  )}
+                  {criticalThought && !isLoadingSummary && (
+                    <div className="mt-2 pt-2 border-t border-white/20">
+                      <div className="flex items-start gap-2">
+                        <Lightbulb className="w-4 h-4 text-[var(--color-aurora-yellow)] flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-[var(--color-aurora-yellow)] italic">{criticalThought}</p>
                       </div>
-                    ) : (
-                      <p className="text-sm text-[var(--foreground)] leading-relaxed">{aiSummary}</p>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* Community Stats Bar - Fixed for mobile */}
-            <div className="bg-[var(--color-aurora-violet)] rounded-xl p-3 overflow-x-auto">
-              <div className="flex items-center justify-between gap-4 min-w-max md:min-w-0">
-                <div className="flex items-center gap-2 text-white/90">
-                  <Users className="w-4 h-4 flex-shrink-0" />
-                  <span className="text-xs font-medium whitespace-nowrap">10K+ Sisters</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/90">
-                  <Shield className="w-4 h-4 flex-shrink-0" />
-                  <span className="text-xs font-medium whitespace-nowrap">50K+ Reports</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/90">
-                  <TrendingUp className="w-4 h-4 flex-shrink-0" />
-                  <span className="text-xs font-medium whitespace-nowrap">25K+ Routes</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/90">
-                  <Heart className="w-4 h-4 flex-shrink-0" />
-                  <span className="text-xs font-medium whitespace-nowrap">98% Safe</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Results Tabs */}
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                {[
-                  { id: "all", label: `All (${webResults.length + videoResults.length})` },
-                  { id: "web", label: `Web (${webResults.length})`, icon: Globe },
-                  ...(videoResults.length > 0 ? [{ id: "videos", label: `Videos (${videoResults.length})` }] : []),
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap min-h-[32px] ${
-                      activeTab === tab.id 
-                        ? "bg-[var(--color-aurora-purple)] text-white" 
-                        : "bg-[var(--accent)] text-[var(--foreground)] hover:bg-[var(--color-aurora-purple)]/20"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-              <Badge className="text-[10px] bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0 whitespace-nowrap">
+            {/* Content Type Tabs - Web, News, Images, Videos */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              {[
+                { id: "all" as SearchTab, label: "All", count: totalResults, icon: Globe },
+                { id: "web" as SearchTab, label: "Web", count: webResults.length, icon: Globe },
+                { id: "news" as SearchTab, label: "News", count: newsResults.length, icon: Newspaper },
+                { id: "images" as SearchTab, label: "Images", count: imageResults.length, icon: ImageIcon },
+                { id: "videos" as SearchTab, label: "Videos", count: videoResults.length, icon: PlayCircle },
+              ].filter(tab => tab.id === "all" || tab.count > 0).map((tab) => (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-colors whitespace-nowrap min-h-[36px] ${
+                    activeTab === tab.id ? "bg-[var(--color-aurora-purple)] text-white" : "bg-[var(--accent)] text-[var(--foreground)] hover:bg-[var(--color-aurora-purple)]/20"
+                  }`}>
+                  <tab.icon className="w-3.5 h-3.5" />
+                  {tab.label} ({tab.count})
+                </button>
+              ))}
+              <Badge className="ml-auto text-[10px] bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0 whitespace-nowrap">
                 Powered by Brave Search
               </Badge>
             </div>
 
+            {/* News Results */}
+            {(activeTab === "all" || activeTab === "news") && newsResults.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-[var(--foreground)] mb-2 flex items-center gap-2">
+                  <Newspaper className="w-4 h-4 text-[var(--color-aurora-purple)]" /> Latest News
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {newsResults.slice(0, activeTab === "news" ? undefined : 3).map((news) => (
+                    <NewsCard key={news.id} news={news} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Images Results */}
+            {(activeTab === "all" || activeTab === "images") && imageResults.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-[var(--foreground)] mb-2 flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-[var(--color-aurora-pink)]" /> Images
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {imageResults.slice(0, activeTab === "images" ? undefined : 4).map((img) => (
+                    <a key={img.id} href={img.url} target="_blank" rel="noopener noreferrer"
+                      className="aspect-square rounded-xl overflow-hidden bg-[var(--accent)] hover:opacity-90 transition-opacity">
+                      {img.thumbnail && <img src={img.thumbnail} alt={img.title} className="w-full h-full object-cover" />}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Video Results */}
             {(activeTab === "all" || activeTab === "videos") && videoResults.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium text-[var(--foreground)] mb-2 flex items-center gap-2">
-                  📹 Videos
+                <h4 className="text-sm font-semibold text-[var(--foreground)] mb-2 flex items-center gap-2">
+                  <PlayCircle className="w-4 h-4 text-[var(--color-aurora-blue)]" /> Videos
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {videoResults.slice(0, activeTab === "videos" ? undefined : 2).map((video, i) => (
@@ -356,7 +323,7 @@ export function LandingSearch() {
               </div>
             )}
 
-            {/* Web Results - Improved Layout */}
+            {/* Web Results */}
             {(activeTab === "all" || activeTab === "web") && (
               <div className="space-y-3">
                 {webResults.map((result, i) => (
@@ -386,26 +353,15 @@ export function LandingSearch() {
             </Card>
           </motion.div>
         ) : (
-          <motion.div
-            key="debates"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="space-y-6"
-          >
-            {/* Hot Debates - Engagement without toxicity */}
+          <motion.div key="debates" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Flame className="w-5 h-5 text-[var(--color-aurora-pink)]" />
                 <h3 className="font-semibold text-[var(--foreground)]">Hot Debates Today</h3>
-                <Badge className="text-xs bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] border-0">
-                  Join the conversation
-                </Badge>
+                <Badge className="text-xs bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] border-0">Join the conversation</Badge>
               </div>
               <DailyDebatesPanel userId={null} />
             </div>
-
-            {/* Value Props */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 { icon: Bot, label: "AI Detection", desc: "Spot AI content", color: "var(--color-aurora-blue)" },
@@ -427,37 +383,70 @@ export function LandingSearch() {
   );
 }
 
-/**
- * Search Result Card - Revolutionary Two-Column Layout
- * 
- * Mobile: Stacked (content on top, metrics below)
- * Desktop: Side-by-side (content left, metrics right)
- * 
- * Metrics are ALWAYS visible - no expanding needed
- */
+/** Generate critical thinking question based on search */
+function generateCriticalThought(query: string, results: WebSearchResult[]): string {
+  const avgCredibility = results.reduce((sum, r) => {
+    const score = typeof r.credibilityScore === 'number' ? r.credibilityScore : (r.credibilityScore?.score ?? 50);
+    return sum + score;
+  }, 0) / results.length;
+  
+  const womenFocusedCount = results.filter(r => r.isWomenFocused).length;
+  const hasHighAI = results.some(r => (r.aiContentDetection?.percentage ?? 0) > 50);
+  
+  if (avgCredibility < 50) {
+    return "💭 These sources have mixed credibility. What other perspectives might be missing?";
+  }
+  if (womenFocusedCount === 0) {
+    return "💭 No women-focused sources found. How might women's experiences differ on this topic?";
+  }
+  if (hasHighAI) {
+    return "💭 Some results contain AI-generated content. Consider verifying key facts from primary sources.";
+  }
+  if (query.toLowerCase().includes("news")) {
+    return "💭 News can be biased. What questions would help you form your own opinion?";
+  }
+  return "💭 What assumptions might these sources be making? Consider multiple viewpoints.";
+}
+
+/** News Card Component */
+function NewsCard({ news }: { news: NewsResult }) {
+  return (
+    <a href={news.url} target="_blank" rel="noopener noreferrer"
+      className="block p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--color-aurora-purple)]/40 hover:shadow-md transition-all">
+      <div className="flex gap-3">
+        {news.thumbnail && (
+          <div className="w-20 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-[var(--accent)]">
+            <img src={news.thumbnail} alt="" className="w-full h-full object-cover" />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <h4 className="text-sm font-medium text-[var(--foreground)] line-clamp-2 mb-1">{news.title}</h4>
+          <div className="flex items-center gap-2 text-[10px] text-[var(--muted-foreground)]">
+            <span>{news.source}</span>
+            {news.age && <><span>•</span><span>{news.age}</span></>}
+          </div>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+/** Search Result Card */
 function SearchResultCard({ result, index, query }: { result: WebSearchResult; index: number; query: string }) {
   const aiScore = result.aiContentScore ?? result.aiContentDetection?.percentage ?? 0;
   const biasScore = result.biasScore ?? result.biasAnalysis?.genderBias?.score ?? 50;
-  const credScore = typeof result.credibilityScore === 'number' 
-    ? result.credibilityScore 
-    : (result.credibilityScore?.score ?? 50);
+  const credScore = typeof result.credibilityScore === 'number' ? result.credibilityScore : (result.credibilityScore?.score ?? 50);
   const politicalBias = result.biasAnalysis?.politicalBias?.indicator || "Center";
   const emotionalTone = result.biasAnalysis?.emotionalTone || "Neutral";
   
-  const trustScore = calculateTrustScore({
-    genderBiasScore: biasScore,
-    credibilityScore: credScore,
-    aiContentPercentage: aiScore,
-    publishedDate: result.age,
-    isWomenFocused: result.isWomenFocused,
-    domain: result.domain,
-    contentType: emotionalTone,
-    title: result.title,
+  const trustScoreResult = calculateTrustScore({
+    genderBiasScore: biasScore, credibilityScore: credScore, aiContentPercentage: aiScore,
+    publishedDate: result.age, isWomenFocused: result.isWomenFocused, domain: result.domain,
+    contentType: emotionalTone, title: result.title,
   });
+  const trustScore = trustScoreResult.score;
 
   const verificationLevel = getVerificationLevel(result.domain, credScore, result.isWomenFocused);
-  
-  // Simulated community data
   const communitySearchCount = Math.floor(Math.random() * 50) + 5;
   const helpfulCount = Math.floor(communitySearchCount * 0.3);
   const discussionCount = Math.floor(Math.random() * 10);
@@ -470,7 +459,6 @@ function SearchResultCard({ result, index, query }: { result: WebSearchResult; i
     if (age.includes("week")) return { label: "Recent", color: "var(--color-aurora-yellow)" };
     return { label: "Older", color: "var(--color-aurora-salmon)" };
   };
-
   const freshness = getFreshness();
 
   const getGenderIndicator = () => {
@@ -479,24 +467,16 @@ function SearchResultCard({ result, index, query }: { result: WebSearchResult; i
     if (biasScore <= 70) return { label: "Caution", color: "var(--color-aurora-yellow)", emoji: "⚠️" };
     return { label: "Alert", color: "var(--color-aurora-salmon)", emoji: "🚨" };
   };
-
   const genderIndicator = getGenderIndicator();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-    >
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
       {index === 3 && <LandingAd variant="search-results" className="mb-3" />}
       
       <Card className="overflow-hidden border-[var(--border)] hover:border-[var(--color-aurora-purple)]/40 hover:shadow-lg transition-all bg-[var(--card)]">
-        {/* Two-Column Grid: Stacks on mobile, side-by-side on desktop */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,300px]">
-          
-          {/* LEFT: Web Result Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,280px]">
+          {/* Left: Content */}
           <div className="p-4">
-            {/* Top Row: Domain + Badges */}
             <div className="flex items-center gap-1.5 mb-2 flex-wrap">
               <span className="text-xs text-[var(--color-aurora-purple)] font-semibold">{result.domain}</span>
               <SafetyAlertBadge domain={result.domain} safetyFlags={result.safetyFlags} />
@@ -506,134 +486,51 @@ function SearchResultCard({ result, index, query }: { result: WebSearchResult; i
                   <Heart className="w-2.5 h-2.5 mr-0.5" /> Women
                 </Badge>
               )}
-              <Badge 
-                className="text-[9px] border-0 h-5 px-1.5"
-                style={{ backgroundColor: `${freshness.color}20`, color: freshness.color }}
-              >
+              <Badge className="text-[9px] border-0 h-5 px-1.5" style={{ backgroundColor: `${freshness.color}20`, color: freshness.color }}>
                 <Clock className="w-2.5 h-2.5 mr-0.5" /> {freshness.label}
               </Badge>
             </div>
             
-            {/* Community Engagement */}
             <div className="flex items-center gap-3 mb-2">
               <SistersSearchedBadge searchCount={communitySearchCount} helpfulCount={helpfulCount} />
               {discussionCount > 0 && (
                 <span className="inline-flex items-center gap-1 text-[10px] text-[var(--color-aurora-purple)]">
-                  <MessageCircle className="w-3 h-3" />
-                  {discussionCount} discussing in Aurora App
+                  <MessageCircle className="w-3 h-3" /> {discussionCount} discussing
                 </span>
               )}
             </div>
 
-            {/* Title */}
             <a href={result.url} target="_blank" rel="noopener noreferrer" className="group block mb-1">
               <h3 className="font-semibold text-[var(--foreground)] group-hover:text-[var(--color-aurora-purple)] transition-colors line-clamp-2 text-base">
                 {result.title}
               </h3>
             </a>
-
-            {/* Description */}
-            <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mb-3 leading-relaxed">
-              {result.description}
-            </p>
-
-            {/* Actions */}
+            <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mb-3 leading-relaxed">{result.description}</p>
             <div className="flex items-center gap-3">
-              <a 
-                href={result.url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-aurora-purple)] hover:underline"
-              >
+              <a href={result.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-aurora-purple)] hover:underline">
                 Visit site <ExternalLink className="w-3 h-3" />
               </a>
               {discussionCount > 0 && (
-                <Link 
-                  href={`/feed?topic=${encodeURIComponent(query)}`}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-aurora-pink)] hover:underline"
-                >
+                <Link href={`/feed?topic=${encodeURIComponent(query)}`} className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-aurora-pink)] hover:underline">
                   <Users className="w-3 h-3" /> See discussions
                 </Link>
               )}
             </div>
           </div>
 
-          {/* RIGHT: Aurora Metrics Panel */}
-          <div className="p-4 bg-gradient-to-br from-[var(--color-aurora-cream)]/50 to-[var(--color-aurora-lavender)]/30 dark:from-[var(--color-aurora-violet)]/20 dark:to-[var(--color-aurora-purple)]/10 border-t lg:border-t-0 lg:border-l border-[var(--border)]">
-            
-            {/* Trust Score - Prominent */}
-            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[var(--border)]">
-              <div 
-                className="w-14 h-14 rounded-xl flex flex-col items-center justify-center shadow-sm"
-                style={{ 
-                  backgroundColor: `${trustScore.color}15`,
-                  border: `2px solid ${trustScore.color}40`
-                }}
-              >
-                <span className="text-xl">{trustScore.emoji}</span>
-                <span className="text-sm font-black" style={{ color: trustScore.color }}>
-                  {trustScore.score}
-                </span>
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-[var(--foreground)]">Aurora Trust Score™</p>
-                <p className="text-[11px] text-[var(--muted-foreground)]">{trustScore.label}</p>
-              </div>
+          {/* Right: Aurora Metrics Panel */}
+          <div className="p-4 bg-[var(--accent)]/50 border-t lg:border-t-0 lg:border-l border-[var(--border)]">
+            <div className="flex items-center gap-1.5 mb-3">
+              <Shield className="w-3.5 h-3.5 text-[var(--color-aurora-purple)]" />
+              <span className="text-xs font-semibold text-[var(--foreground)]">Aurora Metrics</span>
             </div>
-
-            {/* Metrics Grid - 2x2 */}
-            <div className="grid grid-cols-2 gap-2">
-              {/* Gender Bias */}
-              <MetricCard
-                emoji={genderIndicator.emoji}
-                label={genderIndicator.label}
-                value={100 - biasScore}
-                color={genderIndicator.color}
-                tooltip="Gender representation score"
-              />
-
-              {/* AI Content */}
-              <MetricCard
-                icon={<Bot className="w-3.5 h-3.5" />}
-                label={`${aiScore}% AI`}
-                value={aiScore}
-                color="var(--color-aurora-lavender)"
-                tooltip="AI-generated content percentage"
-                inverted
-              />
-
-              {/* Credibility */}
-              <MetricCard
-                icon={<CheckCircle className="w-3.5 h-3.5" />}
-                label={`${credScore}%`}
-                sublabel="Credible"
-                value={credScore}
-                color="var(--color-aurora-mint)"
-                tooltip="Source credibility score"
-              />
-
-              {/* Political Bias */}
-              <MetricCard
-                icon={<Scale className="w-3.5 h-3.5" />}
-                label={politicalBias}
-                sublabel={emotionalTone}
-                color="var(--color-aurora-purple)"
-                tooltip="Political leaning indicator"
-              />
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
+              <MetricCard label="Trust Score" value={trustScore} max={100} color={trustScore >= 70 ? "var(--color-aurora-mint)" : trustScore >= 40 ? "var(--color-aurora-yellow)" : "var(--color-aurora-salmon)"} />
+              <MetricCard label="Gender Bias" value={genderIndicator.label} emoji={genderIndicator.emoji} color={genderIndicator.color} />
+              <MetricCard label="AI Content" value={`${aiScore}%`} color={aiScore > 50 ? "var(--color-aurora-salmon)" : aiScore > 20 ? "var(--color-aurora-yellow)" : "var(--color-aurora-mint)"} />
+              <MetricCard label="Credibility" value={credScore} max={100} color={credScore >= 70 ? "var(--color-aurora-mint)" : credScore >= 40 ? "var(--color-aurora-yellow)" : "var(--color-aurora-salmon)"} />
+              <MetricCard label="Political" value={politicalBias} color="var(--color-aurora-blue)" className="col-span-2 lg:col-span-1" />
             </div>
-
-            {/* Safety Flags */}
-            {result.safetyFlags.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-[var(--border)]">
-                <div className="flex flex-wrap gap-1">
-                  {result.safetyFlags.slice(0, 3).map((flag, i) => (
-                    <Badge key={i} className="text-[9px] bg-[var(--accent)] text-[var(--muted-foreground)] border-0 h-5">
-                      {flag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </Card>
@@ -641,52 +538,28 @@ function SearchResultCard({ result, index, query }: { result: WebSearchResult; i
   );
 }
 
-/**
- * Metric Card - Clean, scannable metric display
- */
-function MetricCard({ 
-  emoji, 
-  icon, 
-  label, 
-  sublabel,
-  value, 
-  color, 
-  tooltip,
-  inverted = false 
-}: { 
-  emoji?: string;
-  icon?: React.ReactNode;
-  label: string;
-  sublabel?: string;
-  value?: number;
+/** Metric Card Helper */
+function MetricCard({ label, value, max, emoji, color, className = "" }: { 
+  label: string; 
+  value: string | number; 
+  max?: number; 
+  emoji?: string; 
   color: string;
-  tooltip?: string;
-  inverted?: boolean;
+  className?: string;
 }) {
+  const numValue = typeof value === "number" ? value : null;
+  const percentage = numValue && max ? (numValue / max) * 100 : null;
+  
   return (
-    <div 
-      className="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)]"
-      title={tooltip}
-    >
-      <div className="flex items-center gap-1.5 mb-1.5">
+    <div className={`p-2 rounded-lg bg-[var(--card)] border border-[var(--border)] ${className}`}>
+      <div className="text-[10px] text-[var(--muted-foreground)] mb-1">{label}</div>
+      <div className="flex items-center gap-1.5">
         {emoji && <span className="text-sm">{emoji}</span>}
-        {icon && <span style={{ color }}>{icon}</span>}
-        <span className="text-[11px] font-semibold text-[var(--foreground)] truncate">
-          {label}
-        </span>
+        <span className="text-sm font-semibold" style={{ color }}>{value}{max ? `/${max}` : ""}</span>
       </div>
-      {sublabel && (
-        <p className="text-[10px] text-[var(--muted-foreground)] mb-1">{sublabel}</p>
-      )}
-      {value !== undefined && (
-        <div className="h-1.5 rounded-full bg-[var(--accent)] overflow-hidden">
-          <div 
-            className="h-full rounded-full transition-all duration-500"
-            style={{ 
-              width: `${inverted ? value : value}%`,
-              backgroundColor: color 
-            }}
-          />
+      {percentage !== null && (
+        <div className="mt-1 h-1 bg-[var(--accent)] rounded-full overflow-hidden">
+          <div className="h-full rounded-full transition-all" style={{ width: `${percentage}%`, backgroundColor: color }} />
         </div>
       )}
     </div>

@@ -1,0 +1,229 @@
+# Implementation Plan
+
+## Aurora AI Search Engine - Task List
+
+- [x] 1. Set up core search infrastructure
+  - [x] 1.1 Create search service types and interfaces
+    - Create `lib/search/types.ts` with SearchResult, BiasAnalysis, CredibilityScore, AIContentDetection, AuroraInsights interfaces
+    - Define SafetyFlag type and all enums
+    - _Requirements: 2.1, 3.1, 4.1, 7.1_
+  - [x] 1.2 Add search cache schema to Convex
+    - Add searchCache table with queryHash, results, cachedAt, expiresAt, hitCount
+    - Add apiUsage table with month, used, limit tracking
+    - Create indexes for efficient lookups
+    - _Requirements: 12.1, 12.2, 12.5, 12.6_
+  - [x]* 1.3 Write property test for cache round-trip
+    - **Property 13: Cache Round Trip**
+    - **Validates: Requirements 12.1, 12.2**
+
+- [x] 2. Implement Bias Analyzer service
+  - [x] 2.1 Create gender bias analyzer
+    - Implement `lib/search/bias-analyzer.ts` with analyzeGenderBias function
+    - Score 0-100 based on positive/negative keyword analysis
+    - Map scores to labels (Women-Positive, Balanced, Neutral, Caution, Potential Bias)
+    - _Requirements: 2.1, 2.2, 2.3_
+  - [x]* 2.2 Write property tests for gender bias
+    - **Property 3: Gender Bias Score Range**
+    - **Property 4: Gender Bias Label Mapping**
+    - **Validates: Requirements 2.1, 2.3**
+  - [x] 2.3 Create political bias analyzer
+    - Implement analyzePoliticalBias function with domain reputation lookup
+    - Return indicator (Far Left to Far Right) with confidence score
+    - _Requirements: 2B.1, 2B.2_
+  - [x]* 2.4 Write property test for political bias categories
+    - **Property 6: Political Bias Valid Categories**
+    - **Validates: Requirements 2B.1**
+  - [x] 2.5 Create commercial bias and emotional tone analyzers
+    - Detect promotional content, affiliate links, sponsored messaging
+    - Classify emotional tone (Factual, Emotional, Sensational, Balanced)
+    - _Requirements: 2C.1, 2C.2, 2C.3_
+
+- [x] 3. Implement Credibility Scorer service
+  - [x] 3.1 Create credibility scorer
+    - Implement `lib/search/credibility-scorer.ts` with calculateCredibility function
+    - Award higher scores to .gov, .edu, verified news domains
+    - Add bonus points for women-focused domains (unwomen.org, catalyst.org, etc.)
+    - Map scores to labels (Highly Trusted, Trusted, Moderate, Verify Source)
+    - _Requirements: 3.1, 3.2, 3.3, 3.4_
+  - [x]* 3.2 Write property tests for credibility scoring
+    - **Property 7: Credibility Score Range**
+    - **Property 8: Domain Type Credibility Ordering**
+    - **Property 9: Women-Focused Domain Bonus**
+    - **Property 10: Credibility Label Mapping**
+    - **Validates: Requirements 3.1, 3.2, 3.3, 3.4**
+
+- [x] 4. Implement AI Content Detector service
+  - [x] 4.1 Create AI content detector
+    - Implement `lib/search/ai-detector.ts` with detectAIContent function
+    - Analyze text patterns: formal language, lack of personal voice, common AI phrases
+    - Return percentage (0-100) and label (Mostly Human, Some AI Content, High AI Content)
+    - _Requirements: 4.1, 4.2_
+  - [x]* 4.2 Write property tests for AI detection
+    - **Property 11: AI Content Detection Range**
+    - **Property 12: AI Content Color Coding**
+    - **Validates: Requirements 4.1, 4.3**
+
+- [x] 5. Checkpoint - Ensure all analyzer tests pass
+  - All analyzers implemented and working
+
+- [x] 6. Implement Brave Search API integration
+  - [x] 6.1 Create Brave Search service
+    - Implemented in `/api/search/brave/route.ts`
+    - Handle API authentication with BRAVE_API_KEY
+    - Parse Brave API response into SearchResult format
+    - _Requirements: 1.1_
+  - [x] 6.2 Create search API route
+    - Implement `/api/search/brave/route.ts` GET handler
+    - Validate query (minimum 2 characters)
+    - Apply all analyzers to results
+    - Calculate AuroraInsights aggregates
+    - _Requirements: 1.1, 2.4, 3.5, 4.4_
+  - [x]* 6.3 Write property test for query validation
+    - **Property 1: Query Validation**
+    - **Validates: Requirements 1.1**
+  - [x]* 6.4 Write property test for average calculations
+    - **Property 5: Average Calculation Correctness**
+    - **Validates: Requirements 2.4, 3.5, 4.4**
+
+- [x] 7. Implement caching and API usage tracking
+  - [x] 7.1 Create Convex functions for cache management
+    - Implement `convex/searchCache.ts` with getCachedSearch, cacheSearchResults, cleanExpiredCache
+    - Use hash of normalized query for lookups
+    - Set 24-hour expiration
+    - _Requirements: 12.2, 12.5_
+  - [x] 7.2 Create API usage tracking functions
+    - Implement `convex/searchApiUsage.ts` with getUsage, incrementUsage, checkLimit
+    - Track monthly usage with real-time counter
+    - Alert at 80% usage threshold
+    - _Requirements: 12.3, 12.4, 12.6_
+  - [x]* 7.3 Write property test for API counter increment
+    - **Property 16: API Usage Counter Increment**
+    - **Validates: Requirements 12.6**
+
+- [x] 8. Implement AI Summary Generator
+  - [x] 8.1 Create Gemini summary service
+    - Implement `lib/search/gemini-service.ts` with generateSummary function
+    - Use women-first perspective prompt
+    - Limit to 2-3 paragraphs with source references
+    - _Requirements: 1.2, 1.3, 1.4_
+  - [x] 8.2 Create summary API route
+    - `/api/ai/search-summary/route.ts` already exists
+    - Accept query and results, return summary with sources
+    - Handle Gemini API failures gracefully
+    - _Requirements: 1.2, 1.5_
+  - [x]* 8.3 Write property test for summary constraints
+    - **Property 2: Summary Length Constraint**
+    - **Validates: Requirements 1.4**
+
+- [x] 9. Checkpoint - Ensure all backend tests pass
+  - Backend implementation complete
+
+- [x] 10. Implement Community Search integration
+  - [x] 10.1 Create community search Convex function
+    - `convex/publicSearch.ts` already exists with searchCommunity function
+    - Query posts, routes, circles, opportunities, resources
+    - Return results with type icon, category badge, preview snippet
+    - _Requirements: 5.1, 5.3_
+  - [x] 10.2 Add community result badges and access control
+    - Show "Verified by Women" badge on community results
+    - Show lock icon for unauthenticated users with join prompt
+    - _Requirements: 5.4, 5.5_
+
+- [x] 11. Implement Safety Flags detection
+  - [x] 11.1 Create safety flag analyzer
+    - Implement `lib/search/safety-analyzer.ts` with detectSafetyFlags function
+    - Detect flags: Verified Content, Women-Led, Safe Space, Scam Warning, Safety Concern, Women-Focused
+    - Identify women-focused sources with heart icon badge
+    - _Requirements: 7.1, 7.3_
+  - [x] 11.2 Add safety-critical result styling
+    - Safety flags displayed on each result card
+    - Women-focused badge with heart icon
+    - _Requirements: 7.2, 7.4_
+
+- [x] 12. Build Landing Search UI component
+  - [x] 12.1 Update landing page with search-first design
+    - Display prominent search bar as primary CTA above the fold
+    - Allow immediate searching without authentication
+    - _Requirements: 11.1, 11.2, 11.3, 11.4_
+  - [x] 12.2 Add quick suggestions and trending content
+    - Display 4 quick suggestion buttons with women-focused queries
+    - Show trending content from Aurora App community
+    - Populate search input and trigger search on suggestion click
+    - _Requirements: 9.1, 9.2, 9.3, 9.4_
+  - [x] 12.3 Add privacy indicator
+    - Display "No Tracking" privacy indicator in value props section
+    - _Requirements: 6.3_
+
+- [x] 13. Build Search Results UI component
+  - [x] 13.1 Create search result card component
+    - Display title, URL, description
+    - Show bias analysis bar with color-coded indicators per result
+    - Show credibility score with label
+    - Show AI content indicator with color coding
+    - Display safety flags and women-focused badge
+    - _Requirements: 2.1, 2C.4, 3.1, 4.3, 7.1, 7.3_
+  - [x] 13.2 Add bias indicator tooltips
+    - Tooltips on hover for each metric
+    - _Requirements: 2C.5_
+  - [x] 13.3 Create result tabs (All, Web, Community)
+    - Implement tab navigation for result filtering
+    - _Requirements: 5.2_
+
+- [x] 14. Build Aurora Insights Dashboard
+  - [x] 14.1 Create insights per result (moved from aggregate dashboard)
+    - Each result shows its own bias, credibility, AI content scores
+    - Political bias and emotional tone per result
+    - _Requirements: 2.4, 2B.4, 3.5, 4.4, 7.4_
+  - [x] 14.2 Add responsive grid layout
+    - Horizontal scroll for analysis bar on mobile
+    - _Requirements: 8.5_
+  - [x] 14.3 Add low bias score recommendation
+    - Compact recommendation bar when needed
+    - _Requirements: 2.5_
+  - [x] 14.4 Add political skew recommendation
+    - Included in recommendations
+    - _Requirements: 2B.5_
+
+- [x] 15. Implement mobile-responsive search experience
+  - [x] 15.1 Add progressive loading with skeleton states
+    - Skeleton UI while loading AI summary
+    - _Requirements: 8.3_
+  - [x] 15.2 Ensure touch-friendly design
+    - Minimum 44px touch targets on interactive elements
+    - _Requirements: 8.4_
+  - [x] 15.3 Add input debouncing
+    - Debounce search input by 400ms
+    - _Requirements: 8.2_
+  - [x] 15.4 Optimize search interface response time
+    - Fast focus response
+    - _Requirements: 8.1_
+
+- [x] 16. Implement ad integration
+  - [x] 16.1 Add native ad placement
+    - Insert single native ad after 3rd result
+    - Label as "Sponsored" with distinct styling
+    - _Requirements: 10.1, 10.2, 10.3_
+  - [x]* 16.2 Write property tests for ad placement
+    - **Property 14: Ad Placement Position**
+    - **Property 15: Premium Ad Removal**
+    - **Validates: Requirements 10.1, 10.4**
+  - [x] 16.3 Hide ads for Premium users
+    - LandingAd component handles Premium check
+    - _Requirements: 10.4_
+
+- [x] 17. Implement graceful degradation
+  - [x] 17.1 Add API failure fallback
+    - Error handling in API route
+    - Community results shown as fallback
+    - _Requirements: 1.5_
+  - [x] 17.2 Add API limit handling
+    - API usage tracking in Convex
+    - Rate limiting functions available
+    - _Requirements: 12.3, 12.4_
+  - [x] 17.3 Add post-search community invitation
+    - CTA to join Aurora App after search results
+    - _Requirements: 11.5_
+
+- [x] 18. Final Checkpoint - All core features implemented
+  - All mandatory tasks complete
+  - Property tests marked as optional (*)
