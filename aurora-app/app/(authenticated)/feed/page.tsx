@@ -9,9 +9,9 @@ import { AIChatCard } from "@/components/ai-chat-card";
 import { RouteFeedCard } from "@/components/route-feed-card";
 import { ReelFeedCard } from "@/components/reel-feed-card";
 import { OpportunityFeedCard } from "@/components/opportunity-feed-card";
-import { SisterSpotlightCard, SisterSpotlightFeedCard } from "@/components/sister-spotlight-card";
+import { SisterSpotlightCard } from "@/components/sister-spotlight-card";
 import { FeedAd } from "@/components/ads/feed-ad";
-import { PostCardSkeleton } from "@/components/loading-skeleton";
+
 import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { AIChatCompanion } from "@/components/ai-chat-companion";
 import { MobileFeed } from "./mobile-feed";
@@ -31,7 +31,7 @@ import {
 import { 
   Sparkles, MapPin, Users, Target, Share2, Copy, Mail,
   ChevronDown, Flame, TrendingUp, Clock, LayoutGrid, List,
-  Shield, Heart, Briefcase, Globe, MessageSquare, ArrowRight,
+  Shield, Heart, Briefcase, MessageSquare, ArrowRight,
 } from "lucide-react";
 import { CreateOptionsModal } from "@/components/create-options-modal";
 import { PostCreateDialog } from "@/components/post-create-dialog";
@@ -308,85 +308,10 @@ export default function FeedPage() {
         </div>
       </div>
 
-      {/* Feed Content - Three-column layout (Left Nav | Feed | Right Sidebar) */}
-      <div className="max-w-[1400px] mx-auto px-4 py-4">
-        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_1fr_320px] gap-6">
-          {/* Left Sidebar - Navigation & Quick Actions (Desktop only) */}
-          <aside className="hidden lg:block space-y-4">
-            {/* User Quick Card */}
-            {user && (
-              <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-white font-bold">
-                    {user.name?.charAt(0) || "A"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-[var(--foreground)] truncate">{user.name}</p>
-                    <p className="text-xs text-[var(--muted-foreground)]">
-                      <span className="text-[var(--color-aurora-yellow)]">✦</span> {user.credits || 0} credits
-                    </p>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => setShowCreateModal(true)}
-                  className="w-full bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-purple)] text-white"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Create Post
-                </Button>
-              </div>
-            )}
-
-            {/* Navigation Links */}
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-3">
-              <nav className="space-y-1">
-                {[
-                  { href: "/feed", icon: Flame, label: "Home Feed", active: true },
-                  { href: "/map", icon: MapPin, label: "Safety Map" },
-                  { href: "/circles", icon: Users, label: "Communities" },
-                  { href: "/opportunities", icon: Briefcase, label: "Opportunities" },
-                  { href: "/health", icon: Heart, label: "Wellness" },
-                  { href: "/assistant", icon: MessageSquare, label: "AI Assistant" },
-                ].map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-                      item.active 
-                        ? "bg-[var(--color-aurora-purple)]/10 text-[var(--color-aurora-purple)]" 
-                        : "text-[var(--foreground)] hover:bg-[var(--accent)]"
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    <span className="font-medium text-sm">{item.label}</span>
-                  </Link>
-                ))}
-              </nav>
-            </div>
-
-            {/* My Communities */}
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-              <h3 className="font-bold text-sm text-[var(--foreground)] mb-3">My Communities</h3>
-              <div className="space-y-2">
-                {[
-                  { name: "c/SafetyFirst", icon: "🛡️" },
-                  { name: "c/CareerWomen", icon: "💼" },
-                  { name: "c/WellnessCircle", icon: "💗" },
-                ].map((community) => (
-                  <Link
-                    key={community.name}
-                    href="/circles"
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[var(--accent)] transition-colors"
-                  >
-                    <span>{community.icon}</span>
-                    <span className="text-sm text-[var(--foreground)]">{community.name}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </aside>
-
-          {/* Main Feed Column */}
+      {/* Feed Content - Reddit-style: Wide Feed + Right Sidebar */}
+      <div className="max-w-[1200px] mx-auto px-4 py-4">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
+          {/* Main Feed Column - Full width focus */}
           <div className="space-y-3 min-w-0">
             {/* Loading State - Fast visual feedback */}
           {feedItems === undefined && (
@@ -572,95 +497,82 @@ export default function FeedPage() {
             })}
           </div>
 
-          {/* Right Sidebar - Desktop only, Reddit-style */}
-          <aside className="hidden xl:block space-y-4">
-            {/* Safety Pulse - Compact in sidebar */}
+          {/* Right Sidebar - Desktop only, Reddit-style discovery */}
+          <aside className="hidden xl:block space-y-4 sticky top-20 self-start">
+            {/* Create Post CTA - Prominent */}
+            {user && (
+              <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-white font-bold text-sm">
+                    {user.name?.charAt(0) || "A"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-[var(--foreground)] truncate">{user.name}</p>
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      <span className="text-[var(--color-aurora-yellow)]">✦</span> {user.credits || 0} credits
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => setShowCreateModal(true)}
+                  className="w-full bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-purple)] text-white rounded-xl"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Create Post
+                </Button>
+              </div>
+            )}
+
+            {/* Safety Pulse - Compact */}
             <SafetyPulse compact />
             
             {/* Explore Communities Card */}
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden sticky top-4">
-              <div className="bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-4">
-                <h3 className="font-bold text-white flex items-center gap-2">
-                  <Users className="w-5 h-5" />
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden">
+              <div className="bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-3">
+                <h3 className="font-bold text-white flex items-center gap-2 text-sm">
+                  <Users className="w-4 h-4" />
                   Explore Communities
                 </h3>
               </div>
-              <div className="p-3 space-y-2">
+              <div className="p-3 space-y-1">
                 {[
-                  { name: "c/CareerWomen", icon: "💼", members: "12.4k", desc: "Career growth & opportunities" },
-                  { name: "c/SafetyFirst", icon: "🛡️", members: "8.2k", desc: "Safety tips & alerts" },
-                  { name: "c/WellnessCircle", icon: "💗", members: "15.1k", desc: "Health & self-care" },
-                  { name: "c/SafeTravels", icon: "✈️", members: "6.8k", desc: "Travel safety & tips" },
-                  { name: "c/MomSupport", icon: "👶", members: "9.3k", desc: "Motherhood community" },
+                  { name: "c/CareerWomen", icon: "💼", members: "12.4k" },
+                  { name: "c/SafetyFirst", icon: "🛡️", members: "8.2k" },
+                  { name: "c/WellnessCircle", icon: "💗", members: "15.1k" },
+                  { name: "c/SafeTravels", icon: "✈️", members: "6.8k" },
+                  { name: "c/MomSupport", icon: "👶", members: "9.3k" },
                 ].map((community) => (
                   <Link
                     key={community.name}
                     href="/circles"
-                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-[var(--accent)] transition-colors group"
+                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--accent)] transition-colors group"
                   >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20 flex items-center justify-center text-lg">
-                      {community.icon}
-                    </div>
+                    <span className="text-base">{community.icon}</span>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-[var(--foreground)] group-hover:text-[var(--color-aurora-purple)] transition-colors">
                         {community.name}
                       </p>
-                      <p className="text-xs text-[var(--muted-foreground)] truncate">{community.members} members</p>
                     </div>
+                    <span className="text-xs text-[var(--muted-foreground)]">{community.members}</span>
                   </Link>
                 ))}
                 <Link
                   href="/circles"
-                  className="flex items-center justify-center gap-2 p-2 mt-2 rounded-xl bg-[var(--color-aurora-purple)]/10 text-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-purple)]/20 transition-colors text-sm font-medium"
+                  className="flex items-center justify-center gap-2 p-2 mt-1 rounded-lg bg-[var(--color-aurora-purple)]/10 text-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-purple)]/20 transition-colors text-xs font-medium"
                 >
-                  View All Communities
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            </div>
-
-            {/* Quick Actions Card */}
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-              <h3 className="font-bold text-[var(--foreground)] mb-3 text-sm">Quick Actions</h3>
-              <div className="grid grid-cols-2 gap-2">
-                <Link
-                  href="/map"
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--color-aurora-mint)]/20 transition-colors group"
-                >
-                  <Shield className="w-5 h-5 text-[var(--color-aurora-mint)] group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-medium text-[var(--foreground)]">Safety Map</span>
-                </Link>
-                <Link
-                  href="/opportunities"
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--color-aurora-blue)]/20 transition-colors group"
-                >
-                  <Briefcase className="w-5 h-5 text-[var(--color-aurora-blue)] group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-medium text-[var(--foreground)]">Jobs</span>
-                </Link>
-                <Link
-                  href="/health"
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--color-aurora-pink)]/20 transition-colors group"
-                >
-                  <Heart className="w-5 h-5 text-[var(--color-aurora-pink)] group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-medium text-[var(--foreground)]">Wellness</span>
-                </Link>
-                <Link
-                  href="/assistant"
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--color-aurora-purple)]/20 transition-colors group"
-                >
-                  <MessageSquare className="w-5 h-5 text-[var(--color-aurora-purple)] group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-medium text-[var(--foreground)]">AI Help</span>
+                  View All
+                  <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
             </div>
 
             {/* Trending Topics */}
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-              <h3 className="font-bold text-[var(--foreground)] mb-3 flex items-center gap-2 text-sm">
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-3">
+              <h3 className="font-bold text-[var(--foreground)] mb-2 flex items-center gap-2 text-sm">
                 <Flame className="w-4 h-4 text-[var(--color-aurora-pink)]" />
-                Trending Now
+                Trending
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {[
                   { topic: "Remote Work Safety", posts: 234 },
                   { topic: "Salary Negotiation", posts: 189 },
@@ -668,37 +580,50 @@ export default function FeedPage() {
                   { topic: "Tech Interview Tips", posts: 142 },
                   { topic: "Self-Defense Classes", posts: 98 },
                 ].map((trend, idx) => (
-                  <div key={trend.topic} className="flex items-start gap-3">
+                  <div key={trend.topic} className="flex items-center gap-2 group cursor-pointer">
                     <span className="text-xs font-bold text-[var(--muted-foreground)] w-4">{idx + 1}</span>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-[var(--foreground)] hover:text-[var(--color-aurora-purple)] cursor-pointer transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-[var(--foreground)] group-hover:text-[var(--color-aurora-purple)] transition-colors truncate">
                         {trend.topic}
                       </p>
-                      <p className="text-xs text-[var(--muted-foreground)]">{trend.posts} posts</p>
                     </div>
+                    <span className="text-xs text-[var(--muted-foreground)]">{trend.posts}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Aurora App Info */}
-            <div className="bg-gradient-to-br from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border border-[var(--border)] rounded-2xl p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center">
-                  <Globe className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-[var(--foreground)] text-sm">Aurora App</h3>
-                  <p className="text-xs text-[var(--muted-foreground)]">Safety • Community • Growth</p>
-                </div>
+            {/* Quick Links */}
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-3">
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { href: "/map", icon: Shield, label: "Safety Map", color: "aurora-mint" },
+                  { href: "/opportunities", icon: Briefcase, label: "Jobs", color: "aurora-blue" },
+                  { href: "/health", icon: Heart, label: "Wellness", color: "aurora-pink" },
+                  { href: "/assistant", icon: MessageSquare, label: "AI Help", color: "aurora-purple" },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent)]/80 transition-colors text-xs font-medium text-[var(--foreground)]"
+                  >
+                    <item.icon className={`w-3.5 h-3.5 text-[var(--color-${item.color})]`} />
+                    {item.label}
+                  </Link>
+                ))}
               </div>
-              <p className="text-xs text-[var(--muted-foreground)] mb-3">
-                A safe space for women to share experiences, find opportunities, and support each other.
+            </div>
+
+            {/* Footer Links */}
+            <div className="text-xs text-[var(--muted-foreground)] px-2 space-y-2">
+              <div className="flex flex-wrap gap-x-3 gap-y-1">
+                <Link href="/legal/terms" className="hover:underline">Terms</Link>
+                <Link href="/legal/privacy" className="hover:underline">Privacy</Link>
+                <Link href="/legal/guidelines" className="hover:underline">Guidelines</Link>
+              </div>
+              <p className="text-[var(--muted-foreground)]/60">
+                Aurora App © 2025. Made with 💜 for women everywhere.
               </p>
-              <div className="flex items-center gap-4 text-xs text-[var(--muted-foreground)]">
-                <span>🌍 Global</span>
-                <span>💜 100k+ members</span>
-              </div>
             </div>
           </aside>
         </div>
