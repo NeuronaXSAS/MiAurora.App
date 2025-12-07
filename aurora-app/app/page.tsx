@@ -278,6 +278,7 @@ function LandingPageContent() {
             <motion.p className="text-lg sm:text-xl md:text-2xl text-[#3d0d73]/70 mb-8 max-w-3xl mx-auto leading-relaxed" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
               {t('landing.hero.subtitle')}
               <br className="hidden sm:block" />
+              <span className="sm:hidden"> </span>
               {t('landing.hero.subtitle2')}
             </motion.p>
 
