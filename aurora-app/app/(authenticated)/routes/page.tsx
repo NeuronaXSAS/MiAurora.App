@@ -27,6 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SmartAd, useIsPremium } from "@/components/ads/smart-ad";
 
 export default function RoutesPage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
@@ -37,6 +38,7 @@ export default function RoutesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
   const deleteRoute = useMutation(api.routes.deleteRoute);
+  const isPremium = useIsPremium();
 
   useEffect(() => {
     const getUserId = async () => {
@@ -306,7 +308,12 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
 
             {viewMode === "list" && filteredRoutes.length > 0 && (
               <div className="space-y-4">
-                {filteredRoutes.map((route) => (
+                {filteredRoutes.map((route, index) => (
+                  <>
+                  {/* Show ad every 3 routes */}
+                  {index > 0 && index % 3 === 0 && (
+                    <SmartAd placement="feed" isPremium={isPremium} />
+                  )}
                   <Card key={route._id} className="hover:shadow-lg bg-[var(--card)] border-[var(--border)] transition-shadow">
                     <CardContent className="p-4 sm:p-6">
                       <div className="flex items-start justify-between gap-4">
@@ -393,6 +400,7 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
                       </div>
                     </CardContent>
                   </Card>
+                  </>
                 ))}
               </div>
             )}

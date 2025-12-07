@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ReelPlayer } from "./reel-player";
+import { ReelAd, shouldShowReelAd } from "@/components/ads/reel-ad";
+import { useIsPremium } from "@/components/ads/smart-ad";
 import { Loader2 } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
 
@@ -16,7 +18,8 @@ export function ReelsFeed({ currentUserId, sortBy = "recent" }: ReelsFeedProps) 
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [hasScrolled, setHasScrolled] = useState(false);
-  
+  const isPremium = useIsPremium();
+
   const feedData = useQuery(api.reels.getReelsFeed, {
     limit: 10,
     sortBy: sortBy === "trending" ? "trending" : "recent",
@@ -138,18 +141,35 @@ export function ReelsFeed({ currentUserId, sortBy = "recent" }: ReelsFeedProps) 
         }
       `}</style>
       
-      {reels.map((reel, index) => (
-        <div key={reel._id} data-index={index}>
-          <ReelPlayer
-            reel={reel}
-            isActive={index === activeIndex}
-            currentUserId={currentUserId}
-            onLike={() => handleLike(reel._id)}
-            onComment={() => handleComment(reel._id)}
-            onShare={() => handleShare(reel._id)}
-          />
-        </div>
-      ))}
+      {reels.map((reel, index) => {
+        // Calculate the actual index accounting for inserted ads
+        const adsBeforeThis = isPremium ? 0 : Math.floor(index / 4);
+        const actualIndex = index + adsBeforeThis;
+        
+        return (
+          <div key={reel._id}>
+            {/* Show ad every 5 items (after 4 reels) for non-premium users */}
+            {!isPremium && index > 0 && index % 4 === 0 && (
+              <div data-index={actualIndex - 1} data-type="ad">
+                <ReelAd 
+                  isActive={activeIndex === actualIndex - 1}
+                  isPremium={isPremium}
+                />
+              </div>
+            )}
+            <div data-index={actualIndex}>
+              <ReelPlayer
+                reel={reel}
+                isActive={actualIndex === activeIndex}
+                currentUserId={currentUserId}
+                onLike={() => handleLike(reel._id)}
+                onComment={() => handleComment(reel._id)}
+                onShare={() => handleShare(reel._id)}
+              />
+            </div>
+          </div>
+        );
+      })}
 
       {/* Load More Indicator */}
       {feedData?.hasMore && (

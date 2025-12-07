@@ -1,12 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { NativeAdBanner } from "./native-ad-banner";
+import { SmartAd } from "./smart-ad";
 
 interface FeedAdProps {
   isPremium?: boolean;
 }
 
+/**
+ * Feed Ad Component
+ * 
+ * Displays non-intrusive ads in the feed for free users.
+ * Premium users see no ads.
+ */
 export function FeedAd({ isPremium: propIsPremium }: FeedAdProps) {
   const [isPremium, setIsPremium] = useState(propIsPremium ?? false);
 
@@ -26,12 +32,8 @@ export function FeedAd({ isPremium: propIsPremium }: FeedAdProps) {
   if (isPremium) return null;
 
   return (
-    <div className="w-full max-w-2xl mx-auto my-4">
-      <NativeAdBanner 
-        slot="feed-native-ad"
-        format="fluid"
-        className="shadow-sm"
-      />
+    <div className="w-full max-w-2xl mx-auto">
+      <SmartAd placement="feed" isPremium={isPremium} />
     </div>
   );
 }

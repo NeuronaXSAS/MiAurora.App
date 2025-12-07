@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { OpportunityCard } from "@/components/opportunity-card";
 import { OpportunityCardSkeleton } from "@/components/loading-skeleton";
 import { OpportunityCreateDialog } from "@/components/opportunity-create-dialog";
+import { SmartAd } from "@/components/ads/smart-ad";
 import {
   Select,
   SelectContent,
@@ -177,15 +178,22 @@ export default function OpportunitiesPage() {
           {/* Opportunities Grid */}
           {opportunities && opportunities.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {opportunities.map((opportunity) => (
-                <OpportunityCard
-                  key={opportunity._id}
-                  opportunity={opportunity}
-                  isUnlocked={isUnlocked(opportunity._id)}
-                  userCredits={user?.credits || 0}
-                  currentUserId={userId || undefined}
-                  onUnlock={() => handleUnlock(opportunity._id)}
-                />
+              {opportunities.map((opportunity, index) => (
+                <div key={opportunity._id}>
+                  {/* Show ad after every 4 opportunities */}
+                  {index > 0 && index % 4 === 0 && (
+                    <div className="col-span-1 lg:col-span-2 -mx-4 lg:mx-0">
+                      <SmartAd placement="feed" isPremium={user?.isPremium} />
+                    </div>
+                  )}
+                  <OpportunityCard
+                    opportunity={opportunity}
+                    isUnlocked={isUnlocked(opportunity._id)}
+                    userCredits={user?.credits || 0}
+                    currentUserId={userId || undefined}
+                    onUnlock={() => handleUnlock(opportunity._id)}
+                  />
+                </div>
               ))}
             </div>
           )}

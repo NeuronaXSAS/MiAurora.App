@@ -1,9 +1,85 @@
-# Aurora App - Cost Optimization Guide
+# Aurora App - Cost Optimization & Revenue Guide
 
-## 🎯 Mission: $0 Budget Operation
+## 🎯 Mission: Sustainable $0 Budget Operation
 
-This document tracks all external API usage and cost optimization strategies for Aurora App.
+This document tracks all external API usage, cost optimization strategies, and revenue streams for Aurora App.
 **Critical:** We operate on free tiers only until revenue is generated.
+
+---
+
+## 💰 Revenue Streams
+
+### 1. Google AdSense (Primary)
+- **Publisher ID:** `ca-pub-9358935810206071`
+- **Status:** ✅ Configured in `app/layout.tsx`
+- **Placements:**
+  - Landing page (search results, between sections)
+  - Feed (every 5 posts for free users)
+  - Sidebar (desktop only)
+  - Footer banners
+- **Expected Revenue:** $1-5 per 1,000 impressions (RPM varies by region)
+
+### 2. Premium Subscriptions (Stripe)
+- **Plus:** $5/month (ad-free, extra credits)
+- **Pro:** $12/month (all features, priority support)
+- **Elite:** $25/month (VIP access, exclusive events)
+- **Annual Discount:** 20% off
+- **Regional Pricing:** PPP-adjusted (India 35%, Brazil 45%, etc.)
+
+### 3. Virtual Gifts & Super Chats
+- **Creator Revenue Share:** 85% to creator, 15% platform
+- **Gift Types:** 12 animated gifts (5-500 credits)
+- **Super Chats:** Pinned messages during livestreams
+
+### 4. Paid Events
+- **Host Revenue Share:** 80% to host, 20% platform
+- **Event Types:** Workshops, webinars, coaching sessions
+
+### 5. Credit Purchases
+- **Starter:** 100 credits for $1.99
+- **Popular:** 500 credits for $7.99
+- **Best Value:** 1,500 credits for $19.99
+
+### 6. B2B Intelligence (Future)
+- Safety data API for businesses
+- Workplace certification program
+- Enterprise safety dashboards
+
+---
+
+## 📍 Ad Placement Strategy
+
+### Where Ads Appear:
+| Page | Placement | Frequency |
+|------|-----------|-----------|
+| Landing | Banner after search | 1 per page |
+| Feed | In-feed native | Every 5 posts |
+| Search Results | Search ad | Position 4 |
+| Sidebar | Rectangle | 1 sticky |
+| Profile | Banner | 1 per page |
+| Routes | In-content | Every 3 routes |
+| Opportunities | Native | Every 4 listings |
+
+### Where Ads NEVER Appear:
+- Emergency/Panic pages
+- Safety resources
+- Private messages
+- Premium user sessions
+- Onboarding flow
+
+### Ad Component Usage:
+```tsx
+import { SmartAd } from "@/components/ads/smart-ad";
+
+// In feed
+<SmartAd placement="feed" isPremium={isPremium} />
+
+// In sidebar
+<SmartAd placement="sidebar" />
+
+// Banner
+<SmartAd placement="banner" />
+```
 
 ---
 

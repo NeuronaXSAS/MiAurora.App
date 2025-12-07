@@ -23,11 +23,13 @@ import {
   Award,
   Flame
 } from "lucide-react";
+import { SmartAd, useIsPremium } from "@/components/ads/smart-ad";
 
 export default function HealthPage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const router = useRouter();
+  const isPremium = useIsPremium();
 
   useEffect(() => {
     const getUserId = async () => {
@@ -230,6 +232,9 @@ export default function HealthPage() {
             <MeditationSection userId={userId} />
           </TabsContent>
         </Tabs>
+
+        {/* Banner Ad - Bottom of health page */}
+        <SmartAd placement="banner" isPremium={isPremium} />
       </div>
     </div>
   );

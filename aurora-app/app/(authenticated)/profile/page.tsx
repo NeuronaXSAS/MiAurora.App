@@ -48,6 +48,7 @@ import { HydrationTracker } from "@/components/health/hydration-tracker";
 import { EmotionalCheckin } from "@/components/health/emotional-checkin";
 import { MeditationSection } from "@/components/health/meditation-section";
 import { generateAvatarUrl, AvatarConfig } from "@/hooks/use-avatar";
+import { SmartAd, useIsPremium } from "@/components/ads/smart-ad";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { AvatarCreator } from "@/components/avatar-creator";
 import { BadgesShowcase } from "@/components/badges-showcase";
@@ -55,6 +56,7 @@ import { BadgesShowcase } from "@/components/badges-showcase";
 export default function ProfilePage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [workosId, setWorkosId] = useState<string>("");
+  const isPremium = useIsPremium();
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAvatarCreator, setShowAvatarCreator] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
@@ -550,6 +552,11 @@ export default function ProfilePage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Sidebar Ad - Desktop only */}
+            <div className="hidden lg:block">
+              <SmartAd placement="sidebar" isPremium={isPremium} />
+            </div>
           </div>
 
           {/* Center/Right Column - Wellness & Activity (Desktop: 8 cols) */}
