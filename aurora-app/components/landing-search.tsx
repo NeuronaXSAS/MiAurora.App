@@ -16,9 +16,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Search, X, Globe, ExternalLink, Brain, Heart, 
+  Search, X, Globe, ExternalLink, Heart, 
   Loader2, Shield, Clock, Bot, Scale, Building2, Newspaper, ImageIcon,
-  Flame, ArrowRight, Eye, Zap, PlayCircle, Lightbulb, Leaf, Sparkles
+  Flame, ArrowRight, Eye, Zap, PlayCircle, Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -76,7 +76,7 @@ const QUICK_CATEGORIES = [
 ];
 
 export function LandingSearch() {
-  const { locale } = useLocale();
+  useLocale(); // Keep context active for child components
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -263,47 +263,68 @@ export function LandingSearch() {
             </div>
 
             {/* News Results */}
-            {(activeTab === "all" || activeTab === "news") && newsResults.length > 0 && (
+            {(activeTab === "all" || activeTab === "news") && (
               <div>
                 <h4 className="text-sm font-semibold text-[var(--foreground)] mb-2 flex items-center gap-2">
                   <Newspaper className="w-4 h-4 text-[var(--color-aurora-purple)]" /> Latest News
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {newsResults.slice(0, activeTab === "news" ? undefined : 3).map((news) => (
-                    <NewsCard key={news.id} news={news} />
-                  ))}
-                </div>
+                {newsResults.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {newsResults.slice(0, activeTab === "news" ? undefined : 3).map((news) => (
+                      <NewsCard key={news.id} news={news} />
+                    ))}
+                  </div>
+                ) : activeTab === "news" ? (
+                  <div className="text-center py-8 text-[var(--muted-foreground)]">
+                    <Newspaper className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No news results for this search</p>
+                  </div>
+                ) : null}
               </div>
             )}
 
             {/* Images Results */}
-            {(activeTab === "all" || activeTab === "images") && imageResults.length > 0 && (
+            {(activeTab === "all" || activeTab === "images") && (
               <div>
                 <h4 className="text-sm font-semibold text-[var(--foreground)] mb-2 flex items-center gap-2">
                   <ImageIcon className="w-4 h-4 text-[var(--color-aurora-pink)]" /> Images
                 </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {imageResults.slice(0, activeTab === "images" ? undefined : 4).map((img) => (
-                    <a key={img.id} href={img.url} target="_blank" rel="noopener noreferrer"
-                      className="aspect-square rounded-xl overflow-hidden bg-[var(--accent)] hover:opacity-90 transition-opacity">
-                      {img.thumbnail && <img src={img.thumbnail} alt={img.title} className="w-full h-full object-cover" />}
-                    </a>
-                  ))}
-                </div>
+                {imageResults.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {imageResults.slice(0, activeTab === "images" ? undefined : 4).map((img) => (
+                      <a key={img.id} href={img.url} target="_blank" rel="noopener noreferrer"
+                        className="aspect-square rounded-xl overflow-hidden bg-[var(--accent)] hover:opacity-90 transition-opacity">
+                        {img.thumbnail && <img src={img.thumbnail} alt={img.title} className="w-full h-full object-cover" />}
+                      </a>
+                    ))}
+                  </div>
+                ) : activeTab === "images" ? (
+                  <div className="text-center py-8 text-[var(--muted-foreground)]">
+                    <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No image results for this search</p>
+                  </div>
+                ) : null}
               </div>
             )}
 
             {/* Video Results */}
-            {(activeTab === "all" || activeTab === "videos") && videoResults.length > 0 && (
+            {(activeTab === "all" || activeTab === "videos") && (
               <div>
                 <h4 className="text-sm font-semibold text-[var(--foreground)] mb-2 flex items-center gap-2">
                   <PlayCircle className="w-4 h-4 text-[var(--color-aurora-blue)]" /> Videos
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {videoResults.slice(0, activeTab === "videos" ? undefined : 2).map((video, i) => (
-                    <VideoResultCard key={video.id} video={video} index={i} />
-                  ))}
-                </div>
+                {videoResults.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {videoResults.slice(0, activeTab === "videos" ? undefined : 2).map((video, i) => (
+                      <VideoResultCard key={video.id} video={video} index={i} />
+                    ))}
+                  </div>
+                ) : activeTab === "videos" ? (
+                  <div className="text-center py-8 text-[var(--muted-foreground)]">
+                    <PlayCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No video results for this search</p>
+                  </div>
+                ) : null}
               </div>
             )}
 

@@ -19,11 +19,12 @@ interface AuroraVerifiedBadgeProps {
   className?: string;
 }
 
+// Renamed to reflect algorithmic analysis, NOT community verification
 const LEVEL_CONFIG = {
   gold: {
     icon: Award,
-    label: "Gold Verified",
-    description: "Highest trust - verified by Aurora App team",
+    label: "Official Source",
+    description: "Official women's organization or government health site",
     bgColor: "bg-amber-500/20",
     textColor: "text-amber-600",
     borderColor: "border-amber-500/30",
@@ -31,8 +32,8 @@ const LEVEL_CONFIG = {
   },
   silver: {
     icon: Star,
-    label: "Silver Verified",
-    description: "High trust - verified by trusted community members",
+    label: "High Trust",
+    description: "Women-focused source with high credibility score",
     bgColor: "bg-slate-400/20",
     textColor: "text-slate-500",
     borderColor: "border-slate-400/30",
@@ -40,21 +41,21 @@ const LEVEL_CONFIG = {
   },
   bronze: {
     icon: CheckCircle,
-    label: "Bronze Verified",
-    description: "Verified - community consensus",
-    bgColor: "bg-orange-400/20",
-    textColor: "text-orange-500",
-    borderColor: "border-orange-400/30",
-    glow: "shadow-orange-400/20",
+    label: "Credible",
+    description: "Source meets credibility threshold (70+)",
+    bgColor: "bg-[var(--color-aurora-mint)]/30",
+    textColor: "text-[var(--color-aurora-violet)]",
+    borderColor: "border-[var(--color-aurora-mint)]/50",
+    glow: "shadow-[var(--color-aurora-mint)]/20",
   },
   community: {
     icon: Sparkles,
-    label: "Community Pick",
-    description: "Recommended by Aurora App community",
-    bgColor: "bg-[var(--color-aurora-purple)]/20",
-    textColor: "text-[var(--color-aurora-purple)]",
-    borderColor: "border-[var(--color-aurora-purple)]/30",
-    glow: "shadow-[var(--color-aurora-purple)]/20",
+    label: "Women-Focused",
+    description: "Content specifically addresses women's perspectives",
+    bgColor: "bg-[var(--color-aurora-pink)]/20",
+    textColor: "text-[var(--color-aurora-pink)]",
+    borderColor: "border-[var(--color-aurora-pink)]/30",
+    glow: "shadow-[var(--color-aurora-pink)]/20",
   },
 };
 

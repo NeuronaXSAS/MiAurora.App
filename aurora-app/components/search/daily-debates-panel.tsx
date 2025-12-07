@@ -285,39 +285,7 @@ export function DailyDebatesPanel({ userId }: DailyDebatesPanelProps) {
         )}
       </div>
 
-      {/* Pseudonym Prompt Modal */}
-      <AnimatePresence>
-        {showPseudonymPrompt && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="p-4 rounded-xl bg-gradient-to-r from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20 border border-[var(--border)]"
-          >
-            <p className="font-medium text-[var(--foreground)] mb-3">{t.enterPseudonym}</p>
-            <div className="flex gap-2">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
-                <span className="text-xl">{countryFlag}</span>
-              </div>
-              <input
-                type="text"
-                value={pseudonym}
-                onChange={(e) => setPseudonym(e.target.value)}
-                placeholder={t.pseudonymPlaceholder}
-                className="flex-1 h-10 px-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)]"
-                maxLength={20}
-              />
-              <Button
-                onClick={handlePseudonymSubmit}
-                disabled={!pseudonym.trim()}
-                className="bg-[var(--color-aurora-purple)]"
-              >
-                {t.startDebating}
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Pseudonym prompt removed - now handled inline in each DebateCard */}
 
       {/* Gamified Message Toast for Anonymous Users */}
       <AnimatePresence>
