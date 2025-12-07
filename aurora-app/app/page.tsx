@@ -830,8 +830,10 @@ function LandingPageContent() {
       <footer className="border-t border-[#5537a7]/10 bg-[#fffaf1] py-12 relative">
         <div className="absolute top-0 left-0 right-0"><GlowingLine /></div>
         <div className="max-w-6xl mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div className="md:col-span-2">
+          {/* Main Footer Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 mb-10">
+            {/* Brand Column - spans 2 on mobile, full width intro */}
+            <div className="col-span-2 sm:col-span-3 lg:col-span-2">
               <div className="flex items-center gap-3 mb-4">
                 <Image src="/Au_Logo_1.png" alt="Aurora App" width={44} height={44} className="rounded-xl" />
                 <span className="text-lg font-bold text-[#3d0d73]">Aurora App</span>
@@ -840,67 +842,67 @@ function LandingPageContent() {
               <p className="text-[#3d0d73]/60 text-sm mb-4 max-w-sm">
                 The future of social networking. Non-toxic AI. Privacy-first. Built by women, for women.
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge className="bg-[#d6f4ec] text-[#3d0d73] border-0 text-xs"><Cpu className="w-3 h-3 mr-1 inline" />Ethical AI</Badge>
                 <Badge className="bg-[#f29de5]/20 text-[#5537a7] border-0 text-xs">💜 Women-First</Badge>
+                <Badge className="bg-[#5537a7]/10 text-[#5537a7] border-0 text-xs"><Shield className="w-3 h-3 mr-1 inline" />Safety-First</Badge>
               </div>
             </div>
+
+            {/* Safety Column */}
             <div>
-              <h4 className="font-bold text-[#3d0d73] mb-4">Safety</h4>
+              <h4 className="font-bold text-[#3d0d73] mb-3 text-sm">Safety</h4>
               <ul className="space-y-2 text-sm text-[#3d0d73]/60">
-                <li>Safety Intelligence</li>
-                <li>Safe Routes</li>
-                <li>Panic Button</li>
-                <li>Safety Check-ins</li>
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Safety Intelligence</li>
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Safe Routes</li>
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Panic Button</li>
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Safety Check-ins</li>
               </ul>
             </div>
+
+            {/* Wellness Column */}
             <div>
-              <h4 className="font-bold text-[#3d0d73] mb-4">Features</h4>
+              <h4 className="font-bold text-[#3d0d73] mb-3 text-sm">Wellness</h4>
               <ul className="space-y-2 text-sm text-[#3d0d73]/60">
-                <li>Aurora AI Companion</li>
-                <li>Wellness Hub</li>
-                <li>Support Circles</li>
-                <li>Opportunities</li>
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Cycle Tracking</li>
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Hydration</li>
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Mood Journal</li>
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Meditation</li>
+              </ul>
+            </div>
+
+            {/* Community Column */}
+            <div>
+              <h4 className="font-bold text-[#3d0d73] mb-3 text-sm">Community</h4>
+              <ul className="space-y-2 text-sm text-[#3d0d73]/60">
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Support Circles</li>
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Aurora AI</li>
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Sister Network</li>
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Mentorship</li>
+              </ul>
+            </div>
+
+            {/* Opportunities Column */}
+            <div>
+              <h4 className="font-bold text-[#3d0d73] mb-3 text-sm">Opportunities</h4>
+              <ul className="space-y-2 text-sm text-[#3d0d73]/60">
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Job Matching</li>
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Career Growth</li>
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Credit Economy</li>
+                <li className="hover:text-[#5537a7] transition-colors cursor-default">Financial Tools</li>
               </ul>
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8 pt-6 border-t border-[#5537a7]/10">
-            <div>
-              <h4 className="font-bold text-[#3d0d73] mb-3 text-sm">Wellness</h4>
-              <ul className="space-y-1.5 text-xs text-[#3d0d73]/60">
-                <li>Cycle Tracking</li>
-                <li>Hydration</li>
-                <li>Mood Journal</li>
-                <li>Meditation</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-[#3d0d73] mb-3 text-sm">Community</h4>
-              <ul className="space-y-1.5 text-xs text-[#3d0d73]/60">
-                <li>Private Circles</li>
-                <li>Daily Debates</li>
-                <li>Sister Network</li>
-                <li>Mentorship</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-[#3d0d73] mb-3 text-sm">Finance</h4>
-              <ul className="space-y-1.5 text-xs text-[#3d0d73]/60">
-                <li>Credit Economy</li>
-                <li>Financial Tools</li>
-                <li>Job Matching</li>
-                <li>Career Growth</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-[#3d0d73] mb-3 text-sm">Legal</h4>
-              <ul className="space-y-1.5 text-xs text-[#3d0d73]/60">
-                <li><Link href="/legal/privacy" className="hover:text-[#5537a7] transition-colors">Privacy Policy</Link></li>
-                <li><Link href="/legal/terms" className="hover:text-[#5537a7] transition-colors">Terms of Service</Link></li>
-                <li><Link href="/legal/cookies" className="hover:text-[#5537a7] transition-colors">Cookie Policy</Link></li>
-                <li><Link href="/legal/community" className="hover:text-[#5537a7] transition-colors">Community Guidelines</Link></li>
-              </ul>
-            </div>
+
+          {/* Legal Links Row */}
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 py-6 border-t border-[#5537a7]/10 text-sm text-[#3d0d73]/60">
+            <Link href="/legal/privacy" className="hover:text-[#5537a7] transition-colors">Privacy Policy</Link>
+            <span className="hidden sm:inline text-[#5537a7]/20">•</span>
+            <Link href="/legal/terms" className="hover:text-[#5537a7] transition-colors">Terms of Service</Link>
+            <span className="hidden sm:inline text-[#5537a7]/20">•</span>
+            <Link href="/legal/cookies" className="hover:text-[#5537a7] transition-colors">Cookie Policy</Link>
+            <span className="hidden sm:inline text-[#5537a7]/20">•</span>
+            <Link href="/legal/community" className="hover:text-[#5537a7] transition-colors">Community Guidelines</Link>
           </div>
           <div className="border-t border-[#5537a7]/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-[#3d0d73]/50">© 2024 Aurora App. Made with 💜 for women everywhere.</p>
