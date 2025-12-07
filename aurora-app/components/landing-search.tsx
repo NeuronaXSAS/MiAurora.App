@@ -605,9 +605,6 @@ function SearchResultCard({ result, index }: { result: WebSearchResult; index: n
                 <Heart className="w-2.5 h-2.5 mr-0.5" /> Women
               </Badge>
             )}
-            <Badge className="text-[9px] border-0 h-5 px-1.5" style={{ backgroundColor: `${freshness.color}20`, color: freshness.color }}>
-              <Clock className="w-2.5 h-2.5 mr-0.5" /> {freshness.label}
-            </Badge>
           </div>
 
           {/* Title and description */}
