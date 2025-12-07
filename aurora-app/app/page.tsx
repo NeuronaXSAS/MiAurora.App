@@ -407,19 +407,19 @@ function LandingPageContent() {
       </section>
 
       {/* Stats Bar - Futuristic */}
-      <section className="relative py-8 bg-[#3d0d73] overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#5537a720_1px,transparent_1px)] bg-[size:20px_20px] sm:bg-[size:30px_30px] md:bg-[size:40px_40px]" />
+      <section className="relative py-6 sm:py-8 bg-[#3d0d73] overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#5537a720_1px,transparent_1px)] bg-[size:40px_40px]" />
         <GlowingLine className="absolute top-0 left-0 right-0" />
         <GlowingLine className="absolute bottom-0 left-0 right-0" />
         <div className="relative max-w-6xl mx-auto px-4">
-          <div className="flex items-center justify-center gap-8 md:gap-16">
+          <div className="grid grid-cols-4 gap-2 sm:gap-4 md:gap-8">
             {stats.map((stat, i) => (
               <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="text-center group">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <stat.icon className="w-4 h-4 text-[#f29de5] opacity-70" />
-                  <p className="text-2xl md:text-3xl font-black text-white">{stat.value}</p>
+                <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1">
+                  <stat.icon className="w-3 h-3 sm:w-4 sm:h-4 text-[#f29de5] opacity-70" />
+                  <p className="text-lg sm:text-2xl md:text-3xl font-black text-white">{stat.value}</p>
                 </div>
-                <p className="text-white/50 text-xs md:text-sm uppercase tracking-wider">{stat.label}</p>
+                <p className="text-white/50 text-[10px] sm:text-xs md:text-sm uppercase tracking-wider">{stat.label}</p>
               </motion.div>
             ))}
           </div>
