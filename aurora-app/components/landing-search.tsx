@@ -39,14 +39,14 @@ interface WebSearchResult {
   age?: string;
   aiContentScore?: number;
   biasScore?: number;
-  credibilityScore?: number;
+  // credibilityScore can be a number OR an object {score, label, factors} from API
+  credibilityScore?: number | { score: number; label: string; factors?: unknown };
   biasAnalysis?: {
     genderBias: { score: number; label: string };
     politicalBias?: { indicator: string; confidence: number };
     commercialBias?: { score: number; hasAffiliateLinks: boolean; isSponsored: boolean };
     emotionalTone?: string;
   };
-  credibilityScore2?: { score: number; label: string };
   aiContentDetection?: { percentage: number; label: string; color: string };
   isWomenFocused: boolean;
   safetyFlags: string[];
@@ -414,7 +414,10 @@ export function LandingSearch() {
 function SearchResultCard({ result, index }: { result: WebSearchResult; index: number }) {
   const aiScore = result.aiContentScore ?? result.aiContentDetection?.percentage ?? 0;
   const biasScore = result.biasScore ?? result.biasAnalysis?.genderBias?.score ?? 50;
-  const credScore = result.credibilityScore ?? result.credibilityScore2?.score ?? 50;
+  // Handle credibilityScore being either a number or an object {score, label, factors}
+  const credScore = typeof result.credibilityScore === 'number' 
+    ? result.credibilityScore 
+    : (result.credibilityScore?.score ?? 50);
   const politicalBias = result.biasAnalysis?.politicalBias?.indicator || "Center";
   const emotionalTone = result.biasAnalysis?.emotionalTone || "Neutral";
   
