@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "convex/react";
+import { useState, useMemo } from "react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  Clock,
+  Trash2,
 } from "lucide-react";
 import { format, subMonths, addMonths, startOfMonth, endOfMonth } from "date-fns";
 
@@ -44,7 +46,7 @@ const DIMENSION_EMOJIS: Record<string, string> = {
 
 export function LifeEntriesViewer({ userId, open, onOpenChange }: LifeEntriesViewerProps) {
   const [viewMonth, setViewMonth] = useState(new Date());
-  const [selectedEntry, setSelectedEntry] = useState<string | null>(null);
+  const [selectedEntryId, setSelectedEntryId] = useState<Id<"lifeEntries"> | null>(null);
 
   const monthStart = format(startOfMonth(viewMonth), "yyyy-MM-dd");
   const monthEnd = format(endOfMonth(viewMonth), "yyyy-MM-dd");
@@ -56,11 +58,37 @@ export function LifeEntriesViewer({ userId, open, onOpenChange }: LifeEntriesVie
   });
 
   const entryDetail = useQuery(
-    api.lifeCanvas.getLifeEntry,
-    selectedEntry ? { userId, date: selectedEntry } : "skip"
+    api.lifeCanvas.getLifeEntryById,
+    selectedEntryId ? { entryId: selectedEntryId } : "skip"
   );
 
-  const sortedEntries = entries?.sort((a, b) => b.date.localeCompare(a.date)) || [];
+  const deleteEntry = useMutation(api.lifeCanvas.deleteLifeEntry);
+
+  // Group entries by date and sort
+  const groupedEntries = useMemo(() => {
+    if (!entries) return [];
+    
+    const groups = new Map<string, typeof entries>();
+    entries.forEach((entry) => {
+      const existing = groups.get(entry.date) || [];
+      groups.set(entry.date, [...existing, entry]);
+    });
+
+    // Sort groups by date descending, entries within group by createdAt descending
+    return Array.from(groups.entries())
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([date, dayEntries]) => ({
+        date,
+        entries: dayEntries.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
+      }));
+  }, [entries]);
+
+  const handleDeleteEntry = async (entryId: Id<"lifeEntries">) => {
+    if (confirm("Are you sure you want to delete this entry?")) {
+      await deleteEntry({ entryId });
+      setSelectedEntryId(null);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -99,18 +127,27 @@ export function LifeEntriesViewer({ userId, open, onOpenChange }: LifeEntriesVie
 
           {/* Entries List or Detail View */}
           <div className="flex-1 overflow-y-auto p-4">
-            {selectedEntry && entryDetail ? (
+            {selectedEntryId && entryDetail ? (
               // Detail View
               <div className="space-y-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedEntry(null)}
-                  className="mb-2"
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1" />
-                  Back to list
-                </Button>
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedEntryId(null)}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Back to list
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteEntry(selectedEntryId)}
+                    className="text-[var(--color-aurora-salmon)] hover:text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
 
                 <Card className="bg-[var(--accent)] border-[var(--border)]">
                   <CardHeader className="pb-2">
@@ -118,6 +155,12 @@ export function LifeEntriesViewer({ userId, open, onOpenChange }: LifeEntriesVie
                       <Calendar className="w-4 h-4 text-[var(--color-aurora-purple)]" />
                       {format(new Date(entryDetail.date), "EEEE, MMMM d, yyyy")}
                     </CardTitle>
+                    {entryDetail.createdAt && (
+                      <p className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {format(new Date(entryDetail.createdAt), "h:mm a")}
+                      </p>
+                    )}
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Mood & Energy */}
@@ -219,50 +262,70 @@ export function LifeEntriesViewer({ userId, open, onOpenChange }: LifeEntriesVie
                 </Card>
               </div>
             ) : (
-              // List View
-              <div className="space-y-3">
-                {sortedEntries.length > 0 ? (
-                  sortedEntries.map((entry) => (
-                    <button
-                      key={entry._id}
-                      onClick={() => setSelectedEntry(entry.date)}
-                      className="w-full text-left p-4 rounded-xl bg-[var(--accent)] hover:bg-[var(--color-aurora-lavender)]/20 transition-colors border border-[var(--border)]"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-[var(--foreground)]">
-                          {format(new Date(entry.date), "EEEE, MMM d")}
+              // List View - Grouped by date
+              <div className="space-y-4">
+                {groupedEntries.length > 0 ? (
+                  groupedEntries.map(({ date, entries: dayEntries }) => (
+                    <div key={date}>
+                      {/* Date Header */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-semibold text-[var(--foreground)]">
+                          {format(new Date(date), "EEEE, MMM d")}
                         </span>
-                        <div className="flex items-center gap-2">
-                          {entry.mood && (
-                            <span className="text-lg">{MOOD_EMOJIS[entry.mood - 1]}</span>
-                          )}
-                          {entry.intensityScore !== undefined && entry.intensityScore > 0 && (
-                            <div className="flex gap-0.5">
-                              {Array.from({ length: entry.intensityScore }).map((_, i) => (
-                                <div
-                                  key={i}
-                                  className="w-2 h-2 rounded-full bg-[var(--color-aurora-pink)]"
-                                />
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          {dayEntries.length} {dayEntries.length === 1 ? "entry" : "entries"}
+                        </Badge>
                       </div>
-                      {entry.journalText && (
-                        <p className="text-sm text-[var(--muted-foreground)] line-clamp-2">
-                          {entry.journalText}
-                        </p>
-                      )}
-                      {entry.dimensions && entry.dimensions.length > 0 && (
-                        <div className="flex gap-1 mt-2">
-                          {entry.dimensions.slice(0, 4).map((dim) => (
-                            <span key={dim} className="text-sm">
-                              {DIMENSION_EMOJIS[dim]}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </button>
+                      
+                      {/* Entries for this date */}
+                      <div className="space-y-2 ml-2 border-l-2 border-[var(--color-aurora-lavender)]/30 pl-3">
+                        {dayEntries.map((entry) => (
+                          <button
+                            key={entry._id}
+                            onClick={() => setSelectedEntryId(entry._id)}
+                            className="w-full text-left p-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--color-aurora-lavender)]/20 transition-colors border border-[var(--border)]"
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              {entry.createdAt && (
+                                <span className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {format(new Date(entry.createdAt), "h:mm a")}
+                                </span>
+                              )}
+                              <div className="flex items-center gap-2">
+                                {entry.mood && (
+                                  <span className="text-lg">{MOOD_EMOJIS[entry.mood - 1]}</span>
+                                )}
+                                {entry.intensityScore !== undefined && entry.intensityScore > 0 && (
+                                  <div className="flex gap-0.5">
+                                    {Array.from({ length: entry.intensityScore }).map((_, i) => (
+                                      <div
+                                        key={i}
+                                        className="w-2 h-2 rounded-full bg-[var(--color-aurora-pink)]"
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            {entry.journalText && (
+                              <p className="text-sm text-[var(--muted-foreground)] line-clamp-2">
+                                {entry.journalText}
+                              </p>
+                            )}
+                            {entry.dimensions && entry.dimensions.length > 0 && (
+                              <div className="flex gap-1 mt-1">
+                                {entry.dimensions.slice(0, 4).map((dim) => (
+                                  <span key={dim} className="text-sm">
+                                    {DIMENSION_EMOJIS[dim]}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))
                 ) : (
                   <div className="text-center py-12">

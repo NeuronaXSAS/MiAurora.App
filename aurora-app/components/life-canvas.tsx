@@ -93,19 +93,16 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
   
   const yearStart = `${viewYear}-01-01`;
   const yearEnd = `${viewYear}-12-31`;
-  const entries = useQuery(api.lifeCanvas.getLifeEntries, {
+  
+  // Use aggregated intensities for the calendar grid
+  const dailyIntensities = useQuery(api.lifeCanvas.getDailyIntensities, {
     userId,
     startDate: yearStart,
     endDate: yearEnd,
   });
 
-  const selectedEntry = useQuery(
-    api.lifeCanvas.getLifeEntry,
-    selectedDate ? { userId, date: selectedDate } : "skip"
-  );
-
   // Mutations
-  const upsertEntry = useMutation(api.lifeCanvas.upsertLifeEntry);
+  const createEntry = useMutation(api.lifeCanvas.createLifeEntry);
   const updateSettings = useMutation(api.lifeCanvas.updateLifeSettings);
 
   // Initialize settings form when data loads
@@ -116,20 +113,12 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
     }
   }, [lifeData]);
 
-  // Load entry data when selected
+  // Reset form when dialog closes
   useEffect(() => {
-    if (selectedEntry && showEntryDialog) {
-      setJournalText(selectedEntry.journalText || "");
-      setMood(selectedEntry.mood || null);
-      setEnergy(selectedEntry.energy || null);
-      setHydration(selectedEntry.hydrationGlasses || 0);
-      setHasPeriod(selectedEntry.hasPeriod || false);
-      setSelectedDimensions((selectedEntry.dimensions as string[]) || []);
-      setGratitude(selectedEntry.gratitude || [""]);
-    } else if (!showEntryDialog) {
+    if (!showEntryDialog) {
       resetForm();
     }
-  }, [selectedEntry, showEntryDialog]);
+  }, [showEntryDialog]);
 
   const resetForm = () => {
     setJournalText("");
@@ -141,32 +130,37 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
     setGratitude([""]);
   };
 
-  // Generate calendar grid
+  // Generate calendar grid with aggregated intensities
   const calendarData = useMemo(() => {
     const start = startOfYear(new Date(viewYear, 0, 1));
     const end = endOfYear(new Date(viewYear, 0, 1));
     const days = eachDayOfInterval({ start, end });
     
-    // Create entry map for quick lookup
-    const entryMap = new Map<string, number>();
-    entries?.forEach((e) => {
-      entryMap.set(e.date, e.intensityScore || 0);
+    // Create intensity map for quick lookup (already aggregated from backend)
+    const intensityMap = new Map<string, { intensity: number; entryCount: number }>();
+    dailyIntensities?.forEach((d) => {
+      intensityMap.set(d.date, { intensity: d.intensity, entryCount: d.entryCount });
     });
 
     // Group by week
-    const weeks: { date: Date; intensity: number; dateStr: string }[][] = [];
-    let currentWeek: { date: Date; intensity: number; dateStr: string }[] = [];
+    const weeks: { date: Date; intensity: number; entryCount: number; dateStr: string }[][] = [];
+    let currentWeek: { date: Date; intensity: number; entryCount: number; dateStr: string }[] = [];
     
     // Add empty days at start to align with week
     const firstDayOfWeek = getDay(start);
     for (let i = 0; i < firstDayOfWeek; i++) {
-      currentWeek.push({ date: new Date(0), intensity: -1, dateStr: "" });
+      currentWeek.push({ date: new Date(0), intensity: -1, entryCount: 0, dateStr: "" });
     }
 
     days.forEach((day) => {
       const dateStr = format(day, "yyyy-MM-dd");
-      const intensity = entryMap.get(dateStr) ?? 0;
-      currentWeek.push({ date: day, intensity, dateStr });
+      const dayData = intensityMap.get(dateStr);
+      currentWeek.push({ 
+        date: day, 
+        intensity: dayData?.intensity ?? 0, 
+        entryCount: dayData?.entryCount ?? 0,
+        dateStr 
+      });
       
       if (currentWeek.length === 7) {
         weeks.push(currentWeek);
@@ -177,13 +171,13 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
     // Add remaining days
     if (currentWeek.length > 0) {
       while (currentWeek.length < 7) {
-        currentWeek.push({ date: new Date(0), intensity: -1, dateStr: "" });
+        currentWeek.push({ date: new Date(0), intensity: -1, entryCount: 0, dateStr: "" });
       }
       weeks.push(currentWeek);
     }
 
     return weeks;
-  }, [viewYear, entries]);
+  }, [viewYear, dailyIntensities]);
 
   const handleDayClick = (dateStr: string) => {
     if (!dateStr) return;
@@ -198,7 +192,8 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
     if (!selectedDate) return;
 
     try {
-      await upsertEntry({
+      // Always create a new entry (multiple entries per day supported)
+      await createEntry({
         userId,
         date: selectedDate,
         journalText: journalText || undefined,
@@ -244,7 +239,7 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
       const scrollPosition = Math.max(0, (currentWeek - 10) * 14);
       scrollRef.current.scrollLeft = scrollPosition;
     }
-  }, [viewYear, entries]);
+  }, [viewYear, dailyIntensities]);
 
   const today = format(new Date(), "yyyy-MM-dd");
   const currentYear = new Date().getFullYear();
@@ -356,6 +351,13 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
                       const isToday = day.dateStr === today;
                       const isFuture = day.dateStr > today;
                       const isEmpty = day.intensity === -1;
+                      const hasEntries = day.entryCount > 0;
+                      
+                      // Build tooltip text
+                      let tooltipText = day.dateStr ? format(day.date, "MMM d, yyyy") : "";
+                      if (hasEntries) {
+                        tooltipText += ` • ${day.entryCount} ${day.entryCount === 1 ? "entry" : "entries"}`;
+                      }
                       
                       return (
                         <button
@@ -371,7 +373,7 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
                             ${!isEmpty && !isFuture ? "hover:ring-2 hover:ring-[var(--color-aurora-pink)] cursor-pointer" : ""}
                             disabled:cursor-default
                           `}
-                          title={day.dateStr ? format(day.date, "MMM d, yyyy") : ""}
+                          title={tooltipText}
                         />
                       );
                     })}
@@ -428,8 +430,11 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[var(--foreground)]">
               <PenLine className="w-5 h-5 text-[var(--color-aurora-pink)]" />
-              {selectedDate && format(new Date(selectedDate), "MMMM d, yyyy")}
+              New Entry • {selectedDate && format(new Date(selectedDate), "MMMM d, yyyy")}
             </DialogTitle>
+            <p className="text-sm text-[var(--muted-foreground)]">
+              Add as many entries as you want per day ✨
+            </p>
           </DialogHeader>
 
           <div className="space-y-5 py-4">

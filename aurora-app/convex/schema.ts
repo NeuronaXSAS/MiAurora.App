@@ -2007,9 +2007,11 @@ export default defineSchema({
   // ============================================
 
   // Life Entries - Daily journal entries for life visualization
+  // Supports MULTIPLE entries per day - intensity is sum of all entries
   lifeEntries: defineTable({
     userId: v.id("users"),
     date: v.string(), // YYYY-MM-DD format
+    createdAt: v.optional(v.number()), // Timestamp for ordering multiple entries per day (optional for legacy entries)
     
     // Core journal entry
     journalText: v.optional(v.string()), // Main diary entry (max 2000 chars)
@@ -2044,12 +2046,13 @@ export default defineSchema({
     voiceNoteStorageId: v.optional(v.id("_storage")),
     
     // Intensity score (auto-calculated based on entry completeness)
+    // For multiple entries per day, the calendar shows SUM of all entries
     intensityScore: v.optional(v.number()), // 0-4 for GitHub-style coloring
     
     // Privacy
     isPrivate: v.boolean(), // Always true for now - personal journal
   })
     .index("by_user", ["userId"])
-    .index("by_user_and_date", ["userId", "date"])
+    .index("by_user_and_date", ["userId", "date"]) // For fetching all entries for a date
     .index("by_date", ["date"]),
 });
