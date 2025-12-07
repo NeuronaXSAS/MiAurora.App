@@ -39,7 +39,6 @@ import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { NotificationsDropdown } from "@/components/notifications-dropdown";
 import { CreateOptionsModal } from "@/components/create-options-modal";
 import { PostCreateDialog } from "@/components/post-create-dialog";
 import { PollCreateDialog } from "@/components/poll-create-dialog";
@@ -233,17 +232,14 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
               <p className="text-xs text-[var(--muted-foreground)]">For women to thrive</p>
             </div>
           </Link>
-          <div className="flex items-center gap-1">
-            <NotificationsDropdown />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden min-w-[44px] min-h-[44px]"
-              onClick={() => setMobileOpen(false)}
-            >
-              <X className="w-5 h-5" />
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden min-w-[44px] min-h-[44px]"
+            onClick={() => setMobileOpen(false)}
+          >
+            <X className="w-5 h-5" />
+          </Button>
         </div>
       </div>
 

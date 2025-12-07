@@ -499,30 +499,6 @@ export default function FeedPage() {
 
           {/* Right Sidebar - Desktop only, Reddit-style discovery */}
           <aside className="hidden xl:block space-y-4 sticky top-20 self-start">
-            {/* Create Post CTA - Prominent */}
-            {user && (
-              <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center text-white font-bold text-sm">
-                    {user.name?.charAt(0) || "A"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-[var(--foreground)] truncate">{user.name}</p>
-                    <p className="text-xs text-[var(--muted-foreground)]">
-                      <span className="text-[var(--color-aurora-yellow)]">✦</span> {user.credits || 0} credits
-                    </p>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => setShowCreateModal(true)}
-                  className="w-full bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-purple)] text-white rounded-xl"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Create Post
-                </Button>
-              </div>
-            )}
-
             {/* Safety Pulse - Compact */}
             <SafetyPulse compact />
             
