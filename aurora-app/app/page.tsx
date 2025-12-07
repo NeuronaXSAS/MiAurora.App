@@ -10,7 +10,8 @@ import {
   Route, X, CheckCircle, Zap, Globe,
   ChevronRight, Brain, Smile, Ban, RefreshCw, 
   HeartHandshake, Cpu, Network, Fingerprint,
-  MapPin, Search
+  MapPin, Search, Droplets, Moon, Activity,
+  MessageCircle, Flower2, AlertTriangle
 } from "lucide-react";
 import Link from "next/link";
 
@@ -117,7 +118,7 @@ function LandingPageContent() {
   }, [dismissedPrompt]);
 
   useEffect(() => {
-    const interval = setInterval(() => setActiveFeature((prev) => (prev + 1) % 4), 4000);
+    const interval = setInterval(() => setActiveFeature((prev) => (prev + 1) % 7), 4000);
     return () => clearInterval(interval);
   }, []);
 
@@ -137,7 +138,10 @@ function LandingPageContent() {
     { id: 0, icon: Shield, title: "Safety Intelligence", subtitle: "AI-Powered Protection", desc: "Real-time safety ratings powered by community intelligence and machine learning.", color: "#f29de5", stats: "50K+ ratings" },
     { id: 1, icon: Route, title: "Safe Routes", subtitle: "Smart Navigation", desc: "GPS-tracked routes with live safety scores and real-time journey sharing.", color: "#5537a7", stats: "25K+ routes" },
     { id: 2, icon: Users, title: "Support Circles", subtitle: "Encrypted Communities", desc: "Private, encrypted communities with AI-moderated safe spaces.", color: "#5537a7", stats: "5K+ circles" },
-    { id: 3, icon: Briefcase, title: "Opportunities", subtitle: "Career Intelligence", desc: "AI-matched job listings and mentorship from verified professionals.", color: "#e5e093", stats: "2K+ jobs" }
+    { id: 3, icon: Briefcase, title: "Opportunities", subtitle: "Career Intelligence", desc: "AI-matched job listings and mentorship from verified professionals.", color: "#e5e093", stats: "2K+ jobs" },
+    { id: 4, icon: Heart, title: "Wellness Hub", subtitle: "Health Tracking", desc: "Track your cycle, hydration, mood, and meditation. AI insights for your health evolution.", color: "#f29de5", stats: "Daily tracking" },
+    { id: 5, icon: Sparkles, title: "Aurora AI", subtitle: "Your AI Companion", desc: "Personal AI assistant that understands you. Get support, advice, and companionship 24/7.", color: "#c9cef4", stats: "Always here" },
+    { id: 6, icon: AlertTriangle, title: "Panic Button", subtitle: "Emergency Response", desc: "One-tap emergency alert with offline support. Notifies your trusted contacts instantly.", color: "#ec4c28", stats: "Works offline" }
   ];
 
   const stats = [
@@ -494,49 +498,98 @@ function LandingPageContent() {
             </motion.div>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
-            <div className="space-y-3">
+          <div className="grid lg:grid-cols-2 gap-8 items-start">
+            {/* Left column - scrollable feature list */}
+            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin">
               {features.map((feature, i) => (
-                <motion.div key={feature.id} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                <motion.div key={feature.id} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
                   onClick={() => setActiveFeature(i)}
-                  className={`cursor-pointer p-5 rounded-2xl border transition-all duration-300 backdrop-blur-sm ${
+                  className={`cursor-pointer p-4 rounded-2xl border transition-all duration-300 backdrop-blur-sm ${
                     activeFeature === i 
                       ? "border-[#5537a7]/50 bg-gradient-to-r from-[#5537a7]/10 to-transparent shadow-lg shadow-[#5537a7]/10" 
                       : "border-[#3d0d73]/10 hover:border-[#5537a7]/30 bg-white/50"
                   }`}>
-                  <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${activeFeature === i ? "bg-gradient-to-br from-[#5537a7] to-[#3d0d73] shadow-lg" : "bg-[#3d0d73]/5"}`}>
-                      <feature.icon className={`w-6 h-6 transition-colors ${activeFeature === i ? "text-white" : "text-[#3d0d73]/50"}`} />
+                  <div className="flex items-start gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${
+                      activeFeature === i 
+                        ? feature.title === "Panic Button" 
+                          ? "bg-gradient-to-br from-[#ec4c28] to-[#f05a6b] shadow-lg" 
+                          : "bg-gradient-to-br from-[#5537a7] to-[#3d0d73] shadow-lg" 
+                        : "bg-[#3d0d73]/5"
+                    }`}>
+                      <feature.icon className={`w-5 h-5 transition-colors ${activeFeature === i ? "text-white" : "text-[#3d0d73]/50"}`} />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-bold text-[#3d0d73]">{feature.title}</h3>
-                        <Badge className="text-xs border-0 bg-[#3d0d73]/5 text-[#3d0d73]/70">{feature.stats}</Badge>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1 gap-2">
+                        <h3 className="font-bold text-[#3d0d73] text-sm">{feature.title}</h3>
+                        <Badge className="text-xs border-0 bg-[#3d0d73]/5 text-[#3d0d73]/70 flex-shrink-0">{feature.stats}</Badge>
                       </div>
-                      <p className="text-[#5537a7] text-sm font-medium">{feature.subtitle}</p>
-                      {activeFeature === i && <p className="text-[#3d0d73]/60 text-sm mt-2">{feature.desc}</p>}
+                      <p className="text-[#5537a7] text-xs font-medium">{feature.subtitle}</p>
+                      {activeFeature === i && <p className="text-[#3d0d73]/60 text-xs mt-2">{feature.desc}</p>}
                     </div>
-                    <ChevronRight className={`w-5 h-5 transition-all ${activeFeature === i ? "text-[#5537a7] rotate-90" : "text-[#3d0d73]/30"}`} />
+                    <ChevronRight className={`w-4 h-4 transition-all flex-shrink-0 ${activeFeature === i ? "text-[#5537a7] rotate-90" : "text-[#3d0d73]/30"}`} />
                   </div>
                 </motion.div>
               ))}
             </div>
 
-            <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="relative">
-              <div className="bg-gradient-to-br from-[#3d0d73] to-[#5537a7] rounded-3xl p-8 md:p-12 relative overflow-hidden">
+            {/* Right column - feature preview */}
+            <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="relative lg:sticky lg:top-24">
+              <div className={`rounded-3xl p-8 md:p-10 relative overflow-hidden transition-all duration-500 ${
+                activeFeature === 6 
+                  ? "bg-gradient-to-br from-[#ec4c28] to-[#f05a6b]" 
+                  : activeFeature === 4 
+                    ? "bg-gradient-to-br from-[#f29de5] to-[#5537a7]"
+                    : activeFeature === 5
+                      ? "bg-gradient-to-br from-[#c9cef4] to-[#5537a7]"
+                      : "bg-gradient-to-br from-[#3d0d73] to-[#5537a7]"
+              }`}>
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:30px_30px]" />
                 <AnimatePresence mode="wait">
                   <motion.div key={activeFeature} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="relative text-center">
-                    <div className="w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 shadow-2xl">
+                    <div className={`w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-2xl ${
+                      activeFeature === 6 ? "bg-white/20" : "bg-white/10"
+                    }`}>
                       {activeFeature === 0 && <Shield className="w-10 h-10 text-white" />}
                       {activeFeature === 1 && <Route className="w-10 h-10 text-white" />}
                       {activeFeature === 2 && <Users className="w-10 h-10 text-white" />}
                       {activeFeature === 3 && <Briefcase className="w-10 h-10 text-white" />}
+                      {activeFeature === 4 && <Heart className="w-10 h-10 text-white" />}
+                      {activeFeature === 5 && <Sparkles className="w-10 h-10 text-white" />}
+                      {activeFeature === 6 && <AlertTriangle className="w-10 h-10 text-white" />}
                     </div>
                     <h3 className="text-2xl font-bold text-white mb-3">{features[activeFeature].title}</h3>
-                    <p className="text-white/70 mb-6 max-w-sm mx-auto">{features[activeFeature].desc}</p>
+                    <p className="text-white/70 mb-4 max-w-sm mx-auto text-sm">{features[activeFeature].desc}</p>
+                    
+                    {/* Feature-specific highlights */}
+                    {activeFeature === 4 && (
+                      <div className="flex flex-wrap justify-center gap-2 mb-6">
+                        {["Cycle Tracking", "Hydration", "Mood", "Meditation"].map((item) => (
+                          <Badge key={item} className="bg-white/20 text-white border-0 text-xs">{item}</Badge>
+                        ))}
+                      </div>
+                    )}
+                    {activeFeature === 5 && (
+                      <div className="flex flex-wrap justify-center gap-2 mb-6">
+                        {["24/7 Support", "Health Insights", "Personalized"].map((item) => (
+                          <Badge key={item} className="bg-white/20 text-white border-0 text-xs">{item}</Badge>
+                        ))}
+                      </div>
+                    )}
+                    {activeFeature === 6 && (
+                      <div className="flex flex-wrap justify-center gap-2 mb-6">
+                        {["One Tap", "Offline Ready", "GPS Location"].map((item) => (
+                          <Badge key={item} className="bg-white/20 text-white border-0 text-xs">{item}</Badge>
+                        ))}
+                      </div>
+                    )}
+                    
                     <Link href="/api/auth/login">
-                      <Button className="bg-white text-[#5537a7] hover:bg-white/90 rounded-xl px-6 min-h-[48px] font-semibold">
+                      <Button className={`rounded-xl px-6 min-h-[48px] font-semibold ${
+                        activeFeature === 6 
+                          ? "bg-white text-[#ec4c28] hover:bg-white/90" 
+                          : "bg-white text-[#5537a7] hover:bg-white/90"
+                      }`}>
                         Try {features[activeFeature].title}
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
