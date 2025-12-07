@@ -1904,6 +1904,104 @@ export default defineSchema({
     .index("by_member", ["memberId"]),
 
   // ============================================
+  // HABIT TRACKER - Build positive habits, break negative ones
+  // ============================================
+
+  // User Habits - Custom habits to track
+  habits: defineTable({
+    userId: v.id("users"),
+    name: v.string(), // "No smoking", "Exercise", "Read 30min"
+    emoji: v.string(), // Visual identifier
+    type: v.union(v.literal("build"), v.literal("break")), // Build positive or break negative
+    frequency: v.union(
+      v.literal("daily"),
+      v.literal("weekly"),
+      v.literal("custom")
+    ),
+    targetDays: v.optional(v.array(v.number())), // 0-6 for custom (0=Sunday)
+    reminderTime: v.optional(v.string()), // "09:00" format
+    currentStreak: v.number(), // Current consecutive days
+    longestStreak: v.number(), // Personal best
+    totalCompletions: v.number(),
+    color: v.optional(v.string()), // Custom color for visualization
+    isActive: v.boolean(),
+    isArchived: v.optional(v.boolean()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_active", ["userId", "isActive"]),
+
+  // Habit Completions - Daily check-ins for habits
+  habitCompletions: defineTable({
+    habitId: v.id("habits"),
+    userId: v.id("users"),
+    date: v.string(), // YYYY-MM-DD
+    completed: v.boolean(),
+    note: v.optional(v.string()), // Optional reflection
+    difficulty: v.optional(v.number()), // 1-5 how hard was it today
+  })
+    .index("by_habit", ["habitId"])
+    .index("by_user_date", ["userId", "date"])
+    .index("by_habit_date", ["habitId", "date"]),
+
+  // Personal Goals - Life goals with milestones
+  personalGoals: defineTable({
+    userId: v.id("users"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    category: v.union(
+      v.literal("health"),
+      v.literal("career"),
+      v.literal("relationships"),
+      v.literal("finance"),
+      v.literal("education"),
+      v.literal("creativity"),
+      v.literal("mindfulness"),
+      v.literal("fitness"),
+      v.literal("other")
+    ),
+    targetDate: v.optional(v.string()), // YYYY-MM-DD
+    progress: v.number(), // 0-100
+    milestones: v.optional(v.array(v.object({
+      title: v.string(),
+      completed: v.boolean(),
+      completedAt: v.optional(v.number()),
+    }))),
+    isCompleted: v.boolean(),
+    completedAt: v.optional(v.number()),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_active", ["userId", "isActive"])
+    .index("by_category", ["category"]),
+
+  // Daily Affirmations - Motivational messages
+  dailyAffirmations: defineTable({
+    category: v.union(
+      v.literal("self-love"),
+      v.literal("strength"),
+      v.literal("growth"),
+      v.literal("healing"),
+      v.literal("success"),
+      v.literal("peace")
+    ),
+    text: v.string(),
+    author: v.optional(v.string()),
+    isActive: v.boolean(),
+  })
+    .index("by_category", ["category"]),
+
+  // User Affirmation History - Track which affirmations shown
+  userAffirmationHistory: defineTable({
+    userId: v.id("users"),
+    affirmationId: v.id("dailyAffirmations"),
+    shownAt: v.number(),
+    liked: v.optional(v.boolean()),
+  })
+    .index("by_user", ["userId"]),
+
+  // ============================================
   // LIFE CANVAS - Life Visualization & Daily Journal
   // GitHub-style contribution graph for life tracking
   // ============================================

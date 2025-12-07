@@ -35,6 +35,7 @@ import type * as files from "../files.js";
 import type * as financialChat from "../financialChat.js";
 import type * as gifts from "../gifts.js";
 import type * as guardians from "../guardians.js";
+import type * as habits from "../habits.js";
 import type * as health from "../health.js";
 import type * as intelligence from "../intelligence.js";
 import type * as lifeCanvas from "../lifeCanvas.js";
@@ -102,6 +103,7 @@ declare const fullApi: ApiFromModules<{
   financialChat: typeof financialChat;
   gifts: typeof gifts;
   guardians: typeof guardians;
+  habits: typeof habits;
   health: typeof health;
   intelligence: typeof intelligence;
   lifeCanvas: typeof lifeCanvas;
