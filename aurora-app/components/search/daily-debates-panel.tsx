@@ -381,6 +381,22 @@ export function DailyDebatesPanel({ userId }: DailyDebatesPanelProps) {
             anonymousId={anonymousId}
             locale={locale}
             t={t}
+            countryFlag={countryFlag}
+            onCreateAnonymous={async (name: string) => {
+              const sessionHash = await generateAnonymousSessionHash();
+              const debater = await getOrCreateDebater({
+                sessionHash,
+                pseudonym: name.trim(),
+                countryCode,
+                countryFlag,
+              });
+              if (debater) {
+                setAnonymousId(debater._id as Id<"anonymousDebaters">);
+                localStorage.setItem("aurora-debate-pseudonym", name);
+                return debater._id as Id<"anonymousDebaters">;
+              }
+              return null;
+            }}
           />
         ))}
       </div>
@@ -389,7 +405,7 @@ export function DailyDebatesPanel({ userId }: DailyDebatesPanelProps) {
 }
 
 
-// Individual Debate Card
+// Individual Debate Card with inline pseudonym prompt
 function DebateCard({
   debate,
   isExpanded,
@@ -399,6 +415,8 @@ function DebateCard({
   anonymousId,
   locale,
   t,
+  countryFlag,
+  onCreateAnonymous,
 }: {
   debate: any;
   isExpanded: boolean;
@@ -408,7 +426,14 @@ function DebateCard({
   anonymousId: Id<"anonymousDebaters"> | null;
   locale: string;
   t: any;
+  countryFlag?: string;
+  onCreateAnonymous?: (name: string) => Promise<Id<"anonymousDebaters"> | null>;
 }) {
+  const [showInlinePrompt, setShowInlinePrompt] = useState(false);
+  const [pendingVote, setPendingVote] = useState<"agree" | "disagree" | "neutral" | null>(null);
+  const [inlinePseudonym, setInlinePseudonym] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const config = CATEGORY_CONFIG[debate.category as keyof typeof CATEGORY_CONFIG];
   const Icon = config?.icon || Globe;
   const categoryLabel = config?.label[locale as keyof typeof config.label] || config?.label.en || debate.category;
@@ -417,6 +442,37 @@ function DebateCard({
   const agreePercent = total > 0 ? Math.round((debate.agreeCount / total) * 100) : 0;
   const disagreePercent = total > 0 ? Math.round((debate.disagreeCount / total) * 100) : 0;
   const neutralPercent = total > 0 ? Math.round((debate.neutralCount / total) * 100) : 0;
+
+  const handleVoteClick = (vote: "agree" | "disagree" | "neutral") => {
+    if (!userId && !anonymousId) {
+      setPendingVote(vote);
+      setShowInlinePrompt(true);
+    } else {
+      onVote(vote);
+    }
+  };
+
+  const handleInlineSubmit = async () => {
+    if (!inlinePseudonym.trim() || !pendingVote || !onCreateAnonymous) return;
+    
+    setIsSubmitting(true);
+    try {
+      const newAnonymousId = await onCreateAnonymous(inlinePseudonym);
+      if (newAnonymousId) {
+        // Small delay to let state update
+        setTimeout(() => {
+          onVote(pendingVote);
+          setShowInlinePrompt(false);
+          setPendingVote(null);
+          setInlinePseudonym("");
+        }, 100);
+      }
+    } catch (err) {
+      console.error("Failed to create anonymous debater:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Card className="bg-[var(--card)] border-[var(--border)] overflow-hidden hover:shadow-lg transition-shadow">
@@ -481,7 +537,7 @@ function DebateCard({
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onVote("agree")}
+              onClick={() => handleVoteClick("agree")}
               className="flex-1 border-[var(--color-aurora-mint)] hover:bg-[var(--color-aurora-mint)]/20"
             >
               <ThumbsUp className="w-4 h-4 mr-1 text-[var(--color-aurora-mint)]" />
@@ -490,7 +546,7 @@ function DebateCard({
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onVote("disagree")}
+              onClick={() => handleVoteClick("disagree")}
               className="flex-1 border-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/20"
             >
               <ThumbsDown className="w-4 h-4 mr-1 text-[var(--color-aurora-salmon)]" />
@@ -499,13 +555,51 @@ function DebateCard({
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onVote("neutral")}
+              onClick={() => handleVoteClick("neutral")}
               className="flex-1"
             >
               <Minus className="w-4 h-4 mr-1" />
               {debate.neutralCount}
             </Button>
           </div>
+
+          {/* Inline Pseudonym Prompt - appears right after voting attempt */}
+          <AnimatePresence>
+            {showInlinePrompt && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="p-3 rounded-xl bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border border-[var(--color-aurora-purple)]/30">
+                  <p className="text-xs font-medium text-[var(--foreground)] mb-2">
+                    {countryFlag} Quick! Enter a name to vote:
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={inlinePseudonym}
+                      onChange={(e) => setInlinePseudonym(e.target.value)}
+                      placeholder="Your name..."
+                      className="flex-1 h-9 px-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] text-sm"
+                      maxLength={20}
+                      autoFocus
+                      onKeyDown={(e) => e.key === "Enter" && handleInlineSubmit()}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleInlineSubmit}
+                      disabled={!inlinePseudonym.trim() || isSubmitting}
+                      className="bg-[var(--color-aurora-purple)] h-9 px-3"
+                    >
+                      {isSubmitting ? "..." : "Vote!"}
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Expand/Collapse Comments */}
           <button

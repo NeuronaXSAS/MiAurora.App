@@ -5,6 +5,9 @@
  * 
  * THE ANTI-TOXIC SEARCH: Get informed fast, debate constructively, continue with life.
  * Features: Web, News, Images, Videos - all with Aurora bias analysis
+ * 
+ * AI Personality: Aurora is a warm, witty guide who speaks like a trusted friend
+ * and helps foster critical thinking about search results.
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -14,9 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Search, X, Globe, ExternalLink, Brain, Heart, 
-  Loader2, Shield, Clock, Users, MessageCircle,
-  CheckCircle, Bot, Scale, Building2, Newspaper, ImageIcon,
-  Flame, ArrowRight, Eye, Zap, PlayCircle, Lightbulb
+  Loader2, Shield, Clock, Bot, Scale, Building2, Newspaper, ImageIcon,
+  Flame, ArrowRight, Eye, Zap, PlayCircle, Lightbulb, Leaf, Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -26,7 +28,6 @@ import { DailyDebatesPanel } from "@/components/search/daily-debates-panel";
 import { VideoResultCard } from "@/components/search/video-result-card";
 import { SafetyAlertBadge } from "@/components/search/safety-alert-badge";
 import { AuroraVerifiedBadge, getVerificationLevel } from "@/components/search/aurora-verified-badge";
-import { SistersSearchedBadge } from "@/components/search/sisters-searched-badge";
 import { useLocale } from "@/lib/locale-context";
 
 interface WebSearchResult {
@@ -84,9 +85,8 @@ export function LandingSearch() {
   const [videoResults, setVideoResults] = useState<VideoResult[]>([]);
   const [newsResults, setNewsResults] = useState<NewsResult[]>([]);
   const [imageResults, setImageResults] = useState<ImageResult[]>([]);
-  const [aiSummary, setAiSummary] = useState<string | null>(null);
-  const [criticalThought, setCriticalThought] = useState<string | null>(null);
-  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [aiInsight, setAiInsight] = useState<string | null>(null);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [activeTab, setActiveTab] = useState<SearchTab>("all");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -98,6 +98,7 @@ export function LandingSearch() {
   useEffect(() => {
     if (debouncedQuery.length < 2) {
       setWebResults([]); setVideoResults([]); setNewsResults([]); setImageResults([]);
+      setAiInsight(null);
       return;
     }
     const fetchResults = async () => {
@@ -115,36 +116,24 @@ export function LandingSearch() {
     fetchResults();
   }, [debouncedQuery]);
 
-  // Fetch AI summary with critical thinking prompt
+  // Generate Aurora AI insight with personality
   useEffect(() => {
     if (webResults.length > 0 && debouncedQuery) {
-      setIsLoadingSummary(true);
-      const summaryResults = webResults.slice(0, 4).map(r => ({
-        type: "web", previewTitle: r.title, previewSnippet: r.description, category: r.domain,
-      }));
-      
-      fetch("/api/ai/search-summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: debouncedQuery, results: summaryResults, language: locale }),
-      })
-        .then(res => res.json())
-        .then(data => { 
-          setAiSummary(data.summary); 
-          // Generate critical thinking question
-          setCriticalThought(generateCriticalThought(debouncedQuery, webResults));
-          setIsLoadingSummary(false); 
-        })
-        .catch(() => setIsLoadingSummary(false));
+      setIsLoadingAI(true);
+      // Generate insight locally to save API calls - Aurora speaks with personality
+      const insight = generateAuroraInsight(debouncedQuery, webResults, newsResults);
+      setTimeout(() => {
+        setAiInsight(insight);
+        setIsLoadingAI(false);
+      }, 800); // Small delay for natural feel
     } else {
-      setAiSummary(null);
-      setCriticalThought(null);
+      setAiInsight(null);
     }
-  }, [webResults, debouncedQuery, locale]);
+  }, [webResults, newsResults, debouncedQuery]);
 
   const handleClear = useCallback(() => {
     setQuery(""); setDebouncedQuery(""); setWebResults([]); setVideoResults([]);
-    setNewsResults([]); setImageResults([]); setAiSummary(null); setCriticalThought(null);
+    setNewsResults([]); setImageResults([]); setAiInsight(null);
     setActiveTab("all"); inputRef.current?.focus();
   }, []);
 
@@ -228,49 +217,44 @@ export function LandingSearch() {
         {hasResults ? (
           <motion.div key="results" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
             
-            {/* AI Summary Bar - Replaces useless purple stats bar */}
+            {/* Aurora AI Insight - Personality-driven guidance */}
             <div className="bg-[var(--color-aurora-violet)] rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
                   <Image src="/Au_Logo_1.png" alt="Aurora App" width={28} height={28} className="w-7 h-7" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Brain className="w-3.5 h-3.5 text-[var(--color-aurora-pink)]" />
-                    <span className="text-xs font-semibold text-white/90">Aurora App AI Insight</span>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[var(--color-aurora-pink)]" />
+                    <span className="text-xs font-semibold text-white/90">Aurora says...</span>
                   </div>
-                  {isLoadingSummary ? (
-                    <div className="h-4 bg-white/20 rounded animate-pulse w-3/4" />
-                  ) : (
-                    <p className="text-sm text-white/90 leading-relaxed">{aiSummary || "Analyzing results..."}</p>
-                  )}
-                  {criticalThought && !isLoadingSummary && (
-                    <div className="mt-2 pt-2 border-t border-white/20">
-                      <div className="flex items-start gap-2">
-                        <Lightbulb className="w-4 h-4 text-[var(--color-aurora-yellow)] flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-[var(--color-aurora-yellow)] italic">{criticalThought}</p>
-                      </div>
+                  {isLoadingAI ? (
+                    <div className="space-y-2">
+                      <div className="h-4 bg-white/20 rounded animate-pulse w-full" />
+                      <div className="h-4 bg-white/20 rounded animate-pulse w-3/4" />
                     </div>
+                  ) : (
+                    <p className="text-sm text-white leading-relaxed">{aiInsight}</p>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Content Type Tabs - Web, News, Images, Videos */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {/* Content Type Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {[
                 { id: "all" as SearchTab, label: "All", count: totalResults, icon: Globe },
                 { id: "web" as SearchTab, label: "Web", count: webResults.length, icon: Globe },
                 { id: "news" as SearchTab, label: "News", count: newsResults.length, icon: Newspaper },
                 { id: "images" as SearchTab, label: "Images", count: imageResults.length, icon: ImageIcon },
                 { id: "videos" as SearchTab, label: "Videos", count: videoResults.length, icon: PlayCircle },
-              ].filter(tab => tab.id === "all" || tab.count > 0).map((tab) => (
+              ].map((tab) => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-colors whitespace-nowrap min-h-[36px] ${
                     activeTab === tab.id ? "bg-[var(--color-aurora-purple)] text-white" : "bg-[var(--accent)] text-[var(--foreground)] hover:bg-[var(--color-aurora-purple)]/20"
                   }`}>
                   <tab.icon className="w-3.5 h-3.5" />
-                  {tab.label} ({tab.count})
+                  {tab.label} {tab.count > 0 && `(${tab.count})`}
                 </button>
               ))}
               <Badge className="ml-auto text-[10px] bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0 whitespace-nowrap">
@@ -327,7 +311,7 @@ export function LandingSearch() {
             {(activeTab === "all" || activeTab === "web") && (
               <div className="space-y-3">
                 {webResults.map((result, i) => (
-                  <SearchResultCard key={i} result={result} index={i} query={debouncedQuery} />
+                  <SearchResultCard key={i} result={result} index={i} />
                 ))}
               </div>
             )}
@@ -366,7 +350,7 @@ export function LandingSearch() {
               {[
                 { icon: Bot, label: "AI Detection", desc: "Spot AI content", color: "var(--color-aurora-blue)" },
                 { icon: Scale, label: "Bias Analysis", desc: "Gender & political", color: "var(--color-aurora-purple)" },
-                { icon: CheckCircle, label: "Credibility", desc: "Source trust", color: "var(--color-aurora-mint)" },
+                { icon: Shield, label: "Credibility", desc: "Source trust", color: "var(--color-aurora-mint)" },
                 { icon: Eye, label: "No Tracking", desc: "100% private", color: "var(--color-aurora-pink)" },
               ].map((item, i) => (
                 <div key={i} className="text-center p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]">
@@ -383,29 +367,80 @@ export function LandingSearch() {
   );
 }
 
-/** Generate critical thinking question based on search */
-function generateCriticalThought(query: string, results: WebSearchResult[]): string {
-  const avgCredibility = results.reduce((sum, r) => {
+
+/**
+ * Aurora AI Insight Generator - Speaks with personality like a trusted friend
+ * Fosters critical thinking without being preachy
+ */
+function generateAuroraInsight(query: string, webResults: WebSearchResult[], newsResults: NewsResult[]): string {
+  const q = query.toLowerCase();
+  const avgCredibility = webResults.reduce((sum, r) => {
     const score = typeof r.credibilityScore === 'number' ? r.credibilityScore : (r.credibilityScore?.score ?? 50);
     return sum + score;
-  }, 0) / results.length;
+  }, 0) / webResults.length;
   
-  const womenFocusedCount = results.filter(r => r.isWomenFocused).length;
-  const hasHighAI = results.some(r => (r.aiContentDetection?.percentage ?? 0) > 50);
+  const womenFocusedCount = webResults.filter(r => r.isWomenFocused).length;
+  const hasHighAI = webResults.some(r => (r.aiContentDetection?.percentage ?? 0) > 50);
+  const hasNews = newsResults.length > 0;
+  const domains = [...new Set(webResults.map(r => r.domain))];
   
-  if (avgCredibility < 50) {
-    return "💭 These sources have mixed credibility. What other perspectives might be missing?";
+  // Aurora speaks with warmth and wit
+  const greetings = [
+    "Hey there! 👋",
+    "Okay, let's see...",
+    "Interesting search!",
+    "Got it!",
+    "Here's what I found:",
+  ];
+  const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+  
+  // Context-aware insights
+  if (q.includes("news") || hasNews) {
+    if (avgCredibility < 50) {
+      return `${greeting} These news sources are a mixed bag. I'd cross-check the big claims before sharing. What's the story behind the story? 🤔`;
+    }
+    return `${greeting} Fresh news from ${domains.length} sources. Remember: headlines are designed to grab attention. The full picture is usually more nuanced. What angle might be missing?`;
   }
-  if (womenFocusedCount === 0) {
-    return "💭 No women-focused sources found. How might women's experiences differ on this topic?";
+  
+  if (q.includes("safety") || q.includes("safe")) {
+    return `${greeting} Safety info is serious business. I've flagged the most credible sources. Trust your instincts, and when in doubt, verify with official channels. You've got this! 💜`;
   }
+  
+  if (q.includes("career") || q.includes("job") || q.includes("work")) {
+    if (womenFocusedCount > 0) {
+      return `${greeting} Found ${womenFocusedCount} women-focused resources! Career advice often assumes a male default. These sources might speak more to your experience. What specific challenge are you tackling?`;
+    }
+    return `${greeting} Career advice incoming! Quick thought: most of these sources don't specifically address women's experiences. Consider how the advice might apply differently to you.`;
+  }
+  
+  if (q.includes("health") || q.includes("medical") || q.includes("symptom")) {
+    return `${greeting} Health info alert! 🏥 I've checked source credibility, but please consult a healthcare provider for personal medical decisions. Women's symptoms are often dismissed - advocate for yourself!`;
+  }
+  
   if (hasHighAI) {
-    return "💭 Some results contain AI-generated content. Consider verifying key facts from primary sources.";
+    return `${greeting} Heads up: some of these results look AI-generated. Not necessarily bad, but worth knowing! AI content can miss nuance and context. What would a human expert add?`;
   }
-  if (query.toLowerCase().includes("news")) {
-    return "💭 News can be biased. What questions would help you form your own opinion?";
+  
+  if (avgCredibility < 40) {
+    return `${greeting} Hmm, these sources are a bit sketchy on the credibility scale. I'd dig deeper before taking anything as fact. What would make you trust this info more?`;
   }
-  return "💭 What assumptions might these sources be making? Consider multiple viewpoints.";
+  
+  if (womenFocusedCount === 0) {
+    return `${greeting} Found ${webResults.length} results, but none specifically from women-focused sources. The mainstream perspective might be missing something. What would women's voices add here?`;
+  }
+  
+  if (avgCredibility > 70) {
+    return `${greeting} Good news! These sources score well on credibility. Still, no source is perfect. What assumptions might even trusted sources be making?`;
+  }
+  
+  // Default thoughtful response
+  const thoughts = [
+    `${greeting} ${webResults.length} results from ${domains.length} different sources. Diversity of sources = better picture. What's the common thread you're noticing?`,
+    `${greeting} Here's what the internet has to say. Remember: search results reflect what's popular, not necessarily what's true. What's your gut telling you?`,
+    `${greeting} Found some interesting stuff! Before diving in, ask yourself: who benefits from me believing this? Critical thinking is your superpower. 💪`,
+  ];
+  
+  return thoughts[Math.floor(Math.random() * thoughts.length)];
 }
 
 /** News Card Component */
@@ -431,8 +466,8 @@ function NewsCard({ news }: { news: NewsResult }) {
   );
 }
 
-/** Search Result Card */
-function SearchResultCard({ result, index, query }: { result: WebSearchResult; index: number; query: string }) {
+/** Search Result Card - Clean metrics, no fake data */
+function SearchResultCard({ result, index }: { result: WebSearchResult; index: number }) {
   const aiScore = result.aiContentScore ?? result.aiContentDetection?.percentage ?? 0;
   const biasScore = result.biasScore ?? result.biasAnalysis?.genderBias?.score ?? 50;
   const credScore = typeof result.credibilityScore === 'number' ? result.credibilityScore : (result.credibilityScore?.score ?? 50);
@@ -447,9 +482,21 @@ function SearchResultCard({ result, index, query }: { result: WebSearchResult; i
   const trustScore = trustScoreResult.score;
 
   const verificationLevel = getVerificationLevel(result.domain, credScore, result.isWomenFocused);
-  const communitySearchCount = Math.floor(Math.random() * 50) + 5;
-  const helpfulCount = Math.floor(communitySearchCount * 0.3);
-  const discussionCount = Math.floor(Math.random() * 10);
+
+  // Calculate sustainability score based on source longevity and credibility
+  const getSustainability = () => {
+    const age = result.age?.toLowerCase() || "";
+    let score = credScore * 0.5; // Base from credibility
+    if (age.includes("year")) score += 20;
+    else if (age.includes("month")) score += 10;
+    else if (age.includes("week")) score += 5;
+    if (result.isWomenFocused) score += 10;
+    score = Math.min(100, Math.max(0, score));
+    if (score >= 70) return { label: "Lasting", color: "var(--color-aurora-mint)", icon: "🌱" };
+    if (score >= 40) return { label: "Moderate", color: "var(--color-aurora-yellow)", icon: "🌿" };
+    return { label: "Fleeting", color: "var(--color-aurora-salmon)", icon: "🍂" };
+  };
+  const sustainability = getSustainability();
 
   const getFreshness = () => {
     if (!result.age) return { label: "Unknown", color: "var(--muted-foreground)" };
@@ -474,63 +521,51 @@ function SearchResultCard({ result, index, query }: { result: WebSearchResult; i
       {index === 3 && <LandingAd variant="search-results" className="mb-3" />}
       
       <Card className="overflow-hidden border-[var(--border)] hover:border-[var(--color-aurora-purple)]/40 hover:shadow-lg transition-all bg-[var(--card)]">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,280px]">
-          {/* Left: Content */}
-          <div className="p-4">
-            <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-              <span className="text-xs text-[var(--color-aurora-purple)] font-semibold">{result.domain}</span>
-              <SafetyAlertBadge domain={result.domain} safetyFlags={result.safetyFlags} />
-              {verificationLevel && <AuroraVerifiedBadge level={verificationLevel} />}
-              {result.isWomenFocused && !verificationLevel && (
-                <Badge className="text-[9px] bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] border-0 h-5 px-1.5">
-                  <Heart className="w-2.5 h-2.5 mr-0.5" /> Women
-                </Badge>
-              )}
-              <Badge className="text-[9px] border-0 h-5 px-1.5" style={{ backgroundColor: `${freshness.color}20`, color: freshness.color }}>
-                <Clock className="w-2.5 h-2.5 mr-0.5" /> {freshness.label}
+        <div className="p-4">
+          {/* Header badges */}
+          <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+            <span className="text-xs text-[var(--color-aurora-purple)] font-semibold">{result.domain}</span>
+            <SafetyAlertBadge domain={result.domain} safetyFlags={result.safetyFlags} />
+            {verificationLevel && <AuroraVerifiedBadge level={verificationLevel} />}
+            {result.isWomenFocused && !verificationLevel && (
+              <Badge className="text-[9px] bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] border-0 h-5 px-1.5">
+                <Heart className="w-2.5 h-2.5 mr-0.5" /> Women
               </Badge>
-            </div>
-            
-            <div className="flex items-center gap-3 mb-2">
-              <SistersSearchedBadge searchCount={communitySearchCount} helpfulCount={helpfulCount} />
-              {discussionCount > 0 && (
-                <span className="inline-flex items-center gap-1 text-[10px] text-[var(--color-aurora-purple)]">
-                  <MessageCircle className="w-3 h-3" /> {discussionCount} discussing
-                </span>
-              )}
-            </div>
-
-            <a href={result.url} target="_blank" rel="noopener noreferrer" className="group block mb-1">
-              <h3 className="font-semibold text-[var(--foreground)] group-hover:text-[var(--color-aurora-purple)] transition-colors line-clamp-2 text-base">
-                {result.title}
-              </h3>
-            </a>
-            <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mb-3 leading-relaxed">{result.description}</p>
-            <div className="flex items-center gap-3">
-              <a href={result.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-aurora-purple)] hover:underline">
-                Visit site <ExternalLink className="w-3 h-3" />
-              </a>
-              {discussionCount > 0 && (
-                <Link href={`/feed?topic=${encodeURIComponent(query)}`} className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-aurora-pink)] hover:underline">
-                  <Users className="w-3 h-3" /> See discussions
-                </Link>
-              )}
-            </div>
+            )}
+            <Badge className="text-[9px] border-0 h-5 px-1.5" style={{ backgroundColor: `${freshness.color}20`, color: freshness.color }}>
+              <Clock className="w-2.5 h-2.5 mr-0.5" /> {freshness.label}
+            </Badge>
           </div>
 
-          {/* Right: Aurora Metrics Panel */}
-          <div className="p-4 bg-[var(--accent)]/50 border-t lg:border-t-0 lg:border-l border-[var(--border)]">
-            <div className="flex items-center gap-1.5 mb-3">
+          {/* Title and description */}
+          <a href={result.url} target="_blank" rel="noopener noreferrer" className="group block mb-1">
+            <h3 className="font-semibold text-[var(--foreground)] group-hover:text-[var(--color-aurora-purple)] transition-colors line-clamp-2 text-base">
+              {result.title}
+            </h3>
+          </a>
+          <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mb-3 leading-relaxed">{result.description}</p>
+          
+          {/* Aurora Metrics - Compact 3x2 grid on desktop */}
+          <div className="p-3 rounded-xl bg-[var(--accent)]/50 border border-[var(--border)]">
+            <div className="flex items-center gap-1.5 mb-2">
               <Shield className="w-3.5 h-3.5 text-[var(--color-aurora-purple)]" />
               <span className="text-xs font-semibold text-[var(--foreground)]">Aurora Metrics</span>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
-              <MetricCard label="Trust Score" value={trustScore} max={100} color={trustScore >= 70 ? "var(--color-aurora-mint)" : trustScore >= 40 ? "var(--color-aurora-yellow)" : "var(--color-aurora-salmon)"} />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <MetricCard label="Trust" value={trustScore} max={100} color={trustScore >= 70 ? "var(--color-aurora-mint)" : trustScore >= 40 ? "var(--color-aurora-yellow)" : "var(--color-aurora-salmon)"} />
               <MetricCard label="Gender Bias" value={genderIndicator.label} emoji={genderIndicator.emoji} color={genderIndicator.color} />
               <MetricCard label="AI Content" value={`${aiScore}%`} color={aiScore > 50 ? "var(--color-aurora-salmon)" : aiScore > 20 ? "var(--color-aurora-yellow)" : "var(--color-aurora-mint)"} />
               <MetricCard label="Credibility" value={credScore} max={100} color={credScore >= 70 ? "var(--color-aurora-mint)" : credScore >= 40 ? "var(--color-aurora-yellow)" : "var(--color-aurora-salmon)"} />
-              <MetricCard label="Political" value={politicalBias} color="var(--color-aurora-blue)" className="col-span-2 lg:col-span-1" />
+              <MetricCard label="Political" value={politicalBias} color="var(--color-aurora-blue)" />
+              <MetricCard label="Sustainability" value={sustainability.label} emoji={sustainability.icon} color={sustainability.color} />
             </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 mt-3">
+            <a href={result.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-aurora-purple)] hover:underline">
+              Visit site <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
         </div>
       </Card>
@@ -538,24 +573,23 @@ function SearchResultCard({ result, index, query }: { result: WebSearchResult; i
   );
 }
 
-/** Metric Card Helper */
-function MetricCard({ label, value, max, emoji, color, className = "" }: { 
+/** Metric Card - Compact display */
+function MetricCard({ label, value, max, emoji, color }: { 
   label: string; 
   value: string | number; 
   max?: number; 
   emoji?: string; 
   color: string;
-  className?: string;
 }) {
   const numValue = typeof value === "number" ? value : null;
   const percentage = numValue && max ? (numValue / max) * 100 : null;
   
   return (
-    <div className={`p-2 rounded-lg bg-[var(--card)] border border-[var(--border)] ${className}`}>
-      <div className="text-[10px] text-[var(--muted-foreground)] mb-1">{label}</div>
-      <div className="flex items-center gap-1.5">
-        {emoji && <span className="text-sm">{emoji}</span>}
-        <span className="text-sm font-semibold" style={{ color }}>{value}{max ? `/${max}` : ""}</span>
+    <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
+      <div className="text-[10px] text-[var(--muted-foreground)] mb-0.5">{label}</div>
+      <div className="flex items-center gap-1">
+        {emoji && <span className="text-xs">{emoji}</span>}
+        <span className="text-xs font-semibold" style={{ color }}>{value}{max ? `/${max}` : ""}</span>
       </div>
       {percentage !== null && (
         <div className="mt-1 h-1 bg-[var(--accent)] rounded-full overflow-hidden">
