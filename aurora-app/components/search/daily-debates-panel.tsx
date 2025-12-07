@@ -541,16 +541,20 @@ function DebateCard({
                 className="overflow-hidden"
               >
                 <div className="p-3 rounded-xl bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border border-[var(--color-aurora-purple)]/30">
-                  <p className="text-xs font-medium text-[var(--foreground)] mb-2">
-                    {countryFlag} Quick! Enter a name to vote:
-                  </p>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-base flex-shrink-0">{countryFlag}</span>
+                    <p className="text-xs font-medium text-[var(--foreground)]">
+                      Quick! Enter a name to vote:
+                    </p>
+                  </div>
+                  {/* Stack vertically on mobile for better fit */}
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
                       value={inlinePseudonym}
                       onChange={(e) => setInlinePseudonym(e.target.value)}
                       placeholder="Your name..."
-                      className="flex-1 h-9 px-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] text-sm"
+                      className="flex-1 h-10 px-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] text-sm min-w-0"
                       maxLength={20}
                       autoFocus
                       onKeyDown={(e) => e.key === "Enter" && handleInlineSubmit()}
@@ -559,7 +563,7 @@ function DebateCard({
                       size="sm"
                       onClick={handleInlineSubmit}
                       disabled={!inlinePseudonym.trim() || isSubmitting}
-                      className="bg-[var(--color-aurora-purple)] h-9 px-3"
+                      className="bg-[var(--color-aurora-purple)] h-10 px-4 w-full sm:w-auto min-h-[44px]"
                     >
                       {isSubmitting ? "..." : "Vote!"}
                     </Button>
@@ -594,6 +598,8 @@ function DebateCard({
                 userId={userId}
                 anonymousId={anonymousId}
                 t={t}
+                countryFlag={countryFlag}
+                onCreateAnonymous={onCreateAnonymous}
               />
             </motion.div>
           )}
@@ -603,21 +609,32 @@ function DebateCard({
   );
 }
 
-// Comments Section
+// Comments Section with inline name prompt for anonymous users
 function DebateComments({
   debateId,
   userId,
   anonymousId,
   t,
+  countryFlag,
+  onCreateAnonymous,
 }: {
   debateId: Id<"dailyDebates">;
   userId?: Id<"users"> | null;
   anonymousId: Id<"anonymousDebaters"> | null;
   t: any;
+  countryFlag?: string;
+  onCreateAnonymous?: (name: string) => Promise<Id<"anonymousDebaters"> | null>;
 }) {
   const [newComment, setNewComment] = useState("");
+  const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [inlineName, setInlineName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const comments = useQuery(api.dailyDebates.getDebateComments, { debateId });
   const addComment = useMutation(api.dailyDebates.addComment);
+
+  // Check if user can comment directly
+  const canCommentDirectly = userId || anonymousId;
 
   const handleSubmit = async () => {
     if (!newComment.trim()) return;
@@ -633,32 +650,129 @@ function DebateComments({
     setNewComment("");
   };
 
+  // Handle comment attempt when not logged in
+  const handleCommentAttempt = () => {
+    if (!canCommentDirectly) {
+      setShowNamePrompt(true);
+    }
+  };
+
+  // Handle name submission then comment
+  const handleNameSubmitAndComment = async () => {
+    if (!inlineName.trim() || !newComment.trim() || !onCreateAnonymous) return;
+    
+    setIsSubmitting(true);
+    try {
+      const newAnonymousId = await onCreateAnonymous(inlineName);
+      if (newAnonymousId) {
+        // Now submit the comment
+        await addComment({
+          debateId,
+          content: newComment.trim(),
+          anonymousId: newAnonymousId,
+          memberId: undefined,
+        });
+        setNewComment("");
+        setInlineName("");
+        setShowNamePrompt(false);
+      }
+    } catch (err) {
+      console.error("Failed to create anonymous debater:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Filter top-level comments
   const topLevelComments = comments?.filter((c) => !c.parentId) || [];
 
   return (
     <div className="p-4 space-y-3 bg-[var(--accent)]/30">
-      {/* Comment Input */}
-      {(userId || anonymousId) && (
+      {/* Comment Input - Always visible */}
+      <div className="space-y-2">
+        {/* Name prompt for anonymous users */}
+        <AnimatePresence>
+          {showNamePrompt && !canCommentDirectly && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="p-3 rounded-xl bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border border-[var(--color-aurora-purple)]/30 mb-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-base flex-shrink-0">{countryFlag || "🌍"}</span>
+                  <p className="text-xs font-medium text-[var(--foreground)]">
+                    Enter your name to comment:
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={inlineName}
+                    onChange={(e) => setInlineName(e.target.value)}
+                    placeholder="Your name..."
+                    className="flex-1 h-10 px-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] text-sm min-w-0"
+                    maxLength={20}
+                    autoFocus
+                    onKeyDown={(e) => e.key === "Enter" && inlineName.trim() && handleNameSubmitAndComment()}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handleNameSubmitAndComment}
+                    disabled={!inlineName.trim() || !newComment.trim() || isSubmitting}
+                    className="bg-[var(--color-aurora-purple)] h-10 px-4 w-full sm:w-auto min-h-[44px]"
+                  >
+                    <Send className="w-4 h-4 mr-1" />
+                    {isSubmitting ? "..." : "Post"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Comment input field */}
         <div className="flex gap-2">
           <input
             type="text"
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
+            onFocus={handleCommentAttempt}
             placeholder={t.writeComment}
-            className="flex-1 h-10 px-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] text-sm"
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+            className="flex-1 h-10 px-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] text-sm min-w-0"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                if (canCommentDirectly) {
+                  handleSubmit();
+                } else if (showNamePrompt && inlineName.trim()) {
+                  handleNameSubmitAndComment();
+                }
+              }
+            }}
           />
-          <Button
-            size="sm"
-            onClick={handleSubmit}
-            disabled={!newComment.trim()}
-            className="bg-[var(--color-aurora-purple)]"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
+          {canCommentDirectly ? (
+            <Button
+              size="sm"
+              onClick={handleSubmit}
+              disabled={!newComment.trim()}
+              className="bg-[var(--color-aurora-purple)] min-h-[44px] min-w-[44px]"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() => setShowNamePrompt(true)}
+              disabled={!newComment.trim()}
+              className="bg-[var(--color-aurora-purple)] min-h-[44px] px-3"
+            >
+              <MessageSquare className="w-4 h-4 mr-1" />
+              <span className="text-xs">Add</span>
+            </Button>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Comments List */}
       <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -673,12 +787,12 @@ function DebateComments({
           >
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               {comment.authorFlag && (
-                <span className="text-sm">{comment.authorFlag}</span>
+                <span className="text-base flex-shrink-0">{comment.authorFlag}</span>
               )}
               <span className="font-medium text-sm text-[var(--foreground)]">
                 {comment.authorName}
               </span>
-              {/* Task 11.2: Member badges visible to anonymous users */}
+              {/* Member badges visible to anonymous users */}
               {comment.authorType === "member" && (
                 <Badge className="text-[9px] bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)] border-0 h-4">
                   Member
@@ -702,9 +816,9 @@ function DebateComments({
           </div>
         ))}
 
-        {topLevelComments.length === 0 && (
+        {topLevelComments.length === 0 && !showNamePrompt && (
           <p className="text-center text-sm text-[var(--muted-foreground)] py-4">
-            {t.joinDebate}
+            Be the first to share your thoughts! 💜
           </p>
         )}
       </div>
