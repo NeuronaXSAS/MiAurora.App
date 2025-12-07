@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   MessageSquare, Plus, Check, AlertCircle, 
   Shield, Briefcase, Heart, Scale, Cpu, Globe,
-  Sparkles, Clock
+  Sparkles, Clock, Bot, Lock, Calendar
 } from "lucide-react";
 
 const CATEGORIES = [
@@ -141,25 +141,59 @@ export function DailyDebatesAdmin() {
       </div>
 
       {/* Auto-generation Controls */}
-      <Card className="bg-[var(--accent)]/30 border-[var(--border)]">
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between gap-4">
+      <div className="grid md:grid-cols-2 gap-4">
+        {/* Predefined Topics (Active - Zero Cost) */}
+        <Card className="bg-[var(--color-aurora-mint)]/10 border-[var(--color-aurora-mint)]/30">
+          <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-[var(--color-aurora-purple)] mt-0.5" />
-              <div>
-                <p className="font-medium text-[var(--foreground)]">Auto-Generation</p>
-                <p className="text-sm text-[var(--muted-foreground)]">
-                  Generate all 6 debates automatically with predefined topics. 
-                  Topics rotate daily to keep content fresh.
+              <Sparkles className="w-5 h-5 text-[var(--color-aurora-mint)] mt-0.5" />
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-medium text-[var(--foreground)]">Predefined Topics</p>
+                  <Badge className="text-[9px] bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0">
+                    Active • $0
+                  </Badge>
+                </div>
+                <p className="text-sm text-[var(--muted-foreground)] mb-3">
+                  30 topics per category rotate daily. Zero API cost.
                 </p>
+                <AutoGenerateButton date={date} onSuccess={() => {
+                  setMessage({ type: "success", text: "6 debates auto-generated!" });
+                }} />
               </div>
             </div>
-            <AutoGenerateButton date={date} onSuccess={() => {
-              setMessage({ type: "success", text: "6 debates auto-generated!" });
-            }} />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* AI Generation (Future - Disabled) */}
+        <Card className="bg-[var(--accent)]/30 border-[var(--border)] opacity-60">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Bot className="w-5 h-5 text-[var(--muted-foreground)] mt-0.5" />
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-medium text-[var(--foreground)]">AI Generation</p>
+                  <Badge variant="outline" className="text-[9px]">
+                    <Lock className="w-2.5 h-2.5 mr-1" />
+                    Coming Soon
+                  </Badge>
+                </div>
+                <p className="text-sm text-[var(--muted-foreground)] mb-3">
+                  Weekly batch: 7 days of debates in 1 API call. Uses Google AI free tier.
+                </p>
+                <Button
+                  disabled
+                  variant="outline"
+                  className="min-h-[44px] opacity-50"
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Generate Week (Disabled)
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Today's Debates Status */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">

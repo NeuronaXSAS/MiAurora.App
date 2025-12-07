@@ -28,7 +28,6 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import type { Id } from "@/convex/_generated/dataModel";
 import { ResourceMonitor } from "@/components/admin/resource-monitor";
-import { DailyNewsAdmin } from "@/components/admin/daily-news-admin";
 import { DailyDebatesAdmin } from "@/components/admin/daily-debates-admin";
 import { DebatesMonitor } from "@/components/admin/debates-monitor";
 
@@ -180,19 +179,11 @@ export default function AdminDashboard() {
             <BroadcastCenter userId={userId} />
           </TabsContent>
 
-          {/* Daily News Tab - Now includes 6 Daily Debates */}
-          <TabsContent value="news" className="mt-6 space-y-6">
-            {/* Daily Debates (6 per day) */}
+          {/* Content Tab - Daily Debates Management */}
+          <TabsContent value="news" className="mt-6">
             <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardContent className="p-6">
                 <DailyDebatesAdmin />
-              </CardContent>
-            </Card>
-            
-            {/* Legacy Daily News (2 per day) */}
-            <Card className="bg-[var(--card)] border-[var(--border)]">
-              <CardContent className="p-6">
-                <DailyNewsAdmin />
               </CardContent>
             </Card>
           </TabsContent>
