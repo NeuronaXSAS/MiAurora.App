@@ -77,7 +77,8 @@ export async function getGeolocation(): Promise<GeoLocation> {
   if (cached) return cached;
   
   try {
-    const response = await fetch("http://ip-api.com/json/?fields=status,country,countryCode,city,regionName");
+    // Use HTTPS endpoint (ipapi.co is free and supports HTTPS)
+    const response = await fetch("https://ipapi.co/json/");
     
     if (!response.ok) {
       throw new Error("Geolocation API failed");
@@ -85,16 +86,17 @@ export async function getGeolocation(): Promise<GeoLocation> {
     
     const data = await response.json();
     
-    if (data.status !== "success") {
+    // ipapi.co returns different field names
+    if (data.error) {
       throw new Error("Geolocation lookup failed");
     }
     
     const location: GeoLocation = {
-      countryCode: data.countryCode || "XX",
-      countryName: data.country || "Unknown",
-      flag: countryCodeToFlag(data.countryCode || "XX"),
+      countryCode: data.country_code || data.countryCode || "XX",
+      countryName: data.country_name || data.country || "Unknown",
+      flag: countryCodeToFlag(data.country_code || data.countryCode || "XX"),
       city: data.city,
-      region: data.regionName,
+      region: data.region || data.regionName,
     };
     
     // Cache the result

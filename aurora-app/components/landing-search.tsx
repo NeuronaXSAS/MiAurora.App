@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Search, X, Globe, ExternalLink, Brain, Heart, 
-  Loader2, Sparkles, Shield, Clock,
+  Loader2, Shield, Clock,
   CheckCircle, Bot, Scale, Building2,
   Flame, ArrowRight, Eye
 } from "lucide-react";
@@ -53,19 +53,6 @@ interface WebSearchResult {
   source: "web" | "aurora";
 }
 
-interface AuroraInsights {
-  overallBiasScore?: number;
-  averageGenderBias?: number;
-  aiContentAverage?: number;
-  averageAIContent?: number;
-  credibilityAverage?: number;
-  averageCredibility?: number;
-  womenFocusedCount: number;
-  womenFocusedPercentage: number;
-  recommendation?: string;
-  recommendations?: string[];
-}
-
 interface VideoResult {
   id: string;
   title: string;
@@ -96,7 +83,6 @@ export function LandingSearch() {
   const [isSearching, setIsSearching] = useState(false);
   const [webResults, setWebResults] = useState<WebSearchResult[]>([]);
   const [videoResults, setVideoResults] = useState<VideoResult[]>([]);
-  const [insights, setInsights] = useState<AuroraInsights | null>(null);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [activeTab, setActiveTab] = useState<"all" | "web" | "videos">("all");
@@ -112,7 +98,6 @@ export function LandingSearch() {
   useEffect(() => {
     if (debouncedQuery.length < 2) {
       setWebResults([]);
-      setInsights(null);
       return;
     }
 
@@ -123,7 +108,6 @@ export function LandingSearch() {
         const data = await res.json();
         if (data.results) {
           setWebResults(data.results);
-          setInsights(data.auroraInsights);
         }
         if (data.videos) {
           setVideoResults(data.videos);
@@ -167,7 +151,6 @@ export function LandingSearch() {
     setDebouncedQuery("");
     setWebResults([]);
     setVideoResults([]);
-    setInsights(null);
     setAiSummary(null);
     setActiveTab("all");
     inputRef.current?.focus();
@@ -187,15 +170,49 @@ export function LandingSearch() {
 
   return (
     <div className="w-full max-w-5xl mx-auto">
-      {/* Compact Header */}
-      <div className="text-center mb-6">
-        <Badge className="bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white border-0 px-3 py-1 mb-3">
-          <Sparkles className="w-3 h-3 mr-1" />
-          Women-First • Bias Detection • Private
-        </Badge>
-        <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] bg-clip-text text-transparent">
-          Search Smarter, Not Harder
-        </h2>
+      {/* Beautiful Search Header - Google-level design with Aurora App branding */}
+      <div className="text-center mb-8">
+        {/* Logo + Brand */}
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="relative">
+            <img 
+              src="/Au_Logo_1.png" 
+              alt="Aurora App" 
+              className="w-12 h-12 md:w-14 md:h-14 object-contain"
+            />
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[var(--color-aurora-mint)] rounded-full flex items-center justify-center">
+              <Search className="w-2.5 h-2.5 text-[var(--color-aurora-violet)]" />
+            </div>
+          </div>
+          <div className="text-left">
+            <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-aurora-violet)] dark:text-[var(--color-aurora-cream)]">
+              Aurora App
+            </h1>
+            <p className="text-xs text-[var(--color-aurora-purple)] font-medium tracking-wide">
+              SEARCH ENGINE
+            </p>
+          </div>
+        </div>
+        
+        {/* Tagline */}
+        <p className="text-sm md:text-base text-[var(--muted-foreground)] mb-3 max-w-md mx-auto">
+          The world's first search engine designed for women.
+          <br className="hidden md:block" />
+          <span className="text-[var(--color-aurora-purple)] font-medium">See the truth behind every result.</span>
+        </p>
+        
+        {/* Feature Pills */}
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] text-xs font-medium">
+            <Shield className="w-3 h-3" /> Bias Detection
+          </span>
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] text-xs font-medium">
+            <Heart className="w-3 h-3" /> Women-First
+          </span>
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)] text-xs font-medium">
+            <Eye className="w-3 h-3" /> 100% Private
+          </span>
+        </div>
       </div>
 
       {/* Search Input */}
