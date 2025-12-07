@@ -19,7 +19,7 @@ import { ImmersiveFeed } from "@/components/immersive-feed";
 import { MobilePostCard } from "@/components/mobile-post-card";
 import { SisterSpotlightCompact, SisterSpotlightFeedCard } from "@/components/sister-spotlight-card";
 import { GuardianDiscoveryCard } from "@/components/guardian-discovery-card";
-import { ConversationTracker, ConversationTrackerButton } from "@/components/conversation-tracker";
+
 import { 
   Sparkles, 
   ChevronDown, 
@@ -175,7 +175,6 @@ export function MobileFeed() {
   const [isPremium, setIsPremium] = useState(false);
   const [viewMode, setViewMode] = useState<FeedViewMode>("cards");
   const [visibleItems, setVisibleItems] = useState(10); // Progressive loading
-  const [showConversationTracker, setShowConversationTracker] = useState(false);
 
   // Device performance detection
   const { isLowEnd: deviceIsLowEnd, isSlowNetwork, shouldReduceData } = useDevicePerformance();
@@ -566,20 +565,7 @@ export function MobileFeed() {
         />
       )}
 
-      {/* Conversation Tracker Panel */}
-      <ConversationTracker
-        userId={userId}
-        isOpen={showConversationTracker}
-        onClose={() => setShowConversationTracker(false)}
-      />
 
-      {/* Floating Conversation Tracker Button */}
-      <div className="fixed bottom-20 right-4 z-40">
-        <ConversationTrackerButton
-          onClick={() => setShowConversationTracker(true)}
-          hasNew={false}
-        />
-      </div>
     </div>
   );
 }

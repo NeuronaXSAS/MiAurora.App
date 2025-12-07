@@ -59,11 +59,38 @@ export const create = mutation({
             title: "New comment",
             message: `${commenter.name} commented on your post`,
             isRead: false,
-            actionUrl: `/feed`, // Could be more specific with post ID
+            actionUrl: `/feed?post=${args.postId}`,
             fromUserId: args.authorId,
-            relatedId: args.postId,
+            relatedId: args.postId as unknown as string,
           });
         }
+      }
+    }
+
+    // If this is a reply to another comment, notify the parent comment author
+    if (args.parentCommentId) {
+      const parentComment = await ctx.db.get(args.parentCommentId);
+      if (parentComment && parentComment.authorId !== args.authorId) {
+        const commenter = await ctx.db.get(args.authorId);
+        if (commenter) {
+          await ctx.db.insert("notifications", {
+            userId: parentComment.authorId,
+            type: "comment",
+            title: "New reply",
+            message: `${commenter.name} replied to your comment`,
+            isRead: false,
+            actionUrl: `/feed?post=${args.postId}`,
+            fromUserId: args.authorId,
+            relatedId: args.postId as unknown as string,
+          });
+        }
+      }
+      
+      // Update parent comment's reply count
+      if (parentComment) {
+        await ctx.db.patch(args.parentCommentId, {
+          replyCount: (parentComment.replyCount || 0) + 1,
+        });
       }
     }
 
