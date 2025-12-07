@@ -169,13 +169,13 @@ export function LandingSearch() {
           <span className="text-[var(--color-aurora-purple)] font-medium">See the truth behind every result.</span>
         </p>
         <div className="flex items-center justify-center gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--color-aurora-mint)]/20 text-xs font-medium" style={{ color: 'var(--color-aurora-mint)' }}>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--color-aurora-mint)] text-xs font-semibold text-[var(--color-aurora-violet)]">
             <Shield className="w-3 h-3" /> Bias Detection
           </span>
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--color-aurora-pink)]/20 text-xs font-medium" style={{ color: 'var(--color-aurora-pink)' }}>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--color-aurora-pink)] text-xs font-semibold text-[var(--color-aurora-violet)]">
             <Heart className="w-3 h-3" /> Women-First
           </span>
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--color-aurora-purple)]/20 text-xs font-medium" style={{ color: 'var(--color-aurora-purple)' }}>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--color-aurora-purple)] text-xs font-semibold text-white">
             <Eye className="w-3 h-3" /> Private
           </span>
         </div>
@@ -262,69 +262,60 @@ export function LandingSearch() {
               </Badge>
             </div>
 
-            {/* News Results */}
-            {(activeTab === "all" || activeTab === "news") && (
+            {/* News Results - Only show when News tab is active */}
+            {activeTab === "news" && (
               <div>
-                <h4 className="text-sm font-semibold text-[var(--foreground)] mb-2 flex items-center gap-2">
-                  <Newspaper className="w-4 h-4 text-[var(--color-aurora-purple)]" /> Latest News
-                </h4>
                 {newsResults.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {newsResults.slice(0, activeTab === "news" ? undefined : 3).map((news) => (
+                    {newsResults.map((news) => (
                       <NewsCard key={news.id} news={news} />
                     ))}
                   </div>
-                ) : activeTab === "news" ? (
+                ) : (
                   <div className="text-center py-8 text-[var(--muted-foreground)]">
                     <Newspaper className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No news results for this search</p>
                   </div>
-                ) : null}
+                )}
               </div>
             )}
 
-            {/* Images Results */}
-            {(activeTab === "all" || activeTab === "images") && (
+            {/* Images Results - Only show when Images tab is active */}
+            {activeTab === "images" && (
               <div>
-                <h4 className="text-sm font-semibold text-[var(--foreground)] mb-2 flex items-center gap-2">
-                  <ImageIcon className="w-4 h-4 text-[var(--color-aurora-pink)]" /> Images
-                </h4>
                 {imageResults.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {imageResults.slice(0, activeTab === "images" ? undefined : 4).map((img) => (
+                    {imageResults.map((img) => (
                       <a key={img.id} href={img.url} target="_blank" rel="noopener noreferrer"
                         className="aspect-square rounded-xl overflow-hidden bg-[var(--accent)] hover:opacity-90 transition-opacity">
                         {img.thumbnail && <img src={img.thumbnail} alt={img.title} className="w-full h-full object-cover" />}
                       </a>
                     ))}
                   </div>
-                ) : activeTab === "images" ? (
+                ) : (
                   <div className="text-center py-8 text-[var(--muted-foreground)]">
                     <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No image results for this search</p>
                   </div>
-                ) : null}
+                )}
               </div>
             )}
 
-            {/* Video Results */}
-            {(activeTab === "all" || activeTab === "videos") && (
+            {/* Video Results - Only show when Videos tab is active */}
+            {activeTab === "videos" && (
               <div>
-                <h4 className="text-sm font-semibold text-[var(--foreground)] mb-2 flex items-center gap-2">
-                  <PlayCircle className="w-4 h-4 text-[var(--color-aurora-blue)]" /> Videos
-                </h4>
                 {videoResults.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {videoResults.slice(0, activeTab === "videos" ? undefined : 2).map((video, i) => (
+                    {videoResults.map((video, i) => (
                       <VideoResultCard key={video.id} video={video} index={i} />
                     ))}
                   </div>
-                ) : activeTab === "videos" ? (
+                ) : (
                   <div className="text-center py-8 text-[var(--muted-foreground)]">
                     <PlayCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No video results for this search</p>
                   </div>
-                ) : null}
+                )}
               </div>
             )}
 
@@ -391,7 +382,7 @@ export function LandingSearch() {
 
 /**
  * Aurora AI Insight Generator - Speaks with personality like a trusted friend
- * Fosters critical thinking without being preachy
+ * Detects language and provides empathetic, context-aware responses
  */
 function generateAuroraInsight(query: string, webResults: WebSearchResult[], newsResults: NewsResult[]): string {
   const q = query.toLowerCase();
@@ -405,56 +396,117 @@ function generateAuroraInsight(query: string, webResults: WebSearchResult[], new
   const hasNews = newsResults.length > 0;
   const domains = [...new Set(webResults.map(r => r.domain))];
   
-  // Aurora speaks with warmth and wit
-  const greetings = [
-    "Hey there! 👋",
-    "Okay, let's see...",
-    "Interesting search!",
-    "Got it!",
-    "Here's what I found:",
-  ];
+  // Detect language from query (Spanish indicators)
+  const isSpanish = /[áéíóúñ¿¡]/.test(query) || 
+    /\b(estoy|tengo|quiero|como|para|que|por|con|una|los|las|del|muy|más|está|son|hay|ser|hacer|puedo|necesito|ayuda|busco|donde|cuando|porque|embarazo|prueba|deprimida|triste|ansiedad|salud|trabajo|dinero|seguridad)\b/i.test(query);
+  
+  // Mental health & emotional support detection (both languages)
+  const mentalHealthKeywords = {
+    en: ["depressed", "depression", "sad", "anxiety", "anxious", "stressed", "lonely", "hopeless", "suicidal", "mental health", "feeling down", "overwhelmed", "panic", "scared", "afraid", "worried", "crying", "can't sleep", "insomnia"],
+    es: ["deprimida", "depresión", "triste", "ansiedad", "ansiosa", "estresada", "sola", "desesperada", "suicida", "salud mental", "me siento mal", "abrumada", "pánico", "asustada", "miedo", "preocupada", "llorando", "no puedo dormir", "insomnio", "angustia", "agotada"]
+  };
+  
+  const isMentalHealthQuery = [...mentalHealthKeywords.en, ...mentalHealthKeywords.es].some(kw => q.includes(kw));
+  
+  // Pregnancy/reproductive health detection
+  const reproductiveKeywords = {
+    en: ["pregnancy", "pregnant", "pregnancy test", "period", "menstrual", "fertility", "ovulation", "contraception", "birth control", "abortion", "miscarriage"],
+    es: ["embarazo", "embarazada", "prueba de embarazo", "período", "menstruación", "fertilidad", "ovulación", "anticonceptivos", "aborto", "pérdida"]
+  };
+  
+  const isReproductiveQuery = [...reproductiveKeywords.en, ...reproductiveKeywords.es].some(kw => q.includes(kw));
+  
+  // PRIORITY: Mental health - empathetic response
+  if (isMentalHealthQuery) {
+    if (isSpanish) {
+      return `💜 Gracias por compartir cómo te sientes. No estás sola en esto. He encontrado ${webResults.length} recursos, pero lo más importante: si estás pasando por un momento difícil, considera hablar con alguien de confianza o una línea de ayuda profesional. Tu bienestar importa. ¿Hay algo específico que te gustaría explorar?`;
+    }
+    return `💜 Thank you for sharing how you're feeling. You're not alone in this. I found ${webResults.length} resources, but most importantly: if you're going through a difficult time, please consider reaching out to someone you trust or a professional helpline. Your wellbeing matters. Is there something specific you'd like to explore?`;
+  }
+  
+  // Reproductive health - supportive and informative
+  if (isReproductiveQuery) {
+    if (isSpanish) {
+      return `💗 Entiendo que este es un tema importante y personal. He encontrado ${webResults.length} resultados de ${domains.length} fuentes. Recuerda: cada cuerpo es diferente. Para información médica específica, siempre es mejor consultar con un profesional de salud que conozca tu situación.`;
+    }
+    return `💗 I understand this is an important and personal topic. I found ${webResults.length} results from ${domains.length} sources. Remember: every body is different. For specific medical information, it's always best to consult with a healthcare professional who knows your situation.`;
+  }
+  
+  // Spanish greetings and responses
+  const greetingsEs = ["¡Hola! 👋", "Veamos...", "¡Interesante búsqueda!", "¡Listo!", "Esto es lo que encontré:"];
+  const greetingsEn = ["Hey there! 👋", "Okay, let's see...", "Interesting search!", "Got it!", "Here's what I found:"];
+  const greetings = isSpanish ? greetingsEs : greetingsEn;
   const greeting = greetings[Math.floor(Math.random() * greetings.length)];
   
   // Context-aware insights
-  if (q.includes("news") || hasNews) {
+  if (q.includes("news") || q.includes("noticias") || hasNews) {
     if (avgCredibility < 50) {
-      return `${greeting} These news sources are a mixed bag. I'd cross-check the big claims before sharing. What's the story behind the story? 🤔`;
+      return isSpanish 
+        ? `${greeting} Estas fuentes de noticias son variadas en credibilidad. Te recomiendo verificar las afirmaciones importantes antes de compartir. ¿Qué hay detrás de la historia? 🤔`
+        : `${greeting} These news sources are a mixed bag. I'd cross-check the big claims before sharing. What's the story behind the story? 🤔`;
     }
-    return `${greeting} Fresh news from ${domains.length} sources. Remember: headlines are designed to grab attention. The full picture is usually more nuanced. What angle might be missing?`;
+    return isSpanish
+      ? `${greeting} Noticias frescas de ${domains.length} fuentes. Recuerda: los titulares están diseñados para llamar la atención. La imagen completa suele ser más matizada.`
+      : `${greeting} Fresh news from ${domains.length} sources. Remember: headlines are designed to grab attention. The full picture is usually more nuanced.`;
   }
   
-  if (q.includes("safety") || q.includes("safe")) {
-    return `${greeting} Safety info is serious business. I've flagged the most credible sources. Trust your instincts, and when in doubt, verify with official channels. You've got this! 💜`;
+  if (q.includes("safety") || q.includes("safe") || q.includes("seguridad") || q.includes("segura")) {
+    return isSpanish
+      ? `${greeting} La información de seguridad es seria. He marcado las fuentes más confiables. Confía en tus instintos, y ante la duda, verifica con fuentes oficiales. ¡Tú puedes! 💜`
+      : `${greeting} Safety info is serious business. I've flagged the most credible sources. Trust your instincts, and when in doubt, verify with official channels. You've got this! 💜`;
   }
   
-  if (q.includes("career") || q.includes("job") || q.includes("work")) {
+  if (q.includes("career") || q.includes("job") || q.includes("work") || q.includes("trabajo") || q.includes("empleo") || q.includes("carrera")) {
     if (womenFocusedCount > 0) {
-      return `${greeting} Found ${womenFocusedCount} women-focused resources! Career advice often assumes a male default. These sources might speak more to your experience. What specific challenge are you tackling?`;
+      return isSpanish
+        ? `${greeting} ¡Encontré ${womenFocusedCount} recursos enfocados en mujeres! Los consejos de carrera a menudo asumen una perspectiva masculina. Estas fuentes pueden hablar más a tu experiencia.`
+        : `${greeting} Found ${womenFocusedCount} women-focused resources! Career advice often assumes a male default. These sources might speak more to your experience.`;
     }
-    return `${greeting} Career advice incoming! Quick thought: most of these sources don't specifically address women's experiences. Consider how the advice might apply differently to you.`;
+    return isSpanish
+      ? `${greeting} ¡Consejos de carrera! Nota: la mayoría de estas fuentes no abordan específicamente las experiencias de las mujeres. Considera cómo los consejos podrían aplicarse diferente a ti.`
+      : `${greeting} Career advice incoming! Quick thought: most of these sources don't specifically address women's experiences. Consider how the advice might apply differently to you.`;
   }
   
-  if (q.includes("health") || q.includes("medical") || q.includes("symptom")) {
-    return `${greeting} Health info alert! 🏥 I've checked source credibility, but please consult a healthcare provider for personal medical decisions. Women's symptoms are often dismissed - advocate for yourself!`;
+  if (q.includes("health") || q.includes("medical") || q.includes("symptom") || q.includes("salud") || q.includes("médico") || q.includes("síntoma")) {
+    return isSpanish
+      ? `${greeting} ¡Información de salud! 🏥 He verificado la credibilidad de las fuentes, pero consulta con un profesional de salud para decisiones médicas personales. Los síntomas de las mujeres a menudo son minimizados - ¡aboga por ti misma!`
+      : `${greeting} Health info alert! 🏥 I've checked source credibility, but please consult a healthcare provider for personal medical decisions. Women's symptoms are often dismissed - advocate for yourself!`;
   }
   
   if (hasHighAI) {
-    return `${greeting} Heads up: some of these results look AI-generated. Not necessarily bad, but worth knowing! AI content can miss nuance and context. What would a human expert add?`;
+    return isSpanish
+      ? `${greeting} Aviso: algunos de estos resultados parecen generados por IA. No es necesariamente malo, ¡pero vale la pena saberlo! El contenido de IA puede perder matices y contexto.`
+      : `${greeting} Heads up: some of these results look AI-generated. Not necessarily bad, but worth knowing! AI content can miss nuance and context.`;
   }
   
   if (avgCredibility < 40) {
-    return `${greeting} Hmm, these sources are a bit sketchy on the credibility scale. I'd dig deeper before taking anything as fact. What would make you trust this info more?`;
+    return isSpanish
+      ? `${greeting} Hmm, estas fuentes son un poco dudosas en la escala de credibilidad. Te recomiendo investigar más antes de tomar algo como hecho.`
+      : `${greeting} Hmm, these sources are a bit sketchy on the credibility scale. I'd dig deeper before taking anything as fact.`;
   }
   
   if (womenFocusedCount === 0) {
-    return `${greeting} Found ${webResults.length} results, but none specifically from women-focused sources. The mainstream perspective might be missing something. What would women's voices add here?`;
+    return isSpanish
+      ? `${greeting} Encontré ${webResults.length} resultados, pero ninguno específicamente de fuentes enfocadas en mujeres. La perspectiva general podría estar perdiendo algo. ¿Qué agregarían las voces de mujeres aquí?`
+      : `${greeting} Found ${webResults.length} results, but none specifically from women-focused sources. The mainstream perspective might be missing something. What would women's voices add here?`;
   }
   
   if (avgCredibility > 70) {
-    return `${greeting} Good news! These sources score well on credibility. Still, no source is perfect. What assumptions might even trusted sources be making?`;
+    return isSpanish
+      ? `${greeting} ¡Buenas noticias! Estas fuentes tienen buena puntuación en credibilidad. Aún así, ninguna fuente es perfecta. ¿Qué suposiciones podrían estar haciendo incluso las fuentes confiables?`
+      : `${greeting} Good news! These sources score well on credibility. Still, no source is perfect. What assumptions might even trusted sources be making?`;
   }
   
   // Default thoughtful response
+  if (isSpanish) {
+    const thoughtsEs = [
+      `${greeting} ${webResults.length} resultados de ${domains.length} fuentes diferentes. Diversidad de fuentes = mejor panorama. ¿Qué patrón común estás notando?`,
+      `${greeting} Esto es lo que dice internet. Recuerda: los resultados de búsqueda reflejan lo popular, no necesariamente lo verdadero. ¿Qué te dice tu intuición?`,
+      `${greeting} ¡Encontré cosas interesantes! Antes de profundizar, pregúntate: ¿quién se beneficia de que yo crea esto? El pensamiento crítico es tu superpoder. 💪`,
+    ];
+    return thoughtsEs[Math.floor(Math.random() * thoughtsEs.length)];
+  }
+  
   const thoughts = [
     `${greeting} ${webResults.length} results from ${domains.length} different sources. Diversity of sources = better picture. What's the common thread you're noticing?`,
     `${greeting} Here's what the internet has to say. Remember: search results reflect what's popular, not necessarily what's true. What's your gut telling you?`,
@@ -594,7 +646,7 @@ function SearchResultCard({ result, index }: { result: WebSearchResult; index: n
   );
 }
 
-/** Metric Card - Compact display */
+/** Metric Card - Compact display with improved contrast */
 function MetricCard({ label, value, max, emoji, color }: { 
   label: string; 
   value: string | number; 
@@ -607,13 +659,13 @@ function MetricCard({ label, value, max, emoji, color }: {
   
   return (
     <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
-      <div className="text-[10px] text-[var(--muted-foreground)] mb-0.5">{label}</div>
+      <div className="text-[10px] font-medium text-[var(--foreground)]/70 mb-0.5">{label}</div>
       <div className="flex items-center gap-1">
-        {emoji && <span className="text-xs">{emoji}</span>}
-        <span className="text-xs font-semibold" style={{ color }}>{value}{max ? `/${max}` : ""}</span>
+        {emoji && <span className="text-sm">{emoji}</span>}
+        <span className="text-sm font-bold text-[var(--foreground)]">{value}{max ? <span className="text-[var(--muted-foreground)] font-normal text-xs">/{max}</span> : ""}</span>
       </div>
       {percentage !== null && (
-        <div className="mt-1 h-1 bg-[var(--accent)] rounded-full overflow-hidden">
+        <div className="mt-1.5 h-1.5 bg-[var(--accent)] rounded-full overflow-hidden">
           <div className="h-full rounded-full transition-all" style={{ width: `${percentage}%`, backgroundColor: color }} />
         </div>
       )}
