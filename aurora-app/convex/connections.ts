@@ -50,6 +50,20 @@ export const likeUser = mutation({
       matchedAt: isMatch ? now : undefined,
     });
 
+    // If NOT a match yet, notify the liked user that someone liked them
+    if (!isMatch) {
+      const currentUser = await ctx.db.get(args.userId);
+      await ctx.db.insert("notifications", {
+        userId: args.likedUserId,
+        type: "message",
+        title: "Someone likes you! 💜",
+        message: `${currentUser?.name || "A sister"} wants to connect with you. Swipe right to match!`,
+        isRead: false,
+        actionUrl: `/circles?tab=likes`,
+        fromUserId: args.userId,
+      });
+    }
+
     // If it's a match, update the other connection too
     if (isMatch && reverseConnection) {
       await ctx.db.patch(reverseConnection._id, {

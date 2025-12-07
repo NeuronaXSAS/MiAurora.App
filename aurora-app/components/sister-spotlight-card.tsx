@@ -145,7 +145,7 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
   const avatarUrl = getAvatarUrl(currentUser);
 
   return (
-    <div className="bg-gradient-to-br from-[var(--color-aurora-purple)]/10 via-[var(--color-aurora-pink)]/10 to-[var(--color-aurora-lavender)]/20 rounded-2xl p-4 border border-[var(--color-aurora-purple)]/20 overflow-hidden">
+    <div className="bg-gradient-to-br from-[var(--color-aurora-purple)]/10 via-[var(--color-aurora-pink)]/10 to-[var(--color-aurora-lavender)]/20 rounded-2xl p-3 sm:p-4 border border-[var(--color-aurora-purple)]/20 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -163,7 +163,7 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
       </div>
 
       {/* Swipeable Card */}
-      <div className="relative h-[320px]">
+      <div className="relative h-[380px] sm:h-[420px]">
         {/* Match Celebration Overlay */}
         <AnimatePresence>
           {showMatch && matchedUser && (
@@ -246,10 +246,10 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
             </motion.div>
 
             {/* Profile Content */}
-            <div className="flex flex-col items-center text-center h-full">
+            <div className="flex flex-col items-center text-center h-full py-2">
               {/* DiceBear Avatar */}
-              <div className="relative mb-3">
-                <div className="w-24 h-24 rounded-full border-4 border-[var(--color-aurora-lavender)] overflow-hidden bg-[var(--color-aurora-lavender)] shadow-lg">
+              <div className="relative mb-2">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-[var(--color-aurora-lavender)] overflow-hidden bg-[var(--color-aurora-lavender)] shadow-lg">
                   <img 
                     src={avatarUrl}
                     alt={currentUser.name || "User"}
@@ -257,65 +257,78 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
                   />
                 </div>
                 {currentUser.isPremium && (
-                  <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-[var(--color-aurora-yellow)] rounded-full flex items-center justify-center border-2 border-white">
-                    <Star className="w-4 h-4 text-[var(--color-aurora-violet)] fill-current" />
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 bg-[var(--color-aurora-yellow)] rounded-full flex items-center justify-center border-2 border-white">
+                    <Star className="w-3 h-3 sm:w-4 sm:h-4 text-[var(--color-aurora-violet)] fill-current" />
                   </div>
                 )}
               </div>
 
               {/* Name & Trust Score */}
-              <h4 className="font-bold text-xl text-[var(--foreground)]">{currentUser.name}</h4>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge className="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] border-0 text-xs">
+              <h4 className="font-bold text-lg sm:text-xl text-[var(--foreground)]">{currentUser.name}</h4>
+              <div className="flex items-center flex-wrap justify-center gap-1.5 mt-1">
+                <Badge className="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] border-0 text-[10px] sm:text-xs">
                   Trust: {currentUser.trustScore || 0}
                 </Badge>
                 {currentUser.credits && currentUser.credits > 100 && (
-                  <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0 text-xs">
+                  <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0 text-[10px] sm:text-xs">
                     Active
+                  </Badge>
+                )}
+                {currentUser.isPremium && (
+                  <Badge className="bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)] border-0 text-[10px] sm:text-xs">
+                    ⭐ Premium
                   </Badge>
                 )}
               </div>
 
-              {/* Info */}
-              <div className="mt-3 space-y-1.5 text-sm text-[var(--muted-foreground)]">
+              {/* Location & Industry - Always visible */}
+              <div className="mt-2 space-y-1 text-xs sm:text-sm text-[var(--muted-foreground)] w-full px-2">
                 {currentUser.location && (
-                  <div className="flex items-center justify-center gap-1">
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span>{currentUser.location}</span>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-[var(--color-aurora-blue)] flex-shrink-0" />
+                    <span className="truncate">{currentUser.location}</span>
                   </div>
                 )}
                 {currentUser.industry && (
-                  <div className="flex items-center justify-center gap-1">
-                    <Briefcase className="w-3.5 h-3.5" />
-                    <span>{currentUser.industry}</span>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <Briefcase className="w-3.5 h-3.5 text-[var(--color-aurora-purple)] flex-shrink-0" />
+                    <span className="truncate">{currentUser.industry}</span>
                   </div>
                 )}
               </div>
 
-              {/* Bio */}
+              {/* Bio - Show more lines */}
               {currentUser.bio && (
-                <p className="mt-3 text-sm text-[var(--foreground)] line-clamp-2 px-2 italic">
+                <p className="mt-2 text-xs sm:text-sm text-[var(--foreground)] line-clamp-3 px-3 italic leading-relaxed">
                   "{currentUser.bio}"
                 </p>
               )}
 
-              {/* Interests */}
+              {/* Interests - Show more */}
               {currentUser.interests && currentUser.interests.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-1.5 mt-3">
-                  {currentUser.interests.slice(0, 3).map((interest, idx) => (
+                <div className="flex flex-wrap justify-center gap-1 sm:gap-1.5 mt-2 px-2">
+                  {currentUser.interests.slice(0, 4).map((interest, idx) => (
                     <Badge 
                       key={idx} 
                       variant="secondary" 
-                      className="text-xs bg-[var(--color-aurora-lavender)]/30 text-[var(--color-aurora-purple)]"
+                      className="text-[10px] sm:text-xs bg-[var(--color-aurora-lavender)]/30 text-[var(--color-aurora-purple)] px-2 py-0.5"
                     >
                       {interest}
                     </Badge>
                   ))}
+                  {currentUser.interests.length > 4 && (
+                    <Badge 
+                      variant="secondary" 
+                      className="text-[10px] sm:text-xs bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] px-2 py-0.5"
+                    >
+                      +{currentUser.interests.length - 4} more
+                    </Badge>
+                  )}
                 </div>
               )}
 
               {/* Swipe hint */}
-              <p className="mt-auto text-xs text-[var(--muted-foreground)]">
+              <p className="mt-auto pt-2 text-[10px] sm:text-xs text-[var(--muted-foreground)]">
                 ← Swipe to skip • Swipe to like →
               </p>
             </div>
@@ -324,34 +337,34 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-center gap-4 mt-4">
+      <div className="flex items-center justify-center gap-3 sm:gap-4 mt-3 sm:mt-4">
         <Button
           onClick={handleSkip}
           variant="outline"
-          className="w-14 h-14 rounded-full border-2 border-[var(--muted)] hover:border-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10 transition-all"
+          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-[var(--muted)] hover:border-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10 transition-all min-w-[48px] min-h-[48px]"
         >
-          <X className="w-6 h-6 text-[var(--muted-foreground)]" />
+          <X className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--muted-foreground)]" />
         </Button>
         
         <Link href={`/user/${currentUser._id}`}>
           <Button
             variant="outline"
-            className="w-12 h-12 rounded-full border-2 border-[var(--color-aurora-purple)]/30 hover:border-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-purple)]/10"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-[var(--color-aurora-purple)]/30 hover:border-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-purple)]/10 min-w-[44px] min-h-[44px]"
           >
-            <Users className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-aurora-purple)]" />
           </Button>
         </Link>
         
         <Button
           onClick={handleConnect}
-          className="w-14 h-14 rounded-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 transition-all shadow-lg"
+          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 transition-all shadow-lg min-w-[48px] min-h-[48px]"
         >
-          <Heart className="w-6 h-6 text-white" />
+          <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
         </Button>
       </div>
 
       {/* Info text */}
-      <p className="text-center text-[10px] text-[var(--muted-foreground)] mt-3">
+      <p className="text-center text-[10px] text-[var(--muted-foreground)] mt-2 sm:mt-3">
         💜 Both must like to match • Matches can chat
       </p>
 
