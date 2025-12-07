@@ -498,9 +498,9 @@ function LandingPageContent() {
             </motion.div>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-8 items-start">
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
             {/* Left column - scrollable feature list */}
-            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin">
+            <div className="space-y-3 max-h-[520px] overflow-y-auto pr-2 scrollbar-thin">
               {features.map((feature, i) => (
                 <motion.div key={feature.id} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
                   onClick={() => setActiveFeature(i)}
@@ -534,7 +534,7 @@ function LandingPageContent() {
             </div>
 
             {/* Right column - feature preview */}
-            <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="relative lg:sticky lg:top-24">
+            <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="relative flex items-center justify-center">
               <div className={`rounded-3xl p-8 md:p-10 relative overflow-hidden transition-all duration-500 ${
                 activeFeature === 6 
                   ? "bg-gradient-to-br from-[#ec4c28] to-[#f05a6b]" 
