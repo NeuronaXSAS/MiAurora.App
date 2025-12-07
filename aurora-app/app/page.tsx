@@ -846,20 +846,59 @@ function LandingPageContent() {
               </div>
             </div>
             <div>
-              <h4 className="font-bold text-[#3d0d73] mb-4">Features</h4>
+              <h4 className="font-bold text-[#3d0d73] mb-4">Safety</h4>
               <ul className="space-y-2 text-sm text-[#3d0d73]/60">
                 <li>Safety Intelligence</li>
                 <li>Safe Routes</li>
-                <li>Support Circles</li>
-                <li>AI Companion</li>
+                <li>Panic Button</li>
+                <li>Safety Check-ins</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-[#3d0d73] mb-4">Legal</h4>
+              <h4 className="font-bold text-[#3d0d73] mb-4">Features</h4>
               <ul className="space-y-2 text-sm text-[#3d0d73]/60">
+                <li>Aurora AI Companion</li>
+                <li>Wellness Hub</li>
+                <li>Support Circles</li>
+                <li>Opportunities</li>
+              </ul>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8 pt-6 border-t border-[#5537a7]/10">
+            <div>
+              <h4 className="font-bold text-[#3d0d73] mb-3 text-sm">Wellness</h4>
+              <ul className="space-y-1.5 text-xs text-[#3d0d73]/60">
+                <li>Cycle Tracking</li>
+                <li>Hydration</li>
+                <li>Mood Journal</li>
+                <li>Meditation</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold text-[#3d0d73] mb-3 text-sm">Community</h4>
+              <ul className="space-y-1.5 text-xs text-[#3d0d73]/60">
+                <li>Private Circles</li>
+                <li>Daily Debates</li>
+                <li>Sister Network</li>
+                <li>Mentorship</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold text-[#3d0d73] mb-3 text-sm">Finance</h4>
+              <ul className="space-y-1.5 text-xs text-[#3d0d73]/60">
+                <li>Credit Economy</li>
+                <li>Financial Tools</li>
+                <li>Job Matching</li>
+                <li>Career Growth</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold text-[#3d0d73] mb-3 text-sm">Legal</h4>
+              <ul className="space-y-1.5 text-xs text-[#3d0d73]/60">
                 <li><Link href="/legal/privacy" className="hover:text-[#5537a7] transition-colors">Privacy Policy</Link></li>
                 <li><Link href="/legal/terms" className="hover:text-[#5537a7] transition-colors">Terms of Service</Link></li>
                 <li><Link href="/legal/cookies" className="hover:text-[#5537a7] transition-colors">Cookie Policy</Link></li>
+                <li><Link href="/legal/community" className="hover:text-[#5537a7] transition-colors">Community Guidelines</Link></li>
               </ul>
             </div>
           </div>
