@@ -24,6 +24,7 @@ import { LandingSearch } from "@/components/landing-search";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { LocaleProvider, useLocale } from "@/lib/locale-context";
 import { LandingPageAd } from "@/components/ads/adsense-unit";
+import { AuroraShader } from "@/components/ui/aurora-shader";
 
 // Wrapper component that provides locale context
 export default function LandingPage() {
@@ -243,8 +244,16 @@ function LandingPageContent() {
       </nav>
 
 
-      {/* HERO SECTION - Futuristic */}
+      {/* HERO SECTION - Futuristic with Shader */}
       <section ref={heroRef} className="relative min-h-[90vh] flex items-center overflow-hidden">
+        {/* Aurora Shader Background */}
+        <div className="absolute inset-0 z-0">
+          <AuroraShader className="w-full h-full opacity-40" />
+          {/* Overlay gradient for readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#fffaf1]/80 via-[#fffaf1]/60 to-[#fffaf1]/90" />
+        </div>
+        
+        {/* Fallback/Enhancement layers */}
         <GridBackground />
         <FloatingOrbs />
         
