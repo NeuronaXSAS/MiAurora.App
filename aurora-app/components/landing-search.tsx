@@ -25,11 +25,11 @@ import Image from "next/image";
 import { LandingAd } from "@/components/ads/landing-ad";
 import { calculateTrustScore } from "@/lib/search/trust-score";
 import { DailyDebatesPanel } from "@/components/search/daily-debates-panel";
-import { VideoResultCard } from "@/components/search/video-result-card";
 import { SafetyAlertBadge } from "@/components/search/safety-alert-badge";
 import { AuroraVerifiedBadge, getVerificationLevel } from "@/components/search/aurora-verified-badge";
 import { WhosRightPanel } from "@/components/search/whos-right-panel";
 import { useLocale } from "@/lib/locale-context";
+import { AuroraSearchBox } from "@/components/search/aurora-search-box";
 
 interface WebSearchResult {
   title: string;
@@ -80,7 +80,6 @@ export function LandingSearch() {
   useLocale(); // Keep context active for child components
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [webResults, setWebResults] = useState<WebSearchResult[]>([]);
   const [videoResults, setVideoResults] = useState<VideoResult[]>([]);
@@ -90,7 +89,6 @@ export function LandingSearch() {
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [activeTab, setActiveTab] = useState<SearchTab>("all");
   const [showWhosRight, setShowWhosRight] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query), 400);
@@ -142,7 +140,7 @@ export function LandingSearch() {
   const handleClear = useCallback(() => {
     setQuery(""); setDebouncedQuery(""); setWebResults([]); setVideoResults([]);
     setNewsResults([]); setImageResults([]); setAiInsight(null);
-    setActiveTab("all"); inputRef.current?.focus();
+    setActiveTab("all");
   }, []);
 
   const handleQuickSearch = (category: string) => {
@@ -156,11 +154,28 @@ export function LandingSearch() {
   const hasResults = webResults.length > 0;
   const totalResults = webResults.length + videoResults.length + newsResults.length + imageResults.length;
 
+  // Handle unified search from AuroraSearchBox
+  const handleUnifiedSearch = (searchQuery: string, mode: "judge" | "web" | "community", files?: File[]) => {
+    if (mode === "judge") {
+      setActiveTab("whos-right");
+      setShowWhosRight(true);
+      // If there's a query, we could pass it to WhosRightPanel
+      if (searchQuery) setQuery(searchQuery);
+    } else if (mode === "web") {
+      setActiveTab("all");
+      setQuery(searchQuery);
+    } else if (mode === "community") {
+      // For community search, we search within Aurora App content
+      setActiveTab("debates");
+      setQuery(searchQuery);
+    }
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
-      {/* Search Header */}
+      {/* Search Header - Compact */}
       <div className="text-center mb-6">
-        <div className="flex items-center justify-center gap-3 mb-3">
+        <div className="flex items-center justify-center gap-3 mb-4">
           <div className="relative">
             <Image src="/Au_Logo_1.png" alt="Aurora App" width={56} height={56} className="w-12 h-12 md:w-14 md:h-14 object-contain" />
             <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[var(--color-aurora-mint)] rounded-full flex items-center justify-center shadow-sm">
@@ -172,44 +187,23 @@ export function LandingSearch() {
             <p className="text-[10px] md:text-xs text-[var(--color-aurora-purple)] font-semibold tracking-widest uppercase">Search Engine</p>
           </div>
         </div>
-        <p className="text-sm text-[var(--muted-foreground)] mb-3 max-w-lg mx-auto">
+        <p className="text-sm text-[var(--muted-foreground)] mb-2 max-w-lg mx-auto">
           The world&apos;s first search engine designed for women.{" "}
           <span className="text-[var(--color-aurora-purple)] font-medium">See the truth behind every result.</span>
         </p>
-        <div className="flex items-center justify-center gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--color-aurora-mint)] text-xs font-semibold text-[var(--color-aurora-violet)]">
-            <Shield className="w-3 h-3" /> Bias Detection
-          </span>
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--color-aurora-pink)] text-xs font-semibold text-[var(--color-aurora-violet)]">
-            <Heart className="w-3 h-3" /> Women-First
-          </span>
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--color-aurora-purple)] text-xs font-semibold text-white">
-            <Eye className="w-3 h-3" /> Private
-          </span>
-        </div>
       </div>
 
-      {/* Search Input */}
-      <div className="relative mb-4">
-        <div className={`flex items-center bg-[var(--card)] border-2 rounded-2xl transition-all ${isFocused ? "border-[var(--color-aurora-purple)] shadow-lg shadow-[var(--color-aurora-purple)]/15" : "border-[var(--border)] hover:border-[var(--color-aurora-purple)]/40"}`}>
-          <div className="w-11 h-11 ml-2 rounded-xl bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] flex items-center justify-center flex-shrink-0">
-            <Search className="w-5 h-5 text-white" />
-          </div>
-          <input ref={inputRef} type="text" value={query} onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => setIsFocused(true)} onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-            placeholder="Search anything... see the truth behind every result"
-            className="flex-1 h-14 px-4 bg-transparent text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none text-base" />
-          {isSearching && <Loader2 className="w-5 h-5 mr-3 text-[var(--color-aurora-purple)] animate-spin" />}
-          {query && !isSearching && (
-            <button onClick={handleClear} className="p-2 mr-2 rounded-lg hover:bg-[var(--accent)] min-w-[44px] min-h-[44px] flex items-center justify-center">
-              <X className="w-5 h-5 text-[var(--muted-foreground)]" />
-            </button>
-          )}
-        </div>
+      {/* Aurora Search Box - Unified AI-Powered Search */}
+      <div className="mb-6">
+        <AuroraSearchBox 
+          onSearch={handleUnifiedSearch}
+          isLoading={isSearching}
+          className="max-w-2xl mx-auto"
+        />
       </div>
 
-      {/* Quick Categories */}
-      {!hasResults && (
+      {/* Quick Categories - Only show when no results */}
+      {!hasResults && activeTab === "all" && (
         <div className="flex justify-center gap-2 mb-6 flex-wrap">
           {QUICK_CATEGORIES.map((cat) => (
             <button key={cat.id} onClick={() => handleQuickSearch(cat.id)}
