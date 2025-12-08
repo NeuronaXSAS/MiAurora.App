@@ -2286,4 +2286,74 @@ export default defineSchema({
     }),
   })
     .index("by_date", ["date"]),
+
+  // ============================================
+  // AWS BEDROCK SEEDED CONTENT
+  // Pre-generated content to bootstrap the platform
+  // Generated once with AWS, rotated daily with Gemini (FREE)
+  // ============================================
+
+  seededContent: defineTable({
+    // Content type
+    type: v.union(
+      v.literal("affirmation"),
+      v.literal("safety_tip"),
+      v.literal("career_advice"),
+      v.literal("wellness_tip"),
+      v.literal("discussion_prompt"),
+      v.literal("sister_story"),
+      v.literal("city_guide")
+    ),
+    
+    // Categorization
+    category: v.string(), // Theme or subcategory
+    targetRegion: v.optional(v.string()), // "latam" | "europe" | "asia" | "global"
+    targetCity: v.optional(v.string()), // Specific city if applicable
+    
+    // Content
+    content: v.string(), // The actual content (English)
+    translations: v.optional(v.object({
+      es: v.optional(v.string()),
+      pt: v.optional(v.string()),
+      fr: v.optional(v.string()),
+      ar: v.optional(v.string()),
+      de: v.optional(v.string()),
+    })),
+    
+    // Metadata
+    language: v.string(), // Primary language "en"
+    source: v.union(v.literal("aws_bedrock"), v.literal("gemini"), v.literal("manual")),
+    
+    // Usage tracking (for smart rotation)
+    usageCount: v.number(), // How often shown
+    lastUsedAt: v.optional(v.number()), // Timestamp
+    
+    // Quality control
+    rating: v.optional(v.number()), // User feedback 1-5
+    ratingCount: v.optional(v.number()),
+    isActive: v.boolean(),
+    isFeatured: v.optional(v.boolean()), // High-quality content
+    
+    // Generation metadata
+    generatedAt: v.number(),
+    generationCost: v.optional(v.number()), // Track AWS costs
+  })
+    .index("by_type", ["type", "isActive"])
+    .index("by_type_category", ["type", "category"])
+    .index("by_region", ["targetRegion", "type"])
+    .index("by_city", ["targetCity"])
+    .index("by_usage", ["usageCount"])
+    .index("by_featured", ["isFeatured", "type"]),
+
+  // Daily Content Schedule - What content to show each day
+  dailyContentSchedule: defineTable({
+    date: v.string(), // YYYY-MM-DD
+    affirmationId: v.optional(v.id("seededContent")),
+    safetyTipId: v.optional(v.id("seededContent")),
+    discussionPromptId: v.optional(v.id("seededContent")),
+    wellnessTipId: v.optional(v.id("seededContent")),
+    isPublished: v.boolean(),
+    publishedAt: v.optional(v.number()),
+  })
+    .index("by_date", ["date"]),
 });
