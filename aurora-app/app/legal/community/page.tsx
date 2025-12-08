@@ -186,7 +186,7 @@ We may update these guidelines as our community grows. We'll notify you of signi
 Questions about these guidelines?
 
 - **In-App**: Settings → Help → Contact Support
-- **Email**: community@auroraapp.com
+- **Email**: hello@miaurora.app
 
 ---
 

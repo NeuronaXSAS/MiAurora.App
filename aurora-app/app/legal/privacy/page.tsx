@@ -179,7 +179,7 @@ Aurora App complies with the following data protection regulations:
 
 If you have questions about this Privacy Policy or our privacy practices, please contact us:
 
-- **Email**: auroraapp.info@gmail.com
+- **Email**: hello@miaurora.app
 - **Support**: Available through the app's Help section
 
 ## Your Rights

@@ -130,7 +130,7 @@ We may update this Cookie Policy periodically. We will notify you of significant
 
 If you have questions about our use of cookies, please contact us:
 
-- **Email**: privacy@auroraapp.com
+- **Email**: hello@miaurora.app
 - **In-App**: Settings → Help → Contact Support
 
 ## Your Rights
