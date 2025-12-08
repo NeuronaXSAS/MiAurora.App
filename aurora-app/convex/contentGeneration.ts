@@ -252,7 +252,7 @@ export const voteOnDebate = mutation({
     
     // Check if user already voted
     const existingVote = await ctx.db
-      .query("debateVotes")
+      .query("generatedDebateVotes")
       .withIndex("by_debate_user", (q) => 
         q.eq("debateId", args.debateId).eq("userId", args.userId)
       )
@@ -263,7 +263,7 @@ export const voteOnDebate = mutation({
     }
     
     // Record vote
-    await ctx.db.insert("debateVotes", {
+    await ctx.db.insert("generatedDebateVotes", {
       debateId: args.debateId,
       userId: args.userId,
       optionIndex: args.optionIndex,

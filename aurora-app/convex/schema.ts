@@ -2129,8 +2129,8 @@ export default defineSchema({
     .index("by_scheduled_date", ["scheduledDate"])
     .index("by_status", ["status"]),
 
-  // Debate Votes - Track user votes
-  debateVotes: defineTable({
+  // Generated Debate Votes - Track user votes on generated debates
+  generatedDebateVotes: defineTable({
     debateId: v.id("generatedDebates"),
     userId: v.id("users"),
     optionIndex: v.number(),
