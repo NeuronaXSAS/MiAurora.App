@@ -50,9 +50,11 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
   // Debounce search query
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // Fetch posts with location data
+  // Fetch posts with location data - OPTIMIZED with limit for mobile
   const posts = useQuery(api.posts.getPostsForMap, {
     lifeDimension: lifeDimension as any,
+    limit: 150, // Limit markers for mobile performance
+    minRating: ratingFilter || 1,
   });
 
   // Fetch workplace reports with location

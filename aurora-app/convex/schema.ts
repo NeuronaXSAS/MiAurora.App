@@ -2092,4 +2092,143 @@ export default defineSchema({
     activeUsers: v.number(),
   })
     .index("by_date", ["date"]),
+
+  // ============================================
+  // AI-GENERATED CONTENT - Bootstrap the ecosystem
+  // Designed to be temporary until users take over
+  // ============================================
+
+  // Generated Debates - Daily interactive discussions
+  generatedDebates: defineTable({
+    topic: v.string(),
+    category: v.string(),
+    options: v.array(v.string()),
+    translations: v.object({
+      en: v.string(),
+      es: v.optional(v.string()),
+      pt: v.optional(v.string()),
+      fr: v.optional(v.string()),
+      ar: v.optional(v.string()),
+      hi: v.optional(v.string()),
+    }),
+    optionTranslations: v.optional(v.object({
+      en: v.array(v.string()),
+      es: v.optional(v.array(v.string())),
+      pt: v.optional(v.array(v.string())),
+      fr: v.optional(v.array(v.string())),
+      ar: v.optional(v.array(v.string())),
+      hi: v.optional(v.array(v.string())),
+    })),
+    scheduledDate: v.string(),
+    status: v.string(),
+    votes: v.any(), // { optionIndex: count }
+    totalVotes: v.number(),
+    commentCount: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_scheduled_date", ["scheduledDate"])
+    .index("by_status", ["status"]),
+
+  // Debate Votes - Track user votes
+  debateVotes: defineTable({
+    debateId: v.id("generatedDebates"),
+    userId: v.id("users"),
+    optionIndex: v.number(),
+    votedAt: v.number(),
+  })
+    .index("by_debate", ["debateId"])
+    .index("by_user", ["userId"])
+    .index("by_debate_user", ["debateId", "userId"]),
+
+  // Generated Safety Tips - Community-verified
+  generatedTips: defineTable({
+    category: v.string(),
+    translations: v.object({
+      en: v.string(),
+      es: v.optional(v.string()),
+      pt: v.optional(v.string()),
+      fr: v.optional(v.string()),
+      ar: v.optional(v.string()),
+      hi: v.optional(v.string()),
+    }),
+    status: v.string(),
+    verificationCount: v.number(),
+    isVerified: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_category", ["category"])
+    .index("by_verified", ["isVerified"]),
+
+  // Tip Verifications - Track user verifications
+  tipVerifications: defineTable({
+    tipId: v.id("generatedTips"),
+    userId: v.id("users"),
+    isAccurate: v.boolean(),
+    verifiedAt: v.number(),
+  })
+    .index("by_tip", ["tipId"])
+    .index("by_user", ["userId"])
+    .index("by_tip_user", ["tipId", "userId"]),
+
+  // Generated Discussion Prompts
+  generatedPrompts: defineTable({
+    category: v.string(),
+    translations: v.object({
+      en: v.string(),
+      es: v.optional(v.string()),
+      pt: v.optional(v.string()),
+      fr: v.optional(v.string()),
+      ar: v.optional(v.string()),
+      hi: v.optional(v.string()),
+    }),
+    status: v.string(),
+    responseCount: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_category", ["category"]),
+
+  // Generated Weekly Challenges
+  generatedChallenges: defineTable({
+    weekStart: v.string(),
+    translations: v.object({
+      en: v.object({ title: v.string(), description: v.string() }),
+      es: v.optional(v.object({ title: v.string(), description: v.string() })),
+      pt: v.optional(v.object({ title: v.string(), description: v.string() })),
+      fr: v.optional(v.object({ title: v.string(), description: v.string() })),
+      ar: v.optional(v.object({ title: v.string(), description: v.string() })),
+      hi: v.optional(v.object({ title: v.string(), description: v.string() })),
+    }),
+    credits: v.number(),
+    participantCount: v.number(),
+    status: v.string(),
+  })
+    .index("by_week", ["weekStart"]),
+
+  // User-Suggested Debates - Community takes over
+  debateSuggestions: defineTable({
+    topic: v.string(),
+    category: v.string(),
+    options: v.array(v.string()),
+    suggestedBy: v.id("users"),
+    status: v.string(), // pending, approved, rejected
+    votes: v.number(), // Community votes for this suggestion
+    submittedAt: v.number(),
+  })
+    .index("by_status", ["status"])
+    .index("by_user", ["suggestedBy"]),
+
+  // Community Translations - Users translate content
+  communityTranslations: defineTable({
+    contentType: v.string(), // debate, tip, prompt
+    contentId: v.string(),
+    language: v.string(),
+    translation: v.string(),
+    submittedBy: v.id("users"),
+    status: v.string(), // pending, approved, rejected
+    votes: v.number(),
+    submittedAt: v.number(),
+  })
+    .index("by_content", ["contentType", "contentId"])
+    .index("by_language", ["language"])
+    .index("by_user", ["submittedBy"]),
 });

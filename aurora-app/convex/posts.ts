@@ -186,6 +186,7 @@ export const getFeed = query({
 
 /**
  * Get posts within map bounds for map visualization
+ * OPTIMIZED: Limits results and prioritizes by rating for mobile performance
  */
 export const getPostsForMap = query({
   args: {
@@ -198,25 +199,181 @@ export const getPostsForMap = query({
         v.literal("financial")
       )
     ),
+    limit: v.optional(v.number()), // Limit for mobile performance
+    minRating: v.optional(v.number()), // Filter low-quality markers
   },
   handler: async (ctx, args) => {
+    const limit = args.limit ?? 200; // Default limit for performance
+    const minRating = args.minRating ?? 1;
+    
     let posts;
 
     // Filter by life dimension if provided
     if (args.lifeDimension) {
-      const dimension = args.lifeDimension; // Type narrowing
+      const dimension = args.lifeDimension;
       posts = await ctx.db
         .query("posts")
         .withIndex("by_dimension", (q) => q.eq("lifeDimension", dimension))
         .collect();
     } else {
+      // Use rating index for better performance
+      posts = await ctx.db
+        .query("posts")
+        .withIndex("by_rating")
+        .order("desc")
+        .take(limit * 2); // Get more to filter
+    }
+
+    // Filter posts that have valid location data and meet rating threshold
+    const postsWithLocation = posts
+      .filter((post) => {
+        // Must have location with valid coordinates
+        if (!post.location?.coordinates) return false;
+        if (post.location.coordinates.length !== 2) return false;
+        
+        // Filter by minimum rating
+        if (post.rating < minRating) return false;
+        
+        // Exclude posts with placeholder locations
+        const [lng, lat] = post.location.coordinates;
+        if (lng === 0 && lat === 0) return false;
+        
+        return true;
+      })
+      .slice(0, limit);
+
+    // Return lightweight data for map markers
+    return postsWithLocation.map(post => ({
+      _id: post._id,
+      title: post.title,
+      rating: post.rating,
+      verificationCount: post.verificationCount,
+      lifeDimension: post.lifeDimension,
+      location: post.location,
+      isVerified: post.isVerified,
+    }));
+  },
+});
+
+/**
+ * Get clustered posts for map (server-side clustering for mobile performance)
+ * Groups nearby posts into clusters to reduce marker count
+ */
+export const getClusteredPostsForMap = query({
+  args: {
+    lifeDimension: v.optional(
+      v.union(
+        v.literal("professional"),
+        v.literal("social"),
+        v.literal("daily"),
+        v.literal("travel"),
+        v.literal("financial")
+      )
+    ),
+    zoomLevel: v.optional(v.number()), // Map zoom level affects cluster size
+    bounds: v.optional(v.object({
+      north: v.number(),
+      south: v.number(),
+      east: v.number(),
+      west: v.number(),
+    })),
+  },
+  handler: async (ctx, args) => {
+    const zoom = args.zoomLevel ?? 10;
+    
+    // Grid size based on zoom level (smaller grid = more detail at higher zoom)
+    // At zoom 5: ~100km grid, at zoom 15: ~0.1km grid
+    const gridSizeDeg = 5 / Math.pow(2, zoom - 5);
+    
+    let posts;
+    if (args.lifeDimension) {
+      posts = await ctx.db
+        .query("posts")
+        .withIndex("by_dimension", (q) => q.eq("lifeDimension", args.lifeDimension!))
+        .collect();
+    } else {
       posts = await ctx.db.query("posts").collect();
     }
 
-    // Filter posts that have location data
-    const postsWithLocation = posts.filter((post) => post.location !== undefined);
+    // Filter to posts with valid locations
+    const validPosts = posts.filter(p => {
+      if (!p.location?.coordinates) return false;
+      const [lng, lat] = p.location.coordinates;
+      
+      // Filter by bounds if provided
+      if (args.bounds) {
+        if (lat < args.bounds.south || lat > args.bounds.north) return false;
+        if (lng < args.bounds.west || lng > args.bounds.east) return false;
+      }
+      
+      return true;
+    });
 
-    return postsWithLocation;
+    // Group into grid cells
+    const grid: Map<string, typeof validPosts> = new Map();
+    
+    for (const post of validPosts) {
+      const [lng, lat] = post.location!.coordinates;
+      const gridX = Math.floor(lng / gridSizeDeg);
+      const gridY = Math.floor(lat / gridSizeDeg);
+      const key = `${gridX},${gridY}`;
+      
+      if (!grid.has(key)) {
+        grid.set(key, []);
+      }
+      grid.get(key)!.push(post);
+    }
+
+    // Convert to clusters or individual markers
+    const result: Array<{
+      type: "cluster" | "marker";
+      coordinates: [number, number];
+      count?: number;
+      avgRating?: number;
+      post?: {
+        _id: string;
+        title: string;
+        rating: number;
+        location: { name: string; coordinates: number[] };
+      };
+    }> = [];
+
+    for (const [key, cellPosts] of grid) {
+      const [gridX, gridY] = key.split(",").map(Number);
+      const centerLng = (gridX + 0.5) * gridSizeDeg;
+      const centerLat = (gridY + 0.5) * gridSizeDeg;
+
+      if (cellPosts.length === 1) {
+        // Single post - show as marker
+        const post = cellPosts[0];
+        result.push({
+          type: "marker",
+          coordinates: post.location!.coordinates as [number, number],
+          post: {
+            _id: post._id,
+            title: post.title,
+            rating: post.rating,
+            location: post.location!,
+          },
+        });
+      } else {
+        // Multiple posts - show as cluster
+        const avgRating = cellPosts.reduce((sum, p) => sum + p.rating, 0) / cellPosts.length;
+        result.push({
+          type: "cluster",
+          coordinates: [centerLng, centerLat],
+          count: cellPosts.length,
+          avgRating: Math.round(avgRating * 10) / 10,
+        });
+      }
+    }
+
+    return {
+      clusters: result,
+      totalPosts: validPosts.length,
+      clusterCount: result.filter(r => r.type === "cluster").length,
+      markerCount: result.filter(r => r.type === "marker").length,
+    };
   },
 });
 

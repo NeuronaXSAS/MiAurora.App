@@ -29,6 +29,7 @@ import type * as cycleTracker from "../cycleTracker.js";
 import type * as dailyDebates from "../dailyDebates.js";
 import type * as directMessages from "../directMessages.js";
 import type * as emergency from "../emergency.js";
+import type * as engagement from "../engagement.js";
 import type * as events from "../events.js";
 import type * as feed from "../feed.js";
 import type * as files from "../files.js";
@@ -97,6 +98,7 @@ declare const fullApi: ApiFromModules<{
   dailyDebates: typeof dailyDebates;
   directMessages: typeof directMessages;
   emergency: typeof emergency;
+  engagement: typeof engagement;
   events: typeof events;
   feed: typeof feed;
   files: typeof files;
