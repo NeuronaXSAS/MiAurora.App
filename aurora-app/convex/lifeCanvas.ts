@@ -26,11 +26,13 @@ export const updateLifeSettings = mutation({
     userId: v.id("users"),
     birthYear: v.optional(v.number()),
     lifeExpectancy: v.optional(v.number()),
-    gender: v.optional(v.union(
-      v.literal("female"),
-      v.literal("non-binary"),
-      v.literal("prefer-not-to-say")
-    )),
+    gender: v.optional(
+      v.union(
+        v.literal("female"),
+        v.literal("non-binary"),
+        v.literal("prefer-not-to-say"),
+      ),
+    ),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
@@ -38,7 +40,8 @@ export const updateLifeSettings = mutation({
 
     const updates: Record<string, unknown> = {};
     if (args.birthYear !== undefined) updates.birthYear = args.birthYear;
-    if (args.lifeExpectancy !== undefined) updates.lifeExpectancy = args.lifeExpectancy;
+    if (args.lifeExpectancy !== undefined)
+      updates.lifeExpectancy = args.lifeExpectancy;
     if (args.gender !== undefined) updates.gender = args.gender;
 
     await ctx.db.patch(args.userId, updates);
@@ -64,7 +67,7 @@ export const getLifeEntries = query({
 
     // Filter by date range
     return entries.filter(
-      (e) => e.date >= args.startDate && e.date <= args.endDate
+      (e) => e.date >= args.startDate && e.date <= args.endDate,
     );
   },
 });
@@ -86,22 +89,29 @@ export const getDailyIntensities = query({
       .collect();
 
     // Filter by date range and aggregate by date
-    const dateMap = new Map<string, { totalIntensity: number; entryCount: number }>();
-    
+    const dateMap = new Map<
+      string,
+      { totalIntensity: number; entryCount: number }
+    >();
+
     entries
       .filter((e) => e.date >= args.startDate && e.date <= args.endDate)
       .forEach((entry) => {
-        const existing = dateMap.get(entry.date) || { totalIntensity: 0, entryCount: 0 };
+        const existing = dateMap.get(entry.date) || {
+          totalIntensity: 0,
+          entryCount: 0,
+        };
         dateMap.set(entry.date, {
           totalIntensity: existing.totalIntensity + (entry.intensityScore || 0),
           entryCount: existing.entryCount + 1,
         });
       });
 
-    // Convert to array and cap intensity at 4
+    // Convert to array and calculate final intensity level (0-4)
+    // 1 entry with low completeness = 1, 1 entry complete = 2, 2 entries = 3, 3+ entries = 4
     return Array.from(dateMap.entries()).map(([date, data]) => ({
       date,
-      intensity: Math.min(4, data.totalIntensity), // Cap at 4 for display
+      intensity: Math.min(4, Math.floor(data.totalIntensity)), // Floor and cap at 4 for display
       entryCount: data.entryCount,
     }));
   },
@@ -119,10 +129,10 @@ export const getLifeEntriesForDate = query({
     const entries = await ctx.db
       .query("lifeEntries")
       .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", args.userId).eq("date", args.date)
+        q.eq("userId", args.userId).eq("date", args.date),
       )
       .collect();
-    
+
     // Sort by createdAt descending (newest first)
     return entries.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   },
@@ -156,15 +166,19 @@ export const createLifeEntry = mutation({
     hasPeriod: v.optional(v.boolean()),
     sleepHours: v.optional(v.number()),
     exerciseMinutes: v.optional(v.number()),
-    dimensions: v.optional(v.array(v.union(
-      v.literal("career"),
-      v.literal("health"),
-      v.literal("relationships"),
-      v.literal("growth"),
-      v.literal("creativity"),
-      v.literal("adventure"),
-      v.literal("rest")
-    ))),
+    dimensions: v.optional(
+      v.array(
+        v.union(
+          v.literal("career"),
+          v.literal("health"),
+          v.literal("relationships"),
+          v.literal("growth"),
+          v.literal("creativity"),
+          v.literal("adventure"),
+          v.literal("rest"),
+        ),
+      ),
+    ),
     tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
@@ -172,14 +186,25 @@ export const createLifeEntry = mutation({
     if (!user) throw new Error("User not found");
 
     // Calculate intensity score based on entry completeness
-    let intensityScore = 0;
-    if (args.journalText && args.journalText.length > 0) intensityScore += 1;
-    if (args.journalText && args.journalText.length > 100) intensityScore += 1;
-    if (args.mood) intensityScore += 0.5;
-    if (args.gratitude && args.gratitude.length > 0) intensityScore += 0.5;
-    if (args.dimensions && args.dimensions.length > 0) intensityScore += 0.5;
-    if (args.hydrationGlasses && args.hydrationGlasses >= 8) intensityScore += 0.5;
-    intensityScore = Math.min(4, Math.floor(intensityScore));
+    // Base score of 1 for any entry, with small bonuses for completeness
+    // This ensures progression: 1 entry = level 1-2, 2 entries = level 2-3, 3+ entries = level 3-4
+    let intensityScore = 1; // Base score for creating an entry
+
+    // Small bonuses for completeness (max +1 total from bonuses)
+    let completenessBonus = 0;
+    if (args.journalText && args.journalText.length > 0)
+      completenessBonus += 0.2;
+    if (args.journalText && args.journalText.length > 100)
+      completenessBonus += 0.2;
+    if (args.mood) completenessBonus += 0.15;
+    if (args.gratitude && args.gratitude.length > 0) completenessBonus += 0.15;
+    if (args.dimensions && args.dimensions.length > 0)
+      completenessBonus += 0.15;
+    if (args.hydrationGlasses && args.hydrationGlasses >= 8)
+      completenessBonus += 0.15;
+
+    intensityScore += Math.min(1, completenessBonus); // Cap bonus at 1
+    // Don't floor here - keep decimal for aggregation, will be floored when displayed
 
     // Always create a new entry (multiple entries per day supported)
     const entryId = await ctx.db.insert("lifeEntries", {
@@ -204,7 +229,8 @@ export const createLifeEntry = mutation({
     const JOURNAL_ENTRY_CREDITS = 5;
     await ctx.db.patch(args.userId, {
       credits: user.credits + JOURNAL_ENTRY_CREDITS,
-      monthlyCreditsEarned: (user.monthlyCreditsEarned || 0) + JOURNAL_ENTRY_CREDITS,
+      monthlyCreditsEarned:
+        (user.monthlyCreditsEarned || 0) + JOURNAL_ENTRY_CREDITS,
     });
 
     await ctx.db.insert("transactions", {
@@ -232,15 +258,19 @@ export const updateLifeEntry = mutation({
     hasPeriod: v.optional(v.boolean()),
     sleepHours: v.optional(v.number()),
     exerciseMinutes: v.optional(v.number()),
-    dimensions: v.optional(v.array(v.union(
-      v.literal("career"),
-      v.literal("health"),
-      v.literal("relationships"),
-      v.literal("growth"),
-      v.literal("creativity"),
-      v.literal("adventure"),
-      v.literal("rest")
-    ))),
+    dimensions: v.optional(
+      v.array(
+        v.union(
+          v.literal("career"),
+          v.literal("health"),
+          v.literal("relationships"),
+          v.literal("growth"),
+          v.literal("creativity"),
+          v.literal("adventure"),
+          v.literal("rest"),
+        ),
+      ),
+    ),
     tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
@@ -255,13 +285,16 @@ export const updateLifeEntry = mutation({
     const dimensions = args.dimensions ?? entry.dimensions;
     const hydrationGlasses = args.hydrationGlasses ?? entry.hydrationGlasses;
 
-    if (journalText && journalText.length > 0) intensityScore += 1;
-    if (journalText && journalText.length > 100) intensityScore += 1;
-    if (mood) intensityScore += 0.5;
-    if (gratitude && gratitude.length > 0) intensityScore += 0.5;
-    if (dimensions && dimensions.length > 0) intensityScore += 0.5;
-    if (hydrationGlasses && hydrationGlasses >= 8) intensityScore += 0.5;
-    intensityScore = Math.min(4, Math.floor(intensityScore));
+    // Base score of 1 for any entry, with small bonuses for completeness
+    intensityScore = 1;
+    let completenessBonus = 0;
+    if (journalText && journalText.length > 0) completenessBonus += 0.2;
+    if (journalText && journalText.length > 100) completenessBonus += 0.2;
+    if (mood) completenessBonus += 0.15;
+    if (gratitude && gratitude.length > 0) completenessBonus += 0.15;
+    if (dimensions && dimensions.length > 0) completenessBonus += 0.15;
+    if (hydrationGlasses && hydrationGlasses >= 8) completenessBonus += 0.15;
+    intensityScore += Math.min(1, completenessBonus); // Cap bonus at 1
 
     await ctx.db.patch(args.entryId, {
       journalText: args.journalText,
@@ -291,7 +324,7 @@ export const deleteLifeEntry = mutation({
   handler: async (ctx, args) => {
     const entry = await ctx.db.get(args.entryId);
     if (!entry) throw new Error("Entry not found");
-    
+
     await ctx.db.delete(args.entryId);
     return { success: true };
   },
@@ -313,8 +346,11 @@ export const getLifeStats = query({
 
     // Calculate stats
     const totalEntries = entries.length;
-    const entriesWithJournal = entries.filter((e) => e.journalText && e.journalText.length > 0).length;
-    const avgMood = entries.filter((e) => e.mood).reduce((sum, e) => sum + (e.mood || 0), 0) / 
+    const entriesWithJournal = entries.filter(
+      (e) => e.journalText && e.journalText.length > 0,
+    ).length;
+    const avgMood =
+      entries.filter((e) => e.mood).reduce((sum, e) => sum + (e.mood || 0), 0) /
       (entries.filter((e) => e.mood).length || 1);
 
     // Get unique days with entries
@@ -341,10 +377,17 @@ export const getLifeStats = query({
     let daysRemaining = 0;
     if (user.birthYear) {
       const birthDate = new Date(user.birthYear, 0, 1);
-      daysLived = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24));
+      daysLived = Math.floor(
+        (today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24),
+      );
       const lifeExpectancy = user.lifeExpectancy || 80;
       const expectedEndDate = new Date(user.birthYear + lifeExpectancy, 0, 1);
-      daysRemaining = Math.max(0, Math.floor((expectedEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+      daysRemaining = Math.max(
+        0,
+        Math.floor(
+          (expectedEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+        ),
+      );
     }
 
     return {
