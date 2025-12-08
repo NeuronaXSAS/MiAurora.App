@@ -2231,4 +2231,59 @@ export default defineSchema({
     .index("by_content", ["contentType", "contentId"])
     .index("by_language", ["language"])
     .index("by_user", ["submittedBy"]),
+
+  // ============================================
+  // WHO'S RIGHT - ARGUMENT ANALYZER
+  // ============================================
+  
+  // Argument Analysis Results - For analytics and premium features
+  argumentAnalyses: defineTable({
+    // User info (optional - can be anonymous)
+    userId: v.optional(v.id("users")),
+    sessionId: v.string(), // Anonymous session tracking
+    
+    // Analysis results
+    winner: v.union(
+      v.literal("person1"),
+      v.literal("person2"),
+      v.literal("tie"),
+      v.literal("both_wrong")
+    ),
+    toxicityScore: v.number(), // 0-100
+    communicationScore: v.number(), // 0-100
+    argumentType: v.string(), // e.g., "Emotional Neglect", "Miscommunication"
+    
+    // Red flags detected
+    redFlags: v.array(v.object({
+      type: v.string(),
+      severity: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
+    })),
+    
+    // Metadata
+    imageCount: v.number(), // Number of screenshots analyzed
+    processingTime: v.optional(v.number()), // ms
+    
+    // Engagement
+    shared: v.optional(v.boolean()),
+    savedToProfile: v.optional(v.boolean()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_session", ["sessionId"])
+    .index("by_toxicity", ["toxicityScore"]),
+
+  // Argument Analysis Stats - Aggregated for insights
+  argumentStats: defineTable({
+    date: v.string(), // YYYY-MM-DD
+    totalAnalyses: v.number(),
+    avgToxicityScore: v.number(),
+    avgCommunicationScore: v.number(),
+    mostCommonRedFlags: v.array(v.string()),
+    winnerDistribution: v.object({
+      person1: v.number(),
+      person2: v.number(),
+      tie: v.number(),
+      bothWrong: v.number(),
+    }),
+  })
+    .index("by_date", ["date"]),
 });

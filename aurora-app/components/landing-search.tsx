@@ -28,6 +28,7 @@ import { DailyDebatesPanel } from "@/components/search/daily-debates-panel";
 import { VideoResultCard } from "@/components/search/video-result-card";
 import { SafetyAlertBadge } from "@/components/search/safety-alert-badge";
 import { AuroraVerifiedBadge, getVerificationLevel } from "@/components/search/aurora-verified-badge";
+import { WhosRightPanel } from "@/components/search/whos-right-panel";
 import { useLocale } from "@/lib/locale-context";
 
 interface WebSearchResult {
@@ -66,7 +67,7 @@ interface ImageResult {
   id: string; title: string; url: string; thumbnail?: string; source: string;
 }
 
-type SearchTab = "all" | "web" | "news" | "images" | "videos";
+type SearchTab = "all" | "web" | "whos-right" | "debates";
 
 const QUICK_CATEGORIES = [
   { id: "news", label: "Today's News", icon: Newspaper, color: "var(--color-aurora-purple)" },
@@ -88,6 +89,7 @@ export function LandingSearch() {
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [activeTab, setActiveTab] = useState<SearchTab>("all");
+  const [showWhosRight, setShowWhosRight] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -119,26 +121,8 @@ export function LandingSearch() {
     fetchResults();
   }, [debouncedQuery]);
 
-  // Fetch media results only when user switches to those tabs (cost optimization)
-  const fetchMediaResults = useCallback(async (tab: SearchTab) => {
-    if (!debouncedQuery || debouncedQuery.length < 2) return;
-    if (tab === "all" || tab === "web") return; // No need to fetch for these tabs
-    
-    // Check if we already have results for this tab
-    if (tab === "videos" && videoResults.length > 0) return;
-    if (tab === "news" && newsResults.length > 0) return;
-    if (tab === "images" && imageResults.length > 0) return;
-    
-    setIsSearching(true);
-    try {
-      const res = await fetch(`/api/search/brave?q=${encodeURIComponent(debouncedQuery)}&count=8&includeMedia=true`);
-      const data = await res.json();
-      if (data.videos) setVideoResults(data.videos);
-      if (data.news) setNewsResults(data.news);
-      if (data.images) setImageResults(data.images);
-    } catch (err) { console.error("Media search error:", err); }
-    finally { setIsSearching(false); }
-  }, [debouncedQuery, videoResults.length, newsResults.length, imageResults.length]);
+  // Note: Media tabs (news, images, videos) have been replaced with Who's Right and Debates
+  // to optimize API costs and focus on unique Aurora App features
 
   // Generate Aurora AI insight with personality
   useEffect(() => {
@@ -238,7 +222,21 @@ export function LandingSearch() {
       )}
 
       <AnimatePresence mode="wait">
-        {hasResults ? (
+        {/* Show Who's Right panel standalone when selected from home */}
+        {activeTab === "whos-right" && !hasResults ? (
+          <motion.div key="whos-right-standalone" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <button 
+                onClick={() => setActiveTab("all")}
+                className="flex items-center gap-2 text-sm text-[var(--color-aurora-purple)] hover:underline"
+              >
+                <ArrowRight className="w-4 h-4 rotate-180" />
+                Back to Home
+              </button>
+            </div>
+            <WhosRightPanel />
+          </motion.div>
+        ) : hasResults ? (
           <motion.div key="results" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
             
             {/* Aurora AI Insight - Personality-driven guidance */}
@@ -264,21 +262,21 @@ export function LandingSearch() {
               </div>
             </div>
 
-            {/* Content Type Tabs */}
+            {/* Content Type Tabs - Simplified with Who's Right feature */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {[
-                { id: "all" as SearchTab, label: "All", count: totalResults, icon: Globe },
+                { id: "all" as SearchTab, label: "All", count: webResults.length, icon: Globe },
                 { id: "web" as SearchTab, label: "Web", count: webResults.length, icon: Globe },
-                { id: "news" as SearchTab, label: "News", count: newsResults.length, icon: Newspaper },
-                { id: "images" as SearchTab, label: "Images", count: imageResults.length, icon: ImageIcon },
-                { id: "videos" as SearchTab, label: "Videos", count: videoResults.length, icon: PlayCircle },
+                { id: "whos-right" as SearchTab, label: "Who's Right", count: null, icon: Scale, isNew: true },
+                { id: "debates" as SearchTab, label: "Debates", count: null, icon: Flame },
               ].map((tab) => (
-                <button key={tab.id} onClick={() => { setActiveTab(tab.id); fetchMediaResults(tab.id); }}
+                <button key={tab.id} onClick={() => { setActiveTab(tab.id); if (tab.id === "whos-right") setShowWhosRight(true); }}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-colors whitespace-nowrap min-h-[36px] ${
                     activeTab === tab.id ? "bg-[var(--color-aurora-purple)] text-white" : "bg-[var(--accent)] text-[var(--foreground)] hover:bg-[var(--color-aurora-purple)]/20"
                   }`}>
                   <tab.icon className="w-3.5 h-3.5" />
-                  {tab.label} {tab.count > 0 && `(${tab.count})`}
+                  {tab.label} {tab.count !== null && tab.count > 0 && `(${tab.count})`}
+                  {tab.isNew && <Badge className="ml-1 text-[8px] bg-[var(--color-aurora-pink)] text-white border-0 px-1 py-0">NEW</Badge>}
                 </button>
               ))}
               <Badge className="ml-auto text-[10px] bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0 whitespace-nowrap">
@@ -286,60 +284,15 @@ export function LandingSearch() {
               </Badge>
             </div>
 
-            {/* News Results - Only show when News tab is active */}
-            {activeTab === "news" && (
-              <div>
-                {newsResults.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {newsResults.map((news) => (
-                      <NewsCard key={news.id} news={news} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-[var(--muted-foreground)]">
-                    <Newspaper className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No news results for this search</p>
-                  </div>
-                )}
-              </div>
+            {/* Who's Right Panel - Argument Analyzer */}
+            {activeTab === "whos-right" && (
+              <WhosRightPanel />
             )}
 
-            {/* Images Results - Only show when Images tab is active */}
-            {activeTab === "images" && (
-              <div>
-                {imageResults.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {imageResults.map((img) => (
-                      <a key={img.id} href={img.url} target="_blank" rel="noopener noreferrer"
-                        className="aspect-square rounded-xl overflow-hidden bg-[var(--accent)] hover:opacity-90 transition-opacity">
-                        {img.thumbnail && <img src={img.thumbnail} alt={img.title} className="w-full h-full object-cover" />}
-                      </a>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-[var(--muted-foreground)]">
-                    <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No image results for this search</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Video Results - Only show when Videos tab is active */}
-            {activeTab === "videos" && (
-              <div>
-                {videoResults.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {videoResults.map((video, i) => (
-                      <VideoResultCard key={video.id} video={video} index={i} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-[var(--muted-foreground)]">
-                    <PlayCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No video results for this search</p>
-                  </div>
-                )}
+            {/* Debates Panel */}
+            {activeTab === "debates" && (
+              <div className="space-y-4">
+                <DailyDebatesPanel userId={null} />
               </div>
             )}
 
@@ -374,6 +327,35 @@ export function LandingSearch() {
           </motion.div>
         ) : (
           <motion.div key="debates" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+            {/* Who's Right Feature Card - NEW */}
+            <div 
+              onClick={() => { setActiveTab("whos-right"); setShowWhosRight(true); }}
+              className="cursor-pointer group"
+            >
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-6 text-white hover:shadow-xl transition-all">
+                <div className="absolute top-2 right-2">
+                  <Badge className="text-[10px] bg-white/20 text-white border-0">NEW FEATURE</Badge>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <Scale className="w-8 h-8" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold mb-1">Who&apos;s Right?</h3>
+                    <p className="text-sm text-white/80">
+                      Upload screenshots of your argument and let AI determine who won, detect red flags, and get relationship insights.
+                    </p>
+                  </div>
+                  <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                </div>
+                <div className="flex items-center gap-3 mt-4 text-xs text-white/70">
+                  <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> All relationships</span>
+                  <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> Private & secure</span>
+                  <span className="flex items-center gap-1"><Sparkles className="w-3 h-3" /> AI-powered</span>
+                </div>
+              </div>
+            </div>
+
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Flame className="w-5 h-5 text-[var(--color-aurora-pink)]" />
