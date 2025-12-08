@@ -40,7 +40,16 @@ import {
 } from "lucide-react";
 import { LifeEntriesViewer } from "./life-entries-viewer";
 import { motion, AnimatePresence } from "framer-motion";
-import { format, startOfYear, endOfYear, eachDayOfInterval, getDay, subYears, addYears } from "date-fns";
+import {
+  format,
+  startOfYear,
+  endOfYear,
+  eachDayOfInterval,
+  getDay,
+  subYears,
+  addYears,
+  parse,
+} from "date-fns";
 
 interface LifeCanvasProps {
   userId: Id<"users">;
@@ -90,10 +99,10 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
   // Queries
   const lifeData = useQuery(api.lifeCanvas.getLifeCanvasData, { userId });
   const lifeStats = useQuery(api.lifeCanvas.getLifeStats, { userId });
-  
+
   const yearStart = `${viewYear}-01-01`;
   const yearEnd = `${viewYear}-12-31`;
-  
+
   // Use aggregated intensities for the calendar grid
   const dailyIntensities = useQuery(api.lifeCanvas.getDailyIntensities, {
     userId,
@@ -135,33 +144,54 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
     const start = startOfYear(new Date(viewYear, 0, 1));
     const end = endOfYear(new Date(viewYear, 0, 1));
     const days = eachDayOfInterval({ start, end });
-    
+
     // Create intensity map for quick lookup (already aggregated from backend)
-    const intensityMap = new Map<string, { intensity: number; entryCount: number }>();
+    const intensityMap = new Map<
+      string,
+      { intensity: number; entryCount: number }
+    >();
     dailyIntensities?.forEach((d) => {
-      intensityMap.set(d.date, { intensity: d.intensity, entryCount: d.entryCount });
+      intensityMap.set(d.date, {
+        intensity: d.intensity,
+        entryCount: d.entryCount,
+      });
     });
 
     // Group by week
-    const weeks: { date: Date; intensity: number; entryCount: number; dateStr: string }[][] = [];
-    let currentWeek: { date: Date; intensity: number; entryCount: number; dateStr: string }[] = [];
-    
+    const weeks: {
+      date: Date;
+      intensity: number;
+      entryCount: number;
+      dateStr: string;
+    }[][] = [];
+    let currentWeek: {
+      date: Date;
+      intensity: number;
+      entryCount: number;
+      dateStr: string;
+    }[] = [];
+
     // Add empty days at start to align with week
     const firstDayOfWeek = getDay(start);
     for (let i = 0; i < firstDayOfWeek; i++) {
-      currentWeek.push({ date: new Date(0), intensity: -1, entryCount: 0, dateStr: "" });
+      currentWeek.push({
+        date: new Date(0),
+        intensity: -1,
+        entryCount: 0,
+        dateStr: "",
+      });
     }
 
     days.forEach((day) => {
       const dateStr = format(day, "yyyy-MM-dd");
       const dayData = intensityMap.get(dateStr);
-      currentWeek.push({ 
-        date: day, 
-        intensity: dayData?.intensity ?? 0, 
+      currentWeek.push({
+        date: day,
+        intensity: dayData?.intensity ?? 0,
         entryCount: dayData?.entryCount ?? 0,
-        dateStr 
+        dateStr,
       });
-      
+
       if (currentWeek.length === 7) {
         weeks.push(currentWeek);
         currentWeek = [];
@@ -171,7 +201,12 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
     // Add remaining days
     if (currentWeek.length > 0) {
       while (currentWeek.length < 7) {
-        currentWeek.push({ date: new Date(0), intensity: -1, entryCount: 0, dateStr: "" });
+        currentWeek.push({
+          date: new Date(0),
+          intensity: -1,
+          entryCount: 0,
+          dateStr: "",
+        });
       }
       weeks.push(currentWeek);
     }
@@ -183,7 +218,7 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
     if (!dateStr) return;
     const today = format(new Date(), "yyyy-MM-dd");
     if (dateStr > today) return; // Can't log future days
-    
+
     setSelectedDate(dateStr);
     setShowEntryDialog(true);
   };
@@ -202,9 +237,18 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
         gratitude: gratitude.filter((g) => g.trim().length > 0),
         hydrationGlasses: hydration || undefined,
         hasPeriod: hasPeriod || undefined,
-        dimensions: selectedDimensions.length > 0 
-          ? selectedDimensions as ("career" | "health" | "relationships" | "growth" | "creativity" | "adventure" | "rest")[]
-          : undefined,
+        dimensions:
+          selectedDimensions.length > 0
+            ? (selectedDimensions as (
+                | "career"
+                | "health"
+                | "relationships"
+                | "growth"
+                | "creativity"
+                | "adventure"
+                | "rest"
+              )[])
+            : undefined,
       });
       setShowEntryDialog(false);
       resetForm();
@@ -228,14 +272,17 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
 
   const toggleDimension = (dim: string) => {
     setSelectedDimensions((prev) =>
-      prev.includes(dim) ? prev.filter((d) => d !== dim) : [...prev, dim]
+      prev.includes(dim) ? prev.filter((d) => d !== dim) : [...prev, dim],
     );
   };
 
   // Scroll to current month on mount
   useEffect(() => {
     if (scrollRef.current && viewYear === new Date().getFullYear()) {
-      const currentWeek = Math.floor((new Date().getTime() - new Date(viewYear, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
+      const currentWeek = Math.floor(
+        (new Date().getTime() - new Date(viewYear, 0, 1).getTime()) /
+          (7 * 24 * 60 * 60 * 1000),
+      );
       const scrollPosition = Math.max(0, (currentWeek - 10) * 14);
       scrollRef.current.scrollLeft = scrollPosition;
     }
@@ -263,24 +310,30 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
             </Button>
           </div>
         </div>
-        
+
         {/* Life Stats Summary */}
         {lifeStats && lifeStats.birthYear && (
           <div className="flex flex-wrap gap-3 mt-2 text-sm">
             <div className="flex items-center gap-1.5 text-[var(--muted-foreground)]">
               <Heart className="w-4 h-4 text-[var(--color-aurora-pink)]" />
-              <span className="font-semibold text-[var(--foreground)]">{lifeStats.daysLived.toLocaleString()}</span>
+              <span className="font-semibold text-[var(--foreground)]">
+                {lifeStats.daysLived.toLocaleString()}
+              </span>
               <span>days lived</span>
             </div>
             <div className="flex items-center gap-1.5 text-[var(--muted-foreground)]">
               <Sparkles className="w-4 h-4 text-[var(--color-aurora-purple)]" />
-              <span className="font-semibold text-[var(--foreground)]">{lifeStats.daysRemaining.toLocaleString()}</span>
+              <span className="font-semibold text-[var(--foreground)]">
+                {lifeStats.daysRemaining.toLocaleString()}
+              </span>
               <span>days ahead</span>
             </div>
             {lifeStats.currentStreak > 0 && (
               <div className="flex items-center gap-1.5 text-[var(--muted-foreground)]">
                 <Flame className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
-                <span className="font-semibold text-[var(--foreground)]">{lifeStats.currentStreak}</span>
+                <span className="font-semibold text-[var(--foreground)]">
+                  {lifeStats.currentStreak}
+                </span>
                 <span>day streak</span>
               </div>
             )}
@@ -300,7 +353,9 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="font-semibold text-[var(--foreground)]">{viewYear}</span>
+          <span className="font-semibold text-[var(--foreground)]">
+            {viewYear}
+          </span>
           <Button
             variant="ghost"
             size="sm"
@@ -313,24 +368,40 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
         </div>
 
         {/* GitHub-style Contribution Grid */}
-        <div 
+        <div
           ref={scrollRef}
           className="overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0"
         >
           <div className="inline-flex flex-col gap-0.5 min-w-max">
             {/* Month labels */}
             <div className="flex gap-0.5 mb-1 ml-0">
-              {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map((month, i) => (
-                <div 
-                  key={month} 
+              {[
+                "Jan",
+                "Feb",
+                "Mar",
+                "Apr",
+                "May",
+                "Jun",
+                "Jul",
+                "Aug",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dec",
+              ].map((month, i) => (
+                <div
+                  key={month}
                   className="text-[10px] text-[var(--muted-foreground)]"
-                  style={{ width: `${(calendarData.length / 12) * 14}px`, minWidth: "28px" }}
+                  style={{
+                    width: `${(calendarData.length / 12) * 14}px`,
+                    minWidth: "28px",
+                  }}
                 >
                   {month}
                 </div>
               ))}
             </div>
-            
+
             {/* Day labels */}
             <div className="flex">
               <div className="flex flex-col gap-0.5 mr-1 text-[10px] text-[var(--muted-foreground)]">
@@ -342,7 +413,7 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
                 <span className="h-3"></span>
                 <span className="h-3">S</span>
               </div>
-              
+
               {/* Grid */}
               <div className="flex gap-0.5">
                 {calendarData.map((week, weekIdx) => (
@@ -352,13 +423,15 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
                       const isFuture = day.dateStr > today;
                       const isEmpty = day.intensity === -1;
                       const hasEntries = day.entryCount > 0;
-                      
+
                       // Build tooltip text
-                      let tooltipText = day.dateStr ? format(day.date, "MMM d, yyyy") : "";
+                      let tooltipText = day.dateStr
+                        ? format(day.date, "MMM d, yyyy")
+                        : "";
                       if (hasEntries) {
                         tooltipText += ` • ${day.entryCount} ${day.entryCount === 1 ? "entry" : "entries"}`;
                       }
-                      
+
                       return (
                         <button
                           key={dayIdx}
@@ -430,7 +503,12 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[var(--foreground)]">
               <PenLine className="w-5 h-5 text-[var(--color-aurora-pink)]" />
-              New Entry • {selectedDate && format(new Date(selectedDate), "MMMM d, yyyy")}
+              New Entry •{" "}
+              {selectedDate &&
+                format(
+                  parse(selectedDate, "yyyy-MM-dd", new Date()),
+                  "MMMM d, yyyy",
+                )}
             </DialogTitle>
             <p className="text-sm text-[var(--muted-foreground)]">
               Add as many entries as you want per day ✨
@@ -450,9 +528,10 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
                     onClick={() => setMood(i + 1)}
                     className={`
                       w-12 h-12 text-2xl rounded-xl transition-all
-                      ${mood === i + 1 
-                        ? "bg-[var(--color-aurora-pink)]/30 ring-2 ring-[var(--color-aurora-pink)] scale-110" 
-                        : "bg-[var(--accent)] hover:bg-[var(--color-aurora-pink)]/10"
+                      ${
+                        mood === i + 1
+                          ? "bg-[var(--color-aurora-pink)]/30 ring-2 ring-[var(--color-aurora-pink)] scale-110"
+                          : "bg-[var(--accent)] hover:bg-[var(--color-aurora-pink)]/10"
                       }
                     `}
                   >
@@ -491,9 +570,10 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
                     onClick={() => toggleDimension(dim.id)}
                     className={`
                       px-3 py-2 rounded-xl text-sm transition-all flex items-center gap-1.5
-                      ${selectedDimensions.includes(dim.id)
-                        ? "bg-[var(--color-aurora-purple)] text-white"
-                        : "bg-[var(--accent)] text-[var(--foreground)] hover:bg-[var(--color-aurora-lavender)]/30"
+                      ${
+                        selectedDimensions.includes(dim.id)
+                          ? "bg-[var(--color-aurora-purple)] text-white"
+                          : "bg-[var(--accent)] text-[var(--foreground)] hover:bg-[var(--color-aurora-lavender)]/30"
                       }
                     `}
                   >
@@ -521,7 +601,9 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
                   >
                     -
                   </Button>
-                  <span className="w-8 text-center font-semibold text-[var(--foreground)]">{hydration}</span>
+                  <span className="w-8 text-center font-semibold text-[var(--foreground)]">
+                    {hydration}
+                  </span>
                   <Button
                     variant="outline"
                     size="sm"
@@ -617,7 +699,10 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
                   <SelectValue placeholder="Select your birth year" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: 80 }, (_, i) => currentYear - 13 - i).map((year) => (
+                  {Array.from(
+                    { length: 80 },
+                    (_, i) => currentYear - 13 - i,
+                  ).map((year) => (
                     <SelectItem key={year} value={year.toString()}>
                       {year}
                     </SelectItem>
@@ -659,11 +744,16 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
                 <p className="text-sm text-[var(--foreground)]">
                   Based on your settings, you've lived approximately{" "}
                   <span className="font-bold text-[var(--color-aurora-pink)]">
-                    {Math.floor((currentYear - birthYearInput) * 365.25).toLocaleString()}
+                    {Math.floor(
+                      (currentYear - birthYearInput) * 365.25,
+                    ).toLocaleString()}
                   </span>{" "}
                   days and have about{" "}
                   <span className="font-bold text-[var(--color-aurora-purple)]">
-                    {Math.floor((birthYearInput + lifeExpectancyInput - currentYear) * 365.25).toLocaleString()}
+                    {Math.floor(
+                      (birthYearInput + lifeExpectancyInput - currentYear) *
+                        365.25,
+                    ).toLocaleString()}
                   </span>{" "}
                   days ahead. Make them count! 💜
                 </p>
