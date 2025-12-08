@@ -22,6 +22,7 @@ import type * as badges from "../badges.js";
 import type * as circles from "../circles.js";
 import type * as cleanup from "../cleanup.js";
 import type * as comments from "../comments.js";
+import type * as communityJudgeCases from "../communityJudgeCases.js";
 import type * as communityTruth from "../communityTruth.js";
 import type * as connections from "../connections.js";
 import type * as contentGeneration from "../contentGeneration.js";
@@ -93,6 +94,7 @@ declare const fullApi: ApiFromModules<{
   circles: typeof circles;
   cleanup: typeof cleanup;
   comments: typeof comments;
+  communityJudgeCases: typeof communityJudgeCases;
   communityTruth: typeof communityTruth;
   connections: typeof connections;
   contentGeneration: typeof contentGeneration;

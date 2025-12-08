@@ -3,33 +3,35 @@
 /**
  * Aurora App - Revolutionary Women-First Search Engine
  * 
- * THE ANTI-TOXIC SEARCH: Get informed fast, debate constructively, continue with life.
- * Features: Web, News, Images, Videos - all with Aurora bias analysis
- * 
- * AI Personality: Aurora is a warm, witty guide who speaks like a trusted friend
- * and helps foster critical thinking about search results.
+ * Landing page search experience with:
+ * - Unified search bar with integrated results
+ * - Judge mode results flow from within the search box
+ * - Web search with bias detection and AI insights
+ * - Community search via Convex API
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Search, X, Globe, ExternalLink, Heart, 
-  Loader2, Shield, Clock, Bot, Scale, Building2, Newspaper, ImageIcon,
-  Flame, ArrowRight, Eye, Zap, PlayCircle, Sparkles
-} from "lucide-react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import {
+  Search, Globe, ExternalLink, Heart, Loader2, Shield, Bot, Scale,
+  ArrowRight, Zap, Sparkles, Users, MessageSquare, MapPin, Briefcase, Flame
+} from "lucide-react";
 import { LandingAd } from "@/components/ads/landing-ad";
 import { calculateTrustScore } from "@/lib/search/trust-score";
 import { DailyDebatesPanel } from "@/components/search/daily-debates-panel";
 import { SafetyAlertBadge } from "@/components/search/safety-alert-badge";
 import { AuroraVerifiedBadge, getVerificationLevel } from "@/components/search/aurora-verified-badge";
-import { WhosRightPanel } from "@/components/search/whos-right-panel";
 import { useLocale } from "@/lib/locale-context";
-import { AuroraSearchBox } from "@/components/search/aurora-search-box";
+import { AuroraSearchBox, type SearchMode, type SearchData } from "@/components/search/aurora-search-box";
+
+// ==================== TYPES ====================
 
 interface WebSearchResult {
   title: string;
@@ -43,137 +45,121 @@ interface WebSearchResult {
   biasAnalysis?: {
     genderBias: { score: number; label: string };
     politicalBias?: { indicator: string; confidence: number };
-    commercialBias?: { score: number; hasAffiliateLinks: boolean; isSponsored: boolean };
     emotionalTone?: string;
   };
   aiContentDetection?: { percentage: number; label: string; color: string };
   isWomenFocused: boolean;
   safetyFlags: string[];
-  source: "web" | "aurora";
 }
 
-interface VideoResult {
-  id: string; title: string; url: string; description: string; domain: string;
-  thumbnail?: string; duration?: string; views?: string; creator?: string; age?: string;
-  isWomenFocused: boolean;
+interface CommunityResult {
+  type: "post" | "route" | "circle" | "opportunity" | "resource";
+  id: string;
+  previewTitle: string;
+  previewSnippet: string;
+  category?: string;
+  stats?: { label: string; value: string };
+  createdAt: number;
 }
 
-interface NewsResult {
-  id: string; title: string; url: string; description: string; domain: string;
-  thumbnail?: string; source: string; age?: string; isWomenFocused: boolean;
-}
-
-interface ImageResult {
-  id: string; title: string; url: string; thumbnail?: string; source: string;
-}
-
-type SearchTab = "all" | "web" | "whos-right" | "debates";
-
-const QUICK_CATEGORIES = [
-  { id: "news", label: "Today's News", icon: Newspaper, color: "var(--color-aurora-purple)" },
-  { id: "safety", label: "Safety", icon: Shield, color: "var(--color-aurora-mint)" },
-  { id: "career", label: "Career", icon: Building2, color: "var(--color-aurora-blue)" },
-  { id: "health", label: "Health", icon: Heart, color: "var(--color-aurora-pink)" },
-];
+// ==================== MAIN COMPONENT ====================
 
 export function LandingSearch() {
-  useLocale(); // Keep context active for child components
+  useLocale();
+
+  // Core state
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [activeMode, setActiveMode] = useState<SearchMode | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Web search results
   const [webResults, setWebResults] = useState<WebSearchResult[]>([]);
-  const [videoResults, setVideoResults] = useState<VideoResult[]>([]);
-  const [newsResults, setNewsResults] = useState<NewsResult[]>([]);
-  const [imageResults, setImageResults] = useState<ImageResult[]>([]);
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
-  const [activeTab, setActiveTab] = useState<SearchTab>("all");
-  const [showWhosRight, setShowWhosRight] = useState(false);
 
+  // Community search via Convex
+  const communityResults = useQuery(
+    api.publicSearch.publicSearch,
+    debouncedQuery.length >= 2 && activeMode === "community"
+      ? { query: debouncedQuery, limit: 12 }
+      : "skip"
+  );
+
+  // Debounce query
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query), 400);
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Fetch web results only on initial search (saves 75% API calls!)
+  // Fetch web results
   useEffect(() => {
-    if (debouncedQuery.length < 2) {
-      setWebResults([]); setVideoResults([]); setNewsResults([]); setImageResults([]);
-      setAiInsight(null);
+    if (debouncedQuery.length < 2 || activeMode !== "web") {
       return;
     }
+
     const fetchResults = async () => {
       setIsSearching(true);
       try {
-        // Only fetch web results initially - media fetched on-demand when tab clicked
         const res = await fetch(`/api/search/brave?q=${encodeURIComponent(debouncedQuery)}&count=8`);
         const data = await res.json();
         if (data.results) setWebResults(data.results);
-        // Clear media results - will be fetched when user clicks those tabs
-        setVideoResults([]);
-        setNewsResults([]);
-        setImageResults([]);
-      } catch (err) { console.error("Search error:", err); }
-      finally { setIsSearching(false); }
+      } catch (err) {
+        console.error("Search error:", err);
+      } finally {
+        setIsSearching(false);
+      }
     };
     fetchResults();
-  }, [debouncedQuery]);
+  }, [debouncedQuery, activeMode]);
 
-  // Note: Media tabs (news, images, videos) have been replaced with Who's Right and Debates
-  // to optimize API costs and focus on unique Aurora App features
-
-  // Generate Aurora AI insight with personality
+  // Generate AI insight
   useEffect(() => {
-    if (webResults.length > 0 && debouncedQuery) {
+    if (webResults.length > 0 && debouncedQuery && activeMode === "web") {
       setIsLoadingAI(true);
-      // Generate insight locally to save API calls - Aurora speaks with personality
-      const insight = generateAuroraInsight(debouncedQuery, webResults, newsResults);
+      const insight = generateAuroraInsight(debouncedQuery, webResults);
       setTimeout(() => {
         setAiInsight(insight);
         setIsLoadingAI(false);
-      }, 800); // Small delay for natural feel
+      }, 600);
     } else {
       setAiInsight(null);
     }
-  }, [webResults, newsResults, debouncedQuery]);
+  }, [webResults, debouncedQuery, activeMode]);
 
-  const handleClear = useCallback(() => {
-    setQuery(""); setDebouncedQuery(""); setWebResults([]); setVideoResults([]);
-    setNewsResults([]); setImageResults([]); setAiInsight(null);
-    setActiveTab("all");
+  // Handle search from AuroraSearchBox
+  const handleSearch = useCallback(async (searchQuery: string, mode: SearchMode, _data?: SearchData) => {
+    // Judge mode is handled entirely within the AuroraSearchBox now
+    if (mode === "judge") {
+      setActiveMode(null); // Don't show external results for judge
+      return;
+    }
+
+    setQuery(searchQuery);
+    setActiveMode(mode);
+
+    if (mode === "web") {
+      setWebResults([]);
+      setAiInsight(null);
+    }
   }, []);
 
-  const handleQuickSearch = (category: string) => {
-    const queries: Record<string, string> = {
-      news: "women news today", safety: "women safety tips",
-      career: "career advice for women", health: "women health wellness",
-    };
-    setQuery(queries[category] || category);
-  };
+  // Reset to home
+  const handleReset = useCallback(() => {
+    setQuery("");
+    setDebouncedQuery("");
+    setWebResults([]);
+    setAiInsight(null);
+    setActiveMode(null);
+  }, []);
 
-  const hasResults = webResults.length > 0;
-  const totalResults = webResults.length + videoResults.length + newsResults.length + imageResults.length;
-
-  // Handle unified search from AuroraSearchBox
-  const handleUnifiedSearch = (searchQuery: string, mode: "judge" | "web" | "community", files?: File[]) => {
-    if (mode === "judge") {
-      setActiveTab("whos-right");
-      setShowWhosRight(true);
-      // If there's a query, we could pass it to WhosRightPanel
-      if (searchQuery) setQuery(searchQuery);
-    } else if (mode === "web") {
-      setActiveTab("all");
-      setQuery(searchQuery);
-    } else if (mode === "community") {
-      // For community search, we search within Aurora App content
-      setActiveTab("debates");
-      setQuery(searchQuery);
-    }
-  };
+  const hasWebResults = webResults.length > 0;
+  const hasCommunityResults = communityResults?.results && communityResults.results.length > 0;
+  const showExternalResults = activeMode === "web" || activeMode === "community";
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
-      {/* Search Header - Compact */}
+      {/* Search Header */}
       <div className="text-center mb-6">
         <div className="flex items-center justify-center gap-3 mb-4">
           <div className="relative">
@@ -193,163 +179,27 @@ export function LandingSearch() {
         </p>
       </div>
 
-      {/* Aurora Search Box - Unified AI-Powered Search */}
-      <div className="mb-6">
-        <AuroraSearchBox 
-          onSearch={handleUnifiedSearch}
+      {/* Aurora Search Box - The Central Hub */}
+      <div className="mb-8">
+        <AuroraSearchBox
+          onSearch={handleSearch}
           isLoading={isSearching}
           className="max-w-2xl mx-auto"
         />
       </div>
 
-      {/* Quick Categories - Only show when no results */}
-      {!hasResults && activeTab === "all" && (
-        <div className="flex justify-center gap-2 mb-6 flex-wrap">
-          {QUICK_CATEGORIES.map((cat) => (
-            <button key={cat.id} onClick={() => handleQuickSearch(cat.id)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[var(--card)] border border-[var(--border)] hover:border-[var(--color-aurora-purple)]/50 hover:shadow-md transition-all min-h-[44px]">
-              <cat.icon className="w-4 h-4" style={{ color: cat.color }} />
-              <span className="text-sm font-medium text-[var(--foreground)]">{cat.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
+      {/* External Results Area - Only for Web and Community modes */}
       <AnimatePresence mode="wait">
-        {/* Show Who's Right panel standalone when selected from home */}
-        {activeTab === "whos-right" && !hasResults ? (
-          <motion.div key="whos-right-standalone" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <button 
-                onClick={() => setActiveTab("all")}
-                className="flex items-center gap-2 text-sm text-[var(--color-aurora-purple)] hover:underline"
-              >
-                <ArrowRight className="w-4 h-4 rotate-180" />
-                Back to Home
-              </button>
-            </div>
-            <WhosRightPanel />
-          </motion.div>
-        ) : hasResults ? (
-          <motion.div key="results" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
-            
-            {/* Aurora AI Insight - Personality-driven guidance */}
-            <div className="bg-[var(--color-aurora-violet)] rounded-xl p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                  <Image src="/Au_Logo_1.png" alt="Aurora App" width={28} height={28} className="w-7 h-7" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[var(--color-aurora-pink)]" />
-                    <span className="text-xs font-semibold text-white/90">Aurora says...</span>
-                  </div>
-                  {isLoadingAI ? (
-                    <div className="space-y-2">
-                      <div className="h-4 bg-white/20 rounded animate-pulse w-full" />
-                      <div className="h-4 bg-white/20 rounded animate-pulse w-3/4" />
-                    </div>
-                  ) : (
-                    <p className="text-sm text-white leading-relaxed">{aiInsight}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Content Type Tabs - Simplified with Who's Right feature */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {[
-                { id: "all" as SearchTab, label: "All", count: webResults.length, icon: Globe },
-                { id: "web" as SearchTab, label: "Web", count: webResults.length, icon: Globe },
-                { id: "whos-right" as SearchTab, label: "Who's Right", count: null, icon: Scale, isNew: true },
-                { id: "debates" as SearchTab, label: "Debates", count: null, icon: Flame },
-              ].map((tab) => (
-                <button key={tab.id} onClick={() => { setActiveTab(tab.id); if (tab.id === "whos-right") setShowWhosRight(true); }}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-colors whitespace-nowrap min-h-[36px] ${
-                    activeTab === tab.id ? "bg-[var(--color-aurora-purple)] text-white" : "bg-[var(--accent)] text-[var(--foreground)] hover:bg-[var(--color-aurora-purple)]/20"
-                  }`}>
-                  <tab.icon className="w-3.5 h-3.5" />
-                  {tab.label} {tab.count !== null && tab.count > 0 && `(${tab.count})`}
-                  {tab.isNew && <Badge className="ml-1 text-[8px] bg-[var(--color-aurora-pink)] text-white border-0 px-1 py-0">NEW</Badge>}
-                </button>
-              ))}
-              <Badge className="ml-auto text-[10px] bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0 whitespace-nowrap">
-                Powered by Brave Search
-              </Badge>
-            </div>
-
-            {/* Who's Right Panel - Argument Analyzer */}
-            {activeTab === "whos-right" && (
-              <WhosRightPanel />
-            )}
-
-            {/* Debates Panel */}
-            {activeTab === "debates" && (
-              <div className="space-y-4">
-                <DailyDebatesPanel userId={null} />
-              </div>
-            )}
-
-            {/* Web Results */}
-            {(activeTab === "all" || activeTab === "web") && (
-              <div className="space-y-3">
-                {webResults.map((result, i) => (
-                  <SearchResultCard key={i} result={result} index={i} />
-                ))}
-              </div>
-            )}
-
-            {/* Join CTA */}
-            <Card className="p-4 bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border-[var(--color-aurora-purple)]/20">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[var(--color-aurora-yellow)] flex items-center justify-center">
-                    <Zap className="w-5 h-5 text-[var(--color-aurora-violet)]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--foreground)]">Join Aurora App Community</p>
-                    <p className="text-xs text-[var(--muted-foreground)]">Get personalized safety intelligence + earn credits</p>
-                  </div>
-                </div>
-                <Link href="/api/auth/login">
-                  <Button className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white min-h-[44px] px-6">
-                    Join Free <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-          </motion.div>
-        ) : (
-          <motion.div key="debates" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-            {/* Who's Right Feature Card - NEW */}
-            <div 
-              onClick={() => { setActiveTab("whos-right"); setShowWhosRight(true); }}
-              className="cursor-pointer group"
-            >
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] p-6 text-white hover:shadow-xl transition-all">
-                <div className="absolute top-2 right-2">
-                  <Badge className="text-[10px] bg-white/20 text-white border-0">NEW FEATURE</Badge>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                    <Scale className="w-8 h-8" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-1">Who&apos;s Right?</h3>
-                    <p className="text-sm text-white/80">
-                      Upload screenshots of your argument and let AI determine who won, detect red flags, and get relationship insights.
-                    </p>
-                  </div>
-                  <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                </div>
-                <div className="flex items-center gap-3 mt-4 text-xs text-white/70">
-                  <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> All relationships</span>
-                  <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> Private & secure</span>
-                  <span className="flex items-center gap-1"><Sparkles className="w-3 h-3" /> AI-powered</span>
-                </div>
-              </div>
-            </div>
-
+        {/* HOME STATE - When no external search active */}
+        {!showExternalResults && (
+          <motion.div
+            key="home"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="space-y-6"
+          >
+            {/* Hot Debates */}
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Flame className="w-5 h-5 text-[var(--color-aurora-pink)]" />
@@ -358,12 +208,14 @@ export function LandingSearch() {
               </div>
               <DailyDebatesPanel userId={null} />
             </div>
+
+            {/* Feature Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 { icon: Bot, label: "AI Detection", desc: "Spot AI content", color: "var(--color-aurora-blue)" },
                 { icon: Scale, label: "Bias Analysis", desc: "Gender & political", color: "var(--color-aurora-purple)" },
                 { icon: Shield, label: "Credibility", desc: "Source trust", color: "var(--color-aurora-mint)" },
-                { icon: Eye, label: "No Tracking", desc: "100% private", color: "var(--color-aurora-pink)" },
+                { icon: Heart, label: "Women First", desc: "Your perspective", color: "var(--color-aurora-pink)" },
               ].map((item, i) => (
                 <div key={i} className="text-center p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]">
                   <item.icon className="w-6 h-6 mx-auto mb-2" style={{ color: item.color }} />
@@ -374,212 +226,249 @@ export function LandingSearch() {
             </div>
           </motion.div>
         )}
+
+        {/* WEB SEARCH RESULTS */}
+        {activeMode === "web" && (
+          <motion.div
+            key="web"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-4"
+          >
+            {/* Back Button */}
+            <button onClick={handleReset} className="flex items-center gap-2 text-sm text-[var(--color-aurora-purple)] hover:underline">
+              <ArrowRight className="w-4 h-4 rotate-180" /> Back to Home
+            </button>
+
+            {/* AI Insight */}
+            {(hasWebResults || isLoadingAI) && (
+              <div className="bg-[var(--color-aurora-violet)] rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                    <Image src="/Au_Logo_1.png" alt="Aurora" width={28} height={28} className="w-7 h-7" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-[var(--color-aurora-pink)]" />
+                      <span className="text-xs font-semibold text-white/90">Aurora says...</span>
+                    </div>
+                    {isLoadingAI ? (
+                      <div className="space-y-2">
+                        <div className="h-4 bg-white/20 rounded animate-pulse w-full" />
+                        <div className="h-4 bg-white/20 rounded animate-pulse w-3/4" />
+                      </div>
+                    ) : (
+                      <p className="text-sm text-white leading-relaxed">{aiInsight}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Loading State */}
+            {isSearching && !hasWebResults && (
+              <div className="text-center py-12">
+                <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-[var(--color-aurora-purple)]" />
+                <p className="text-sm text-[var(--muted-foreground)]">Searching with bias detection...</p>
+              </div>
+            )}
+
+            {/* Web Results */}
+            {hasWebResults && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                  <span className="text-sm font-medium text-[var(--foreground)]">Web Results ({webResults.length})</span>
+                  <Badge className="ml-auto text-[10px] bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0">
+                    Brave Search
+                  </Badge>
+                </div>
+                {webResults.map((result, i) => (
+                  <SearchResultCard key={i} result={result} index={i} />
+                ))}
+              </div>
+            )}
+
+            {/* No Results */}
+            {!isSearching && !hasWebResults && query && (
+              <div className="text-center py-12">
+                <Search className="w-8 h-8 mx-auto mb-3 text-[var(--muted-foreground)]" />
+                <p className="text-sm text-[var(--muted-foreground)]">No results found. Try a different search.</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* COMMUNITY SEARCH RESULTS */}
+        {activeMode === "community" && (
+          <motion.div
+            key="community"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-4"
+          >
+            {/* Back Button */}
+            <button onClick={handleReset} className="flex items-center gap-2 text-sm text-[var(--color-aurora-purple)] hover:underline">
+              <ArrowRight className="w-4 h-4 rotate-180" /> Back to Home
+            </button>
+
+            {/* Community Header */}
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-[var(--color-aurora-pink)]" />
+              <span className="font-medium text-[var(--foreground)]">Aurora App Community</span>
+              {hasCommunityResults && (
+                <Badge className="text-[10px] bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0">
+                  {communityResults?.total || 0} results
+                </Badge>
+              )}
+            </div>
+
+            {/* Loading State */}
+            {debouncedQuery.length >= 2 && !communityResults && (
+              <div className="text-center py-12">
+                <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-[var(--color-aurora-purple)]" />
+                <p className="text-sm text-[var(--muted-foreground)]">Searching community...</p>
+              </div>
+            )}
+
+            {/* Community Results */}
+            {hasCommunityResults && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {communityResults?.results.map((result, i) => (
+                  <CommunityResultCard key={i} result={result as unknown as CommunityResult} index={i} />
+                ))}
+              </div>
+            )}
+
+            {/* No Results */}
+            {communityResults && communityResults.results.length === 0 && debouncedQuery.length >= 2 && (
+              <div className="text-center py-12">
+                <Users className="w-8 h-8 mx-auto mb-3 text-[var(--muted-foreground)]" />
+                <p className="text-sm text-[var(--muted-foreground)]">No community content found for &quot;{debouncedQuery}&quot;</p>
+                <p className="text-xs text-[var(--muted-foreground)] mt-1">Try a different search</p>
+              </div>
+            )}
+
+            {/* Show debates when no search */}
+            {(!debouncedQuery || debouncedQuery.length < 2) && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Flame className="w-5 h-5 text-[var(--color-aurora-pink)]" />
+                  <h3 className="font-semibold text-[var(--foreground)]">Hot Debates Today</h3>
+                </div>
+                <DailyDebatesPanel userId={null} />
+              </div>
+            )}
+
+            {/* Join CTA */}
+            {hasCommunityResults && (
+              <Card className="p-4 bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border-[var(--color-aurora-purple)]/20">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[var(--color-aurora-yellow)] flex items-center justify-center">
+                      <Zap className="w-5 h-5 text-[var(--color-aurora-violet)]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--foreground)]">Join Aurora App Community</p>
+                      <p className="text-xs text-[var(--muted-foreground)]">Get full access + earn credits</p>
+                    </div>
+                  </div>
+                  <Link href="/api/auth/login">
+                    <Button className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white min-h-[44px] px-6">
+                      Join Free <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
+            )}
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );
 }
 
+// ==================== COMMUNITY RESULT CARD ====================
 
-/**
- * Aurora AI Insight Generator - Speaks with personality like a trusted friend
- * Detects language and provides empathetic, context-aware responses
- */
-function generateAuroraInsight(query: string, webResults: WebSearchResult[], newsResults: NewsResult[]): string {
-  const q = query.toLowerCase();
-  const avgCredibility = webResults.reduce((sum, r) => {
-    const score = typeof r.credibilityScore === 'number' ? r.credibilityScore : (r.credibilityScore?.score ?? 50);
-    return sum + score;
-  }, 0) / webResults.length;
-  
-  const womenFocusedCount = webResults.filter(r => r.isWomenFocused).length;
-  const hasHighAI = webResults.some(r => (r.aiContentDetection?.percentage ?? 0) > 50);
-  const hasNews = newsResults.length > 0;
-  const domains = [...new Set(webResults.map(r => r.domain))];
-  
-  // Detect language from query (Spanish indicators)
-  const isSpanish = /[áéíóúñ¿¡]/.test(query) || 
-    /\b(estoy|tengo|quiero|como|para|que|por|con|una|los|las|del|muy|más|está|son|hay|ser|hacer|puedo|necesito|ayuda|busco|donde|cuando|porque|embarazo|prueba|deprimida|triste|ansiedad|salud|trabajo|dinero|seguridad)\b/i.test(query);
-  
-  // Mental health & emotional support detection (both languages)
-  const mentalHealthKeywords = {
-    en: ["depressed", "depression", "sad", "anxiety", "anxious", "stressed", "lonely", "hopeless", "suicidal", "mental health", "feeling down", "overwhelmed", "panic", "scared", "afraid", "worried", "crying", "can't sleep", "insomnia"],
-    es: ["deprimida", "depresión", "triste", "ansiedad", "ansiosa", "estresada", "sola", "desesperada", "suicida", "salud mental", "me siento mal", "abrumada", "pánico", "asustada", "miedo", "preocupada", "llorando", "no puedo dormir", "insomnio", "angustia", "agotada"]
+function CommunityResultCard({ result, index }: { result: CommunityResult; index: number }) {
+  const getIcon = () => {
+    switch (result.type) {
+      case "post": return MessageSquare;
+      case "route": return MapPin;
+      case "circle": return Users;
+      case "opportunity": return Briefcase;
+      case "resource": return Shield;
+      default: return MessageSquare;
+    }
   };
-  
-  const isMentalHealthQuery = [...mentalHealthKeywords.en, ...mentalHealthKeywords.es].some(kw => q.includes(kw));
-  
-  // Pregnancy/reproductive health detection
-  const reproductiveKeywords = {
-    en: ["pregnancy", "pregnant", "pregnancy test", "period", "menstrual", "fertility", "ovulation", "contraception", "birth control", "abortion", "miscarriage"],
-    es: ["embarazo", "embarazada", "prueba de embarazo", "período", "menstruación", "fertilidad", "ovulación", "anticonceptivos", "aborto", "pérdida"]
-  };
-  
-  const isReproductiveQuery = [...reproductiveKeywords.en, ...reproductiveKeywords.es].some(kw => q.includes(kw));
-  
-  // PRIORITY: Mental health - empathetic response
-  if (isMentalHealthQuery) {
-    if (isSpanish) {
-      return `💜 Gracias por compartir cómo te sientes. No estás sola en esto. He encontrado ${webResults.length} recursos, pero lo más importante: si estás pasando por un momento difícil, considera hablar con alguien de confianza o una línea de ayuda profesional. Tu bienestar importa. ¿Hay algo específico que te gustaría explorar?`;
-    }
-    return `💜 Thank you for sharing how you're feeling. You're not alone in this. I found ${webResults.length} resources, but most importantly: if you're going through a difficult time, please consider reaching out to someone you trust or a professional helpline. Your wellbeing matters. Is there something specific you'd like to explore?`;
-  }
-  
-  // Reproductive health - supportive and informative
-  if (isReproductiveQuery) {
-    if (isSpanish) {
-      return `💗 Entiendo que este es un tema importante y personal. He encontrado ${webResults.length} resultados de ${domains.length} fuentes. Recuerda: cada cuerpo es diferente. Para información médica específica, siempre es mejor consultar con un profesional de salud que conozca tu situación.`;
-    }
-    return `💗 I understand this is an important and personal topic. I found ${webResults.length} results from ${domains.length} sources. Remember: every body is different. For specific medical information, it's always best to consult with a healthcare professional who knows your situation.`;
-  }
-  
-  // Spanish greetings and responses
-  const greetingsEs = ["¡Hola! 👋", "Veamos...", "¡Interesante búsqueda!", "¡Listo!", "Esto es lo que encontré:"];
-  const greetingsEn = ["Hey there! 👋", "Okay, let's see...", "Interesting search!", "Got it!", "Here's what I found:"];
-  const greetings = isSpanish ? greetingsEs : greetingsEn;
-  const greeting = greetings[Math.floor(Math.random() * greetings.length)];
-  
-  // Context-aware insights
-  if (q.includes("news") || q.includes("noticias") || hasNews) {
-    if (avgCredibility < 50) {
-      return isSpanish 
-        ? `${greeting} Estas fuentes de noticias son variadas en credibilidad. Te recomiendo verificar las afirmaciones importantes antes de compartir. ¿Qué hay detrás de la historia? 🤔`
-        : `${greeting} These news sources are a mixed bag. I'd cross-check the big claims before sharing. What's the story behind the story? 🤔`;
-    }
-    return isSpanish
-      ? `${greeting} Noticias frescas de ${domains.length} fuentes. Recuerda: los titulares están diseñados para llamar la atención. La imagen completa suele ser más matizada.`
-      : `${greeting} Fresh news from ${domains.length} sources. Remember: headlines are designed to grab attention. The full picture is usually more nuanced.`;
-  }
-  
-  if (q.includes("safety") || q.includes("safe") || q.includes("seguridad") || q.includes("segura")) {
-    return isSpanish
-      ? `${greeting} La información de seguridad es seria. He marcado las fuentes más confiables. Confía en tus instintos, y ante la duda, verifica con fuentes oficiales. ¡Tú puedes! 💜`
-      : `${greeting} Safety info is serious business. I've flagged the most credible sources. Trust your instincts, and when in doubt, verify with official channels. You've got this! 💜`;
-  }
-  
-  if (q.includes("career") || q.includes("job") || q.includes("work") || q.includes("trabajo") || q.includes("empleo") || q.includes("carrera")) {
-    if (womenFocusedCount > 0) {
-      return isSpanish
-        ? `${greeting} ¡Encontré ${womenFocusedCount} recursos enfocados en mujeres! Los consejos de carrera a menudo asumen una perspectiva masculina. Estas fuentes pueden hablar más a tu experiencia.`
-        : `${greeting} Found ${womenFocusedCount} women-focused resources! Career advice often assumes a male default. These sources might speak more to your experience.`;
-    }
-    return isSpanish
-      ? `${greeting} ¡Consejos de carrera! Nota: la mayoría de estas fuentes no abordan específicamente las experiencias de las mujeres. Considera cómo los consejos podrían aplicarse diferente a ti.`
-      : `${greeting} Career advice incoming! Quick thought: most of these sources don't specifically address women's experiences. Consider how the advice might apply differently to you.`;
-  }
-  
-  if (q.includes("health") || q.includes("medical") || q.includes("symptom") || q.includes("salud") || q.includes("médico") || q.includes("síntoma")) {
-    return isSpanish
-      ? `${greeting} ¡Información de salud! 🏥 He verificado la credibilidad de las fuentes, pero consulta con un profesional de salud para decisiones médicas personales. Los síntomas de las mujeres a menudo son minimizados - ¡aboga por ti misma!`
-      : `${greeting} Health info alert! 🏥 I've checked source credibility, but please consult a healthcare provider for personal medical decisions. Women's symptoms are often dismissed - advocate for yourself!`;
-  }
-  
-  if (hasHighAI) {
-    return isSpanish
-      ? `${greeting} Aviso: algunos de estos resultados parecen generados por IA. No es necesariamente malo, ¡pero vale la pena saberlo! El contenido de IA puede perder matices y contexto.`
-      : `${greeting} Heads up: some of these results look AI-generated. Not necessarily bad, but worth knowing! AI content can miss nuance and context.`;
-  }
-  
-  if (avgCredibility < 40) {
-    return isSpanish
-      ? `${greeting} Hmm, estas fuentes son un poco dudosas en la escala de credibilidad. Te recomiendo investigar más antes de tomar algo como hecho.`
-      : `${greeting} Hmm, these sources are a bit sketchy on the credibility scale. I'd dig deeper before taking anything as fact.`;
-  }
-  
-  if (womenFocusedCount === 0) {
-    return isSpanish
-      ? `${greeting} Encontré ${webResults.length} resultados, pero ninguno específicamente de fuentes enfocadas en mujeres. La perspectiva general podría estar perdiendo algo. ¿Qué agregarían las voces de mujeres aquí?`
-      : `${greeting} Found ${webResults.length} results, but none specifically from women-focused sources. The mainstream perspective might be missing something. What would women's voices add here?`;
-  }
-  
-  if (avgCredibility > 70) {
-    return isSpanish
-      ? `${greeting} ¡Buenas noticias! Estas fuentes tienen buena puntuación en credibilidad. Aún así, ninguna fuente es perfecta. ¿Qué suposiciones podrían estar haciendo incluso las fuentes confiables?`
-      : `${greeting} Good news! These sources score well on credibility. Still, no source is perfect. What assumptions might even trusted sources be making?`;
-  }
-  
-  // Default thoughtful response
-  if (isSpanish) {
-    const thoughtsEs = [
-      `${greeting} ${webResults.length} resultados de ${domains.length} fuentes diferentes. Diversidad de fuentes = mejor panorama. ¿Qué patrón común estás notando?`,
-      `${greeting} Esto es lo que dice internet. Recuerda: los resultados de búsqueda reflejan lo popular, no necesariamente lo verdadero. ¿Qué te dice tu intuición?`,
-      `${greeting} ¡Encontré cosas interesantes! Antes de profundizar, pregúntate: ¿quién se beneficia de que yo crea esto? El pensamiento crítico es tu superpoder. 💪`,
-    ];
-    return thoughtsEs[Math.floor(Math.random() * thoughtsEs.length)];
-  }
-  
-  const thoughts = [
-    `${greeting} ${webResults.length} results from ${domains.length} different sources. Diversity of sources = better picture. What's the common thread you're noticing?`,
-    `${greeting} Here's what the internet has to say. Remember: search results reflect what's popular, not necessarily what's true. What's your gut telling you?`,
-    `${greeting} Found some interesting stuff! Before diving in, ask yourself: who benefits from me believing this? Critical thinking is your superpower. 💪`,
-  ];
-  
-  return thoughts[Math.floor(Math.random() * thoughts.length)];
-}
 
-/** News Card Component */
-function NewsCard({ news }: { news: NewsResult }) {
+  const getColor = () => {
+    switch (result.type) {
+      case "post": return "var(--color-aurora-purple)";
+      case "route": return "var(--color-aurora-mint)";
+      case "circle": return "var(--color-aurora-pink)";
+      case "opportunity": return "var(--color-aurora-blue)";
+      case "resource": return "var(--color-aurora-yellow)";
+      default: return "var(--color-aurora-purple)";
+    }
+  };
+
+  const Icon = getIcon();
+  const color = getColor();
+
   return (
-    <a href={news.url} target="_blank" rel="noopener noreferrer"
-      className="block p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--color-aurora-purple)]/40 hover:shadow-md transition-all">
-      <div className="flex gap-3">
-        {news.thumbnail && (
-          <div className="w-20 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-[var(--accent)]">
-            <img src={news.thumbnail} alt="" className="w-full h-full object-cover" />
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+    >
+      <Card className="p-4 bg-[var(--card)] border-[var(--border)] hover:border-[var(--color-aurora-purple)]/40 hover:shadow-md transition-all cursor-pointer">
+        <div className="flex gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}20` }}>
+            <Icon className="w-5 h-5" style={{ color }} />
           </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-medium text-[var(--foreground)] line-clamp-2 mb-1">{news.title}</h4>
-          <div className="flex items-center gap-2 text-[10px] text-[var(--muted-foreground)]">
-            <span>{news.source}</span>
-            {news.age && <><span>•</span><span>{news.age}</span></>}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Badge className="text-[9px] capitalize" style={{ backgroundColor: `${color}20`, color, border: 'none' }}>
+                {result.type}
+              </Badge>
+              {result.category && (
+                <span className="text-[10px] text-[var(--muted-foreground)]">{result.category}</span>
+              )}
+            </div>
+            <h4 className="font-medium text-sm text-[var(--foreground)] line-clamp-1">{result.previewTitle}</h4>
+            <p className="text-xs text-[var(--muted-foreground)] line-clamp-2 mt-0.5">{result.previewSnippet}</p>
+            {result.stats && (
+              <div className="flex items-center gap-1 mt-2 text-[10px] text-[var(--muted-foreground)]">
+                <span className="capitalize">{result.stats.label}:</span>
+                <span className="font-medium">{result.stats.value}</span>
+              </div>
+            )}
           </div>
         </div>
-      </div>
-    </a>
+      </Card>
+    </motion.div>
   );
 }
 
-/** Search Result Card - Clean metrics, no fake data */
+// ==================== WEB SEARCH RESULT CARD ====================
+
 function SearchResultCard({ result, index }: { result: WebSearchResult; index: number }) {
   const aiScore = result.aiContentScore ?? result.aiContentDetection?.percentage ?? 0;
   const biasScore = result.biasScore ?? result.biasAnalysis?.genderBias?.score ?? 50;
   const credScore = typeof result.credibilityScore === 'number' ? result.credibilityScore : (result.credibilityScore?.score ?? 50);
   const politicalBias = result.biasAnalysis?.politicalBias?.indicator || "Center";
   const emotionalTone = result.biasAnalysis?.emotionalTone || "Neutral";
-  
+
   const trustScoreResult = calculateTrustScore({
     genderBiasScore: biasScore, credibilityScore: credScore, aiContentPercentage: aiScore,
     publishedDate: result.age, isWomenFocused: result.isWomenFocused, domain: result.domain,
     contentType: emotionalTone, title: result.title,
   });
   const trustScore = trustScoreResult.score;
-
   const verificationLevel = getVerificationLevel(result.domain, credScore, result.isWomenFocused);
-
-  // Calculate sustainability score based on source longevity and credibility
-  const getSustainability = () => {
-    const age = result.age?.toLowerCase() || "";
-    let score = credScore * 0.5; // Base from credibility
-    if (age.includes("year")) score += 20;
-    else if (age.includes("month")) score += 10;
-    else if (age.includes("week")) score += 5;
-    if (result.isWomenFocused) score += 10;
-    score = Math.min(100, Math.max(0, score));
-    if (score >= 70) return { label: "Lasting", color: "var(--color-aurora-mint)", icon: "🌱" };
-    if (score >= 40) return { label: "Moderate", color: "var(--color-aurora-yellow)", icon: "🌿" };
-    return { label: "Fleeting", color: "var(--color-aurora-salmon)", icon: "🍂" };
-  };
-  const sustainability = getSustainability();
-
-  const getFreshness = () => {
-    if (!result.age) return { label: "Unknown", color: "var(--muted-foreground)" };
-    const age = result.age.toLowerCase();
-    if (age.includes("hour") || age.includes("minute")) return { label: "Fresh", color: "var(--color-aurora-mint)" };
-    if (age.includes("day") && !age.includes("days")) return { label: "Today", color: "var(--color-aurora-blue)" };
-    if (age.includes("week")) return { label: "Recent", color: "var(--color-aurora-yellow)" };
-    return { label: "Older", color: "var(--color-aurora-salmon)" };
-  };
-  const freshness = getFreshness();
 
   const getGenderIndicator = () => {
     if (biasScore <= 30) return { label: "Women+", color: "var(--color-aurora-mint)", emoji: "💚" };
@@ -592,10 +481,9 @@ function SearchResultCard({ result, index }: { result: WebSearchResult; index: n
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
       {index === 3 && <LandingAd variant="search-results" className="mb-3" />}
-      
+
       <Card className="overflow-hidden border-[var(--border)] hover:border-[var(--color-aurora-purple)]/40 hover:shadow-lg transition-all bg-[var(--card)]">
         <div className="p-4">
-          {/* Header badges */}
           <div className="flex items-center gap-1.5 mb-2 flex-wrap">
             <span className="text-xs text-[var(--color-aurora-purple)] font-semibold">{result.domain}</span>
             <SafetyAlertBadge domain={result.domain} safetyFlags={result.safetyFlags} />
@@ -607,35 +495,30 @@ function SearchResultCard({ result, index }: { result: WebSearchResult; index: n
             )}
           </div>
 
-          {/* Title and description */}
           <a href={result.url} target="_blank" rel="noopener noreferrer" className="group block mb-1">
             <h3 className="font-semibold text-[var(--foreground)] group-hover:text-[var(--color-aurora-purple)] transition-colors line-clamp-2 text-base">
               {result.title}
             </h3>
           </a>
           <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mb-3 leading-relaxed">{result.description}</p>
-          
-          {/* Aurora Metrics - Compact 3x2 grid on desktop */}
+
           <div className="p-3 rounded-xl bg-[var(--accent)]/50 border border-[var(--border)]">
             <div className="flex items-center gap-1.5 mb-2">
               <Shield className="w-3.5 h-3.5 text-[var(--color-aurora-purple)]" />
               <span className="text-xs font-semibold text-[var(--foreground)]">Aurora Metrics</span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <MetricCard label="Trust" value={trustScore} max={100} color={trustScore >= 70 ? "var(--color-aurora-mint)" : trustScore >= 40 ? "var(--color-aurora-yellow)" : "var(--color-aurora-salmon)"} />
-              <MetricCard label="Gender Bias" value={genderIndicator.label} emoji={genderIndicator.emoji} color={genderIndicator.color} />
-              <MetricCard label="AI Content" value={`${aiScore}%`} color={aiScore > 50 ? "var(--color-aurora-salmon)" : aiScore > 20 ? "var(--color-aurora-yellow)" : "var(--color-aurora-mint)"} />
-              <MetricCard label="Credibility" value={credScore} max={100} color={credScore >= 70 ? "var(--color-aurora-mint)" : credScore >= 40 ? "var(--color-aurora-yellow)" : "var(--color-aurora-salmon)"} />
-              <MetricCard label="Political" value={politicalBias} color="var(--color-aurora-blue)" />
-              <MetricCard label="Sustainability" value={sustainability.label} emoji={sustainability.icon} color={sustainability.color} />
+              <MetricCard label="Gender" value={genderIndicator.label} emoji={genderIndicator.emoji} color={genderIndicator.color} />
+              <MetricCard label="AI" value={`${aiScore}%`} color={aiScore > 50 ? "var(--color-aurora-salmon)" : aiScore > 20 ? "var(--color-aurora-yellow)" : "var(--color-aurora-mint)"} />
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex items-center gap-3 mt-3">
             <a href={result.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-aurora-purple)] hover:underline">
               Visit site <ExternalLink className="w-3 h-3" />
             </a>
+            <span className="text-[10px] text-[var(--muted-foreground)]">{politicalBias}</span>
           </div>
         </div>
       </Card>
@@ -643,17 +526,14 @@ function SearchResultCard({ result, index }: { result: WebSearchResult; index: n
   );
 }
 
-/** Metric Card - Compact display with improved contrast */
-function MetricCard({ label, value, max, emoji, color }: { 
-  label: string; 
-  value: string | number; 
-  max?: number; 
-  emoji?: string; 
-  color: string;
+// ==================== METRIC CARD ====================
+
+function MetricCard({ label, value, max, emoji, color }: {
+  label: string; value: string | number; max?: number; emoji?: string; color: string;
 }) {
   const numValue = typeof value === "number" ? value : null;
   const percentage = numValue && max ? (numValue / max) * 100 : null;
-  
+
   return (
     <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
       <div className="text-[10px] font-medium text-[var(--foreground)]/70 mb-0.5">{label}</div>
@@ -668,6 +548,57 @@ function MetricCard({ label, value, max, emoji, color }: {
       )}
     </div>
   );
+}
+
+// ==================== AURORA INSIGHT GENERATOR ====================
+
+function generateAuroraInsight(query: string, webResults: WebSearchResult[]): string {
+  const q = query.toLowerCase();
+  const avgCredibility = webResults.reduce((sum, r) => {
+    const score = typeof r.credibilityScore === 'number' ? r.credibilityScore : (r.credibilityScore?.score ?? 50);
+    return sum + score;
+  }, 0) / webResults.length;
+
+  const womenFocusedCount = webResults.filter(r => r.isWomenFocused).length;
+  const hasHighAI = webResults.some(r => (r.aiContentDetection?.percentage ?? 0) > 50);
+  const domains = [...new Set(webResults.map(r => r.domain))];
+
+  const isSpanish = /[áéíóúñ¿¡]/.test(query) ||
+    /\b(estoy|tengo|quiero|como|para|que|por|con|una|los|las)\b/i.test(query);
+
+  const mentalHealthKeywords = ["depressed", "depression", "sad", "anxiety", "lonely", "hopeless", "deprimida", "triste", "ansiedad"];
+  const isMentalHealthQuery = mentalHealthKeywords.some(kw => q.includes(kw));
+
+  if (isMentalHealthQuery) {
+    return isSpanish
+      ? `💜 Gracias por compartir cómo te sientes. No estás sola. He encontrado ${webResults.length} recursos, pero lo más importante: si estás pasando por un momento difícil, considera hablar con alguien de confianza.`
+      : `💜 Thank you for sharing how you're feeling. You're not alone. I found ${webResults.length} resources, but most importantly: if you're going through a difficult time, please consider reaching out to someone you trust.`;
+  }
+
+  const greetings = isSpanish ? ["¡Hola! 👋", "Veamos...", "¡Listo!"] : ["Hey! 👋", "Let's see...", "Got it!"];
+  const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+
+  if (hasHighAI) {
+    return isSpanish
+      ? `${greeting} Aviso: algunos resultados parecen generados por IA. No es malo, ¡pero vale la pena saberlo!`
+      : `${greeting} Heads up: some results look AI-generated. Not necessarily bad, but worth knowing!`;
+  }
+
+  if (avgCredibility < 40) {
+    return isSpanish
+      ? `${greeting} Estas fuentes son un poco dudosas. Te recomiendo investigar más.`
+      : `${greeting} These sources are a bit sketchy. I'd dig deeper before taking anything as fact.`;
+  }
+
+  if (womenFocusedCount > 0) {
+    return isSpanish
+      ? `${greeting} ¡Encontré ${womenFocusedCount} recursos enfocados en mujeres de ${domains.length} fuentes!`
+      : `${greeting} Found ${womenFocusedCount} women-focused resources from ${domains.length} sources!`;
+  }
+
+  return isSpanish
+    ? `${greeting} Encontré ${webResults.length} resultados. Pregúntate: ¿quién se beneficia de que yo crea esto? 💪`
+    : `${greeting} Found ${webResults.length} results. Ask yourself: who benefits from me believing this? Critical thinking is your superpower. 💪`;
 }
 
 export default LandingSearch;

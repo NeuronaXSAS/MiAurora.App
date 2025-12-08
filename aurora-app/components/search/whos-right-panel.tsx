@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Who's Right - Your Pocket Lawyer ⚖️
+ * Who's Right - Your Pocket Judge ⚖️
  * 
  * AI-powered argument analyzer that helps resolve disputes fairly.
  * Upload screenshots + add context for balanced analysis.
@@ -21,8 +21,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Upload, X, Loader2, AlertTriangle, Scale, Heart, Shield, 
-  MessageSquare, Flag, FileText, Users, 
+  Upload, X, Loader2, AlertTriangle, Scale, Heart, Shield,
+  MessageSquare, Flag, FileText, Users,
   Info, Crown, Share2, Gavel,
   Calendar, Hash, RefreshCw, Plus
 } from "lucide-react";
@@ -170,10 +170,10 @@ export function WhosRightPanel() {
           </span>
         </div>
         <h2 className="text-xl md:text-2xl font-bold text-[var(--color-aurora-violet)] dark:text-[var(--color-aurora-cream)] mb-2">
-          Your Pocket Lawyer ⚖️
+          Your Pocket Judge ⚖️
         </h2>
         <p className="text-sm text-[var(--muted-foreground)] max-w-md mx-auto">
-          Upload screenshots of your conversation and get an AI-powered analysis. 
+          Upload screenshots of your conversation and get an AI-powered analysis.
           Fair, balanced, and confidential.
         </p>
         <div className="flex items-center justify-center gap-3 mt-3 text-xs text-[var(--muted-foreground)]">
@@ -221,7 +221,7 @@ export function WhosRightPanel() {
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {images.map((img, i) => (
                   <div key={img.id} className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border-2 border-[var(--color-aurora-purple)]/20">
-                    <img src={img.preview} alt={`Evidence ${i+1}`} className="w-full h-full object-cover" />
+                    <img src={img.preview} alt={`Evidence ${i + 1}`} className="w-full h-full object-cover" />
                     <button onClick={(e) => { e.stopPropagation(); removeImage(img.id); }}
                       className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[var(--color-aurora-salmon)] flex items-center justify-center">
                       <X className="w-3 h-3 text-white" />
@@ -264,7 +264,7 @@ export function WhosRightPanel() {
             <LandingAd variant="native" className="mt-4" />
           </motion.div>
         ) : (
-          <ResultView result={result} person1Label={person1Label} person2Label={person2Label} 
+          <ResultView result={result} person1Label={person1Label} person2Label={person2Label}
             showCertificate={showCertificate} setShowCertificate={setShowCertificate}
             onReset={resetAnalysis} onShare={shareResult} />
         )}
@@ -314,7 +314,7 @@ function ResultView({ result, person1Label, person2Label, showCertificate, setSh
             ({result.toxicityScore})
           </span>
         </div>
-        
+
         {/* Visual Meter - Semicircle gauge */}
         <div className="relative h-24 flex items-end justify-center mb-2">
           <svg viewBox="0 0 200 100" className="w-48 h-24">
@@ -327,7 +327,7 @@ function ResultView({ result, person1Label, person2Label, showCertificate, setSh
             <path d="M 145 25 A 90 90 0 0 1 175 55" fill="none" stroke="#f97316" strokeWidth="16" />
             <path d="M 175 55 A 90 90 0 0 1 190 100" fill="none" stroke="#ef4444" strokeWidth="16" strokeLinecap="round" />
             {/* Needle */}
-            <line x1="100" y1="100" x2={100 + 70 * Math.cos(Math.PI * (1 - result.toxicityScore / 100))} 
+            <line x1="100" y1="100" x2={100 + 70 * Math.cos(Math.PI * (1 - result.toxicityScore / 100))}
               y2={100 - 70 * Math.sin(Math.PI * (1 - result.toxicityScore / 100))}
               stroke="#1f2937" strokeWidth="3" strokeLinecap="round" />
             <circle cx="100" cy="100" r="8" fill="#1f2937" />
