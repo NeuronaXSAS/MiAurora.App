@@ -19,6 +19,7 @@ import { useIsMobile } from "@/hooks/use-is-mobile";
 import { SafetyPulse } from "@/components/safety-pulse";
 import { WelcomeExperience } from "@/components/welcome-experience";
 import { ValuePropositionBanner } from "@/components/value-proposition-banner";
+import { DailyEngagement } from "@/components/daily-engagement";
 import { FeedLoadingSkeleton } from "@/components/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -499,6 +500,9 @@ export default function FeedPage() {
 
           {/* Right Sidebar - Desktop only, Reddit-style discovery */}
           <aside className="hidden xl:block space-y-4 sticky top-20 self-start">
+            {/* Daily Engagement Hub - Streaks & Challenges */}
+            {userId && <DailyEngagement userId={userId} compact />}
+            
             {/* Safety Pulse - Compact */}
             <SafetyPulse compact />
             

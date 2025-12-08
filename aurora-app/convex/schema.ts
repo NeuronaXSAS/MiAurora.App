@@ -2055,4 +2055,41 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_and_date", ["userId", "date"]) // For fetching all entries for a date
     .index("by_date", ["date"]),
+
+  // ============================================
+  // DAILY ENGAGEMENT - Login Streaks & Challenges
+  // Drives user retention through gamification
+  // ============================================
+
+  // Login Streaks - Track consecutive daily logins
+  loginStreaks: defineTable({
+    userId: v.id("users"),
+    currentStreak: v.number(), // Current consecutive days
+    longestStreak: v.number(), // Personal best
+    lastClaimDate: v.string(), // YYYY-MM-DD of last claim
+    totalClaims: v.number(), // Total days claimed
+  })
+    .index("by_user", ["userId"])
+    .index("by_streak", ["currentStreak"]), // For leaderboards
+
+  // Daily Challenges - Track challenge completions
+  dailyChallenges: defineTable({
+    userId: v.id("users"),
+    date: v.string(), // YYYY-MM-DD
+    challengeId: v.string(), // Which challenge
+    completed: v.boolean(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_date", ["userId", "date"]),
+
+  // Platform Stats - Cached activity metrics for social proof
+  platformStats: defineTable({
+    date: v.string(), // YYYY-MM-DD
+    onlineUsers: v.number(),
+    postsToday: v.number(),
+    routesToday: v.number(),
+    newUsers: v.number(),
+    activeUsers: v.number(),
+  })
+    .index("by_date", ["date"]),
 });
