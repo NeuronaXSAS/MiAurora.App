@@ -19,7 +19,15 @@ import {
 import { useLocale } from "@/lib/locale-context";
 
 // Priority languages for the landing page (most common for women's safety)
-const PRIORITY_LOCALES: SupportedLocale[] = ['en', 'es', 'pt', 'fr', 'de', 'ar', 'hi', 'zh'];
+// Full translations available for: EN, ES, FR, PT, DE, AR
+const PRIORITY_LOCALES: SupportedLocale[] = ['en', 'es', 'pt', 'fr', 'de', 'ar'];
+
+// Language flags/emojis for visual recognition
+const LOCALE_FLAGS: Record<SupportedLocale, string> = {
+  en: '🇬🇧', es: '🇪🇸', pt: '🇧🇷', fr: '🇫🇷', de: '🇩🇪', ar: '🇸🇦',
+  it: '🇮🇹', zh: '🇨🇳', ja: '🇯🇵', ko: '🇰🇷', hi: '🇮🇳', ru: '🇷🇺',
+  tr: '🇹🇷', pl: '🇵🇱', nl: '🇳🇱', sv: '🇸🇪', th: '🇹🇭', vi: '🇻🇳',
+};
 
 interface LanguageSwitcherProps {
   variant?: 'compact' | 'full';
@@ -55,11 +63,12 @@ export function LanguageSwitcher({
           variant="ghost"
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-1.5 px-2 py-1 h-8 text-[var(--foreground)]/70 hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
+          className="flex items-center gap-2 px-3 py-2 h-10 min-h-[44px] text-[var(--foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)] rounded-xl border border-[var(--border)]"
+          aria-label={`Change language. Current: ${currentLocaleInfo.name}`}
         >
-          <Globe className="w-4 h-4" />
-          <span className="text-xs font-medium uppercase">{currentLocale}</span>
-          <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <span className="text-base">{LOCALE_FLAGS[currentLocale]}</span>
+          <span className="text-sm font-medium">{currentLocaleInfo.nativeName}</span>
+          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </Button>
 
         <AnimatePresence>
@@ -79,7 +88,13 @@ export function LanguageSwitcher({
                 transition={{ duration: 0.15 }}
                 className="absolute right-0 top-full mt-2 z-50 min-w-[200px] bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden"
               >
-                <div className="p-2 max-h-[300px] overflow-y-auto">
+                <div className="p-2 border-b border-[var(--border)]">
+                  <p className="px-3 py-2 text-xs font-bold text-[var(--color-aurora-purple)] uppercase tracking-wider flex items-center gap-2">
+                    <Globe className="w-4 h-4" />
+                    Select Your Language
+                  </p>
+                </div>
+                <div className="p-2 max-h-[350px] overflow-y-auto space-y-1">
                   {displayLocales.map((locale) => {
                     const info = SUPPORTED_LOCALES[locale];
                     const isSelected = locale === currentLocale;
@@ -88,17 +103,20 @@ export function LanguageSwitcher({
                       <button
                         key={locale}
                         onClick={() => handleLocaleChange(locale)}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                        className={`w-full flex items-center justify-between px-3 py-3 rounded-xl text-base transition-colors min-h-[48px] ${
                           isSelected 
-                            ? 'bg-[var(--color-aurora-purple)]/10 text-[var(--color-aurora-purple)]' 
+                            ? 'bg-[var(--color-aurora-purple)]/10 text-[var(--color-aurora-purple)] border border-[var(--color-aurora-purple)]/30' 
                             : 'hover:bg-[var(--accent)] text-[var(--foreground)]'
                         }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{info.nativeName}</span>
-                          <span className="text-xs text-[var(--muted-foreground)]">({info.name})</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl">{LOCALE_FLAGS[locale]}</span>
+                          <div className="text-left">
+                            <span className="font-semibold block">{info.nativeName}</span>
+                            <span className="text-xs text-[var(--muted-foreground)]">{info.name}</span>
+                          </div>
                         </div>
-                        {isSelected && <Check className="w-4 h-4" />}
+                        {isSelected && <Check className="w-5 h-5" />}
                       </button>
                     );
                   })}
