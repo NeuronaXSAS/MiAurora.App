@@ -350,7 +350,19 @@ export function DailyEngagement({ userId, compact = false }: DailyEngagementProp
   const streak = dailyStatus?.currentStreak || 0;
   const multiplier = dailyStatus?.streakMultiplier || 1;
   const canClaimDaily = dailyStatus?.canClaimDaily ?? true;
-  const todayChallenge = dailyStatus?.todayChallenge || getTodayChallenge();
+  
+  // Map backend challenge to local challenge with icon
+  const todayChallenge = useMemo((): typeof DAILY_CHALLENGES[0] => {
+    const backendChallenge = dailyStatus?.todayChallenge;
+    if (backendChallenge) {
+      // Find matching local challenge to get the icon
+      const localChallenge = DAILY_CHALLENGES.find(c => c.id === backendChallenge.id);
+      if (localChallenge) {
+        return localChallenge; // Use local challenge which has the icon
+      }
+    }
+    return getTodayChallenge();
+  }, [dailyStatus?.todayChallenge]);
 
   const handleClaimDaily = async () => {
     if (isClaiming || !canClaimDaily) return;
@@ -358,7 +370,7 @@ export function DailyEngagement({ userId, compact = false }: DailyEngagementProp
     setIsClaiming(true);
     try {
       const result = await claimDailyBonus({ userId });
-      if (result.success) {
+      if (result.success && result.creditsAwarded) {
         setShowCreditAnimation(result.creditsAwarded);
       }
     } catch (error) {

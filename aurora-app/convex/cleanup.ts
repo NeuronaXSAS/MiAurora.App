@@ -341,6 +341,295 @@ export const addRandomLocationsToPostsWithout = mutation({
   },
 });
 
+// ============================================
+// COMPREHENSIVE CONTENT MONITORING
+// ============================================
+
+/**
+ * Get complete content inventory across all types
+ * For admin dashboard monitoring
+ */
+export const getContentInventory = query({
+  args: {},
+  handler: async (ctx) => {
+    // Posts breakdown
+    const allPosts = await ctx.db.query("posts").collect();
+    const postsByType = {
+      standard: allPosts.filter(p => !p.postType || p.postType === "standard").length,
+      poll: allPosts.filter(p => p.postType === "poll").length,
+      aiChat: allPosts.filter(p => p.postType === "ai_chat").length,
+      reel: allPosts.filter(p => p.postType === "reel" || p.reelId).length,
+    };
+    const postsByDimension = {
+      professional: allPosts.filter(p => p.lifeDimension === "professional").length,
+      social: allPosts.filter(p => p.lifeDimension === "social").length,
+      daily: allPosts.filter(p => p.lifeDimension === "daily").length,
+      travel: allPosts.filter(p => p.lifeDimension === "travel").length,
+      financial: allPosts.filter(p => p.lifeDimension === "financial").length,
+    };
+    const postsByModeration = {
+      approved: allPosts.filter(p => p.moderationStatus === "approved").length,
+      pending: allPosts.filter(p => p.moderationStatus === "pending").length,
+      flagged: allPosts.filter(p => p.moderationStatus === "flagged").length,
+      noStatus: allPosts.filter(p => !p.moderationStatus).length,
+    };
+
+    // Reels breakdown
+    const allReels = await ctx.db.query("reels").collect();
+    const reelsByModeration = {
+      approved: allReels.filter(r => r.moderationStatus === "approved").length,
+      pending: allReels.filter(r => r.moderationStatus === "pending").length,
+      flagged: allReels.filter(r => r.moderationStatus === "flagged").length,
+      rejected: allReels.filter(r => r.moderationStatus === "rejected").length,
+    };
+    const reelsByProvider = {
+      cloudinary: allReels.filter(r => r.provider === "cloudinary").length,
+      aws: allReels.filter(r => r.provider === "aws").length,
+      custom: allReels.filter(r => r.provider === "custom").length,
+    };
+
+    // Routes breakdown
+    const allRoutes = await ctx.db.query("routes").collect();
+    const routesByType = {
+      walking: allRoutes.filter(r => r.routeType === "walking").length,
+      running: allRoutes.filter(r => r.routeType === "running").length,
+      cycling: allRoutes.filter(r => r.routeType === "cycling").length,
+      commuting: allRoutes.filter(r => r.routeType === "commuting").length,
+    };
+    const routesBySharing = {
+      public: allRoutes.filter(r => r.sharingLevel === "public").length,
+      anonymous: allRoutes.filter(r => r.sharingLevel === "anonymous").length,
+      private: allRoutes.filter(r => r.sharingLevel === "private").length,
+    };
+
+    // Generated content (AI)
+    const generatedDebates = await ctx.db.query("generatedDebates").collect();
+    const generatedTips = await ctx.db.query("generatedTips").collect();
+
+    // Users
+    const allUsers = await ctx.db.query("users").collect();
+    const userStats = {
+      total: allUsers.length,
+      onboarded: allUsers.filter(u => u.onboardingCompleted).length,
+      premium: allUsers.filter(u => u.isPremium).length,
+      withCredits: allUsers.filter(u => (u.credits || 0) > 0).length,
+    };
+
+    // Comments
+    const allComments = await ctx.db.query("comments").collect();
+    const reelComments = await ctx.db.query("reelComments").collect();
+
+    // Circles
+    const allCircles = await ctx.db.query("circles").collect();
+
+    // Daily debates
+    const dailyDebates = await ctx.db.query("dailyDebates").collect();
+
+    return {
+      posts: {
+        total: allPosts.length,
+        byType: postsByType,
+        byDimension: postsByDimension,
+        byModeration: postsByModeration,
+        withLocation: allPosts.filter(p => p.location?.coordinates).length,
+        verified: allPosts.filter(p => p.isVerified).length,
+        anonymous: allPosts.filter(p => p.isAnonymous).length,
+      },
+      reels: {
+        total: allReels.length,
+        byModeration: reelsByModeration,
+        byProvider: reelsByProvider,
+        totalViews: allReels.reduce((sum, r) => sum + (r.views || 0), 0),
+        totalLikes: allReels.reduce((sum, r) => sum + (r.likes || 0), 0),
+      },
+      routes: {
+        total: allRoutes.length,
+        byType: routesByType,
+        bySharing: routesBySharing,
+        totalDistance: allRoutes.reduce((sum, r) => sum + (r.distance || 0), 0),
+      },
+      generatedContent: {
+        debates: generatedDebates.length,
+        tips: generatedTips.length,
+        total: generatedDebates.length + generatedTips.length,
+      },
+      users: userStats,
+      engagement: {
+        comments: allComments.length,
+        reelComments: reelComments.length,
+        circles: allCircles.length,
+        dailyDebates: dailyDebates.length,
+      },
+    };
+  },
+});
+
+/**
+ * List all content by source (real users vs seeded/generated)
+ */
+export const getContentBySource = query({
+  args: { contentType: v.union(v.literal("posts"), v.literal("reels"), v.literal("routes")) },
+  handler: async (ctx, args) => {
+    // Known seed user patterns (adjust based on your seed data)
+    const seedPatterns = ["seed", "test", "demo", "example"];
+    
+    if (args.contentType === "posts") {
+      const posts = await ctx.db.query("posts").collect();
+      const withAuthors = await Promise.all(
+        posts.slice(0, 100).map(async (post) => {
+          const author = await ctx.db.get(post.authorId);
+          const isSeeded = author?.email?.includes("seed") || 
+                          author?.name?.toLowerCase().includes("test") ||
+                          seedPatterns.some(p => author?.email?.includes(p));
+          return {
+            _id: post._id,
+            title: post.title,
+            authorName: author?.name || "Unknown",
+            authorEmail: author?.email || "Unknown",
+            isSeeded,
+            hasLocation: !!post.location?.coordinates,
+            postType: post.postType || "standard",
+            _creationTime: post._creationTime,
+          };
+        })
+      );
+      
+      return {
+        total: posts.length,
+        seeded: withAuthors.filter(p => p.isSeeded).length,
+        real: withAuthors.filter(p => !p.isSeeded).length,
+        sample: withAuthors.slice(0, 20),
+      };
+    }
+    
+    if (args.contentType === "reels") {
+      const reels = await ctx.db.query("reels").collect();
+      const withAuthors = await Promise.all(
+        reels.slice(0, 100).map(async (reel) => {
+          const author = await ctx.db.get(reel.authorId);
+          const isSeeded = author?.email?.includes("seed") || 
+                          seedPatterns.some(p => author?.email?.includes(p)) ||
+                          reel.videoUrl?.includes("example.com");
+          return {
+            _id: reel._id,
+            caption: reel.caption,
+            authorName: author?.name || "Unknown",
+            isSeeded,
+            provider: reel.provider,
+            moderationStatus: reel.moderationStatus,
+            views: reel.views,
+            _creationTime: reel._creationTime,
+          };
+        })
+      );
+      
+      return {
+        total: reels.length,
+        seeded: withAuthors.filter(r => r.isSeeded).length,
+        real: withAuthors.filter(r => !r.isSeeded).length,
+        sample: withAuthors.slice(0, 20),
+      };
+    }
+    
+    if (args.contentType === "routes") {
+      const routes = await ctx.db.query("routes").collect();
+      const withCreators = await Promise.all(
+        routes.slice(0, 100).map(async (route) => {
+          const creator = await ctx.db.get(route.creatorId);
+          const isSeeded = creator?.email?.includes("seed") || 
+                          seedPatterns.some(p => creator?.email?.includes(p));
+          return {
+            _id: route._id,
+            title: route.title,
+            creatorName: creator?.name || "Unknown",
+            isSeeded,
+            routeType: route.routeType,
+            sharingLevel: route.sharingLevel,
+            distance: route.distance,
+            _creationTime: route._creationTime,
+          };
+        })
+      );
+      
+      return {
+        total: routes.length,
+        seeded: withCreators.filter(r => r.isSeeded).length,
+        real: withCreators.filter(r => !r.isSeeded).length,
+        sample: withCreators.slice(0, 20),
+      };
+    }
+    
+    return { total: 0, seeded: 0, real: 0, sample: [] };
+  },
+});
+
+/**
+ * Delete all seeded/test content
+ */
+export const deleteSeededContent = mutation({
+  args: {
+    contentType: v.union(v.literal("posts"), v.literal("reels"), v.literal("routes"), v.literal("all")),
+    dryRun: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const dryRun = args.dryRun ?? true;
+    const seedPatterns = ["seed", "test", "demo", "example"];
+    
+    // Get all seed users
+    const allUsers = await ctx.db.query("users").collect();
+    const seedUserIds = allUsers
+      .filter(u => seedPatterns.some(p => u.email?.includes(p) || u.name?.toLowerCase().includes(p)))
+      .map(u => u._id);
+    
+    let deleted = { posts: 0, reels: 0, routes: 0 };
+    
+    if (args.contentType === "posts" || args.contentType === "all") {
+      const posts = await ctx.db.query("posts").collect();
+      const seededPosts = posts.filter(p => seedUserIds.includes(p.authorId));
+      
+      if (!dryRun) {
+        for (const post of seededPosts) {
+          await ctx.db.delete(post._id);
+        }
+      }
+      deleted.posts = seededPosts.length;
+    }
+    
+    if (args.contentType === "reels" || args.contentType === "all") {
+      const reels = await ctx.db.query("reels").collect();
+      const seededReels = reels.filter(r => 
+        seedUserIds.includes(r.authorId) || 
+        r.videoUrl?.includes("example.com")
+      );
+      
+      if (!dryRun) {
+        for (const reel of seededReels) {
+          await ctx.db.delete(reel._id);
+        }
+      }
+      deleted.reels = seededReels.length;
+    }
+    
+    if (args.contentType === "routes" || args.contentType === "all") {
+      const routes = await ctx.db.query("routes").collect();
+      const seededRoutes = routes.filter(r => seedUserIds.includes(r.creatorId));
+      
+      if (!dryRun) {
+        for (const route of seededRoutes) {
+          await ctx.db.delete(route._id);
+        }
+      }
+      deleted.routes = seededRoutes.length;
+    }
+    
+    return {
+      dryRun,
+      deleted,
+      seedUsersFound: seedUserIds.length,
+    };
+  },
+});
+
 /**
  * Reduce marker density by keeping only highest-rated posts per grid cell
  * This improves map performance on mobile
