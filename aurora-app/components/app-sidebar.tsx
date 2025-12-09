@@ -59,7 +59,9 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPostDialog, setShowPostDialog] = useState(false);
   const [showPollDialog, setShowPollDialog] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({
     safety: false,
     social: false,
     wellness: false,
@@ -69,18 +71,31 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
 
   // Auto-expand section based on current path
   useEffect(() => {
-    const safetyPaths = ['/map', '/routes', '/emergency', '/resources', '/report'];
-    const socialPaths = ['/circles', '/reels', '/live', '/creator', '/opportunities', '/messages'];
-    const wellnessPaths = ['/health', '/assistant'];
-    const financePaths = ['/wallet', '/finance'];
-    const growthPaths = ['/profile', '/settings', '/premium'];
+    const safetyPaths = [
+      "/map",
+      "/routes",
+      "/emergency",
+      "/resources",
+      "/report",
+    ];
+    const socialPaths = [
+      "/circles",
+      "/reels",
+      "/live",
+      "/creator",
+      "/opportunities",
+      "/messages",
+    ];
+    const wellnessPaths = ["/health", "/assistant"];
+    const financePaths = ["/wallet", "/finance"];
+    const growthPaths = ["/profile", "/settings", "/premium"];
 
     setExpandedSections({
-      safety: safetyPaths.some(p => pathname.startsWith(p)),
-      social: socialPaths.some(p => pathname.startsWith(p)),
-      wellness: wellnessPaths.some(p => pathname.startsWith(p)),
-      finance: financePaths.some(p => pathname.startsWith(p)),
-      growth: growthPaths.some(p => pathname.startsWith(p)),
+      safety: safetyPaths.some((p) => pathname.startsWith(p)),
+      social: socialPaths.some((p) => pathname.startsWith(p)),
+      wellness: wellnessPaths.some((p) => pathname.startsWith(p)),
+      finance: financePaths.some((p) => pathname.startsWith(p)),
+      growth: growthPaths.some((p) => pathname.startsWith(p)),
     });
     // Close mobile sidebar on navigation
     setMobileOpen(false);
@@ -106,13 +121,14 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
       // Check if we're on mobile or desktop
       const isMobile = window.innerWidth < 1024;
       if (isMobile) {
-        setMobileOpen(prev => !prev);
+        setMobileOpen((prev) => !prev);
       } else {
-        setDesktopCollapsed(prev => !prev);
+        setDesktopCollapsed((prev) => !prev);
       }
     };
-    window.addEventListener('toggle-sidebar', handleToggleSidebar);
-    return () => window.removeEventListener('toggle-sidebar', handleToggleSidebar);
+    window.addEventListener("toggle-sidebar", handleToggleSidebar);
+    return () =>
+      window.removeEventListener("toggle-sidebar", handleToggleSidebar);
   }, []);
 
   const user = useQuery(api.users.getUser, userId ? { userId } : "skip");
@@ -132,10 +148,11 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
   };
 
   const toggleSection = (id: string) => {
-    setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
+    setExpandedSections((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/");
 
   // Navigation items organized by category
   const mainNav = [
@@ -145,7 +162,12 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
   ];
 
   const safetyNav = [
-    { href: "/emergency", icon: AlertTriangle, label: "Emergency", color: "text-[var(--color-aurora-orange)]" },
+    {
+      href: "/emergency",
+      icon: AlertTriangle,
+      label: "Emergency",
+      color: "text-[var(--color-aurora-orange)]",
+    },
     { href: "/resources", icon: Shield, label: "Resources", color: null },
     { href: "/report", icon: FileText, label: "Report", color: null },
   ];
@@ -155,27 +177,79 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
     { href: "/reels", icon: Play, label: "Reels", badge: null },
     { href: "/live", icon: Video, label: "Live", badge: "NEW" },
     { href: "/creator", icon: Video, label: "Creator Studio", badge: "NEW" },
-    { href: "/opportunities", icon: Briefcase, label: "Opportunities", badge: null },
+    {
+      href: "/opportunities",
+      icon: Briefcase,
+      label: "Opportunities",
+      badge: null,
+    },
     { href: "/messages", icon: Mail, label: "Messages", badge: null },
   ];
 
   const wellnessNav = [
-    { href: "/health", icon: Heart, label: "Health Tracker", color: "text-[var(--color-aurora-pink)]" },
-    { href: "/assistant", icon: MessageSquare, label: "Aurora AI", color: "text-[var(--color-aurora-purple)]" },
+    {
+      href: "/health",
+      icon: Heart,
+      label: "Health Tracker",
+      color: "text-[var(--color-aurora-pink)]",
+    },
+    {
+      href: "/assistant",
+      icon: MessageSquare,
+      label: "Aurora AI",
+      color: "text-[var(--color-aurora-purple)]",
+    },
   ];
 
   const financeNav = [
-    { href: "/wallet", icon: Wallet, label: "My Wallet", badge: null, color: "text-[var(--color-aurora-yellow)]" },
-    { href: "/finance", icon: TrendingUp, label: "Financial Wellness", badge: "NEW", color: "text-[var(--color-aurora-mint)]" },
+    {
+      href: "/wallet",
+      icon: Wallet,
+      label: "My Wallet",
+      badge: null,
+      color: "text-[var(--color-aurora-yellow)]",
+    },
+    {
+      href: "/finance",
+      icon: TrendingUp,
+      label: "Financial Wellness",
+      badge: "NEW",
+      color: "text-[var(--color-aurora-mint)]",
+    },
   ];
 
   const growthNav = [
-    { href: "/premium", icon: Star, label: "Premium", badge: user?.isPremium ? "PRO" : null, color: "text-[var(--color-aurora-yellow)]" },
-    { href: "/profile", icon: User, label: "My Profile", badge: null, color: null },
-    { href: "/settings", icon: Settings, label: "Settings", badge: null, color: null },
+    {
+      href: "/premium",
+      icon: Star,
+      label: "Premium",
+      badge: user?.isPremium ? "PRO" : null,
+      color: "text-[var(--color-aurora-yellow)]",
+    },
+    {
+      href: "/profile",
+      icon: User,
+      label: "My Profile",
+      badge: null,
+      color: null,
+    },
+    {
+      href: "/settings",
+      icon: Settings,
+      label: "Settings",
+      badge: null,
+      color: null,
+    },
   ];
 
-  const NavItem = ({ href, icon: Icon, label, badge, color, compact = false }: {
+  const NavItem = ({
+    href,
+    icon: Icon,
+    label,
+    badge,
+    color,
+    compact = false,
+  }: {
     href: string;
     icon: React.ElementType;
     label: string;
@@ -184,14 +258,22 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
     compact?: boolean;
   }) => (
     <Link href={href} onClick={() => setMobileOpen(false)}>
-      <div className={cn(
-        "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group",
-        isActive(href)
-          ? "bg-[var(--color-aurora-purple)]/20 text-[var(--foreground)]"
-          : "text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--foreground)]",
-        compact && "justify-center px-2"
-      )}>
-        <Icon className={cn("w-5 h-5 flex-shrink-0", color, isActive(href) && "text-[var(--color-aurora-purple)]")} />
+      <div
+        className={cn(
+          "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group",
+          isActive(href)
+            ? "bg-[var(--color-aurora-purple)]/20 text-[var(--foreground)]"
+            : "text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--foreground)]",
+          compact && "justify-center px-2",
+        )}
+      >
+        <Icon
+          className={cn(
+            "w-5 h-5 flex-shrink-0",
+            color,
+            isActive(href) && "text-[var(--color-aurora-purple)]",
+          )}
+        />
         {!compact && (
           <>
             <span className="flex-1 text-sm font-medium truncate">{label}</span>
@@ -206,7 +288,12 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
     </Link>
   );
 
-  const SectionHeader = ({ id, label, icon: Icon, expanded }: {
+  const SectionHeader = ({
+    id,
+    label,
+    icon: Icon,
+    expanded,
+  }: {
     id: string;
     label: string;
     icon: React.ElementType;
@@ -218,7 +305,11 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
     >
       <Icon className="w-4 h-4" />
       <span className="flex-1 text-left">{label}</span>
-      {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+      {expanded ? (
+        <ChevronDown className="w-4 h-4" />
+      ) : (
+        <ChevronRight className="w-4 h-4" />
+      )}
     </button>
   );
 
@@ -228,10 +319,16 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
       <div className="sticky top-0 z-10 p-4 border-b border-[var(--border)] bg-[var(--card)]">
         <div className="flex items-center justify-between">
           <Link href="/feed" className="flex items-center gap-3">
-            <img src="/Au_Logo_1.png" alt="Aurora App" className="w-10 h-10 rounded-xl" />
+            <img
+              src="/Au_Logo_1.png"
+              alt="Aurora App"
+              className="w-10 h-10 rounded-xl"
+            />
             <div className="hidden sm:block">
               <h1 className="font-bold text-[var(--foreground)]">Aurora App</h1>
-              <p className="text-xs text-[var(--muted-foreground)]">For women to thrive</p>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                For women to thrive
+              </p>
             </div>
           </Link>
           <Button
@@ -252,9 +349,17 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
           <div className="pb-3 mb-3 border-b border-[var(--border)]">
             <div className="flex items-center gap-3 mb-3">
               <Avatar className="w-10 h-10 border-2 border-[var(--color-aurora-purple)]/50">
-                <AvatarImage src={user.avatarConfig ? generateAvatarUrl(user.avatarConfig as AvatarConfig) : user.profileImage} />
+                <AvatarImage
+                  src={
+                    user.avatarConfig
+                      ? generateAvatarUrl(user.avatarConfig as AvatarConfig)
+                      : user.profileImage
+                  }
+                />
                 <AvatarFallback className="bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white">
-                  {(user.name && user.name !== "null" ? user.name : "U").charAt(0).toUpperCase()}
+                  {(user.name && user.name !== "null" ? user.name : "U")
+                    .charAt(0)
+                    .toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
@@ -262,11 +367,16 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
                   {user.name && user.name !== "null" ? user.name : "User"}
                 </p>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-[var(--color-aurora-yellow)]/50 text-[var(--color-aurora-yellow)]">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] px-1.5 py-0 border-[var(--color-aurora-yellow)]/50 text-[var(--color-aurora-yellow)]"
+                  >
                     <Coins className="w-3 h-3 mr-1" />
                     {user.credits}
                   </Badge>
-                  <span className="text-xs text-[var(--muted-foreground)]">Trust: {user.trustScore}</span>
+                  <span className="text-xs text-[var(--muted-foreground)]">
+                    Trust: {user.trustScore}
+                  </span>
                 </div>
               </div>
             </div>
@@ -283,16 +393,21 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
         )}
 
         {/* Main Navigation */}
-        {mainNav.map(item => (
+        {mainNav.map((item) => (
           <NavItem key={item.href} {...item} />
         ))}
 
         {/* Safety Section */}
         <div className="pt-3">
-          <SectionHeader id="safety" label="Safety" icon={Shield} expanded={expandedSections.safety} />
+          <SectionHeader
+            id="safety"
+            label="Safety"
+            icon={Shield}
+            expanded={expandedSections.safety}
+          />
           {expandedSections.safety && (
             <div className="space-y-1 mt-1">
-              {safetyNav.map(item => (
+              {safetyNav.map((item) => (
                 <NavItem key={item.href} {...item} />
               ))}
             </div>
@@ -301,10 +416,15 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
 
         {/* Social Section */}
         <div className="pt-2">
-          <SectionHeader id="social" label="Community" icon={Users} expanded={expandedSections.social} />
+          <SectionHeader
+            id="social"
+            label="Community"
+            icon={Users}
+            expanded={expandedSections.social}
+          />
           {expandedSections.social && (
             <div className="space-y-1 mt-1">
-              {socialNav.map(item => (
+              {socialNav.map((item) => (
                 <NavItem key={item.href} {...item} />
               ))}
             </div>
@@ -313,10 +433,15 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
 
         {/* Wellness Section */}
         <div className="pt-2">
-          <SectionHeader id="wellness" label="Wellness" icon={Heart} expanded={expandedSections.wellness} />
+          <SectionHeader
+            id="wellness"
+            label="Wellness"
+            icon={Heart}
+            expanded={expandedSections.wellness}
+          />
           {expandedSections.wellness && (
             <div className="space-y-1 mt-1">
-              {wellnessNav.map(item => (
+              {wellnessNav.map((item) => (
                 <NavItem key={item.href} {...item} />
               ))}
             </div>
@@ -325,10 +450,15 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
 
         {/* Finance Section - NEW */}
         <div className="pt-2">
-          <SectionHeader id="finance" label="Finance" icon={DollarSign} expanded={expandedSections.finance} />
+          <SectionHeader
+            id="finance"
+            label="Finance"
+            icon={DollarSign}
+            expanded={expandedSections.finance}
+          />
           {expandedSections.finance && (
             <div className="space-y-1 mt-1">
-              {financeNav.map(item => (
+              {financeNav.map((item) => (
                 <NavItem key={item.href} {...item} />
               ))}
             </div>
@@ -337,7 +467,12 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
 
         {/* Growth & Premium Section */}
         <div className="pt-2">
-          <SectionHeader id="growth" label="Growth" icon={Zap} expanded={expandedSections.growth} />
+          <SectionHeader
+            id="growth"
+            label="Growth"
+            icon={Zap}
+            expanded={expandedSections.growth}
+          />
           {expandedSections.growth && (
             <div className="space-y-1 mt-1">
               {/* Premium Highlight Card */}
@@ -346,9 +481,13 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
                   <div className="mx-1 mb-2 p-3 rounded-xl bg-gradient-to-r from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20 border border-[var(--color-aurora-purple)]/30 hover:border-[var(--color-aurora-purple)]/50 transition-colors">
                     <div className="flex items-center gap-2 mb-1">
                       <Star className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
-                      <span className="text-sm font-semibold text-[var(--foreground)]">Unlock Premium</span>
+                      <span className="text-sm font-semibold text-[var(--foreground)]">
+                        Unlock Premium
+                      </span>
                     </div>
-                    <p className="text-xs text-[var(--muted-foreground)]">Get unlimited AI, priority support & more</p>
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      Get unlimited AI, priority support & more
+                    </p>
                   </div>
                 </Link>
               )}
@@ -359,7 +498,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
                 <ThemeToggle />
               </div>
 
-              {growthNav.map(item => (
+              {growthNav.map((item) => (
                 <NavItem key={item.href} {...item} />
               ))}
             </div>
@@ -368,7 +507,12 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
 
         {/* Intelligence - B2B */}
         <div className="pt-3 border-t border-[var(--border)] mt-3">
-          <NavItem href="/intelligence" icon={Database} label="Intelligence" badge="B2B" />
+          <NavItem
+            href="/intelligence"
+            icon={Database}
+            label="Intelligence"
+            badge="B2B"
+          />
         </div>
 
         {/* Legal & Logout - Now part of scrollable content */}
@@ -409,7 +553,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
       {/* Mobile Overlay */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -417,14 +561,14 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col h-screen bg-[var(--card)] border-r border-[var(--border)]",
+          "fixed inset-y-0 left-0 z-[70] flex flex-col h-screen bg-[var(--card)] border-r border-[var(--border)]",
           "w-72 lg:w-64 xl:w-72",
           "transform transition-transform duration-300 ease-out",
           // Mobile: slide in/out
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           // Desktop: always use fixed positioning, slide in/out
           "lg:translate-x-0",
-          desktopCollapsed && "lg:-translate-x-full"
+          desktopCollapsed && "lg:-translate-x-full",
         )}
       >
         {sidebarContent}
@@ -440,8 +584,16 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
       />
       {userId && (
         <>
-          <PostCreateDialog open={showPostDialog} onOpenChange={setShowPostDialog} userId={userId} />
-          <PollCreateDialog open={showPollDialog} onOpenChange={setShowPollDialog} userId={userId} />
+          <PostCreateDialog
+            open={showPostDialog}
+            onOpenChange={setShowPostDialog}
+            userId={userId}
+          />
+          <PollCreateDialog
+            open={showPollDialog}
+            onOpenChange={setShowPollDialog}
+            userId={userId}
+          />
         </>
       )}
     </>

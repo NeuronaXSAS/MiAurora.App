@@ -94,19 +94,29 @@ export default function IntelligenceDashboard() {
     api.intelligence.getUrbanSafety,
     viewport
       ? {
-          minLat: viewport.latitude - 0.1,
-          maxLat: viewport.latitude + 0.1,
-          minLng: viewport.longitude - 0.1,
-          maxLng: viewport.longitude + 0.1,
-        }
+        minLat: viewport.latitude - 0.1,
+        maxLat: viewport.latitude + 0.1,
+        minLng: viewport.longitude - 0.1,
+        maxLng: viewport.longitude + 0.1,
+      }
       : "skip",
   );
 
   // Convert urban data to GeoJSON for heatmap
   const heatmapData = urbanData
     ? {
-        type: "FeatureCollection" as const,
-        features: urbanData.map((cell) => ({
+      type: "FeatureCollection" as const,
+      features: urbanData
+        .filter(
+          (cell) =>
+            typeof cell.gridLng === "number" &&
+            typeof cell.gridLat === "number" &&
+            cell.gridLat >= -90 &&
+            cell.gridLat <= 90 &&
+            cell.gridLng >= -180 &&
+            cell.gridLng <= 180,
+        )
+        .map((cell) => ({
           type: "Feature" as const,
           geometry: {
             type: "Point" as const,
@@ -117,7 +127,7 @@ export default function IntelligenceDashboard() {
             intensity: cell.overallScore / 100,
           },
         })),
-      }
+    }
     : null;
 
   const handleExportData = () => {
@@ -426,8 +436,8 @@ export default function IntelligenceDashboard() {
                     geographic cells analyzed • Updated{" "}
                     {stats?.urban.lastAggregated
                       ? new Date(
-                          stats.urban.lastAggregated,
-                        ).toLocaleDateString()
+                        stats.urban.lastAggregated,
+                      ).toLocaleDateString()
                       : "recently"}
                   </p>
                 </div>
@@ -585,8 +595,8 @@ export default function IntelligenceDashboard() {
                           Last updated:{" "}
                           {stats?.corporate.lastAggregated
                             ? new Date(
-                                stats.corporate.lastAggregated,
-                              ).toLocaleString()
+                              stats.corporate.lastAggregated,
+                            ).toLocaleString()
                             : "N/A"}
                         </span>
                       </div>
@@ -638,8 +648,8 @@ export default function IntelligenceDashboard() {
                           Last updated:{" "}
                           {stats?.urban.lastAggregated
                             ? new Date(
-                                stats.urban.lastAggregated,
-                              ).toLocaleString()
+                              stats.urban.lastAggregated,
+                            ).toLocaleString()
                             : "N/A"}
                         </span>
                       </div>

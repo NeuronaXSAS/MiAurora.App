@@ -405,13 +405,26 @@ export function SafetyMap({
       filteredPosts.forEach((post) => {
         if (!post.location || !map.current) return;
 
+        const [lng, lat] = post.location.coordinates as [number, number];
+
+        // Validate coordinates
+        if (
+          typeof lng !== "number" ||
+          typeof lat !== "number" ||
+          lat < -90 || lat > 90 ||
+          lng < -180 || lng > 180
+        ) {
+          console.warn("Invalid coordinates for post:", post._id, lng, lat);
+          return;
+        }
+
         const el = createPostMarker(
           post,
           onMarkerClick ? () => onMarkerClick(post._id) : undefined,
         );
 
         const marker = new mapboxgl.Marker(el)
-          .setLngLat(post.location.coordinates as [number, number])
+          .setLngLat([lng, lat])
           .addTo(map.current!);
 
         const locationName = post.location.name || "Unknown location";
@@ -451,10 +464,23 @@ export function SafetyMap({
         workplaceReports.forEach((report) => {
           if (!report.location || !map.current) return;
 
+          const [lng, lat] = report.location.coordinates as [number, number];
+
+          // Validate coordinates
+          if (
+            typeof lng !== "number" ||
+            typeof lat !== "number" ||
+            lat < -90 || lat > 90 ||
+            lng < -180 || lng > 180
+          ) {
+            console.warn("Invalid coordinates for report:", report._id, lng, lat);
+            return;
+          }
+
           const el = createWorkplaceMarker();
 
           const marker = new mapboxgl.Marker(el)
-            .setLngLat(report.location.coordinates as [number, number])
+            .setLngLat([lng, lat])
             .addTo(map.current!);
 
           let popupAdded = false;
@@ -639,7 +665,7 @@ export function SafetyMap({
             const [postLng, postLat] = post.location.coordinates;
             const distance = Math.sqrt(
               Math.pow(postLng - longitude, 2) +
-                Math.pow(postLat - latitude, 2),
+              Math.pow(postLat - latitude, 2),
             );
             return distance < 0.05;
           });
@@ -823,11 +849,10 @@ export function SafetyMap({
         {onLocationSelect && (
           <Button
             onClick={() => setIsSelectingLocation(!isSelectingLocation)}
-            className={`shadow-lg min-w-[48px] min-h-[48px] rounded-xl ${
-              isSelectingLocation
+            className={`shadow-lg min-w-[48px] min-h-[48px] rounded-xl ${isSelectingLocation
                 ? "bg-[var(--color-aurora-purple)] text-white hover:bg-[var(--color-aurora-violet)]"
                 : "bg-[var(--card)]/95 backdrop-blur-sm text-[var(--foreground)] hover:bg-[var(--accent)] border border-[var(--border)]"
-            }`}
+              }`}
             size="icon"
             title="Click map to mark location"
           >
@@ -911,13 +936,12 @@ export function SafetyMap({
               >
                 <div className="flex items-start gap-2">
                   <Badge
-                    className={`flex-shrink-0 text-white text-[10px] px-1.5 ${
-                      post.rating >= 4
+                    className={`flex-shrink-0 text-white text-[10px] px-1.5 ${post.rating >= 4
                         ? "bg-[#22c55e]"
                         : post.rating >= 3
                           ? "bg-[#eab308]"
                           : "bg-[#ef4444]"
-                    }`}
+                      }`}
                   >
                     {post.rating}
                   </Badge>
