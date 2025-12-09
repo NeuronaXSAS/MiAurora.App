@@ -143,6 +143,30 @@
   --sidebar-ring: #c9cef4;
 }
 
+/* Force light theme - Used on landing page to override user's dark mode preference */
+/* This ensures the landing page always displays correctly regardless of theme settings */
+.force-light-theme,
+.force-light-theme * {
+  --background: #fffaf1 !important;
+  --foreground: #3d0d73 !important;
+  --card: #ffffff !important;
+  --card-foreground: #3d0d73 !important;
+  --popover: #ffffff !important;
+  --popover-foreground: #3d0d73 !important;
+  --primary: #2e2ad6 !important;
+  --primary-foreground: #ffffff !important;
+  --secondary: #c9cef4 !important;
+  --secondary-foreground: #3d0d73 !important;
+  --muted: #f5f0e8 !important;
+  --muted-foreground: #5537a7 !important;
+  --accent: #c9cef4 !important;
+  --accent-foreground: #3d0d73 !important;
+  --destructive: #f05a6b !important;
+  --border: #e8e0d5 !important;
+  --input: #f5f0e8 !important;
+  --ring: #5537a7 !important;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

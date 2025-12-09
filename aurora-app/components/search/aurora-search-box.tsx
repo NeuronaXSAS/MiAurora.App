@@ -88,22 +88,70 @@ const TooltipContent = React.forwardRef<
 ));
 TooltipContent.displayName = "TooltipContent";
 
-// Voice Recorder Component with actual recording
+// Voice Recorder Component with actual recording and transcription
 const VoiceRecorder: React.FC<{
   isRecording: boolean;
   onStop: (audioBlob: Blob | null) => void;
+  onTranscript?: (text: string) => void;
   mediaRecorderRef: React.MutableRefObject<MediaRecorder | null>;
-}> = ({ isRecording, onStop, mediaRecorderRef }) => {
+}> = ({ isRecording, onStop, onTranscript, mediaRecorderRef }) => {
   const [time, setTime] = useState(0);
   const chunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     if (!isRecording) {
       setTime(0);
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
       return;
     }
 
-    // Start recording
+    // Initialize Speech Recognition if available
+    const initSpeechRecognition = () => {
+      const { webkitSpeechRecognition, SpeechRecognition } = window as any;
+      const SpeechRecognitionConstructor = SpeechRecognition || webkitSpeechRecognition;
+
+      if (SpeechRecognitionConstructor && onTranscript) {
+        const recognition = new SpeechRecognitionConstructor();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US'; // Default to English, could be made dynamic
+
+        recognition.onresult = (event: any) => {
+          let finalTranscript = '';
+          let interimTranscript = '';
+
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+
+          if (finalTranscript || interimTranscript) {
+            // Pass the latest chunk of text
+            onTranscript(finalTranscript + interimTranscript);
+          }
+        };
+
+        recognition.onerror = (event: any) => {
+          console.warn("Speech recognition error", event.error);
+        };
+
+        try {
+          recognition.start();
+          recognitionRef.current = recognition;
+        } catch (e) {
+          console.error("Failed to start speech recognition", e);
+        }
+      }
+    };
+
+    // Start recording audio
     const startRecording = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -121,9 +169,13 @@ const VoiceRecorder: React.FC<{
           const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
           stream.getTracks().forEach(track => track.stop());
           onStop(audioBlob);
+          if (recognitionRef.current) {
+            recognitionRef.current.stop();
+          }
         };
 
         mediaRecorder.start();
+        initSpeechRecognition(); // Start transcription in parallel
       } catch (err) {
         console.error("Error accessing microphone:", err);
         onStop(null);
@@ -133,8 +185,11 @@ const VoiceRecorder: React.FC<{
     startRecording();
 
     const timer = setInterval(() => setTime((t) => t + 1), 1000);
-    return () => clearInterval(timer);
-  }, [isRecording, onStop, mediaRecorderRef]);
+    return () => {
+      clearInterval(timer);
+      if (recognitionRef.current) recognitionRef.current.stop();
+    };
+  }, [isRecording, onStop, mediaRecorderRef, onTranscript]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -154,7 +209,7 @@ const VoiceRecorder: React.FC<{
       <div className="flex items-center gap-2 mb-3">
         <div className="h-3 w-3 rounded-full bg-[#ec4c28] animate-pulse" />
         <span className="font-mono text-sm text-[var(--color-aurora-violet)] font-bold">{formatTime(time)}</span>
-        <span className="text-xs text-[var(--muted-foreground)]">Recording live argument...</span>
+        <span className="text-xs text-[var(--muted-foreground)]">Recording & Transcribing...</span>
       </div>
       <div className="w-full h-10 flex items-center justify-center gap-0.5 px-4">
         {[...Array(32)].map((_, i) => (
@@ -167,7 +222,7 @@ const VoiceRecorder: React.FC<{
         ))}
       </div>
       <p className="mt-3 text-xs text-[var(--muted-foreground)]">
-        🎤 Recording will be analyzed for who&apos;s right
+        🎤 Speak clearly - text will appear below
       </p>
     </motion.div>
   );
@@ -200,7 +255,7 @@ const ModeButton: React.FC<ModeButtonProps> = ({ mode, currentMode, icon: Icon, 
           type="button"
           onClick={onClick}
           className={cn(
-            "rounded-full transition-all flex items-center gap-1.5 px-3 py-1.5 border min-h-[36px]",
+            "rounded-full transition-all flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 border min-h-[32px] sm:min-h-[36px] flex-shrink-0",
             isActive ? "border-current" : "bg-transparent border-transparent hover:bg-[var(--color-aurora-lavender)]/30"
           )}
           style={{
@@ -213,9 +268,9 @@ const ModeButton: React.FC<ModeButtonProps> = ({ mode, currentMode, icon: Icon, 
             animate={{ rotate: isActive ? 360 : 0, scale: isActive ? 1.1 : 1 }}
             whileHover={{ scale: 1.15, transition: { type: "spring", stiffness: 300, damping: 10 } }}
             transition={{ type: "spring", stiffness: 260, damping: 25 }}
-            className="w-5 h-5 flex items-center justify-center"
+            className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center"
           >
-            <Icon className="w-4 h-4" />
+            <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </motion.div>
           <AnimatePresence>
             {isActive && (
@@ -224,14 +279,14 @@ const ModeButton: React.FC<ModeButtonProps> = ({ mode, currentMode, icon: Icon, 
                 animate={{ width: "auto", opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="text-xs font-medium overflow-hidden whitespace-nowrap"
+                className="text-[10px] sm:text-xs font-medium overflow-hidden whitespace-nowrap hidden sm:inline"
               >
                 {label}
               </motion.span>
             )}
           </AnimatePresence>
           {isNew && !isActive && (
-            <span className="text-[8px] px-1 py-0.5 rounded bg-[var(--color-aurora-pink)] text-white font-bold">
+            <span className="text-[7px] sm:text-[8px] px-0.5 sm:px-1 py-0.5 rounded bg-[var(--color-aurora-pink)] text-white font-bold">
               NEW
             </span>
           )}
@@ -559,6 +614,7 @@ export const AuroraSearchBox = React.forwardRef<HTMLDivElement, AuroraSearchBoxP
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const initialInputRef = useRef<string>("");
 
     // Mode configurations
     const modes = {
@@ -743,6 +799,7 @@ export const AuroraSearchBox = React.forwardRef<HTMLDivElement, AuroraSearchBoxP
         }
       } else {
         // Start recording
+        initialInputRef.current = input; // Save current input state
         setIsRecording(true);
         setIsExpanded(true);
       }
@@ -777,6 +834,10 @@ export const AuroraSearchBox = React.forwardRef<HTMLDivElement, AuroraSearchBoxP
                 isRecording={isRecording}
                 onStop={handleRecordingStop}
                 mediaRecorderRef={mediaRecorderRef}
+                onTranscript={(text) => {
+                  const separator = initialInputRef.current && !initialInputRef.current.trim().endsWith(".") && !initialInputRef.current.endsWith(" ") ? " " : "";
+                  setInput(initialInputRef.current + separator + text);
+                }}
               />
             )}
           </AnimatePresence>
@@ -857,8 +918,12 @@ export const AuroraSearchBox = React.forwardRef<HTMLDivElement, AuroraSearchBoxP
 
           {/* Actions bar - Hide when showing result */}
           {!judgeResult && (
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--color-aurora-lavender)]/30 mt-2">
-              <div className={cn("flex items-center gap-0.5 transition-opacity", isRecording && "opacity-0 pointer-events-none")}>
+            <div className="flex items-center justify-between gap-1.5 sm:gap-2 pt-2 border-t border-[var(--color-aurora-lavender)]/30 mt-2">
+              {/* Mode buttons with horizontal scroll on mobile */}
+              <div className={cn(
+                "flex items-center gap-0.5 overflow-x-auto no-scrollbar transition-opacity flex-1 min-w-0",
+                isRecording && "opacity-0 pointer-events-none"
+              )}>
                 <ModeButton mode="judge" currentMode={mode} icon={Scale} label="Judge" activeColor="#5537a7" onClick={() => handleModeChange("judge")} isNew />
                 <ModeDivider />
                 <ModeButton mode="web" currentMode={mode} icon={Globe} label="Web" activeColor="#2e2ad6" onClick={() => handleModeChange("web")} />
@@ -866,16 +931,17 @@ export const AuroraSearchBox = React.forwardRef<HTMLDivElement, AuroraSearchBoxP
                 <ModeButton mode="community" currentMode={mode} icon={Users} label="Community" activeColor="#f29de5" onClick={() => handleModeChange("community")} />
               </div>
 
-              <div className="flex items-center gap-1">
+              {/* Action buttons */}
+              <div className="flex items-center gap-1 flex-shrink-0">
                 {/* Record button for live arguments */}
                 {mode === "judge" && !isRecording && !judgeResult && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
                         onClick={handleToggleRecording}
-                        className="h-10 w-10 rounded-full flex items-center justify-center bg-[var(--color-aurora-salmon)]/10 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/20 transition-all"
+                        className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center bg-[var(--color-aurora-salmon)]/10 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/20 transition-all"
                       >
-                        <Mic className="w-5 h-5" />
+                        <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>Record live argument</TooltipContent>
@@ -893,16 +959,16 @@ export const AuroraSearchBox = React.forwardRef<HTMLDivElement, AuroraSearchBoxP
                       }}
                       disabled={(isLoading || isAnalyzing) && !hasContent}
                       className={cn(
-                        "h-10 w-10 rounded-full flex items-center justify-center transition-all duration-200",
+                        "h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center transition-all duration-200",
                         isRecording ? "bg-[#ec4c28]/10 text-[#ec4c28] hover:bg-[#ec4c28]/20"
                           : hasContent ? "bg-[var(--color-aurora-purple)] text-white hover:bg-[var(--color-aurora-violet)] shadow-lg"
                             : "bg-[var(--color-aurora-lavender)]/50 text-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-lavender)]"
                       )}
                     >
-                      {(isLoading || isAnalyzing) ? <Loader2 className="w-5 h-5 animate-spin" />
-                        : isRecording ? <StopCircle className="w-5 h-5" />
-                          : hasContent ? (mode === "judge" ? <Gavel className="w-5 h-5" /> : <ArrowUp className="w-5 h-5" />)
-                            : <Mic className="w-5 h-5" />}
+                      {(isLoading || isAnalyzing) ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                        : isRecording ? <StopCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                          : hasContent ? (mode === "judge" ? <Gavel className="w-4 h-4 sm:w-5 sm:h-5" /> : <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />)
+                            : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>

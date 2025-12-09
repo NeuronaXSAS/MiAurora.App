@@ -8,7 +8,7 @@ import {
   Sparkles, Briefcase, Shield, ArrowRight,
   Heart, Users, Star, Lock,
   Route, X, CheckCircle, Zap, Globe,
-  ChevronRight, Brain, Smile, Ban, RefreshCw, 
+  ChevronRight, Brain, Smile, Ban, RefreshCw,
   HeartHandshake, Cpu, Network, Fingerprint,
   MapPin, Search, Droplets, Moon, Activity,
   MessageCircle, Flower2, AlertTriangle
@@ -46,27 +46,27 @@ const GridBackground = () => (
 // Floating orbs component
 const FloatingOrbs = () => (
   <>
-    <motion.div 
+    <motion.div
       className="absolute top-20 right-[10%] w-[400px] h-[400px] rounded-full"
       style={{ background: "radial-gradient(circle, rgba(85,55,167,0.15) 0%, transparent 70%)" }}
-      animate={{ 
+      animate={{
         scale: [1, 1.2, 1],
         x: [0, 30, 0],
         y: [0, -20, 0]
       }}
       transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
     />
-    <motion.div 
+    <motion.div
       className="absolute bottom-40 left-[5%] w-[500px] h-[500px] rounded-full"
       style={{ background: "radial-gradient(circle, rgba(242,157,229,0.2) 0%, transparent 70%)" }}
-      animate={{ 
+      animate={{
         scale: [1.2, 1, 1.2],
         x: [0, -20, 0],
         y: [0, 30, 0]
       }}
       transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
     />
-    <motion.div 
+    <motion.div
       className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
       style={{ background: "radial-gradient(circle, rgba(214,244,236,0.3) 0%, transparent 70%)" }}
       animate={{ rotate: 360 }}
@@ -77,7 +77,7 @@ const FloatingOrbs = () => (
 
 // Glowing line component
 const GlowingLine = ({ className = "" }: { className?: string }) => (
-  <motion.div 
+  <motion.div
     className={`h-px bg-gradient-to-r from-transparent via-[#5537a7] to-transparent ${className}`}
     animate={{ opacity: [0.3, 0.8, 0.3] }}
     transition={{ duration: 3, repeat: Infinity }}
@@ -160,9 +160,9 @@ function LandingPageContent() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#fffaf1] overflow-x-hidden">
+    <div className="min-h-screen bg-[#fffaf1] overflow-x-hidden force-light-theme">
       {/* Cursor glow effect */}
-      <div 
+      <div
         className="pointer-events-none fixed inset-0 z-30 transition-opacity duration-300 hidden lg:block"
         style={{
           background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(85,55,167,0.06), transparent 40%)`
@@ -219,14 +219,14 @@ function LandingPageContent() {
             <div className="flex items-center gap-2">
               {/* Language Switcher - Non-disruptive */}
               <LanguageSwitcher variant="compact" />
-              
+
               <Link href="/api/auth/login?provider=GoogleOAuth" className="hidden md:block">
                 <Button variant="outline" className="text-[#3d0d73] border-[#3d0d73]/20 hover:bg-[#5537a7]/5 rounded-xl font-medium min-h-[44px] px-4 flex items-center gap-2">
                   <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                   </svg>
                   Sign in
                 </Button>
@@ -252,11 +252,11 @@ function LandingPageContent() {
           {/* Overlay gradient for readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-[#fffaf1]/80 via-[#fffaf1]/60 to-[#fffaf1]/90" />
         </div>
-        
+
         {/* Fallback/Enhancement layers */}
         <GridBackground />
         <FloatingOrbs />
-        
+
         <motion.div style={{ scale: heroScale }} className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
           <div className="max-w-4xl mx-auto text-center">
             {/* Futuristic Badge */}
@@ -316,28 +316,28 @@ function LandingPageContent() {
               <p className="text-center text-[#3d0d73]/70 text-sm mb-6">
                 {t('landing.hero.noPassword')}
               </p>
-              
+
               {/* SSO Buttons - Apple Style */}
               <div className="space-y-3">
                 <Link href="/api/auth/login?provider=GoogleOAuth" className="block">
                   <Button size="lg" className="w-full bg-white hover:bg-gray-50 text-[#3d0d73] rounded-2xl min-h-[60px] font-semibold text-lg shadow-lg border border-[#3d0d73]/10 transition-all hover:scale-[1.01] hover:shadow-xl flex items-center justify-center gap-3">
                     <svg className="w-6 h-6" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                     </svg>
                     {t('landing.hero.continueGoogle')}
                   </Button>
                 </Link>
-                
+
                 <Link href="/api/auth/login?provider=MicrosoftOAuth" className="block">
                   <Button size="lg" className="w-full bg-white hover:bg-gray-50 text-[#3d0d73] rounded-2xl min-h-[60px] font-semibold text-lg shadow-lg border border-[#3d0d73]/10 transition-all hover:scale-[1.01] hover:shadow-xl flex items-center justify-center gap-3">
                     <svg className="w-6 h-6" viewBox="0 0 24 24">
-                      <path fill="#F25022" d="M1 1h10v10H1z"/>
-                      <path fill="#00A4EF" d="M1 13h10v10H1z"/>
-                      <path fill="#7FBA00" d="M13 1h10v10H13z"/>
-                      <path fill="#FFB900" d="M13 13h10v10H13z"/>
+                      <path fill="#F25022" d="M1 1h10v10H1z" />
+                      <path fill="#00A4EF" d="M1 13h10v10H1z" />
+                      <path fill="#7FBA00" d="M13 1h10v10H13z" />
+                      <path fill="#FFB900" d="M13 13h10v10H13z" />
                     </svg>
                     {t('landing.hero.continueMicrosoft')}
                   </Button>
@@ -384,9 +384,9 @@ function LandingPageContent() {
       <section className="py-16 md:py-24 bg-gradient-to-b from-[#fffaf1] to-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#5537a708_1px,transparent_1px),linear-gradient(to_bottom,#5537a708_1px,transparent_1px)] bg-[size:40px_40px]" />
         <div className="relative max-w-6xl mx-auto px-4">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
-            whileInView={{ opacity: 1, y: 0 }} 
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-center mb-10"
           >
@@ -409,7 +409,7 @@ function LandingPageContent() {
           >
             <LandingSearch />
           </motion.div>
-          
+
           {/* AdSense - Between search and stats */}
           <LandingPageAd className="mt-12" />
         </div>
@@ -462,7 +462,7 @@ function LandingPageContent() {
                 <p className="text-white text-sm font-bold">✨ Aurora App</p>
               </div>
             </div>
-            
+
             {/* Rows */}
             {toxicVsAurora.map((item, i) => (
               <div key={i} className={`grid grid-cols-2 ${i % 2 === 0 ? 'bg-white' : 'bg-[#fffaf1]'}`}>
@@ -514,19 +514,17 @@ function LandingPageContent() {
               {features.map((feature, i) => (
                 <motion.div key={feature.id} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
                   onClick={() => setActiveFeature(i)}
-                  className={`cursor-pointer p-4 rounded-2xl border transition-all duration-300 backdrop-blur-sm ${
-                    activeFeature === i 
-                      ? "border-[#5537a7]/50 bg-gradient-to-r from-[#5537a7]/10 to-transparent shadow-lg shadow-[#5537a7]/10" 
+                  className={`cursor-pointer p-4 rounded-2xl border transition-all duration-300 backdrop-blur-sm ${activeFeature === i
+                      ? "border-[#5537a7]/50 bg-gradient-to-r from-[#5537a7]/10 to-transparent shadow-lg shadow-[#5537a7]/10"
                       : "border-[#3d0d73]/10 hover:border-[#5537a7]/30 bg-white/50"
-                  }`}>
-                  <div className="flex items-start gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${
-                      activeFeature === i 
-                        ? feature.title === "Panic Button" 
-                          ? "bg-gradient-to-br from-[#ec4c28] to-[#f05a6b] shadow-lg" 
-                          : "bg-gradient-to-br from-[#5537a7] to-[#3d0d73] shadow-lg" 
-                        : "bg-[#3d0d73]/5"
                     }`}>
+                  <div className="flex items-start gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${activeFeature === i
+                        ? feature.title === "Panic Button"
+                          ? "bg-gradient-to-br from-[#ec4c28] to-[#f05a6b] shadow-lg"
+                          : "bg-gradient-to-br from-[#5537a7] to-[#3d0d73] shadow-lg"
+                        : "bg-[#3d0d73]/5"
+                      }`}>
                       <feature.icon className={`w-5 h-5 transition-colors ${activeFeature === i ? "text-white" : "text-[#3d0d73]/50"}`} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -545,21 +543,19 @@ function LandingPageContent() {
 
             {/* Right column - feature preview */}
             <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="relative flex items-center justify-center">
-              <div className={`rounded-3xl p-8 md:p-10 relative overflow-hidden transition-all duration-500 ${
-                activeFeature === 6 
-                  ? "bg-gradient-to-br from-[#ec4c28] to-[#f05a6b]" 
-                  : activeFeature === 4 
+              <div className={`rounded-3xl p-8 md:p-10 relative overflow-hidden transition-all duration-500 ${activeFeature === 6
+                  ? "bg-gradient-to-br from-[#ec4c28] to-[#f05a6b]"
+                  : activeFeature === 4
                     ? "bg-gradient-to-br from-[#f29de5] to-[#5537a7]"
                     : activeFeature === 5
                       ? "bg-gradient-to-br from-[#c9cef4] to-[#5537a7]"
                       : "bg-gradient-to-br from-[#3d0d73] to-[#5537a7]"
-              }`}>
+                }`}>
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:30px_30px]" />
                 <AnimatePresence mode="wait">
                   <motion.div key={activeFeature} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="relative text-center">
-                    <div className={`w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-2xl ${
-                      activeFeature === 6 ? "bg-white/20" : "bg-white/10"
-                    }`}>
+                    <div className={`w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-2xl ${activeFeature === 6 ? "bg-white/20" : "bg-white/10"
+                      }`}>
                       {activeFeature === 0 && <Shield className="w-10 h-10 text-white" />}
                       {activeFeature === 1 && <Route className="w-10 h-10 text-white" />}
                       {activeFeature === 2 && <Users className="w-10 h-10 text-white" />}
@@ -570,7 +566,7 @@ function LandingPageContent() {
                     </div>
                     <h3 className="text-2xl font-bold text-white mb-3">{features[activeFeature].title}</h3>
                     <p className="text-white/70 mb-4 max-w-sm mx-auto text-sm">{features[activeFeature].desc}</p>
-                    
+
                     {/* Feature-specific highlights */}
                     {activeFeature === 4 && (
                       <div className="flex flex-wrap justify-center gap-2 mb-6">
@@ -593,13 +589,12 @@ function LandingPageContent() {
                         ))}
                       </div>
                     )}
-                    
+
                     <Link href="/api/auth/login">
-                      <Button className={`rounded-xl px-6 min-h-[48px] font-semibold ${
-                        activeFeature === 6 
-                          ? "bg-white text-[#ec4c28] hover:bg-white/90" 
+                      <Button className={`rounded-xl px-6 min-h-[48px] font-semibold ${activeFeature === 6
+                          ? "bg-white text-[#ec4c28] hover:bg-white/90"
                           : "bg-white text-[#5537a7] hover:bg-white/90"
-                      }`}>
+                        }`}>
                         Try {features[activeFeature].title}
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
@@ -637,7 +632,7 @@ function LandingPageContent() {
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all group">
                 <div className="flex items-center gap-1 mb-4">
-                  {[1,2,3,4,5].map((s) => <Star key={s} className="w-4 h-4 fill-[#e5e093] text-[#e5e093]" />)}
+                  {[1, 2, 3, 4, 5].map((s) => <Star key={s} className="w-4 h-4 fill-[#e5e093] text-[#e5e093]" />)}
                 </div>
                 <p className="text-white/90 leading-relaxed mb-6">
                   "{t.quote.split(t.highlight).map((part, idx, arr) => (
@@ -678,9 +673,9 @@ function LandingPageContent() {
 
           {/* Regional Pricing Indicator */}
           {regionalPricing && regionalPricing.multiplier < 1 && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }} 
-              whileInView={{ opacity: 1, y: 0 }} 
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               className="flex items-center justify-center gap-2 mb-8 p-3 rounded-xl bg-[#d6f4ec]/50 border border-[#22c55e]/20"
             >
@@ -696,36 +691,36 @@ function LandingPageContent() {
 
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             {[
-              { 
-                name: "Plus", 
-                tier: "plus", 
+              {
+                name: "Plus",
+                tier: "plus",
                 basePrice: 5,
-                features: ["Ad-free", "100 AI/day", "100 credits"], 
-                badge: "Popular" 
+                features: ["Ad-free", "100 AI/day", "100 credits"],
+                badge: "Popular"
               },
-              { 
-                name: "Pro", 
-                tier: "pro", 
+              {
+                name: "Pro",
+                tier: "pro",
                 basePrice: 12,
-                features: ["Unlimited AI", "Priority support", "500 credits"], 
-                badge: "Best Value", 
-                highlighted: true 
+                features: ["Unlimited AI", "Priority support", "500 credits"],
+                badge: "Best Value",
+                highlighted: true
               },
-              { 
-                name: "Elite", 
-                tier: "elite", 
+              {
+                name: "Elite",
+                tier: "elite",
                 basePrice: 25,
-                features: ["VIP events", "1-on-1 consults", "1500 credits"], 
-                badge: "VIP" 
+                features: ["VIP events", "1-on-1 consults", "1500 credits"],
+                badge: "VIP"
               }
             ].map((tier, i) => {
-              const price = regionalPricing 
+              const price = regionalPricing
                 ? regionalPricing.subscriptions[tier.tier as keyof typeof regionalPricing.subscriptions].monthly
                 : tier.basePrice;
-              const displayPrice = regionalPricing 
+              const displayPrice = regionalPricing
                 ? formatRegionalPrice(price, regionalPricing)
                 : `$${tier.basePrice}`;
-              
+
               return (
                 <motion.div key={tier.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                   className={`relative rounded-2xl p-6 backdrop-blur-sm ${tier.highlighted ? "bg-gradient-to-br from-[#3d0d73] to-[#5537a7] text-white shadow-2xl shadow-[#5537a7]/30 scale-105 border border-[#5537a7]/50" : "bg-white/80 border border-[#3d0d73]/10"}`}>
@@ -800,26 +795,26 @@ function LandingPageContent() {
             {/* Apple-Style SSO Buttons */}
             <div className="max-w-sm mx-auto space-y-3 mb-8">
               <p className="text-center text-[#3d0d73]/60 text-sm mb-4">Join instantly — no password needed</p>
-              
+
               <Link href="/api/auth/login?provider=GoogleOAuth" className="block">
                 <Button size="lg" className="w-full bg-white hover:bg-gray-50 text-[#3d0d73] rounded-2xl min-h-[56px] font-semibold shadow-lg border border-[#3d0d73]/10 transition-all hover:scale-[1.01] flex items-center justify-center gap-3">
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                   </svg>
                   Continue with Google
                 </Button>
               </Link>
-              
+
               <Link href="/api/auth/login?provider=MicrosoftOAuth" className="block">
                 <Button size="lg" className="w-full bg-white hover:bg-gray-50 text-[#3d0d73] rounded-2xl min-h-[56px] font-semibold shadow-lg border border-[#3d0d73]/10 transition-all hover:scale-[1.01] flex items-center justify-center gap-3">
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
-                    <path fill="#F25022" d="M1 1h10v10H1z"/>
-                    <path fill="#00A4EF" d="M1 13h10v10H1z"/>
-                    <path fill="#7FBA00" d="M13 1h10v10H13z"/>
-                    <path fill="#FFB900" d="M13 13h10v10H13z"/>
+                    <path fill="#F25022" d="M1 1h10v10H1z" />
+                    <path fill="#00A4EF" d="M1 13h10v10H1z" />
+                    <path fill="#7FBA00" d="M13 1h10v10H13z" />
+                    <path fill="#FFB900" d="M13 13h10v10H13z" />
                   </svg>
                   Continue with Microsoft
                 </Button>

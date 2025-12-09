@@ -42,6 +42,7 @@ interface WebSearchResult {
   aiContentScore?: number;
   biasScore?: number;
   credibilityScore?: number | { score: number; label: string; factors?: unknown };
+  sustainabilityScore?: number; // Environmental/sustainability score 0-100
   biasAnalysis?: {
     genderBias: { score: number; label: string };
     politicalBias?: { indicator: string; confidence: number };
@@ -158,7 +159,7 @@ export function LandingSearch() {
   const showExternalResults = activeMode === "web" || activeMode === "community";
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4">
+    <div className="w-full max-w-6xl mx-auto px-4 force-light-theme">
       {/* Search Header */}
       <div className="text-center mb-6">
         <div className="flex items-center justify-center gap-3 mb-4">
@@ -169,7 +170,7 @@ export function LandingSearch() {
             </div>
           </div>
           <div className="text-left">
-            <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-aurora-violet)] dark:text-[var(--color-aurora-cream)]">Aurora App</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-aurora-violet)]">Aurora App</h1>
             <p className="text-[10px] md:text-xs text-[var(--color-aurora-purple)] font-semibold tracking-widest uppercase">Search Engine</p>
           </div>
         </div>
@@ -507,18 +508,52 @@ function SearchResultCard({ result, index }: { result: WebSearchResult; index: n
               <Shield className="w-3.5 h-3.5 text-[var(--color-aurora-purple)]" />
               <span className="text-xs font-semibold text-[var(--foreground)]">Aurora Metrics</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <MetricCard label="Trust" value={trustScore} max={100} color={trustScore >= 70 ? "var(--color-aurora-mint)" : trustScore >= 40 ? "var(--color-aurora-yellow)" : "var(--color-aurora-salmon)"} />
-              <MetricCard label="Gender" value={genderIndicator.label} emoji={genderIndicator.emoji} color={genderIndicator.color} />
-              <MetricCard label="AI" value={`${aiScore}%`} color={aiScore > 50 ? "var(--color-aurora-salmon)" : aiScore > 20 ? "var(--color-aurora-yellow)" : "var(--color-aurora-mint)"} />
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {/* Row 1: Trust, Gender, Political */}
+              <MetricCard
+                label="Trust"
+                value={trustScore}
+                max={100}
+                color={trustScore >= 70 ? "var(--color-aurora-mint)" : trustScore >= 40 ? "var(--color-aurora-yellow)" : "var(--color-aurora-salmon)"}
+              />
+              <MetricCard
+                label="Gender"
+                value={genderIndicator.label}
+                emoji={genderIndicator.emoji}
+                color={genderIndicator.color}
+              />
+              <MetricCard
+                label="Political"
+                value={politicalBias}
+                emoji={politicalBias === "Left" ? "🔵" : politicalBias === "Right" ? "🔴" : "🟢"}
+                color={politicalBias === "Center" ? "var(--color-aurora-mint)" : "var(--color-aurora-yellow)"}
+              />
+              {/* Row 2: AI, Sustainability, Credibility */}
+              <MetricCard
+                label="AI"
+                value={`${aiScore}%`}
+                color={aiScore > 50 ? "var(--color-aurora-salmon)" : aiScore > 20 ? "var(--color-aurora-yellow)" : "var(--color-aurora-mint)"}
+              />
+              <MetricCard
+                label="Eco"
+                value={result.sustainabilityScore ?? "N/A"}
+                emoji={result.sustainabilityScore && result.sustainabilityScore >= 60 ? "🌱" : result.sustainabilityScore && result.sustainabilityScore < 40 ? "⚠️" : "🌍"}
+                color={(result.sustainabilityScore ?? 50) >= 60 ? "var(--color-aurora-mint)" : (result.sustainabilityScore ?? 50) >= 40 ? "var(--color-aurora-yellow)" : "var(--color-aurora-salmon)"}
+              />
+              <MetricCard
+                label="Credibility"
+                value={credScore}
+                max={100}
+                color={credScore >= 70 ? "var(--color-aurora-mint)" : credScore >= 40 ? "var(--color-aurora-yellow)" : "var(--color-aurora-salmon)"}
+              />
             </div>
           </div>
 
-          <div className="flex items-center gap-3 mt-3">
+          <div className="flex items-center gap-3 mt-3 flex-wrap">
             <a href={result.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-aurora-purple)] hover:underline">
               Visit site <ExternalLink className="w-3 h-3" />
             </a>
-            <span className="text-[10px] text-[var(--muted-foreground)]">{politicalBias}</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--accent)] text-[var(--muted-foreground)]">{emotionalTone}</span>
           </div>
         </div>
       </Card>
