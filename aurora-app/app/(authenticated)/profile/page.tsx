@@ -39,6 +39,8 @@ import {
   DollarSign,
   Users,
   Star,
+  Settings,
+  Camera,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
@@ -233,144 +235,145 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[var(--background)]">
       {/* Profile Header */}
-      <div className="bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white">
-        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
-          <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
-            {/* Avatar with Edit Button */}
-            <div className="relative group">
-              <Avatar className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 border-4 border-white/50">
-                <AvatarImage
-                  src={
-                    user.avatarConfig
-                      ? generateAvatarUrl(user.avatarConfig as AvatarConfig)
-                      : user.profileImage
-                  }
-                />
-                <AvatarFallback className="text-2xl sm:text-3xl bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white">
-                  {(user.name && user.name !== "null" ? user.name : "U")
-                    .charAt(0)
-                    .toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <button
-                onClick={() => setShowAvatarCreator(true)}
-                className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-                title="Edit Avatar"
-              >
-                <Heart className="w-4 h-4 text-[var(--color-aurora-pink)]" />
-              </button>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-2 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-bold">
-                  {user.name && user.name !== "null" ? user.name : "User"}
-                </h1>
-                {/* Premium Badge */}
-                {user.isPremium ? (
-                  <Badge className="bg-gradient-to-r from-[var(--color-aurora-yellow)] to-[var(--color-aurora-orange)] text-slate-900 border-0 font-semibold">
-                    <Crown className="w-3 h-3 mr-1" />
-                    Premium
-                  </Badge>
-                ) : (
-                  <Link href="/premium">
-                    <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 cursor-pointer">
-                      <Crown className="w-3 h-3 mr-1" />
-                      Upgrade
-                    </Badge>
-                  </Link>
-                )}
-                <Button
-                  onClick={() => setShowEditDialog(true)}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/20 border-white/40 text-white hover:bg-white/30 min-h-[44px]"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Profile
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm mb-3 sm:mb-4">
-                {user.industry && (
-                  <div className="flex items-center gap-2">
-                    <Briefcase className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>{user.industry}</span>
-                  </div>
-                )}
-                {user.location && (
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>{user.location}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">
-                    Joined{" "}
-                    {formatDistanceToNow(user._creationTime, {
-                      addSuffix: true,
-                    })}
-                  </span>
-                  <span className="sm:hidden">Member</span>
-                </div>
-              </div>
-              {user.bio && (
-                <div className="bg-white/10 rounded-xl p-2 sm:p-3 mb-2">
-                  <p className="text-xs sm:text-sm">{user.bio}</p>
-                </div>
-              )}
-              {user.careerGoals && (
-                <div className="flex items-start gap-2 bg-white/10 rounded-xl p-2 sm:p-3">
-                  <Target className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs sm:text-sm">{user.careerGoals}</p>
-                </div>
-              )}
-              {user.interests && user.interests.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {user.interests.map((interest: string, idx: number) => (
-                    <Badge
-                      key={idx}
-                      variant="secondary"
-                      className="bg-white/20 text-white border-white/30"
-                    >
-                      {interest}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+      {/* Enhanced Profile Header */}
+      <div className="relative mb-2">
+        {/* Decorative Cover Background */}
+        <div className="h-48 sm:h-64 bg-gradient-to-r from-[var(--color-aurora-purple)] via-[var(--color-aurora-violet)] to-[var(--color-aurora-pink)] relative overflow-hidden">
+          <div className="absolute inset-0 bg-black/10" />
+          <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl opacity-50" />
+          <div className="absolute top-0 left-0 w-full h-full opacity-[0.05]" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }} />
 
-          {/* Reddit-style Stats Bar */}
-          <div className="mt-4 sm:mt-6 flex flex-wrap items-center gap-4 sm:gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
-              <span className="font-bold">{user.credits}</span>
-              <span className="text-white/70">credits</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-[var(--color-aurora-mint)]" />
-              <span className="font-bold">{user.trustScore}</span>
-              <span className="text-white/70">trust score</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              <span className="font-bold">{stats.totalPosts}</span>
-              <span className="text-white/70">posts</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Heart className="w-4 h-4 text-[var(--color-aurora-pink)]" />
-              <span className="font-bold">{stats.womenHelped}</span>
-              <span className="text-white/70">helped</span>
-            </div>
-            <div className="hidden sm:flex items-center gap-1 ml-auto">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <span
-                  key={star}
-                  className={`text-lg ${star <= trustStars ? "text-[var(--color-aurora-yellow)]" : "text-white/30"}`}
+          <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+            <Button variant="ghost" size="sm" className="bg-black/20 hover:bg-black/30 text-white border border-white/20 backdrop-blur-sm transition-all">
+              <Camera className="w-4 h-4 mr-2" />
+              Edit Cover
+            </Button>
+          </div>
+        </div>
+
+        {/* Profile Content Container */}
+        <div className="container mx-auto px-4 sm:px-6 relative">
+          <div className="-mt-16 sm:-mt-20 mb-6">
+            <div className="flex flex-col md:flex-row items-end md:items-start gap-4 sm:gap-6">
+
+              {/* Avatar */}
+              <div className="relative group shrink-0 mx-auto md:mx-0 z-10">
+                <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full p-1.5 bg-[var(--background)] shadow-2xl overflow-hidden relative">
+                  <Avatar className="w-full h-full border-2 border-white/10">
+                    <AvatarImage
+                      src={
+                        user.avatarConfig
+                          ? generateAvatarUrl(user.avatarConfig as AvatarConfig)
+                          : user.profileImage
+                      }
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="text-4xl bg-gradient-to-br from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white">
+                      {(user.name && user.name !== "null" ? user.name : "U")
+                        .charAt(0)
+                        .toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+                <button
+                  onClick={() => setShowAvatarCreator(true)}
+                  className="absolute bottom-2 right-2 w-10 h-10 bg-[var(--color-aurora-purple)] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-4 border-[var(--background)]"
+                  title="Edit Avatar"
                 >
-                  ★
-                </span>
-              ))}
+                  <Edit className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Profile Info & Actions */}
+              <div className="flex-1 min-w-0 pt-2 sm:pt-24 md:pt-4 text-center md:text-left w-full">
+                <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between mb-4">
+                  <div>
+                    <h1 className="text-3xl sm:text-4xl font-bold text-[var(--foreground)] mb-1">
+                      {user.name && user.name !== "null" ? user.name : "User"}
+                    </h1>
+                    <div className="flex items-center justify-center md:justify-start gap-3 text-[var(--muted-foreground)] text-sm mb-3">
+                      {user.industry && (
+                        <div className="flex items-center gap-1.5 bg-[var(--accent)] px-2.5 py-1 rounded-full"><Briefcase className="w-3.5 h-3.5" /> {user.industry}</div>
+                      )}
+                      {user.location && (
+                        <div className="flex items-center gap-1.5 bg-[var(--accent)] px-2.5 py-1 rounded-full"><MapPin className="w-3.5 h-3.5" /> {user.location}</div>
+                      )}
+                      <div className="flex items-center gap-1.5 bg-[var(--accent)] px-2.5 py-1 rounded-full"><Calendar className="w-3.5 h-3.5" /> Joined {formatDistanceToNow(user._creationTime)} ago</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-center gap-3">
+                    {user.isPremium ? (
+                      <div className="bg-gradient-to-r from-[var(--color-aurora-yellow)]/10 to-[var(--color-aurora-orange)]/10 border border-[var(--color-aurora-yellow)]/20 rounded-xl px-4 py-2 flex items-center gap-2">
+                        <div className="p-1 bg-gradient-to-r from-[var(--color-aurora-yellow)] to-[var(--color-aurora-orange)] rounded-full">
+                          <Crown className="w-3 h-3 text-white" />
+                        </div>
+                        <span className="font-bold text-[var(--color-aurora-orange)] text-sm">Premium</span>
+                      </div>
+                    ) : (
+                      <Button className="bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 text-white shadow-lg shadow-[var(--color-aurora-purple)]/20 rounded-xl h-10 px-6 font-semibold">
+                        <Crown className="w-4 h-4 mr-2" />
+                        Upgrade
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowEditDialog(true)}
+                      className="border-[var(--border)] hover:bg-[var(--accent)] rounded-xl h-10 w-10 p-0"
+                      title="Edit Profile"
+                    >
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Bio & Interests */}
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6">
+                  <div className="space-y-4">
+                    {user.bio && (
+                      <p className="text-[var(--foreground)]/80 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto md:mx-0">
+                        {user.bio}
+                      </p>
+                    )}
+
+                    {user.interests && user.interests.length > 0 && (
+                      <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                        {user.interests.map((tag: string, i: number) => (
+                          <Badge key={i} variant="secondary" className="bg-[var(--accent)] hover:bg-[var(--accent)]/80 text-[var(--foreground)]/80 border-0 px-3 py-1 font-normal transition-all hover:scale-105 cursor-default">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Quick Stats Card */}
+                  <div className="flex items-center justify-between gap-6 px-6 py-4 bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-sm self-start mx-auto md:mx-0 w-full lg:w-auto min-w-[300px]">
+                    <div className="text-center flex-1">
+                      <p className="text-2xl font-bold text-[var(--color-aurora-purple)]">{user.credits}</p>
+                      <p className="text-xs text-[var(--muted-foreground)] uppercase tracking-wider font-semibold">Credits</p>
+                    </div>
+                    <div className="w-px h-10 bg-[var(--border)]" />
+                    <div className="text-center flex-1">
+                      <div className="flex items-center justify-center gap-1">
+                        <p className="text-2xl font-bold text-[var(--foreground)]">{user.trustScore}</p>
+                      </div>
+                      <div className="flex justify-center -mt-1 mb-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <span key={star} className={`text-[10px] ${star <= trustStars ? "text-[var(--color-aurora-yellow)]" : "text-[var(--border)]"}`}>★</span>
+                        ))}
+                      </div>
+                      <p className="text-xs text-[var(--muted-foreground)] uppercase tracking-wider font-semibold">Trust</p>
+                    </div>
+                    <div className="w-px h-10 bg-[var(--border)]" />
+                    <div className="text-center flex-1">
+                      <p className="text-2xl font-bold text-[var(--foreground)]">{stats.totalPosts}</p>
+                      <p className="text-xs text-[var(--muted-foreground)] uppercase tracking-wider font-semibold">Posts</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
         </div>
@@ -536,11 +539,10 @@ export default function ProfilePage() {
                           {[1, 2, 3, 4, 5].map((star) => (
                             <span
                               key={star}
-                              className={`text-lg ${
-                                star <= trustStars
-                                  ? "text-[var(--color-aurora-yellow)]"
-                                  : "text-[var(--muted-foreground)]/30"
-                              }`}
+                              className={`text-lg ${star <= trustStars
+                                ? "text-[var(--color-aurora-yellow)]"
+                                : "text-[var(--muted-foreground)]/30"
+                                }`}
                             >
                               ★
                             </span>
@@ -739,11 +741,10 @@ export default function ProfilePage() {
                           {[1, 2, 3, 4, 5].map((star) => (
                             <span
                               key={star}
-                              className={`text-sm sm:text-lg ${
-                                star <= trustStars
-                                  ? "text-[var(--color-aurora-yellow)]"
-                                  : "text-[var(--muted-foreground)]/30"
-                              }`}
+                              className={`text-sm sm:text-lg ${star <= trustStars
+                                ? "text-[var(--color-aurora-yellow)]"
+                                : "text-[var(--muted-foreground)]/30"
+                                }`}
                             >
                               ★
                             </span>
@@ -827,11 +828,10 @@ export default function ProfilePage() {
                             >
                               <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                                 <div
-                                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                    tx.amount > 0
-                                      ? "bg-[var(--color-aurora-mint)]/20"
-                                      : "bg-[var(--color-aurora-salmon)]/20"
-                                  }`}
+                                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${tx.amount > 0
+                                    ? "bg-[var(--color-aurora-mint)]/20"
+                                    : "bg-[var(--color-aurora-salmon)]/20"
+                                    }`}
                                 >
                                   <span
                                     className={`text-xs sm:text-sm ${tx.amount > 0 ? "text-[var(--color-aurora-mint)]" : "text-[var(--color-aurora-salmon)]"}`}
@@ -1398,11 +1398,10 @@ export default function ProfilePage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                              tx.amount > 0
-                                ? "bg-[var(--color-aurora-mint)]/20"
-                                : "bg-[var(--color-aurora-salmon)]/20"
-                            }`}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.amount > 0
+                              ? "bg-[var(--color-aurora-mint)]/20"
+                              : "bg-[var(--color-aurora-salmon)]/20"
+                              }`}
                           >
                             <span
                               className={`text-lg font-bold ${tx.amount > 0 ? "text-[var(--color-aurora-mint)]" : "text-[var(--color-aurora-salmon)]"}`}
