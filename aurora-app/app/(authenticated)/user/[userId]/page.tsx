@@ -9,12 +9,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  MessageSquare, 
-  ArrowLeft, 
-  MapPin, 
-  Briefcase, 
-  Shield, 
+import {
+  MessageSquare,
+  ArrowLeft,
+  MapPin,
+  Briefcase,
+  Shield,
   Users,
   Calendar,
   Loader2
@@ -22,6 +22,7 @@ import {
 import Link from "next/link";
 import { generateAvatarUrl, AvatarConfig } from "@/hooks/use-avatar";
 import { formatDistanceToNow } from "date-fns";
+import { ProfileHeader } from "@/components/profile-header";
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -49,6 +50,11 @@ export default function UserProfilePage() {
     profileUserId ? { userId: profileUserId as Id<"users"> } : "skip"
   );
 
+  const stats = useQuery(
+    api.users.getUserStats,
+    profileUserId ? { userId: profileUserId as Id<"users"> } : "skip"
+  );
+
   const isOwnProfile = currentUserId === profileUserId;
 
   if (!user) {
@@ -59,119 +65,57 @@ export default function UserProfilePage() {
     );
   }
 
-  const avatarUrl = user.avatarConfig 
-    ? generateAvatarUrl(user.avatarConfig as AvatarConfig)
-    : user.profileImage;
-
   return (
     <div className="min-h-screen bg-[var(--background)]">
       {/* Header */}
-      <div className="bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white">
-        <div className="container mx-auto px-4 py-6">
+      <div className="relative">
+        <div className="absolute top-4 left-4 z-20">
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            className="text-white hover:bg-white/20 mb-4 min-h-[44px]"
+            className="bg-black/20 hover:bg-black/30 text-white border border-white/20 backdrop-blur-sm transition-all"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
-          
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            <Avatar className="w-24 h-24 border-4 border-white shadow-xl">
-              <AvatarImage src={avatarUrl || undefined} />
-              <AvatarFallback className="bg-white text-[var(--color-aurora-purple)] text-2xl font-bold">
-                {user.name?.charAt(0).toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div className="text-center sm:text-left flex-1">
-              <h1 className="text-2xl font-bold mb-1">
-                {user.name || "Aurora App Member"}
-              </h1>
-              {user.location && (
-                <p className="flex items-center justify-center sm:justify-start gap-1 text-white/80 mb-2">
-                  <MapPin className="w-4 h-4" />
-                  {user.location}
-                </p>
-              )}
-              <div className="flex flex-wrap justify-center sm:justify-start gap-2">
-                {user.trustScore > 0 && (
-                  <Badge className="bg-white/20 text-white border-0">
-                    <Shield className="w-3 h-3 mr-1" />
-                    Trust: {user.trustScore}
-                  </Badge>
-                )}
-                {user.industry && (
-                  <Badge className="bg-white/20 text-white border-0">
-                    <Briefcase className="w-3 h-3 mr-1" />
-                    {user.industry}
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            {!isOwnProfile && (
-              <div className="flex gap-3">
-                <Link href={`/messages/${profileUserId}`}>
-                  <Button 
-                    size="lg"
-                    className="bg-white text-[var(--color-aurora-purple)] hover:bg-white/90 min-h-[48px] px-6 rounded-xl font-semibold shadow-lg"
-                  >
-                    <MessageSquare className="w-5 h-5 mr-2" />
-                    Send Message
-                  </Button>
-                </Link>
-              </div>
-            )}
-            
-            {isOwnProfile && (
+        </div>
+        <ProfileHeader
+          user={user}
+          stats={stats}
+          isOwnProfile={isOwnProfile}
+          actionButtons={
+            !isOwnProfile ? (
+              <Link href={`/messages/${profileUserId}`}>
+                <Button
+                  className="bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white hover:opacity-90 shadow-lg rounded-xl font-semibold"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Message
+                </Button>
+              </Link>
+            ) : (
               <Link href="/profile">
-                <Button 
+                <Button
                   variant="outline"
-                  className="border-white text-white hover:bg-white/20 min-h-[44px]"
+                  className="border-[var(--border)] hover:bg-[var(--accent)]"
                 >
                   Edit Profile
                 </Button>
               </Link>
-            )}
-          </div>
-        </div>
+            )
+          }
+        />
       </div>
 
       {/* Content */}
       <div className="container mx-auto px-4 py-6">
         <div className="max-w-2xl mx-auto space-y-6">
-          {/* Bio */}
-          {user.bio && (
-            <Card className="bg-[var(--card)] border-[var(--border)]">
-              <CardContent className="p-6">
-                <h2 className="font-semibold text-[var(--foreground)] mb-2">About</h2>
-                <p className="text-[var(--muted-foreground)]">{user.bio}</p>
-              </CardContent>
-            </Card>
-          )}
 
-          {/* Interests */}
-          {user.interests && user.interests.length > 0 && (
-            <Card className="bg-[var(--card)] border-[var(--border)]">
-              <CardContent className="p-6">
-                <h2 className="font-semibold text-[var(--foreground)] mb-3">Interests</h2>
-                <div className="flex flex-wrap gap-2">
-                  {user.interests.map((interest: string, i: number) => (
-                    <Badge 
-                      key={i} 
-                      variant="secondary"
-                      className="bg-[var(--color-aurora-lavender)]/20 text-[var(--foreground)]"
-                    >
-                      {interest}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Detailed Bio (if long) - Optional, keeping redundant for now if bio is very long, but header handles it. 
+              Actually, ProfileHeader truncates or shows simple bio. If bio is long, we might want it here. 
+              But ProfileHeader renders the FULL bio in a paragraph. 
+              Let's remove the Bio card to avoid duplication.
+          */}
 
           {/* Member Since */}
           <Card className="bg-[var(--card)] border-[var(--border)]">
@@ -179,7 +123,7 @@ export default function UserProfilePage() {
               <div className="flex items-center gap-3 text-[var(--muted-foreground)]">
                 <Calendar className="w-5 h-5" />
                 <span>
-                  Member since {user._creationTime 
+                  Member since {user._creationTime
                     ? formatDistanceToNow(user._creationTime, { addSuffix: true })
                     : "recently"}
                 </span>
@@ -196,10 +140,10 @@ export default function UserProfilePage() {
                   Want to connect?
                 </h3>
                 <p className="text-[var(--muted-foreground)] mb-4 text-sm">
-                  Send a message to start a conversation
+                  Send a message to start a conversation with {user.name}
                 </p>
                 <Link href={`/messages/${profileUserId}`}>
-                  <Button className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] min-h-[48px] px-8 rounded-xl">
+                  <Button className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] min-h-[48px] px-8 rounded-xl font-semibold">
                     <MessageSquare className="w-4 h-4 mr-2" />
                     Start Conversation
                   </Button>
