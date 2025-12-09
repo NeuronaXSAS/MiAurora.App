@@ -25,8 +25,8 @@ import type {
 // ============================================
 
 const GENDER_POSITIVE_KEYWORDS = [
-  'women', 'woman', 'female', 'feminine', 'inclusive', 'equality', 
-  'diverse', 'diversity', 'empower', 'empowerment', 'support', 
+  'women', 'woman', 'female', 'feminine', 'inclusive', 'equality',
+  'diverse', 'diversity', 'empower', 'empowerment', 'support',
   'safe space', 'gender equality', 'women-led', 'female-founded',
   'maternity', 'work-life balance', 'flexible', 'inclusive workplace',
   'women in tech', 'women in stem', 'girl power', 'sisterhood',
@@ -103,14 +103,14 @@ const POLITICAL_DOMAIN_MAP: Record<string, PoliticalBiasIndicator> = {
   'washingtonpost.com': 'Center-Left',
   'theguardian.com': 'Center-Left',
   'npr.org': 'Center-Left',
-  
+
   // Center
   'reuters.com': 'Center',
   'apnews.com': 'Center',
   'bbc.com': 'Center',
   'pbs.org': 'Center',
   'c-span.org': 'Center',
-  
+
   // Right-leaning
   'wsj.com': 'Center-Right',
   'foxnews.com': 'Right',
@@ -233,9 +233,9 @@ export function analyzeCommercialBias(text: string, url?: string): CommercialBia
   }
 
   // Check for sponsored content markers
-  const isSponsored = lowerText.includes('sponsored') || 
-                      lowerText.includes('paid partnership') ||
-                      lowerText.includes('advertisement');
+  const isSponsored = lowerText.includes('sponsored') ||
+    lowerText.includes('paid partnership') ||
+    lowerText.includes('advertisement');
   if (isSponsored) score += 30;
 
   return {
@@ -256,15 +256,31 @@ const SENSATIONAL_WORDS = [
 ];
 
 const EMOTIONAL_WORDS = [
-  'heartbreaking', 'inspiring', 'touching', 'moving', 'emotional',
-  'passionate', 'angry', 'furious', 'sad', 'happy', 'excited',
-  'worried', 'anxious', 'hopeful', 'disappointed'
+  'heartbreaking', 'moving', 'emotional', 'passionate',
+  'angry', 'furious', 'sad', 'happy', 'excited',
+  'worried', 'anxious', 'disappointed'
+];
+
+const INSPIRING_WORDS = [
+  'inspiring', 'empowering', 'empowerment', 'uplifting', 'hope', 'hopeful',
+  'strong', 'courage', 'resilient', 'growth', 'healing', 'success', 'triumph',
+  'supportive', 'inclusive', 'community', 'love', 'kindness'
+];
+
+const TOXIC_WORDS = [
+  'disgusting', 'idiot', 'stupid', 'fake', 'scam', 'hate', 'racist', 'sexist',
+  'ugly', 'fat', 'shame', 'worst', 'terrible', 'horrible', 'trash'
 ];
 
 const FACTUAL_INDICATORS = [
   'according to', 'research shows', 'study finds', 'data indicates',
   'statistics show', 'evidence suggests', 'experts say', 'report states',
-  'analysis reveals', 'survey found'
+  'analysis reveals', 'survey found', 'university', 'scientific'
+];
+
+const CONTROVERSIAL_WORDS = [
+  'debate', 'controversy', 'polarizing', 'argues', 'claims', 'denies',
+  'alleged', 'accused', 'scandal', 'conflict', 'war', 'fight'
 ];
 
 /**
@@ -272,30 +288,34 @@ const FACTUAL_INDICATORS = [
  */
 export function analyzeEmotionalTone(text: string): EmotionalTone {
   const lowerText = text.toLowerCase();
-  
-  let sensationalCount = 0;
-  let emotionalCount = 0;
-  let factualCount = 0;
 
-  SENSATIONAL_WORDS.forEach(word => {
-    if (lowerText.includes(word)) sensationalCount++;
-  });
+  // Helper to count matches
+  const countMatches = (list: string[]) => list.reduce((count, word) =>
+    lowerText.includes(word) ? count + 1 : count, 0);
 
-  EMOTIONAL_WORDS.forEach(word => {
-    if (lowerText.includes(word)) emotionalCount++;
-  });
+  const sensationalCount = countMatches(SENSATIONAL_WORDS);
+  const emotionalCount = countMatches(EMOTIONAL_WORDS);
+  const factualCount = countMatches(FACTUAL_INDICATORS);
+  const inspiringCount = countMatches(INSPIRING_WORDS);
+  const toxicCount = countMatches(TOXIC_WORDS);
+  const controversialCount = countMatches(CONTROVERSIAL_WORDS);
 
-  FACTUAL_INDICATORS.forEach(indicator => {
-    if (lowerText.includes(indicator)) factualCount++;
-  });
+  // Priority detection (Toxic/Urgent usually override others)
+  if (toxicCount >= 1) return 'Toxic';
+  if (sensationalCount >= 2 && sensationalCount > factualCount) return 'Urgent'; // Using Urgent for Sensational in Vibe
+  if (controversialCount >= 2) return 'Controversial';
 
-  // Determine tone based on counts
-  if (sensationalCount >= 3) return 'Sensational';
-  if (factualCount >= 2 && emotionalCount < 2) return 'Factual';
-  if (emotionalCount >= 3) return 'Emotional';
-  if (factualCount >= 1 && emotionalCount >= 1) return 'Balanced';
-  
-  return 'Balanced'; // Default
+  // Positive vibes
+  if (inspiringCount >= 1) return 'Inspiring';
+
+  // Intellectual vibes
+  if (factualCount >= 2) return 'Educational'; // Maps to "Smart" in UI
+
+  // Fallbacks
+  if (emotionalCount >= 2) return 'Emotional';
+  if (factualCount >= 1) return 'Calm'; // Factual often feels Calm/Balanced
+
+  return 'Balanced'; // Default -> Chill/Neutral
 }
 
 // ============================================

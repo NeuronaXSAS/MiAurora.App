@@ -10,7 +10,7 @@
 // SAFETY FLAGS
 // ============================================
 
-export type SafetyFlag = 
+export type SafetyFlag =
   | 'Verified Content'
   | 'Women-Led'
   | 'Safe Space'
@@ -22,27 +22,33 @@ export type SafetyFlag =
 // BIAS ANALYSIS
 // ============================================
 
-export type GenderBiasLabel = 
-  | 'Women-Positive' 
-  | 'Balanced' 
-  | 'Neutral' 
-  | 'Caution' 
+export type GenderBiasLabel =
+  | 'Women-Positive'
+  | 'Balanced'
+  | 'Neutral'
+  | 'Caution'
   | 'Potential Bias';
 
-export type PoliticalBiasIndicator = 
-  | 'Far Left' 
-  | 'Left' 
-  | 'Center-Left' 
-  | 'Center' 
-  | 'Center-Right' 
-  | 'Right' 
+export type PoliticalBiasIndicator =
+  | 'Far Left'
+  | 'Left'
+  | 'Center-Left'
+  | 'Center'
+  | 'Center-Right'
+  | 'Right'
   | 'Far Right';
 
-export type EmotionalTone = 
-  | 'Factual' 
-  | 'Emotional' 
-  | 'Sensational' 
-  | 'Balanced';
+export type EmotionalTone =
+  | 'Factual'
+  | 'Emotional'
+  | 'Sensational'
+  | 'Balanced'
+  | 'Inspiring'
+  | 'Toxic'
+  | 'Urgent'
+  | 'Controversial'
+  | 'Calm'
+  | 'Educational';
 
 export interface GenderBiasAnalysis {
   score: number; // 0-100, higher = more women-positive
@@ -71,18 +77,18 @@ export interface BiasAnalysis {
 // CREDIBILITY SCORING
 // ============================================
 
-export type CredibilityLabel = 
-  | 'Highly Trusted' 
-  | 'Trusted' 
-  | 'Moderate' 
+export type CredibilityLabel =
+  | 'Highly Trusted'
+  | 'Trusted'
+  | 'Moderate'
   | 'Verify Source';
 
-export type DomainType = 
-  | 'gov' 
-  | 'edu' 
-  | 'news' 
-  | 'women-focused' 
-  | 'commercial' 
+export type DomainType =
+  | 'gov'
+  | 'edu'
+  | 'news'
+  | 'women-focused'
+  | 'commercial'
   | 'unknown';
 
 export interface CredibilityScore {
@@ -100,9 +106,9 @@ export interface CredibilityScore {
 // AI CONTENT DETECTION
 // ============================================
 
-export type AIContentLabel = 
-  | 'Mostly Human' 
-  | 'Some AI Content' 
+export type AIContentLabel =
+  | 'Mostly Human'
+  | 'Some AI Content'
   | 'High AI Content';
 
 export type AIContentColor = 'green' | 'yellow' | 'red';
@@ -126,13 +132,13 @@ export interface SearchResult {
   favicon?: string;
   domain: string;
   age?: string;
-  
+
   // Aurora Intelligence Layer
   biasAnalysis: BiasAnalysis;
   credibilityScore: CredibilityScore;
   aiContentDetection: AIContentDetection;
   safetyFlags: SafetyFlag[];
-  
+
   // Metadata
   publishedDate?: string;
   isWomenFocused: boolean;
@@ -196,10 +202,10 @@ export interface SummaryResponse {
 // ERROR HANDLING
 // ============================================
 
-export type SearchErrorCode = 
-  | 'INVALID_QUERY' 
-  | 'API_LIMIT' 
-  | 'API_ERROR' 
+export type SearchErrorCode =
+  | 'INVALID_QUERY'
+  | 'API_LIMIT'
+  | 'API_ERROR'
   | 'NETWORK_ERROR';
 
 export interface SearchError {
