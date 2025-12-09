@@ -165,9 +165,9 @@ export const getDashboardStats = query({
         emergencyResponseRate:
           totalEmergencies > 0
             ? (
-                ((totalEmergencies - activeEmergencies) / totalEmergencies) *
-                100
-              ).toFixed(1)
+              ((totalEmergencies - activeEmergencies) / totalEmergencies) *
+              100
+            ).toFixed(1)
             : "100",
       },
       community: {

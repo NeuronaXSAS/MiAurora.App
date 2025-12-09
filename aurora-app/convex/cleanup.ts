@@ -889,19 +889,19 @@ export const getContentHealthBreakdown = query({
     const reelHealthScore =
       allReels.length > 0
         ? Math.round(
-            (reelHealth.withValidVideo / allReels.length) * 40 +
-              (reelHealth.withEngagement / allReels.length) * 30 +
-              (reelHealth.byModerationStatus.approved / allReels.length) * 30,
-          )
+          (reelHealth.withValidVideo / allReels.length) * 40 +
+          (reelHealth.withEngagement / allReels.length) * 30 +
+          (reelHealth.byModerationStatus.approved / allReels.length) * 30,
+        )
         : 100;
 
     const postHealthScore =
       allPosts.length > 0
         ? Math.round(
-            (postHealth.withLocation / allPosts.length) * 30 +
-              (postHealth.withEngagement / allPosts.length) * 40 +
-              (postHealth.byModerationStatus.approved / allPosts.length) * 30,
-          )
+          (postHealth.withLocation / allPosts.length) * 30 +
+          (postHealth.withEngagement / allPosts.length) * 40 +
+          (postHealth.byModerationStatus.approved / allPosts.length) * 30,
+        )
         : 100;
 
     return {
