@@ -1501,3 +1501,35 @@ textarea:focus-visible {
 .animate-flag {
   animation: flag-wave 1s ease-in-out infinite;
 }
+
+/* Aurora Map Popup - Fix popup positioning to prevent marker jumping */
+.aurora-map-popup {
+  z-index: 10 !important;
+}
+
+.aurora-map-popup .mapboxgl-popup-content {
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.aurora-map-popup .mapboxgl-popup-tip {
+  border-top-color: white;
+}
+
+/* Prevent marker transform changes when popup is shown */
+.aurora-safety-marker,
+.aurora-workplace-marker {
+  transform-origin: center bottom !important;
+}
+
+/* Ensure popup doesn't affect marker position */
+.mapboxgl-popup {
+  pointer-events: none;
+}
+
+.mapboxgl-popup-content {
+  pointer-events: auto;
+}

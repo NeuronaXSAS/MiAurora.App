@@ -72,7 +72,7 @@ export function AdSenseUnit({
 export function LandingPageAd({ className = "" }: { className?: string }) {
   return (
     <AdSenseUnit
-      slot="1234567890" // Replace with your actual ad slot ID
+      slot="2595473780"
       format="horizontal"
       className={`my-8 ${className}`}
     />
@@ -85,7 +85,7 @@ export function LandingPageAd({ className = "" }: { className?: string }) {
 export function FeedAd({ className = "" }: { className?: string }) {
   return (
     <AdSenseUnit
-      slot="0987654321" // Replace with your actual ad slot ID
+      slot="5431899428"
       format="rectangle"
       className={`my-4 ${className}`}
     />
@@ -98,7 +98,7 @@ export function FeedAd({ className = "" }: { className?: string }) {
 export function SearchResultsAd({ className = "" }: { className?: string }) {
   return (
     <AdSenseUnit
-      slot="1122334455" // Replace with your actual ad slot ID
+      slot="5088284491"
       format="auto"
       className={`my-3 ${className}`}
     />

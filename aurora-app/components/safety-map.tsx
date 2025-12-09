@@ -339,7 +339,7 @@ export function SafetyMap({
     [],
   );
 
-  // Create marker element - optimized helper
+  // Create marker element - optimized helper with touch support
   const createPostMarker = useCallback((post: any, onClick?: () => void) => {
     const color =
       post.rating >= 4 ? "#22c55e" : post.rating >= 3 ? "#eab308" : "#ef4444";
@@ -353,9 +353,12 @@ export function SafetyMap({
       cursor: pointer; display: flex; align-items: center;
       justify-content: center; font-size: 12px; font-weight: bold; color: white;
       transition: transform 0.15s ease;
+      position: relative;
+      z-index: 1;
     `;
     el.textContent = post.rating.toString();
 
+    // Desktop hover effect
     el.addEventListener("mouseenter", () => {
       el.style.transform = "scale(1.15)";
     });
@@ -363,7 +366,18 @@ export function SafetyMap({
       el.style.transform = "scale(1)";
     });
 
-    if (onClick) el.addEventListener("click", onClick);
+    if (onClick) {
+      // Support both click and touch for mobile
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        onClick();
+      });
+      el.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick();
+      });
+    }
     return el;
   }, []);
 
@@ -376,6 +390,8 @@ export function SafetyMap({
       cursor: pointer; display: flex; align-items: center;
       justify-content: center; font-size: 12px; border-radius: 4px; transform: rotate(45deg);
       transition: transform 0.15s ease;
+      position: relative;
+      z-index: 1;
     `;
     el.innerHTML = '<span style="transform: rotate(-45deg);">⚠️</span>';
 
@@ -430,10 +446,16 @@ export function SafetyMap({
         const locationName = post.location.name || "Unknown location";
         let popupAdded = false;
 
-        el.addEventListener("mouseenter", () => {
+        // Helper to show popup
+        const showPopup = () => {
           if (!popupAdded && map.current) {
             marker.setPopup(
-              new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(`
+              new mapboxgl.Popup({ 
+                offset: [0, -14], 
+                closeButton: true,
+                anchor: 'bottom',
+                className: 'aurora-map-popup'
+              }).setHTML(`
               <div style="padding: 8px; max-width: 200px;">
                 <div style="font-weight: 600; font-size: 13px; color: #1a1a1a; margin-bottom: 4px;">${post.title}</div>
                 <div style="font-size: 11px; color: #666;">${locationName}</div>
@@ -446,15 +468,26 @@ export function SafetyMap({
             `),
             );
             popupAdded = true;
+          }
+          if (!marker.getPopup()?.isOpen()) {
             marker.togglePopup();
           }
-        });
+        };
+
+        // Desktop hover
+        el.addEventListener("mouseenter", showPopup);
 
         el.addEventListener("mouseleave", () => {
           if (marker.getPopup()?.isOpen()) {
             marker.togglePopup();
           }
         });
+
+        // Mobile touch - show popup on touch
+        el.addEventListener("touchstart", (e) => {
+          e.stopPropagation();
+          showPopup();
+        }, { passive: true });
 
         markers.current.push(marker);
       });
@@ -485,10 +518,16 @@ export function SafetyMap({
 
           let popupAdded = false;
 
-          el.addEventListener("mouseenter", () => {
+          // Helper to show popup
+          const showPopup = () => {
             if (!popupAdded && map.current) {
               marker.setPopup(
-                new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(`
+                new mapboxgl.Popup({ 
+                  offset: [0, -14], 
+                  closeButton: true,
+                  anchor: 'bottom',
+                  className: 'aurora-map-popup'
+                }).setHTML(`
                 <div style="padding: 8px; max-width: 200px;">
                   <div style="font-weight: 600; font-size: 13px; color: #ec4c28; margin-bottom: 4px;">⚠️ Workplace Report</div>
                   <div style="font-size: 12px; color: #1a1a1a; font-weight: 500;">${report.companyName}</div>
@@ -497,15 +536,26 @@ export function SafetyMap({
               `),
               );
               popupAdded = true;
+            }
+            if (!marker.getPopup()?.isOpen()) {
               marker.togglePopup();
             }
-          });
+          };
+
+          // Desktop hover
+          el.addEventListener("mouseenter", showPopup);
 
           el.addEventListener("mouseleave", () => {
             if (marker.getPopup()?.isOpen()) {
               marker.togglePopup();
             }
           });
+
+          // Mobile touch - show popup on touch
+          el.addEventListener("touchstart", (e) => {
+            e.stopPropagation();
+            showPopup();
+          }, { passive: true });
 
           markers.current.push(marker);
         });

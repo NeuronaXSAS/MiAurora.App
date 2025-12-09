@@ -556,8 +556,8 @@ function FeedItemCard({
         </div>
       )}
 
-      {/* Content Overlay - Bottom - Positioned to fit viewport */}
-      <div className="absolute bottom-[env(safe-area-inset-bottom,0px)] left-0 right-16 p-4 pb-6 z-10 max-h-[35vh] overflow-hidden">
+      {/* Content Overlay - Bottom - Positioned to fit viewport with safe area */}
+      <div className="absolute left-0 right-16 p-4 pb-[calc(env(safe-area-inset-bottom,0px)+24px)] z-10 max-h-[40vh] overflow-visible" style={{ bottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}>
         {/* Author Info */}
         <div className="flex items-center gap-2 mb-2">
           <Link href={`/user/${item.authorId}`}>
@@ -653,8 +653,8 @@ function FeedItemCard({
         </div>
       </div>
 
-      {/* Side Action Bar - Positioned within viewport */}
-      <div className="absolute right-3 bottom-[15vh] z-10">
+      {/* Side Action Bar - Positioned within viewport, below header menu */}
+      <div className="absolute right-3 bottom-[20vh] z-10">
         <ActionBar
           item={item}
           userId={userId}
@@ -803,7 +803,7 @@ export function ImmersiveFeed({
             pointerEvents: controlsVisible ? "auto" : "none",
           }}
           transition={{ duration: 0.2 }}
-          className="fixed top-4 left-1/2 -translate-x-1/2 z-50"
+          className="fixed top-16 left-1/2 -translate-x-1/2 z-30"
         >
           <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 shadow-xl">
             {/* Exit to Card View */}
@@ -847,7 +847,7 @@ export function ImmersiveFeed({
       )}
 
       {/* Progress Indicator */}
-      <div className="absolute top-14 left-0 right-0 z-20 flex gap-1 p-2">
+      <div className="absolute top-28 left-0 right-0 z-20 flex gap-1 p-2">
         {items.slice(0, 10).map((_, idx) => (
           <div
             key={idx}

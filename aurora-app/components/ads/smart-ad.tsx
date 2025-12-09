@@ -20,14 +20,14 @@ import { ExternalLink, Sparkles, Shield, Briefcase, Heart, GraduationCap, Zap } 
 // Aurora App's AdSense Publisher ID
 const ADSENSE_CLIENT_ID = "ca-pub-9358935810206071";
 
-// Ad slot IDs - Replace with your actual AdSense slot IDs
+// Ad slot IDs - Aurora App's AdSense ad units
 const AD_SLOTS = {
-  feed: "1234567890",        // In-feed native ad
-  sidebar: "2345678901",     // Sidebar rectangle
-  banner: "3456789012",      // Horizontal banner
-  footer: "4567890123",      // Footer leaderboard
-  search: "5678901234",      // Search results
-  article: "6789012345",     // In-article
+  feed: "5431899428",        // In-feed native ad
+  sidebar: "3908555455",     // Sidebar rectangle
+  banner: "2595473780",      // Horizontal banner
+  footer: "6249430724",      // Footer leaderboard
+  search: "5088284491",      // Search results
+  article: "3775202822",     // In-article
 };
 
 type AdPlacement = "feed" | "sidebar" | "banner" | "footer" | "search" | "article";
