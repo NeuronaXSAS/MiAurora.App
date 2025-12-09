@@ -88,20 +88,31 @@ const TooltipContent = React.forwardRef<
 ));
 TooltipContent.displayName = "TooltipContent";
 
+// Detect user's preferred language for speech recognition
+const getUserLanguage = (): string => {
+  if (typeof window === 'undefined') return 'en-US';
+  // Try to get the user's preferred language from the browser
+  const browserLang = navigator.language || (navigator as any).userLanguage || 'en-US';
+  return browserLang;
+};
+
 // Voice Recorder Component with actual recording and transcription
 const VoiceRecorder: React.FC<{
   isRecording: boolean;
   onStop: (audioBlob: Blob | null) => void;
   onTranscript?: (text: string) => void;
   mediaRecorderRef: React.MutableRefObject<MediaRecorder | null>;
-}> = ({ isRecording, onStop, onTranscript, mediaRecorderRef }) => {
+  liveText?: string; // Show live transcription
+}> = ({ isRecording, onStop, onTranscript, mediaRecorderRef, liveText }) => {
   const [time, setTime] = useState(0);
   const chunksRef = useRef<Blob[]>([]);
   const recognitionRef = useRef<any>(null);
+  const fullTranscriptRef = useRef<string>("");
 
   useEffect(() => {
     if (!isRecording) {
       setTime(0);
+      fullTranscriptRef.current = "";
       if (recognitionRef.current) {
         recognitionRef.current.stop();
         recognitionRef.current = null;
@@ -118,28 +129,48 @@ const VoiceRecorder: React.FC<{
         const recognition = new SpeechRecognitionConstructor();
         recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.lang = 'en-US'; // Default to English, could be made dynamic
+        // Auto-detect user's language for global support
+        recognition.lang = getUserLanguage();
 
         recognition.onresult = (event: any) => {
           let finalTranscript = '';
           let interimTranscript = '';
 
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
+          for (let i = 0; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
-              finalTranscript += event.results[i][0].transcript;
+              finalTranscript += event.results[i][0].transcript + ' ';
             } else {
               interimTranscript += event.results[i][0].transcript;
             }
           }
 
-          if (finalTranscript || interimTranscript) {
-            // Pass the latest chunk of text
-            onTranscript(finalTranscript + interimTranscript);
+          // Build the complete transcript including interim results
+          const completeText = (finalTranscript + interimTranscript).trim();
+          if (completeText) {
+            onTranscript(completeText);
           }
         };
 
         recognition.onerror = (event: any) => {
           console.warn("Speech recognition error", event.error);
+          // Try to restart on recoverable errors
+          if (event.error === 'no-speech' || event.error === 'network') {
+            try {
+              recognition.stop();
+              setTimeout(() => {
+                if (isRecording) recognition.start();
+              }, 100);
+            } catch (e) { /* ignore */ }
+          }
+        };
+
+        recognition.onend = () => {
+          // Restart recognition if still recording (handles timeouts)
+          if (isRecording && recognitionRef.current) {
+            try {
+              recognition.start();
+            } catch (e) { /* ignore if already started */ }
+          }
         };
 
         try {
@@ -199,6 +230,9 @@ const VoiceRecorder: React.FC<{
 
   if (!isRecording) return null;
 
+  const detectedLang = getUserLanguage();
+  const langDisplay = detectedLang.split('-')[0].toUpperCase();
+
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -210,19 +244,33 @@ const VoiceRecorder: React.FC<{
         <div className="h-3 w-3 rounded-full bg-[#ec4c28] animate-pulse" />
         <span className="font-mono text-sm text-[var(--color-aurora-violet)] font-bold">{formatTime(time)}</span>
         <span className="text-xs text-[var(--muted-foreground)]">Recording & Transcribing...</span>
+        <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--color-aurora-purple)]/20 text-[var(--color-aurora-purple)] font-medium">
+          {langDisplay}
+        </span>
       </div>
-      <div className="w-full h-10 flex items-center justify-center gap-0.5 px-4">
-        {[...Array(32)].map((_, i) => (
+      <div className="w-full h-8 flex items-center justify-center gap-0.5 px-4">
+        {[...Array(24)].map((_, i) => (
           <motion.div
             key={i}
             className="w-1 rounded-full bg-gradient-to-t from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)]"
-            animate={{ height: [8, Math.random() * 32 + 8, 8] }}
+            animate={{ height: [6, Math.random() * 24 + 6, 6] }}
             transition={{ duration: 0.4 + Math.random() * 0.3, repeat: Infinity, delay: i * 0.03 }}
           />
         ))}
       </div>
-      <p className="mt-3 text-xs text-[var(--muted-foreground)]">
-        🎤 Speak clearly - text will appear below
+      {/* Live transcription preview */}
+      {liveText && (
+        <div className="mt-3 px-4 w-full">
+          <div className="p-2 rounded-lg bg-white/50 dark:bg-[var(--color-aurora-violet)]/30 border border-[var(--color-aurora-purple)]/20">
+            <p className="text-sm text-[var(--foreground)] leading-relaxed">
+              {liveText}
+              <span className="inline-block w-0.5 h-4 bg-[var(--color-aurora-purple)] animate-pulse ml-0.5 align-middle" />
+            </p>
+          </div>
+        </div>
+      )}
+      <p className="mt-2 text-xs text-[var(--muted-foreground)]">
+        🎤 Speak in any language - auto-detected
       </p>
     </motion.div>
   );
@@ -827,40 +875,41 @@ export const AuroraSearchBox = React.forwardRef<HTMLDivElement, AuroraSearchBoxP
             )}
           </div>
 
-          {/* Voice recorder */}
+          {/* Voice recorder - shows above textarea with live transcription */}
           <AnimatePresence>
             {isRecording && (
               <VoiceRecorder
                 isRecording={isRecording}
                 onStop={handleRecordingStop}
                 mediaRecorderRef={mediaRecorderRef}
+                liveText={input !== initialInputRef.current ? input.slice(initialInputRef.current.length).trim() : ""}
                 onTranscript={(text) => {
-                  const separator = initialInputRef.current && !initialInputRef.current.trim().endsWith(".") && !initialInputRef.current.endsWith(" ") ? " " : "";
-                  setInput(initialInputRef.current + separator + text);
+                  const base = initialInputRef.current;
+                  const separator = base && !base.trim().endsWith(".") && !base.endsWith(" ") ? " " : "";
+                  setInput(base + separator + text);
                 }}
               />
             )}
           </AnimatePresence>
 
-          {/* Textarea */}
-          {!isRecording && (
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-              placeholder={currentMode.placeholder}
-              disabled={isLoading || isAnalyzing}
-              rows={1}
-              className={cn(
-                "w-full bg-transparent px-2 py-2 text-base resize-none",
-                "text-[var(--color-aurora-violet)] dark:text-[var(--color-aurora-cream)]",
-                "placeholder:text-[var(--color-aurora-purple)]/50 focus:outline-none disabled:opacity-50 min-h-[44px] max-h-[120px]"
-              )}
-            />
-          )}
+          {/* Textarea - always visible to show transcription */}
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+            placeholder={isRecording ? "Listening..." : currentMode.placeholder}
+            disabled={isLoading || isAnalyzing || isRecording}
+            rows={1}
+            className={cn(
+              "w-full bg-transparent px-2 py-2 text-base resize-none",
+              "text-[var(--color-aurora-violet)] dark:text-[var(--color-aurora-cream)]",
+              "placeholder:text-[var(--color-aurora-purple)]/50 focus:outline-none disabled:opacity-50 min-h-[44px] max-h-[120px]",
+              isRecording && "hidden" // Hide during recording since we show live text in recorder
+            )}
+          />
 
           {/* Judge Setup - No redundant context field */}
           <AnimatePresence>
@@ -931,50 +980,60 @@ export const AuroraSearchBox = React.forwardRef<HTMLDivElement, AuroraSearchBoxP
                 <ModeButton mode="community" currentMode={mode} icon={Users} label="Community" activeColor="#f29de5" onClick={() => handleModeChange("community")} />
               </div>
 
-              {/* Action buttons */}
-              <div className="flex items-center gap-1 flex-shrink-0">
-                {/* Record button for live arguments */}
-                {mode === "judge" && !isRecording && !judgeResult && (
+              {/* Action buttons - unified single voice button for all modes */}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                {/* Voice button - works for ALL modes */}
+                {!isRecording && !hasContent && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
                         onClick={handleToggleRecording}
-                        className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center bg-[var(--color-aurora-salmon)]/10 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/20 transition-all"
+                        className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center bg-[var(--color-aurora-purple)]/10 text-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-purple)]/20 transition-all"
                       >
                         <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent>Record live argument</TooltipContent>
+                    <TooltipContent>Voice input</TooltipContent>
                   </Tooltip>
                 )}
 
-                {/* Main action button */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => {
-                        if (isRecording) handleToggleRecording();
-                        else if (hasContent) handleSubmit();
-                        else if (mode === "judge") handleToggleRecording();
-                      }}
-                      disabled={(isLoading || isAnalyzing) && !hasContent}
-                      className={cn(
-                        "h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center transition-all duration-200",
-                        isRecording ? "bg-[#ec4c28]/10 text-[#ec4c28] hover:bg-[#ec4c28]/20"
-                          : hasContent ? "bg-[var(--color-aurora-purple)] text-white hover:bg-[var(--color-aurora-violet)] shadow-lg"
-                            : "bg-[var(--color-aurora-lavender)]/50 text-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-lavender)]"
-                      )}
-                    >
-                      {(isLoading || isAnalyzing) ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-                        : isRecording ? <StopCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                          : hasContent ? (mode === "judge" ? <Gavel className="w-4 h-4 sm:w-5 sm:h-5" /> : <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />)
-                            : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {(isLoading || isAnalyzing) ? "Processing..." : isRecording ? "Stop" : hasContent ? (mode === "judge" ? "Get Verdict" : "Search") : "Voice"}
-                  </TooltipContent>
-                </Tooltip>
+                {/* Stop recording button */}
+                {isRecording && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={handleToggleRecording}
+                        className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center bg-[#ec4c28] text-white hover:bg-[#ec4c28]/90 transition-all animate-pulse"
+                      >
+                        <StopCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Stop recording</TooltipContent>
+                  </Tooltip>
+                )}
+
+                {/* Submit button - only shows when there's content */}
+                {hasContent && !isRecording && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={handleSubmit}
+                        disabled={isLoading || isAnalyzing}
+                        className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center bg-[var(--color-aurora-purple)] text-white hover:bg-[var(--color-aurora-violet)] shadow-lg transition-all duration-200"
+                      >
+                        {(isLoading || isAnalyzing) 
+                          ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                          : mode === "judge" 
+                            ? <Gavel className="w-4 h-4 sm:w-5 sm:h-5" /> 
+                            : <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
+                        }
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {(isLoading || isAnalyzing) ? "Processing..." : mode === "judge" ? "Get Verdict" : "Search"}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
             </div>
           )}
