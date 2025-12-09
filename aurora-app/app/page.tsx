@@ -244,23 +244,54 @@ function LandingPageContent() {
       </nav>
 
 
-      {/* HERO SECTION - Futuristic with Shader */}
-      <section ref={heroRef} className="relative min-h-[90vh] flex items-center overflow-hidden">
-        {/* Aurora Shader Background */}
+      {/* LIVE SEARCH - Primary Entry Point - Start Engaging Immediately */}
+      <section className="py-16 md:py-24 bg-gradient-to-b from-[#fffaf1] to-white relative overflow-hidden">
+        {/* Aurora Shader Background for Visual Impact */}
         <div className="absolute inset-0 z-0">
-          <AuroraShader className="w-full h-full opacity-40" />
-          {/* Overlay gradient for readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#fffaf1]/80 via-[#fffaf1]/60 to-[#fffaf1]/90" />
+          <AuroraShader className="w-full h-full opacity-30" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#fffaf1]/90 via-[#fffaf1]/70 to-white/90" />
         </div>
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#5537a708_1px,transparent_1px),linear-gradient(to_bottom,#5537a708_1px,transparent_1px)] bg-[size:40px_40px]" />
+        <FloatingOrbs />
+        <div className="relative max-w-6xl mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-10"
+          >
+            <Badge className="bg-[#d6f4ec] text-[#3d0d73] border-0 mb-4 px-4 py-1.5 text-sm font-medium">
+              <Search className="w-3 h-3 mr-1 inline" /> Explore Before You Join
+            </Badge>
+            <h2 className="text-3xl md:text-5xl font-bold text-[#3d0d73] mb-4">
+              Discover What Women Are Sharing
+            </h2>
+            <p className="text-[#3d0d73]/60 text-lg max-w-2xl mx-auto">
+              Search our community for safety tips, career opportunities, support circles, and more.
+            </p>
+          </motion.div>
 
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <LandingSearch />
+          </motion.div>
+
+          {/* AdSense - Between search and stats */}
+          <LandingPageAd className="mt-12" />
+        </div>
+      </section>
+
+      {/* HERO SECTION - Join the Community */}
+      <section ref={heroRef} className="relative min-h-[80vh] flex items-center overflow-hidden bg-gradient-to-b from-white to-[#fffaf1]">
         {/* Fallback/Enhancement layers */}
         <GridBackground />
-        <FloatingOrbs />
 
         <motion.div style={{ scale: heroScale }} className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
           <div className="max-w-4xl mx-auto text-center">
             {/* Futuristic Badge */}
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 mb-6">
+            <motion.div initial={{ opacity: 0, y: -10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="inline-flex items-center gap-2 mb-6">
               <div className="flex items-center gap-2 bg-[#3d0d73]/5 backdrop-blur-sm border border-[#5537a7]/20 rounded-full px-4 py-2 shadow-lg">
                 <motion.div className="w-2 h-2 bg-[#22c55e] rounded-full" animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }} transition={{ duration: 1.5, repeat: Infinity }} />
                 <span className="text-sm font-medium text-[#3d0d73]">
@@ -271,7 +302,7 @@ function LandingPageContent() {
             </motion.div>
 
             {/* Main Headline */}
-            <motion.h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#3d0d73] mb-6 leading-[1.05]" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <motion.h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-[#3d0d73] mb-6 leading-[1.05]" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}>
               {t('landing.hero.title1')}{" "}
               <span className="relative inline-block">
                 <span className="bg-gradient-to-r from-[#5537a7] via-[#f29de5] to-[#5537a7] bg-clip-text text-transparent bg-[length:200%_auto] animate-[gradient_3s_linear_infinite]">
@@ -284,7 +315,7 @@ function LandingPageContent() {
             </motion.h1>
 
             {/* Subheadline */}
-            <motion.p className="text-lg sm:text-xl md:text-2xl text-[#3d0d73]/70 mb-8 max-w-3xl mx-auto leading-relaxed" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <motion.p className="text-lg sm:text-xl md:text-2xl text-[#3d0d73]/70 mb-8 max-w-3xl mx-auto leading-relaxed" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}>
               {t('landing.hero.subtitle')}
               <br className="hidden sm:block" />
               <span className="sm:hidden"> </span>
@@ -292,14 +323,14 @@ function LandingPageContent() {
             </motion.p>
 
             {/* Tech Pills */}
-            <motion.div className="flex flex-wrap justify-center gap-2 mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <motion.div className="flex flex-wrap justify-center gap-2 mb-8" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3 }}>
               {[
                 { icon: Brain, text: "Ethical AI", color: "#5537a7" },
                 { icon: Shield, text: "Privacy-First", color: "#22c55e" },
                 { icon: Network, text: "Decentralized Safety", color: "#5537a7" },
                 { icon: Fingerprint, text: "Zero Data Sales", color: "#f29de5" }
               ].map((item, i) => (
-                <motion.div key={item.text} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 + i * 0.1 }}
+                <motion.div key={item.text} initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: 0.4 + i * 0.1 }}
                   className="flex items-center gap-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-[#3d0d73] shadow-sm border border-[#3d0d73]/10 hover:border-[#5537a7]/30 transition-all hover:shadow-md cursor-default">
                   <item.icon className="w-4 h-4" style={{ color: item.color }} />
                   {item.text}
@@ -308,7 +339,7 @@ function LandingPageContent() {
             </motion.div>
 
             {/* APPLE-STYLE SIGN IN - Super Clear SSO Buttons */}
-            <motion.div className="max-w-md mx-auto mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+            <motion.div className="max-w-md mx-auto mb-8" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.5 }}>
               {/* Clear instruction */}
               <p className="text-center text-[#3d0d73]/70 text-lg mb-4 font-medium">
                 {t('landing.hero.joinInstantly')}
@@ -357,7 +388,7 @@ function LandingPageContent() {
             </motion.div>
 
             {/* Trust Indicators */}
-            <motion.div className="flex flex-wrap justify-center gap-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
+            <motion.div className="flex flex-wrap justify-center gap-6" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.6 }}>
               {[
                 { icon: CheckCircle, text: "Free Safety Features" },
                 { icon: Lock, text: "No Password Needed" },
@@ -371,48 +402,6 @@ function LandingPageContent() {
             </motion.div>
           </div>
         </motion.div>
-
-        {/* Scroll Indicator */}
-        <motion.div className="absolute bottom-8 left-1/2 -translate-x-1/2" animate={{ y: [0, 10, 0] }} transition={{ duration: 2, repeat: Infinity }}>
-          <div className="w-6 h-10 rounded-full border-2 border-[#5537a7]/30 flex items-start justify-center p-2 backdrop-blur-sm">
-            <motion.div className="w-1.5 h-1.5 bg-[#5537a7] rounded-full" animate={{ y: [0, 16, 0] }} transition={{ duration: 2, repeat: Infinity }} />
-          </div>
-        </motion.div>
-      </section>
-
-      {/* LIVE SEARCH - Discover Aurora App Before Signing Up */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-[#fffaf1] to-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#5537a708_1px,transparent_1px),linear-gradient(to_bottom,#5537a708_1px,transparent_1px)] bg-[size:40px_40px]" />
-        <div className="relative max-w-6xl mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-10"
-          >
-            <Badge className="bg-[#d6f4ec] text-[#3d0d73] border-0 mb-4 px-4 py-1.5 text-sm font-medium">
-              <Search className="w-3 h-3 mr-1 inline" /> Explore Before You Join
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-[#3d0d73] mb-4">
-              Discover What Women Are Sharing
-            </h2>
-            <p className="text-[#3d0d73]/60 text-lg max-w-2xl mx-auto">
-              Search our community for safety tips, career opportunities, support circles, and more.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-          >
-            <LandingSearch />
-          </motion.div>
-
-          {/* AdSense - Between search and stats */}
-          <LandingPageAd className="mt-12" />
-        </div>
       </section>
 
       {/* Stats Bar - Futuristic */}
