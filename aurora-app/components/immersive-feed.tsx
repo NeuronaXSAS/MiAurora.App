@@ -2,13 +2,19 @@
 
 /**
  * Immersive Feed Component - TikTok-style Engagement
- * 
+ *
  * Full-screen vertical scroll with snap-to-content, side action bar,
  * and enhanced engagement features for maximum user retention.
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+  PanInfo,
+} from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -17,11 +23,33 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import Link from "next/link";
-import { 
-  Heart, MessageCircle, Share2, Bookmark, MoreHorizontal,
-  ChevronUp, ChevronDown, Play, Pause, Volume2, VolumeX,
-  Sparkles, Shield, MapPin, Users, Send, X, Gift,
-  ThumbsUp, ThumbsDown, Award, Flame, Eye, Clock
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  Bookmark,
+  MoreHorizontal,
+  ChevronUp,
+  ChevronDown,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Sparkles,
+  Shield,
+  MapPin,
+  Users,
+  Send,
+  X,
+  Gift,
+  ThumbsUp,
+  ThumbsDown,
+  Award,
+  Flame,
+  Eye,
+  Clock,
+  LayoutGrid,
+  Filter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -29,6 +57,8 @@ import { formatDistanceToNow } from "date-fns";
 interface ImmersiveFeedProps {
   userId: Id<"users"> | null;
   initialItems?: any[];
+  onExitImmersive?: () => void;
+  showControls?: boolean;
 }
 
 // Quick reaction emojis for posts
@@ -41,8 +71,8 @@ const QUICK_REACTIONS = [
 ];
 
 // Side Action Bar Component
-function ActionBar({ 
-  item, 
+function ActionBar({
+  item,
   userId,
   onLike,
   onComment,
@@ -93,15 +123,19 @@ function ActionBar({
           }}
           className="flex flex-col items-center gap-1 group"
         >
-          <div className={cn(
-            "w-12 h-12 rounded-full flex items-center justify-center transition-all",
-            isLiked 
-              ? "bg-[var(--color-aurora-pink)] text-white scale-110" 
-              : "bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
-          )}>
+          <div
+            className={cn(
+              "w-12 h-12 rounded-full flex items-center justify-center transition-all",
+              isLiked
+                ? "bg-[var(--color-aurora-pink)] text-white scale-110"
+                : "bg-white/20 backdrop-blur-sm text-white hover:bg-white/30",
+            )}
+          >
             <Heart className={cn("w-6 h-6", isLiked && "fill-current")} />
           </div>
-          <span className="text-white text-xs font-semibold">{formatCount(likeCount)}</span>
+          <span className="text-white text-xs font-semibold">
+            {formatCount(likeCount)}
+          </span>
         </button>
 
         {/* Quick Reactions Popup */}
@@ -132,32 +166,47 @@ function ActionBar({
       </div>
 
       {/* Comment Button */}
-      <button onClick={onComment} className="flex flex-col items-center gap-1 group">
+      <button
+        onClick={onComment}
+        className="flex flex-col items-center gap-1 group"
+      >
         <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-all group-hover:scale-110">
           <MessageCircle className="w-6 h-6" />
         </div>
-        <span className="text-white text-xs font-semibold">{formatCount(commentCount)}</span>
+        <span className="text-white text-xs font-semibold">
+          {formatCount(commentCount)}
+        </span>
       </button>
 
       {/* Save/Bookmark Button */}
-      <button onClick={onSave} className="flex flex-col items-center gap-1 group">
-        <div className={cn(
-          "w-12 h-12 rounded-full flex items-center justify-center transition-all group-hover:scale-110",
-          isSaved 
-            ? "bg-[var(--color-aurora-yellow)] text-[var(--color-aurora-violet)]" 
-            : "bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
-        )}>
+      <button
+        onClick={onSave}
+        className="flex flex-col items-center gap-1 group"
+      >
+        <div
+          className={cn(
+            "w-12 h-12 rounded-full flex items-center justify-center transition-all group-hover:scale-110",
+            isSaved
+              ? "bg-[var(--color-aurora-yellow)] text-[var(--color-aurora-violet)]"
+              : "bg-white/20 backdrop-blur-sm text-white hover:bg-white/30",
+          )}
+        >
           <Bookmark className={cn("w-6 h-6", isSaved && "fill-current")} />
         </div>
         <span className="text-white text-xs font-semibold">Save</span>
       </button>
 
       {/* Share Button */}
-      <button onClick={onShare} className="flex flex-col items-center gap-1 group">
+      <button
+        onClick={onShare}
+        className="flex flex-col items-center gap-1 group"
+      >
         <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-all group-hover:scale-110">
           <Share2 className="w-6 h-6" />
         </div>
-        <span className="text-white text-xs font-semibold">{formatCount(shareCount)}</span>
+        <span className="text-white text-xs font-semibold">
+          {formatCount(shareCount)}
+        </span>
       </button>
 
       {/* Gift/Tip Button (Premium Feature) */}
@@ -215,7 +264,7 @@ function CommentDrawer({
             onClick={onClose}
             className="fixed inset-0 bg-black/50 z-40"
           />
-          
+
           {/* Drawer */}
           <motion.div
             initial={{ y: "100%" }}
@@ -234,7 +283,10 @@ function CommentDrawer({
               <h3 className="font-semibold text-[var(--foreground)]">
                 {comments?.length || 0} Comments
               </h3>
-              <button onClick={onClose} className="p-2 hover:bg-[var(--accent)] rounded-full">
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-[var(--accent)] rounded-full"
+              >
                 <X className="w-5 h-5 text-[var(--muted-foreground)]" />
               </button>
             </div>
@@ -244,11 +296,15 @@ function CommentDrawer({
               {comments?.length === 0 && (
                 <div className="text-center py-8">
                   <MessageCircle className="w-12 h-12 text-[var(--muted-foreground)] mx-auto mb-3" />
-                  <p className="text-[var(--muted-foreground)]">Be the first to comment!</p>
-                  <p className="text-xs text-[var(--color-aurora-yellow)] mt-1">+5 credits for first comment</p>
+                  <p className="text-[var(--muted-foreground)]">
+                    Be the first to comment!
+                  </p>
+                  <p className="text-xs text-[var(--color-aurora-yellow)] mt-1">
+                    +5 credits for first comment
+                  </p>
                 </div>
               )}
-              
+
               {comments?.map((comment: any) => (
                 <div key={comment._id} className="flex gap-3">
                   <Avatar className="w-8 h-8">
@@ -263,10 +319,14 @@ function CommentDrawer({
                         {comment.author?.name || "Anonymous"}
                       </span>
                       <span className="text-xs text-[var(--muted-foreground)]">
-                        {formatDistanceToNow(comment._creationTime, { addSuffix: true })}
+                        {formatDistanceToNow(comment._creationTime, {
+                          addSuffix: true,
+                        })}
                       </span>
                     </div>
-                    <p className="text-sm text-[var(--foreground)] mt-1">{comment.content}</p>
+                    <p className="text-sm text-[var(--foreground)] mt-1">
+                      {comment.content}
+                    </p>
                     <div className="flex items-center gap-4 mt-2">
                       <button className="flex items-center gap-1 text-xs text-[var(--muted-foreground)] hover:text-[var(--color-aurora-pink)]">
                         <Heart className="w-4 h-4" />
@@ -315,7 +375,6 @@ function CommentDrawer({
   );
 }
 
-
 // Single Feed Item Card - Full Screen
 function FeedItemCard({
   item,
@@ -350,7 +409,7 @@ function FeedItemCard({
 
   const handleLike = () => {
     setIsLiked(!isLiked);
-    setLikeCount((prev: number) => isLiked ? prev - 1 : prev + 1);
+    setLikeCount((prev: number) => (isLiked ? prev - 1 : prev + 1));
     // TODO: Call mutation to like/unlike
   };
 
@@ -370,20 +429,22 @@ function FeedItemCard({
 
   const isReel = item.reel || item.postType === "reel";
   const isRoute = item.type === "route" || item.route;
-  
+
   // Helper to check if URL is valid (not example.com placeholder)
   const isValidUrl = (url: string | undefined | null): boolean => {
     if (!url) return false;
-    if (url.includes('example.com')) return false;
-    if (url.includes('placeholder')) return false;
-    return url.startsWith('http') || url.startsWith('/');
+    if (url.includes("example.com")) return false;
+    if (url.includes("placeholder")) return false;
+    return url.startsWith("http") || url.startsWith("/");
   };
-  
+
   const videoUrl = isValidUrl(item.reel?.videoUrl) ? item.reel?.videoUrl : null;
-  const thumbnailUrl = isValidUrl(item.reel?.thumbnailUrl) ? item.reel?.thumbnailUrl : null;
+  const thumbnailUrl = isValidUrl(item.reel?.thumbnailUrl)
+    ? item.reel?.thumbnailUrl
+    : null;
   const mediaUrl = isValidUrl(item.mediaUrl) ? item.mediaUrl : null;
   const imageUrl = isValidUrl(item.imageUrl) ? item.imageUrl : null;
-  
+
   const hasMedia = mediaUrl || imageUrl || videoUrl || thumbnailUrl;
 
   return (
@@ -433,7 +494,11 @@ function FeedItemCard({
             onClick={() => setIsMuted(!isMuted)}
             className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white"
           >
-            {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            {isMuted ? (
+              <VolumeX className="w-5 h-5" />
+            ) : (
+              <Volume2 className="w-5 h-5" />
+            )}
           </button>
         </div>
       )}
@@ -460,7 +525,10 @@ function FeedItemCard({
             </Avatar>
           </Link>
           <div className="flex-1 min-w-0">
-            <Link href={`/user/${item.authorId}`} className="font-semibold text-white hover:underline">
+            <Link
+              href={`/user/${item.authorId}`}
+              className="font-semibold text-white hover:underline"
+            >
               {item.author?.name || "Anonymous"}
             </Link>
             <div className="flex items-center gap-2 text-white/70 text-xs">
@@ -470,9 +538,11 @@ function FeedItemCard({
                 <>
                   <span>•</span>
                   <MapPin className="w-3 h-3" />
-                  {typeof item.location === 'string' 
-                    ? item.location 
-                    : item.location?.name || item.location?.city || 'Unknown location'}
+                  {typeof item.location === "string"
+                    ? item.location
+                    : item.location?.name ||
+                      item.location?.city ||
+                      "Unknown location"}
                 </>
               )}
             </div>
@@ -487,9 +557,11 @@ function FeedItemCard({
 
         {/* Post Title/Content */}
         {item.title && (
-          <h3 className="font-bold text-white text-lg mb-2 line-clamp-2">{item.title}</h3>
+          <h3 className="font-bold text-white text-lg mb-2 line-clamp-2">
+            {item.title}
+          </h3>
         )}
-        
+
         <p className="text-white/90 text-sm line-clamp-3 mb-3">
           {item.content || item.reel?.caption || item.description}
         </p>
@@ -497,11 +569,16 @@ function FeedItemCard({
         {/* Tags/Hashtags */}
         {(item.tags?.length > 0 || item.reel?.hashtags?.length > 0) && (
           <div className="flex flex-wrap gap-2 mb-3">
-            {(item.tags || item.reel?.hashtags || []).slice(0, 4).map((tag: string) => (
-              <span key={tag} className="text-[var(--color-aurora-pink)] text-sm font-medium">
-                #{tag}
-              </span>
-            ))}
+            {(item.tags || item.reel?.hashtags || [])
+              .slice(0, 4)
+              .map((tag: string) => (
+                <span
+                  key={tag}
+                  className="text-[var(--color-aurora-pink)] text-sm font-medium"
+                >
+                  #{tag}
+                </span>
+              ))}
           </div>
         )}
 
@@ -510,7 +587,8 @@ function FeedItemCard({
           <div className="flex items-center gap-2 mb-3">
             <Badge className="bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0">
               <Shield className="w-3 h-3 mr-1" />
-              Safety Score: {Math.round((item.route?.rating || item.rating || 4) * 20)}%
+              Safety Score:{" "}
+              {Math.round((item.route?.rating || item.rating || 4) * 20)}%
             </Badge>
           </div>
         )}
@@ -519,7 +597,12 @@ function FeedItemCard({
         <div className="flex items-center gap-4 text-white/70 text-xs">
           <span className="flex items-center gap-1">
             <Eye className="w-4 h-4" />
-            {formatCount(item.views || item.reel?.views || Math.floor(Math.random() * 10000))} views
+            {formatCount(
+              item.views ||
+                item.reel?.views ||
+                Math.floor(Math.random() * 10000),
+            )}{" "}
+            views
           </span>
           <span className="flex items-center gap-1">
             <Flame className="w-4 h-4 text-[var(--color-aurora-pink)]" />
@@ -562,10 +645,43 @@ function FeedItemCard({
 }
 
 // Main Immersive Feed Component
-export function ImmersiveFeed({ userId, initialItems }: ImmersiveFeedProps) {
+export function ImmersiveFeed({
+  userId,
+  initialItems,
+  onExitImmersive,
+  showControls = true,
+}: ImmersiveFeedProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showComments, setShowComments] = useState(false);
+  const [controlsVisible, setControlsVisible] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-hide controls after 3 seconds of inactivity
+  const resetControlsTimeout = useCallback(() => {
+    setControlsVisible(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    controlsTimeoutRef.current = setTimeout(() => {
+      setControlsVisible(false);
+    }, 3000);
+  }, []);
+
+  // Show controls on tap/click
+  useEffect(() => {
+    const handleInteraction = () => resetControlsTimeout();
+    window.addEventListener("touchstart", handleInteraction);
+    window.addEventListener("mousemove", handleInteraction);
+    resetControlsTimeout();
+    return () => {
+      window.removeEventListener("touchstart", handleInteraction);
+      window.removeEventListener("mousemove", handleInteraction);
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, [resetControlsTimeout]);
 
   // Fetch feed items
   const feedItems = useQuery(api.feed.getUnifiedFeed, {
@@ -629,8 +745,61 @@ export function ImmersiveFeed({ userId, initialItems }: ImmersiveFeedProps) {
 
   return (
     <div className="relative h-screen bg-black">
+      {/* Floating Control Bar - Centered, easy to reach */}
+      {showControls && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{
+            opacity: controlsVisible ? 1 : 0,
+            y: controlsVisible ? 0 : -20,
+            pointerEvents: controlsVisible ? "auto" : "none",
+          }}
+          transition={{ duration: 0.2 }}
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-50"
+        >
+          <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 shadow-xl">
+            {/* Exit to Card View */}
+            {onExitImmersive && (
+              <button
+                onClick={onExitImmersive}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white transition-all min-h-[44px]"
+                title="Switch to Card View"
+              >
+                <LayoutGrid className="w-5 h-5" />
+                <span className="text-sm font-medium hidden sm:inline">
+                  Card View
+                </span>
+              </button>
+            )}
+
+            {/* Content counter */}
+            <div className="px-3 py-2 text-white/70 text-sm font-medium">
+              <span className="text-white">{currentIndex + 1}</span>
+              <span className="mx-1">/</span>
+              <span>{items.length}</span>
+            </div>
+
+            {/* Scroll hint for mobile */}
+            <div className="flex items-center gap-1 px-2 text-white/50 text-xs">
+              <ChevronUp className="w-3 h-3" />
+              <ChevronDown className="w-3 h-3" />
+              <span className="hidden sm:inline">Scroll</span>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Tap to show controls hint - only on mobile */}
+      {showControls && !controlsVisible && (
+        <div className="md:hidden fixed top-4 left-1/2 -translate-x-1/2 z-40">
+          <div className="px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-sm text-white/60 text-xs">
+            Tap to show controls
+          </div>
+        </div>
+      )}
+
       {/* Progress Indicator */}
-      <div className="absolute top-0 left-0 right-0 z-20 flex gap-1 p-2">
+      <div className="absolute top-14 left-0 right-0 z-20 flex gap-1 p-2">
         {items.slice(0, 10).map((_, idx) => (
           <div
             key={idx}
@@ -639,8 +808,8 @@ export function ImmersiveFeed({ userId, initialItems }: ImmersiveFeedProps) {
               idx === currentIndex
                 ? "bg-white"
                 : idx < currentIndex
-                ? "bg-white/50"
-                : "bg-white/20"
+                  ? "bg-white/50"
+                  : "bg-white/20",
             )}
           />
         ))}

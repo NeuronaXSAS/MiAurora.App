@@ -17,14 +17,17 @@ import { useDevicePerformance } from "@/hooks/use-device-performance";
 import { ValuePropositionBanner } from "@/components/value-proposition-banner";
 import { ImmersiveFeed } from "@/components/immersive-feed";
 import { MobilePostCard } from "@/components/mobile-post-card";
-import { SisterSpotlightCompact, SisterSpotlightFeedCard } from "@/components/sister-spotlight-card";
+import {
+  SisterSpotlightCompact,
+  SisterSpotlightFeedCard,
+} from "@/components/sister-spotlight-card";
 import { GuardianDiscoveryCard } from "@/components/guardian-discovery-card";
 
-import { 
-  Sparkles, 
-  ChevronDown, 
-  Flame, 
-  TrendingUp, 
+import {
+  Sparkles,
+  ChevronDown,
+  Flame,
+  TrendingUp,
   Clock,
   WifiOff,
   Shield,
@@ -46,17 +49,24 @@ import {
 type FeedViewMode = "cards" | "immersive";
 
 type SortOption = "best" | "hot" | "new" | "top";
-type ContentFilter = "all" | "posts" | "routes" | "polls" | "reels" | "opportunities" | "livestreams";
+type ContentFilter =
+  | "all"
+  | "posts"
+  | "routes"
+  | "polls"
+  | "reels"
+  | "opportunities"
+  | "livestreams";
 
 // Memoized feed item component for better performance
-const FeedItem = memo(function FeedItem({ 
-  item, 
-  userId, 
-  onVerify, 
+const FeedItem = memo(function FeedItem({
+  item,
+  userId,
+  onVerify,
   onDelete,
-  isLowEnd 
-}: { 
-  item: any; 
+  isLowEnd,
+}: {
+  item: any;
   userId: Id<"users"> | null;
   onVerify: (id: Id<"posts">) => void;
   onDelete: (id: Id<"posts">) => void;
@@ -91,7 +101,11 @@ const FeedItem = memo(function FeedItem({
     );
   }
 
-  if (item.type === "post" && (!item.postType || item.postType === "standard") && !item.route) {
+  if (
+    item.type === "post" &&
+    (!item.postType || item.postType === "standard") &&
+    !item.route
+  ) {
     return (
       <RedditPostCard
         post={item}
@@ -135,7 +149,7 @@ const FeedItem = memo(function FeedItem({
       // Include author info for profile linking
       author: item.reel.author || item.author || null,
     };
-    
+
     return (
       <ReelFeedCard
         reel={reelData}
@@ -177,7 +191,11 @@ export function MobileFeed() {
   const [visibleItems, setVisibleItems] = useState(10); // Progressive loading
 
   // Device performance detection
-  const { isLowEnd: deviceIsLowEnd, isSlowNetwork, shouldReduceData } = useDevicePerformance();
+  const {
+    isLowEnd: deviceIsLowEnd,
+    isSlowNetwork,
+    shouldReduceData,
+  } = useDevicePerformance();
   const isLowEndDevice = deviceIsLowEnd;
 
   // Get user ID and premium status
@@ -218,35 +236,41 @@ export function MobileFeed() {
   const deletePost = useMutation(api.posts.deletePost);
 
   // Handle verify post - memoized
-  const handleVerify = useCallback(async (postId: Id<"posts">) => {
-    if (!userId) return;
-    try {
-      await verifyPost({ postId, userId });
-    } catch (error) {
-      console.error("Verify error:", error);
-    }
-  }, [userId, verifyPost]);
+  const handleVerify = useCallback(
+    async (postId: Id<"posts">) => {
+      if (!userId) return;
+      try {
+        await verifyPost({ postId, userId });
+      } catch (error) {
+        console.error("Verify error:", error);
+      }
+    },
+    [userId, verifyPost],
+  );
 
   // Handle delete post - memoized
-  const handleDelete = useCallback(async (postId: Id<"posts">) => {
-    if (!userId) return;
-    try {
-      await deletePost({ postId, userId });
-    } catch (error) {
-      console.error("Delete error:", error);
-    }
-  }, [userId, deletePost]);
+  const handleDelete = useCallback(
+    async (postId: Id<"posts">) => {
+      if (!userId) return;
+      try {
+        await deletePost({ postId, userId });
+      } catch (error) {
+        console.error("Delete error:", error);
+      }
+    },
+    [userId, deletePost],
+  );
 
   // Load more items on scroll - progressive loading for performance
   const loadMoreItems = useCallback(() => {
-    setVisibleItems(prev => Math.min(prev + (isLowEndDevice ? 5 : 10), 50));
+    setVisibleItems((prev) => Math.min(prev + (isLowEndDevice ? 5 : 10), 50));
   }, [isLowEndDevice]);
 
   // Scroll handler for infinite loading
   useEffect(() => {
     const handleScroll = () => {
       if (
-        window.innerHeight + window.scrollY >= 
+        window.innerHeight + window.scrollY >=
         document.documentElement.scrollHeight - 1000
       ) {
         loadMoreItems();
@@ -258,25 +282,41 @@ export function MobileFeed() {
   }, [loadMoreItems]);
 
   // Sort items based on selection - memoized
-  const sortedItems = useMemo(() => feedItems ? [...feedItems].sort((a: any, b: any) => {
-    switch (sortBy) {
-      case "hot":
-        const aScore = (a.upvotes || 0) - (a.downvotes || 0) + (a.commentCount || 0) * 2;
-        const bScore = (b.upvotes || 0) - (b.downvotes || 0) + (b.commentCount || 0) * 2;
-        return bScore - aScore;
-      case "new":
-        return b._creationTime - a._creationTime;
-      case "top":
-        return ((b.upvotes || 0) - (b.downvotes || 0)) - ((a.upvotes || 0) - (a.downvotes || 0));
-      case "best":
-      default:
-        const aEngagement = (a.upvotes || 0) + (a.commentCount || 0);
-        const bEngagement = (b.upvotes || 0) + (b.commentCount || 0);
-        const aRecency = 1 / (Date.now() - a._creationTime + 1);
-        const bRecency = 1 / (Date.now() - b._creationTime + 1);
-        return (bEngagement * bRecency) - (aEngagement * aRecency);
-    }
-  }) : [], [feedItems, sortBy]);
+  const sortedItems = useMemo(
+    () =>
+      feedItems
+        ? [...feedItems].sort((a: any, b: any) => {
+            switch (sortBy) {
+              case "hot":
+                const aScore =
+                  (a.upvotes || 0) -
+                  (a.downvotes || 0) +
+                  (a.commentCount || 0) * 2;
+                const bScore =
+                  (b.upvotes || 0) -
+                  (b.downvotes || 0) +
+                  (b.commentCount || 0) * 2;
+                return bScore - aScore;
+              case "new":
+                return b._creationTime - a._creationTime;
+              case "top":
+                return (
+                  (b.upvotes || 0) -
+                  (b.downvotes || 0) -
+                  ((a.upvotes || 0) - (a.downvotes || 0))
+                );
+              case "best":
+              default:
+                const aEngagement = (a.upvotes || 0) + (a.commentCount || 0);
+                const bEngagement = (b.upvotes || 0) + (b.commentCount || 0);
+                const aRecency = 1 / (Date.now() - a._creationTime + 1);
+                const bRecency = 1 / (Date.now() - b._creationTime + 1);
+                return bEngagement * bRecency - aEngagement * aRecency;
+            }
+          })
+        : [],
+    [feedItems, sortBy],
+  );
 
   const sortOptions = [
     { value: "best", label: "Best", icon: Sparkles },
@@ -295,46 +335,73 @@ export function MobileFeed() {
     { value: "opportunities", label: "Jobs" },
   ];
 
-  const currentSort = sortOptions.find(opt => opt.value === sortBy) || sortOptions[0];
-  const currentFilter = contentFilterOptions.find(opt => opt.value === contentFilter) || contentFilterOptions[0];
+  const currentSort =
+    sortOptions.find((opt) => opt.value === sortBy) || sortOptions[0];
+  const currentFilter =
+    contentFilterOptions.find((opt) => opt.value === contentFilter) ||
+    contentFilterOptions[0];
 
   // Filter items based on content type - memoized
-  const filteredItems = useMemo(() => sortedItems.filter((item: any) => {
-    if (contentFilter === "all") return true;
-    if (contentFilter === "posts") {
-      // Standard posts only - no routes, reels, or polls
-      return item.type === "post" && !item.route && !item.reel && !item.reelId && !item.routeId && item.postType !== "poll" && item.postType !== "reel";
-    }
-    if (contentFilter === "routes") {
-      // Routes - either standalone routes or posts linked to routes
-      return item.type === "route" || (item.type === "post" && (item.route || item.routeId));
-    }
-    if (contentFilter === "polls") {
-      // Polls only
-      return item.type === "post" && item.postType === "poll";
-    }
-    if (contentFilter === "reels") {
-      // Reels - posts linked to reels
-      return item.type === "post" && (item.reel || item.reelId || item.postType === "reel");
-    }
-    if (contentFilter === "opportunities") {
-      return item.type === "opportunity";
-    }
-    if (contentFilter === "livestreams") {
-      return item.type === "livestream";
-    }
-    return true;
-  }), [sortedItems, contentFilter]);
+  const filteredItems = useMemo(
+    () =>
+      sortedItems.filter((item: any) => {
+        if (contentFilter === "all") return true;
+        if (contentFilter === "posts") {
+          // Standard posts only - no routes, reels, or polls
+          return (
+            item.type === "post" &&
+            !item.route &&
+            !item.reel &&
+            !item.reelId &&
+            !item.routeId &&
+            item.postType !== "poll" &&
+            item.postType !== "reel"
+          );
+        }
+        if (contentFilter === "routes") {
+          // Routes - either standalone routes or posts linked to routes
+          return (
+            item.type === "route" ||
+            (item.type === "post" && (item.route || item.routeId))
+          );
+        }
+        if (contentFilter === "polls") {
+          // Polls only
+          return item.type === "post" && item.postType === "poll";
+        }
+        if (contentFilter === "reels") {
+          // Reels - posts linked to reels
+          return (
+            item.type === "post" &&
+            (item.reel || item.reelId || item.postType === "reel")
+          );
+        }
+        if (contentFilter === "opportunities") {
+          return item.type === "opportunity";
+        }
+        if (contentFilter === "livestreams") {
+          return item.type === "livestream";
+        }
+        return true;
+      }),
+    [sortedItems, contentFilter],
+  );
 
   // Progressive loading - only render visible items
-  const displayedItems = useMemo(() => 
-    filteredItems.slice(0, visibleItems), 
-    [filteredItems, visibleItems]
+  const displayedItems = useMemo(
+    () => filteredItems.slice(0, visibleItems),
+    [filteredItems, visibleItems],
   );
 
   // Render immersive mode (TikTok-style full-screen)
   if (viewMode === "immersive") {
-    return <ImmersiveFeed userId={userId} />;
+    return (
+      <ImmersiveFeed
+        userId={userId}
+        onExitImmersive={() => setViewMode("cards")}
+        showControls={true}
+      />
+    );
   }
 
   return (
@@ -351,7 +418,10 @@ export function MobileFeed() {
                 <ChevronDown className="w-3 h-3 text-[var(--muted-foreground)]" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="bg-[var(--card)] border-[var(--border)]">
+            <DropdownMenuContent
+              align="start"
+              className="bg-[var(--card)] border-[var(--border)]"
+            >
               {sortOptions.map((option) => (
                 <DropdownMenuItem
                   key={option.value}
@@ -375,13 +445,18 @@ export function MobileFeed() {
                 <ChevronDown className="w-3 h-3" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="bg-[var(--card)] border-[var(--border)]">
+            <DropdownMenuContent
+              align="start"
+              className="bg-[var(--card)] border-[var(--border)]"
+            >
               {contentFilterOptions.map((option) => (
                 <DropdownMenuItem
                   key={option.value}
                   onClick={() => setContentFilter(option.value)}
                   className={`text-[var(--foreground)] hover:bg-[var(--accent)] ${
-                    contentFilter === option.value ? "bg-[var(--accent)] font-medium" : ""
+                    contentFilter === option.value
+                      ? "bg-[var(--accent)] font-medium"
+                      : ""
                   }`}
                 >
                   {option.label}
@@ -446,7 +521,11 @@ export function MobileFeed() {
 
         {/* Value Proposition for new/returning users */}
         {feedItems !== undefined && (
-          <ValuePropositionBanner variant="minimal" dismissible={true} className="mb-2" />
+          <ValuePropositionBanner
+            variant="minimal"
+            dismissible={true}
+            className="mb-2"
+          />
         )}
 
         {/* Empty State */}
@@ -455,24 +534,41 @@ export function MobileFeed() {
             <div className="w-14 h-14 bg-gradient-to-br from-[var(--color-aurora-purple)]/20 to-[var(--color-aurora-pink)]/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <Sparkles className="w-7 h-7 text-[var(--color-aurora-purple)]" />
             </div>
-            <h3 className="text-lg font-semibold mb-2 text-[var(--foreground)]">Welcome to Aurora App!</h3>
+            <h3 className="text-lg font-semibold mb-2 text-[var(--foreground)]">
+              Welcome to Aurora App!
+            </h3>
             <p className="text-[var(--muted-foreground)] text-sm mb-4">
               Your safe space for community, growth & opportunities
             </p>
-            
+
             {/* Quick Start Actions */}
             <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
-              <a href="/map" className="flex flex-col items-center gap-1 p-3 rounded-xl bg-[var(--color-aurora-mint)]/20 hover:bg-[var(--color-aurora-mint)]/30 transition-colors">
+              <a
+                href="/map"
+                className="flex flex-col items-center gap-1 p-3 rounded-xl bg-[var(--color-aurora-mint)]/20 hover:bg-[var(--color-aurora-mint)]/30 transition-colors"
+              >
                 <Shield className="w-5 h-5 text-[var(--color-aurora-mint)]" />
-                <span className="text-xs font-medium text-[var(--foreground)]">Safety</span>
+                <span className="text-xs font-medium text-[var(--foreground)]">
+                  Safety
+                </span>
               </a>
-              <a href="/circles" className="flex flex-col items-center gap-1 p-3 rounded-xl bg-[var(--color-aurora-pink)]/20 hover:bg-[var(--color-aurora-pink)]/30 transition-colors">
+              <a
+                href="/circles"
+                className="flex flex-col items-center gap-1 p-3 rounded-xl bg-[var(--color-aurora-pink)]/20 hover:bg-[var(--color-aurora-pink)]/30 transition-colors"
+              >
                 <Heart className="w-5 h-5 text-[var(--color-aurora-pink)]" />
-                <span className="text-xs font-medium text-[var(--foreground)]">Community</span>
+                <span className="text-xs font-medium text-[var(--foreground)]">
+                  Community
+                </span>
               </a>
-              <a href="/opportunities" className="flex flex-col items-center gap-1 p-3 rounded-xl bg-[var(--color-aurora-blue)]/20 hover:bg-[var(--color-aurora-blue)]/30 transition-colors">
+              <a
+                href="/opportunities"
+                className="flex flex-col items-center gap-1 p-3 rounded-xl bg-[var(--color-aurora-blue)]/20 hover:bg-[var(--color-aurora-blue)]/30 transition-colors"
+              >
                 <Briefcase className="w-5 h-5 text-[var(--color-aurora-blue)]" />
-                <span className="text-xs font-medium text-[var(--foreground)]">Jobs</span>
+                <span className="text-xs font-medium text-[var(--foreground)]">
+                  Jobs
+                </span>
               </a>
             </div>
           </div>
@@ -481,7 +577,9 @@ export function MobileFeed() {
         {/* Suggested for you label */}
         {sortedItems.length > 0 && (
           <div className="px-1 py-1">
-            <span className="text-xs text-[var(--muted-foreground)] font-medium">Suggested for you</span>
+            <span className="text-xs text-[var(--muted-foreground)] font-medium">
+              Suggested for you
+            </span>
           </div>
         )}
 
@@ -489,7 +587,9 @@ export function MobileFeed() {
         {isSlowNetwork && (
           <div className="flex items-center justify-center gap-2 py-2 px-3 bg-[var(--color-aurora-yellow)]/20 rounded-xl mb-3">
             <WifiOff className="w-4 h-4 text-[var(--color-aurora-yellow)]" />
-            <span className="text-xs text-[var(--foreground)]">Slow connection - Loading optimized content</span>
+            <span className="text-xs text-[var(--foreground)]">
+              Slow connection - Loading optimized content
+            </span>
           </div>
         )}
 
@@ -499,15 +599,19 @@ export function MobileFeed() {
           const showSisterSpotlightCard = index === 4 && userId;
           // Show ad every 5 posts for free users (less on slow networks)
           const adFrequency = isSlowNetwork ? 8 : 5;
-          const showAd = !isPremium && !shouldReduceData && index > 0 && index % adFrequency === 0;
+          const showAd =
+            !isPremium &&
+            !shouldReduceData &&
+            index > 0 &&
+            index % adFrequency === 0;
           // Show divider at certain points
           const showDivider = index === 8;
 
           return (
-            <div 
-              key={item._id} 
+            <div
+              key={item._id}
               className="content-visibility-auto touch-feedback"
-              style={{ containIntrinsicSize: 'auto 200px' }}
+              style={{ containIntrinsicSize: "auto 200px" }}
             >
               {/* Sister Spotlight Feed Card - appears naturally in feed */}
               {showSisterSpotlightCard && (
@@ -522,7 +626,9 @@ export function MobileFeed() {
               {showDivider && (
                 <div className="px-1 py-2 flex items-center gap-2">
                   <div className="flex-1 h-px bg-[var(--border)]" />
-                  <span className="text-xs text-[var(--muted-foreground)]">More posts</span>
+                  <span className="text-xs text-[var(--muted-foreground)]">
+                    More posts
+                  </span>
                   <div className="flex-1 h-px bg-[var(--border)]" />
                 </div>
               )}
@@ -543,17 +649,22 @@ export function MobileFeed() {
           <div className="py-4 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent)] rounded-full">
               <div className="w-4 h-4 border-2 border-[var(--color-aurora-purple)] border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm text-[var(--muted-foreground)]">Loading more...</span>
+              <span className="text-sm text-[var(--muted-foreground)]">
+                Loading more...
+              </span>
             </div>
           </div>
         )}
 
         {/* End of Feed */}
-        {displayedItems.length >= filteredItems.length && filteredItems.length > 0 && (
-          <div className="py-6 text-center">
-            <p className="text-sm text-[var(--muted-foreground)]">You're all caught up! 🎉</p>
-          </div>
-        )}
+        {displayedItems.length >= filteredItems.length &&
+          filteredItems.length > 0 && (
+            <div className="py-6 text-center">
+              <p className="text-sm text-[var(--muted-foreground)]">
+                You're all caught up! 🎉
+              </p>
+            </div>
+          )}
       </div>
 
       {/* Onboarding Wizard for new users */}
@@ -564,8 +675,6 @@ export function MobileFeed() {
           userId={userId}
         />
       )}
-
-
     </div>
   );
 }
