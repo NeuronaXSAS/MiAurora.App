@@ -13,12 +13,12 @@ import { api } from "@/convex/_generated/api";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Heart, 
-  X, 
-  Sparkles, 
-  MapPin, 
-  Briefcase, 
+import {
+  Heart,
+  X,
+  Sparkles,
+  MapPin,
+  Briefcase,
   MessageCircle,
   Users,
   ChevronRight,
@@ -30,9 +30,9 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 
 // Generate DiceBear Lorelei avatar URL
-function getAvatarUrl(user: { 
-  avatarConfig?: { 
-    seed: string; 
+function getAvatarUrl(user: {
+  avatarConfig?: {
+    seed: string;
     backgroundColor: string;
     hairStyle: string;
     hairColor: string;
@@ -58,9 +58,9 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatch, setShowMatch] = useState(false);
   const [matchedUser, setMatchedUser] = useState<any>(null);
-  
+
   // Fetch suggested users
-  const suggestedUsers = useQuery(api.users.getSuggestedUsers, { 
+  const suggestedUsers = useQuery(api.users.getSuggestedUsers, {
     userId: currentUserId,
     limit: 5,
   });
@@ -72,7 +72,7 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0.5, 1, 1, 1, 0.5]);
-  
+
   // Visual indicators for swipe direction
   const connectOpacity = useTransform(x, [0, 100], [0, 1]);
   const skipOpacity = useTransform(x, [-100, 0], [1, 0]);
@@ -87,7 +87,7 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
   const handleDragEnd = (_: any, info: { offset: { x: number }; velocity: { x: number } }) => {
     const swipeThreshold = 100;
     const velocityThreshold = 500;
-    
+
     if (info.offset.x > swipeThreshold || info.velocity.x > velocityThreshold) {
       handleConnect();
     } else if (info.offset.x < -swipeThreshold || info.velocity.x < -velocityThreshold) {
@@ -183,8 +183,8 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
                   {/* Both avatars */}
                   <div className="flex items-center justify-center -space-x-4">
                     <div className="w-20 h-20 rounded-full border-4 border-white shadow-lg overflow-hidden bg-[var(--color-aurora-lavender)]">
-                      <img 
-                        src={getAvatarUrl(matchedUser)} 
+                      <img
+                        src={getAvatarUrl(matchedUser)}
                         alt={matchedUser.name}
                         className="w-full h-full object-cover"
                       />
@@ -199,7 +199,7 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
                     </motion.div>
                   </div>
                 </motion.div>
-                
+
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -209,7 +209,7 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
                     It's a Match! 💜
                   </h3>
                   <p className="text-[var(--color-aurora-purple)] mb-4">
-                    You and {matchedUser.name?.split(" ")[0]} liked each other
+                    You and {matchedUser.name?.split(" ")[0]} can now chat & build safety
                   </p>
                   <Link href={`/messages/${matchedUser._id}`}>
                     <Button className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white rounded-xl">
@@ -232,13 +232,13 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
         >
           <div className="bg-[var(--card)] rounded-2xl border border-[var(--border)] h-full p-4 shadow-lg relative overflow-hidden">
             {/* Swipe Indicators */}
-            <motion.div 
+            <motion.div
               style={{ opacity: connectOpacity }}
               className="absolute top-4 right-4 z-10 bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] px-3 py-1 rounded-full font-bold text-sm rotate-12"
             >
               LIKE 💜
             </motion.div>
-            <motion.div 
+            <motion.div
               style={{ opacity: skipOpacity }}
               className="absolute top-4 left-4 z-10 bg-[var(--muted)] text-[var(--muted-foreground)] px-3 py-1 rounded-full font-bold text-sm -rotate-12"
             >
@@ -250,7 +250,7 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
               {/* DiceBear Avatar */}
               <div className="relative mb-2">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-[var(--color-aurora-lavender)] overflow-hidden bg-[var(--color-aurora-lavender)] shadow-lg">
-                  <img 
+                  <img
                     src={avatarUrl}
                     alt={currentUser.name || "User"}
                     className="w-full h-full object-cover"
@@ -308,17 +308,17 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
               {currentUser.interests && currentUser.interests.length > 0 && (
                 <div className="flex flex-wrap justify-center gap-1 sm:gap-1.5 mt-2 px-2">
                   {currentUser.interests.slice(0, 4).map((interest, idx) => (
-                    <Badge 
-                      key={idx} 
-                      variant="secondary" 
+                    <Badge
+                      key={idx}
+                      variant="secondary"
                       className="text-[10px] sm:text-xs bg-[var(--color-aurora-lavender)]/30 text-[var(--color-aurora-purple)] px-2 py-0.5"
                     >
                       {interest}
                     </Badge>
                   ))}
                   {currentUser.interests.length > 4 && (
-                    <Badge 
-                      variant="secondary" 
+                    <Badge
+                      variant="secondary"
                       className="text-[10px] sm:text-xs bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] px-2 py-0.5"
                     >
                       +{currentUser.interests.length - 4} more
@@ -345,7 +345,7 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
         >
           <X className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--muted-foreground)]" />
         </Button>
-        
+
         <Link href={`/user/${currentUser._id}`}>
           <Button
             variant="outline"
@@ -354,7 +354,7 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
             <Users className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-aurora-purple)]" />
           </Button>
         </Link>
-        
+
         <Button
           onClick={handleConnect}
           className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 transition-all shadow-lg min-w-[48px] min-h-[48px]"
@@ -369,8 +369,8 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
       </p>
 
       {/* View All Link */}
-      <Link 
-        href="/circles" 
+      <Link
+        href="/circles"
         className="flex items-center justify-center gap-1 mt-2 text-xs text-[var(--color-aurora-purple)] hover:underline"
       >
         <span>Find more sisters in Circles</span>
@@ -386,8 +386,8 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
 export function SisterSpotlightCompact({ currentUserId }: { currentUserId: Id<"users"> }) {
   const [likedUsers, setLikedUsers] = useState<Set<string>>(new Set());
   const [showMatchToast, setShowMatchToast] = useState<string | null>(null);
-  
-  const suggestedUsers = useQuery(api.users.getSuggestedUsers, { 
+
+  const suggestedUsers = useQuery(api.users.getSuggestedUsers, {
     userId: currentUserId,
     limit: 5,
   });
@@ -398,15 +398,15 @@ export function SisterSpotlightCompact({ currentUserId }: { currentUserId: Id<"u
 
   const handleQuickLike = async (userId: Id<"users">, userName: string) => {
     if (likedUsers.has(userId)) return;
-    
+
     try {
       const result = await likeUser({
         userId: currentUserId,
         likedUserId: userId,
       });
-      
+
       setLikedUsers(prev => new Set([...prev, userId]));
-      
+
       if (result.isMatch) {
         setShowMatchToast(userName);
         setTimeout(() => setShowMatchToast(null), 3000);
@@ -438,7 +438,9 @@ export function SisterSpotlightCompact({ currentUserId }: { currentUserId: Id<"u
               <p className="font-bold text-[var(--color-aurora-violet)]">
                 It's a Match with {showMatchToast}!
               </p>
-              <p className="text-xs text-[var(--color-aurora-purple)]">+5 credits earned</p>
+              <p className="text-xs text-[var(--color-aurora-purple)]">
+                +5 credits • Add to Safety Circle in Chat
+              </p>
             </div>
           </motion.div>
         )}
@@ -453,26 +455,25 @@ export function SisterSpotlightCompact({ currentUserId }: { currentUserId: Id<"u
           💜 Like to match
         </span>
       </div>
-      
+
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
         {suggestedUsers.map((user) => {
           const avatarUrl = getAvatarUrl(user);
           const isLiked = likedUsers.has(user._id);
-          
+
           return (
-            <motion.div 
-              key={user._id} 
+            <motion.div
+              key={user._id}
               className="flex-shrink-0 flex flex-col items-center gap-1 group"
               whileTap={{ scale: 0.95 }}
             >
               <div className="relative">
                 <Link href={`/user/${user._id}`}>
-                  <div className={`w-16 h-16 rounded-full border-2 transition-all overflow-hidden bg-[var(--color-aurora-lavender)] ${
-                    isLiked 
-                      ? "border-[var(--color-aurora-mint)] ring-2 ring-[var(--color-aurora-mint)]/30" 
+                  <div className={`w-16 h-16 rounded-full border-2 transition-all overflow-hidden bg-[var(--color-aurora-lavender)] ${isLiked
+                      ? "border-[var(--color-aurora-mint)] ring-2 ring-[var(--color-aurora-mint)]/30"
                       : "border-[var(--color-aurora-lavender)] group-hover:border-[var(--color-aurora-purple)]"
-                  }`}>
-                    <img 
+                    }`}>
+                    <img
                       src={avatarUrl}
                       alt={user.name || "User"}
                       className="w-full h-full object-cover"
@@ -482,11 +483,10 @@ export function SisterSpotlightCompact({ currentUserId }: { currentUserId: Id<"u
                 <button
                   onClick={() => handleQuickLike(user._id, user.name?.split(" ")[0] || "Sister")}
                   disabled={isLiked}
-                  className={`absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-md min-w-[28px] min-h-[28px] ${
-                    isLiked 
-                      ? "bg-[var(--color-aurora-mint)] cursor-default" 
+                  className={`absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-md min-w-[28px] min-h-[28px] ${isLiked
+                      ? "bg-[var(--color-aurora-mint)] cursor-default"
                       : "bg-[var(--color-aurora-pink)] hover:bg-[var(--color-aurora-purple)] active:scale-110"
-                  }`}
+                    }`}
                 >
                   {isLiked ? (
                     <Check className="w-3.5 h-3.5 text-[var(--color-aurora-violet)]" />
@@ -520,8 +520,8 @@ export function SisterSpotlightFeedCard({ currentUserId }: { currentUserId: Id<"
   const [likedUsers, setLikedUsers] = useState<Set<string>>(new Set());
   const [showMatch, setShowMatch] = useState(false);
   const [matchedUser, setMatchedUser] = useState<any>(null);
-  
-  const suggestedUsers = useQuery(api.users.getSuggestedUsers, { 
+
+  const suggestedUsers = useQuery(api.users.getSuggestedUsers, {
     userId: currentUserId,
     limit: 3,
   });
@@ -626,7 +626,7 @@ export function SisterSpotlightFeedCard({ currentUserId }: { currentUserId: Id<"
                 It's a Match!
               </h3>
               <p className="text-[var(--color-aurora-purple)]">
-                You and {matchedUser.name?.split(" ")[0]} can now chat
+                You and {matchedUser.name?.split(" ")[0]} can now chat & build safety
               </p>
             </div>
           </motion.div>
@@ -639,7 +639,7 @@ export function SisterSpotlightFeedCard({ currentUserId }: { currentUserId: Id<"
           {/* Avatar */}
           <Link href={`/user/${currentUser._id}`}>
             <div className="w-20 h-20 rounded-full border-3 border-[var(--color-aurora-lavender)] overflow-hidden bg-[var(--color-aurora-lavender)] shadow-lg">
-              <img 
+              <img
                 src={avatarUrl}
                 alt={currentUser.name || "User"}
                 className="w-full h-full object-cover"
@@ -684,9 +684,9 @@ export function SisterSpotlightFeedCard({ currentUserId }: { currentUserId: Id<"
         {currentUser.interests && currentUser.interests.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">
             {currentUser.interests.slice(0, 4).map((interest, idx) => (
-              <Badge 
-                key={idx} 
-                variant="secondary" 
+              <Badge
+                key={idx}
+                variant="secondary"
                 className="text-xs bg-[var(--color-aurora-lavender)]/30 text-[var(--color-aurora-purple)]"
               >
                 {interest}
@@ -705,7 +705,7 @@ export function SisterSpotlightFeedCard({ currentUserId }: { currentUserId: Id<"
         >
           <X className="w-6 h-6 text-[var(--muted-foreground)]" />
         </Button>
-        
+
         <Link href={`/user/${currentUser._id}`}>
           <Button
             variant="outline"
@@ -714,7 +714,7 @@ export function SisterSpotlightFeedCard({ currentUserId }: { currentUserId: Id<"
             <Users className="w-5 h-5 text-[var(--color-aurora-purple)]" />
           </Button>
         </Link>
-        
+
         <Button
           onClick={handleLike}
           className="w-14 h-14 rounded-full bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] hover:opacity-90 shadow-lg"

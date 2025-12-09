@@ -21,7 +21,7 @@ import {
   SisterSpotlightCompact,
   SisterSpotlightFeedCard,
 } from "@/components/sister-spotlight-card";
-import { GuardianDiscoveryCard } from "@/components/guardian-discovery-card";
+
 
 import {
   Sparkles,
@@ -286,34 +286,34 @@ export function MobileFeed() {
     () =>
       feedItems
         ? [...feedItems].sort((a: any, b: any) => {
-            switch (sortBy) {
-              case "hot":
-                const aScore =
-                  (a.upvotes || 0) -
-                  (a.downvotes || 0) +
-                  (a.commentCount || 0) * 2;
-                const bScore =
-                  (b.upvotes || 0) -
-                  (b.downvotes || 0) +
-                  (b.commentCount || 0) * 2;
-                return bScore - aScore;
-              case "new":
-                return b._creationTime - a._creationTime;
-              case "top":
-                return (
-                  (b.upvotes || 0) -
-                  (b.downvotes || 0) -
-                  ((a.upvotes || 0) - (a.downvotes || 0))
-                );
-              case "best":
-              default:
-                const aEngagement = (a.upvotes || 0) + (a.commentCount || 0);
-                const bEngagement = (b.upvotes || 0) + (b.commentCount || 0);
-                const aRecency = 1 / (Date.now() - a._creationTime + 1);
-                const bRecency = 1 / (Date.now() - b._creationTime + 1);
-                return bEngagement * bRecency - aEngagement * aRecency;
-            }
-          })
+          switch (sortBy) {
+            case "hot":
+              const aScore =
+                (a.upvotes || 0) -
+                (a.downvotes || 0) +
+                (a.commentCount || 0) * 2;
+              const bScore =
+                (b.upvotes || 0) -
+                (b.downvotes || 0) +
+                (b.commentCount || 0) * 2;
+              return bScore - aScore;
+            case "new":
+              return b._creationTime - a._creationTime;
+            case "top":
+              return (
+                (b.upvotes || 0) -
+                (b.downvotes || 0) -
+                ((a.upvotes || 0) - (a.downvotes || 0))
+              );
+            case "best":
+            default:
+              const aEngagement = (a.upvotes || 0) + (a.commentCount || 0);
+              const bEngagement = (b.upvotes || 0) + (b.commentCount || 0);
+              const aRecency = 1 / (Date.now() - a._creationTime + 1);
+              const bRecency = 1 / (Date.now() - b._creationTime + 1);
+              return bEngagement * bRecency - aEngagement * aRecency;
+          }
+        })
         : [],
     [feedItems, sortBy],
   );
@@ -426,9 +426,8 @@ export function MobileFeed() {
                 <DropdownMenuItem
                   key={option.value}
                   onClick={() => setSortBy(option.value as SortOption)}
-                  className={`flex items-center gap-2 text-[var(--foreground)] hover:bg-[var(--accent)] ${
-                    sortBy === option.value ? "bg-[var(--accent)]" : ""
-                  }`}
+                  className={`flex items-center gap-2 text-[var(--foreground)] hover:bg-[var(--accent)] ${sortBy === option.value ? "bg-[var(--accent)]" : ""
+                    }`}
                 >
                   <option.icon className="w-4 h-4 text-[var(--color-aurora-purple)]" />
                   {option.label}
@@ -453,11 +452,10 @@ export function MobileFeed() {
                 <DropdownMenuItem
                   key={option.value}
                   onClick={() => setContentFilter(option.value)}
-                  className={`text-[var(--foreground)] hover:bg-[var(--accent)] ${
-                    contentFilter === option.value
-                      ? "bg-[var(--accent)] font-medium"
-                      : ""
-                  }`}
+                  className={`text-[var(--foreground)] hover:bg-[var(--accent)] ${contentFilter === option.value
+                    ? "bg-[var(--accent)] font-medium"
+                    : ""
+                    }`}
                 >
                   {option.label}
                 </DropdownMenuItem>
@@ -514,10 +512,7 @@ export function MobileFeed() {
           <SisterSpotlightCompact currentUserId={userId} />
         )}
 
-        {/* Guardian Discovery - Build safety circle naturally */}
-        {userId && feedItems !== undefined && (
-          <GuardianDiscoveryCard currentUserId={userId} variant="compact" />
-        )}
+
 
         {/* Value Proposition for new/returning users */}
         {feedItems !== undefined && (
