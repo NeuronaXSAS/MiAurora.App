@@ -1,6 +1,16 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 
+// Helper function to validate media URLs
+function isValidMediaUrl(url: string | undefined | null): boolean {
+  if (!url) return false;
+  if (url.includes("example.com")) return false;
+  if (url.includes("placeholder")) return false;
+  if (url.includes("test.com")) return false;
+  if (!url.startsWith("http") && !url.startsWith("/")) return false;
+  return true;
+}
+
 // Map user interests to content dimensions/categories
 const INTEREST_TO_DIMENSION: Record<string, string[]> = {
   "Safe Commuting": ["daily", "travel"],
@@ -14,10 +24,10 @@ const INTEREST_TO_DIMENSION: Record<string, string[]> = {
 };
 
 const ROLE_TO_OPPORTUNITY: Record<string, string[]> = {
-  "Student": ["mentorship", "resource", "event"],
-  "Professional": ["job", "mentorship", "event"],
-  "Traveler": ["resource", "event"],
-  "Entrepreneur": ["funding", "mentorship", "event"],
+  Student: ["mentorship", "resource", "event"],
+  Professional: ["job", "mentorship", "event"],
+  Traveler: ["resource", "event"],
+  Entrepreneur: ["funding", "mentorship", "event"],
   "Job Seeker": ["job", "mentorship", "resource"],
 };
 
@@ -33,28 +43,28 @@ export const getUnifiedFeed = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 50;
-    
+
     // Get user preferences if userId provided
     let userInterests: string[] = [];
     let userRole = "";
     let userLocation = "";
     let preferredDimensions: string[] = [];
     let preferredOpportunityTypes: string[] = [];
-    
+
     if (args.userId) {
       const user = await ctx.db.get(args.userId);
       if (user) {
         userInterests = user.interests || [];
         userRole = user.industry || "";
         userLocation = user.location || "";
-        
+
         // Map interests to content dimensions
         for (const interest of userInterests) {
           const dims = INTEREST_TO_DIMENSION[interest];
           if (dims) preferredDimensions.push(...dims);
         }
         preferredDimensions = [...new Set(preferredDimensions)];
-        
+
         // Map role to opportunity types
         preferredOpportunityTypes = ROLE_TO_OPPORTUNITY[userRole] || [];
       }
@@ -67,73 +77,110 @@ export const getUnifiedFeed = query({
       .take(limit * 4); // Get more to filter by type and preferences
 
     // Also fetch reels directly to ensure they appear in feed
-    // Filter out empty/low-engagement reels to avoid "fake" looking content
+    // Filter out broken/placeholder reels to prevent black boxes in immersive view
     const rawReels = await ctx.db
       .query("reels")
       .order("desc")
-      .take(Math.ceil(limit * 0.6)); // Get more to filter
-    
-    // Task 14.3: Filter reels with actual engagement or content
-    // Keep reels that have: views > 0, OR likes > 0, OR comments > 0, OR have a caption
-    const allReels = rawReels.filter(reel => 
-      (reel.views && reel.views > 0) || 
-      (reel.likes && reel.likes > 0) || 
-      (reel.comments && reel.comments > 0) ||
-      (reel.caption && reel.caption.length > 10)
-    ).slice(0, Math.ceil(limit * 0.4)); // 40% reels for variety
+      .take(Math.ceil(limit * 0.8)); // Get more to filter
+
+    // CRITICAL: Filter reels to only include those with valid video URLs
+    // This prevents "black boxes" appearing in the TikTok-style immersive feed
+    // Reels must have:
+    // 1. A valid video URL (not example.com, placeholder, etc.)
+    // 2. Be approved for moderation
+    // 3. Have some engagement OR meaningful caption
+    const allReels = rawReels
+      .filter((reel) => {
+        // Must have valid video URL - this is the PRIMARY filter
+        if (!isValidMediaUrl(reel.videoUrl)) return false;
+
+        // Must be approved (or at least not rejected/flagged)
+        if (
+          reel.moderationStatus === "rejected" ||
+          reel.moderationStatus === "flagged"
+        )
+          return false;
+
+        // Must have some content indicator (engagement or caption)
+        const hasEngagement =
+          (reel.views && reel.views > 0) ||
+          (reel.likes && reel.likes > 0) ||
+          (reel.comments && reel.comments > 0);
+        const hasCaption = reel.caption && reel.caption.length > 5;
+
+        return hasEngagement || hasCaption;
+      })
+      .slice(0, Math.ceil(limit * 0.4)); // 40% reels for variety
 
     // IMPROVED FEED ALGORITHM v2.0
     // Prioritizes: Fresh content > Engagement velocity > Accumulated engagement
     // Goal: Let new genuine posts shine while keeping engaging content visible
-    
-    const scorePost = (post: typeof allPosts[0]) => {
-      const ageHours = Math.max(0.1, (Date.now() - post._creationTime) / (1000 * 60 * 60));
+
+    const scorePost = (post: (typeof allPosts)[0]) => {
+      const ageHours = Math.max(
+        0.1,
+        (Date.now() - post._creationTime) / (1000 * 60 * 60),
+      );
       const ageDays = ageHours / 24;
-      
+
       // === FRESHNESS SCORE (Primary factor) ===
       // New posts get massive initial boost that decays over time
       let freshnessScore = 0;
-      if (ageHours < 1) freshnessScore = 200;        // Brand new (< 1 hour)
-      else if (ageHours < 3) freshnessScore = 150;   // Very fresh (1-3 hours)
-      else if (ageHours < 6) freshnessScore = 100;   // Fresh (3-6 hours)
-      else if (ageHours < 12) freshnessScore = 70;   // Recent (6-12 hours)
-      else if (ageHours < 24) freshnessScore = 50;   // Today (12-24 hours)
-      else if (ageDays < 3) freshnessScore = 30;     // This week
-      else if (ageDays < 7) freshnessScore = 15;     // Last week
-      else freshnessScore = 5;                        // Older content
-      
+      if (ageHours < 1)
+        freshnessScore = 200; // Brand new (< 1 hour)
+      else if (ageHours < 3)
+        freshnessScore = 150; // Very fresh (1-3 hours)
+      else if (ageHours < 6)
+        freshnessScore = 100; // Fresh (3-6 hours)
+      else if (ageHours < 12)
+        freshnessScore = 70; // Recent (6-12 hours)
+      else if (ageHours < 24)
+        freshnessScore = 50; // Today (12-24 hours)
+      else if (ageDays < 3)
+        freshnessScore = 30; // This week
+      else if (ageDays < 7)
+        freshnessScore = 15; // Last week
+      else freshnessScore = 5; // Older content
+
       // === ENGAGEMENT VELOCITY (Secondary factor) ===
       // Rewards posts that are gaining traction quickly
       const upvotes = post.upvotes || 0;
       const comments = post.commentCount || 0;
       const verifications = post.verificationCount || 0;
-      
+
       const totalEngagement = upvotes + comments * 2 + verifications * 3;
       const engagementVelocity = totalEngagement / ageHours;
-      
+
       let velocityScore = 0;
-      if (engagementVelocity > 10) velocityScore = 150;  // Viral
-      else if (engagementVelocity > 5) velocityScore = 100;  // Hot
-      else if (engagementVelocity > 2) velocityScore = 60;   // Trending
-      else if (engagementVelocity > 1) velocityScore = 30;   // Rising
+      if (engagementVelocity > 10)
+        velocityScore = 150; // Viral
+      else if (engagementVelocity > 5)
+        velocityScore = 100; // Hot
+      else if (engagementVelocity > 2)
+        velocityScore = 60; // Trending
+      else if (engagementVelocity > 1)
+        velocityScore = 30; // Rising
       else if (engagementVelocity > 0.5) velocityScore = 15; // Active
-      
+
       // === ACCUMULATED ENGAGEMENT (Tertiary factor) ===
       // Still matters but with diminishing returns and time decay
       const engagementDecay = Math.pow(0.85, ageDays); // 15% decay per day
-      const rawEngagementScore = Math.min(100, upvotes * 1.5 + comments * 2 + verifications * 3);
+      const rawEngagementScore = Math.min(
+        100,
+        upvotes * 1.5 + comments * 2 + verifications * 3,
+      );
       const engagementScore = rawEngagementScore * engagementDecay;
-      
+
       // === PERSONALIZATION BONUS ===
       let personalizationScore = 0;
-      
+
       // Match user's preferred dimensions
       if (preferredDimensions.length > 0 && post.lifeDimension) {
         if (preferredDimensions.includes(post.lifeDimension)) {
           personalizationScore += 40;
         }
       }
-      
+
       // Location relevance
       if (userLocation && post.location?.name) {
         const postCity = post.location.name.split(",")[0].toLowerCase();
@@ -142,19 +189,19 @@ export const getUnifiedFeed = query({
           personalizationScore += 25;
         }
       }
-      
+
       // === CONTENT TYPE DIVERSITY BONUS ===
       let diversityScore = 0;
       if (post.postType === "poll") diversityScore = 20;
       else if (post.postType === "reel" || post.reelId) diversityScore = 25;
       else if (post.routeId) diversityScore = 20;
-      
+
       // === QUALITY SIGNALS ===
       let qualityScore = 0;
       if (post.isVerified) qualityScore += 25;
       if (post.media && post.media.length > 0) qualityScore += 15;
       if (post.description && post.description.length > 100) qualityScore += 10; // Thoughtful content
-      
+
       // === NEW USER BOOST ===
       // Give new users' first posts extra visibility to encourage participation
       // (This would need author creation time, approximating with low engagement + fresh)
@@ -162,36 +209,36 @@ export const getUnifiedFeed = query({
       if (ageHours < 24 && totalEngagement < 5) {
         newUserBoost = 30; // Help new genuine posts get discovered
       }
-      
+
       // === FINAL SCORE CALCULATION ===
       // Weighted combination prioritizing freshness and velocity
-      const finalScore = 
-        freshnessScore * 1.5 +      // Freshness is king
-        velocityScore * 1.2 +        // Velocity shows quality
-        engagementScore * 0.8 +      // Engagement matters but less
+      const finalScore =
+        freshnessScore * 1.5 + // Freshness is king
+        velocityScore * 1.2 + // Velocity shows quality
+        engagementScore * 0.8 + // Engagement matters but less
         personalizationScore * 1.0 + // Personalization is important
-        diversityScore * 0.8 +       // Encourage variety
-        qualityScore * 0.6 +         // Quality signals
-        newUserBoost;                // Help newcomers
-      
+        diversityScore * 0.8 + // Encourage variety
+        qualityScore * 0.6 + // Quality signals
+        newUserBoost; // Help newcomers
+
       return Math.round(finalScore);
     };
 
     // Sort each category by personalized score
-    const sortByScore = (posts: typeof allPosts) => 
+    const sortByScore = (posts: typeof allPosts) =>
       [...posts].sort((a, b) => scorePost(b) - scorePost(a));
 
     // INCLUDE ALL POSTS - no filtering, just sort by score
     // This ensures every post appears in the feed for maximum engagement
     const allSortedPosts = sortByScore(allPosts);
-    
+
     // Take up to limit posts, prioritizing variety
     const balancedPosts = allSortedPosts.slice(0, limit);
 
     const postsWithAuthors = await Promise.all(
       balancedPosts.map(async (post) => {
         const author = await ctx.db.get(post.authorId);
-        
+
         // Get route data if this post is linked to a route
         let routeData = null;
         if (post.routeId) {
@@ -235,15 +282,17 @@ export const getUnifiedFeed = query({
               shares: reel.shares,
               comments: reel.comments,
               // Include author info for display
-              author: reelAuthor ? {
-                _id: reelAuthor._id,
-                name: reelAuthor.name,
-                profileImage: reelAuthor.profileImage,
-              } : null,
+              author: reelAuthor
+                ? {
+                    _id: reelAuthor._id,
+                    name: reelAuthor.name,
+                    profileImage: reelAuthor.profileImage,
+                  }
+                : null,
             };
           }
         }
-        
+
         return {
           ...post,
           author,
@@ -252,7 +301,7 @@ export const getUnifiedFeed = query({
           type: "post" as const,
           timestamp: post._creationTime,
         };
-      })
+      }),
     );
 
     // Fetch recent public routes with creator data (standalone routes)
@@ -271,37 +320,43 @@ export const getUnifiedFeed = query({
           type: "route" as const,
           timestamp: route._creationTime,
         };
-      })
+      }),
     );
 
     // Fetch active livestreams to show in feed
     // Task 14.3: Only show livestreams with actual viewers or emergency streams
     const rawLivestreams = await ctx.db
       .query("livestreams")
-      .filter((q) => q.and(
-        q.eq(q.field("status"), "live"),
-        q.neq(q.field("isPrivate"), true)
-      ))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "live"),
+          q.neq(q.field("isPrivate"), true),
+        ),
+      )
       .order("desc")
       .take(Math.ceil(limit * 0.4)); // Get more to filter
-    
+
     // Filter livestreams: show only those with viewers > 0 OR emergency streams
-    const activeLivestreams = rawLivestreams.filter(stream =>
-      (stream.viewerCount && stream.viewerCount > 0) ||
-      stream.isEmergency === true
-    ).slice(0, Math.ceil(limit * 0.2));
+    const activeLivestreams = rawLivestreams
+      .filter(
+        (stream) =>
+          (stream.viewerCount && stream.viewerCount > 0) ||
+          stream.isEmergency === true,
+      )
+      .slice(0, Math.ceil(limit * 0.2));
 
     // Task 11.1: Fetch trending debates to include in feed
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
     const trendingDebates = await ctx.db
       .query("dailyDebates")
       .withIndex("by_date", (q) => q.eq("date", today))
       .take(6);
-    
+
     // Filter debates with high engagement
     const hotDebates = trendingDebates
-      .filter(d => {
-        const totalVotes = (d.agreeCount || 0) + (d.disagreeCount || 0) + (d.neutralCount || 0);
+      .filter((d) => {
+        const totalVotes =
+          (d.agreeCount || 0) + (d.disagreeCount || 0) + (d.neutralCount || 0);
         return totalVotes >= 5; // Only show debates with 5+ votes
       })
       .slice(0, 2); // Max 2 debates in feed
@@ -319,14 +374,16 @@ export const getUnifiedFeed = query({
           viewerCount: stream.viewerCount,
           isEmergency: stream.isEmergency,
           location: stream.location,
-          host: host ? {
-            _id: host._id,
-            name: host.name,
-            profileImage: host.profileImage,
-          } : null,
+          host: host
+            ? {
+                _id: host._id,
+                name: host.name,
+                profileImage: host.profileImage,
+              }
+            : null,
           channelName: stream.channelName,
         };
-      })
+      }),
     );
 
     // Task 11.1: Process trending debates for feed
@@ -344,7 +401,10 @@ export const getUnifiedFeed = query({
       agreeCount: debate.agreeCount || 0,
       disagreeCount: debate.disagreeCount || 0,
       neutralCount: debate.neutralCount || 0,
-      totalVotes: (debate.agreeCount || 0) + (debate.disagreeCount || 0) + (debate.neutralCount || 0),
+      totalVotes:
+        (debate.agreeCount || 0) +
+        (debate.disagreeCount || 0) +
+        (debate.neutralCount || 0),
     }));
 
     // Fetch recent active opportunities with creator data
@@ -355,16 +415,16 @@ export const getUnifiedFeed = query({
       .take(Math.ceil(limit * 0.5)); // Get more to filter
 
     // Score opportunities based on user preferences
-    const scoreOpportunity = (opp: typeof allOpportunities[0]) => {
+    const scoreOpportunity = (opp: (typeof allOpportunities)[0]) => {
       let score = 0;
-      
+
       // Boost opportunities matching user's role preferences
       if (preferredOpportunityTypes.length > 0) {
         if (preferredOpportunityTypes.includes(opp.category)) {
           score += 50;
         }
       }
-      
+
       // Boost opportunities from user's location
       if (userLocation && opp.location) {
         const oppCity = opp.location.split(",")[0].toLowerCase();
@@ -373,10 +433,10 @@ export const getUnifiedFeed = query({
           score += 40;
         }
       }
-      
+
       // Lower credit cost = more accessible
       score += Math.max(0, 50 - (opp.creditCost || 0));
-      
+
       return score;
     };
 
@@ -394,7 +454,7 @@ export const getUnifiedFeed = query({
           type: "opportunity" as const,
           timestamp: opp._creationTime,
         };
-      })
+      }),
     );
 
     // Process reels directly (not just posts with reelId)
@@ -423,11 +483,13 @@ export const getUnifiedFeed = query({
             likes: reel.likes,
             shares: reel.shares,
             comments: reel.comments,
-            author: author ? {
-              _id: author._id,
-              name: author.name,
-              profileImage: author.profileImage,
-            } : null,
+            author: author
+              ? {
+                  _id: author._id,
+                  name: author.name,
+                  profileImage: author.profileImage,
+                }
+              : null,
           },
           reelId: reel._id,
           // Required post fields with defaults
@@ -441,7 +503,7 @@ export const getUnifiedFeed = query({
           upvotes: reel.likes,
           commentCount: reel.comments,
         };
-      })
+      }),
     );
 
     // Combine all items - include reels, livestreams, and debates
@@ -455,17 +517,17 @@ export const getUnifiedFeed = query({
     ];
 
     // IMPROVED FEED MIXING ALGORITHM v2.0
-    // Goals: 
+    // Goals:
     // 1. Show variety of content types
     // 2. Mix fresh content with trending content
     // 3. Ensure new genuine posts get visibility
     // 4. Keep the feed feeling alive and dynamic
-    
+
     // Categorize items by type and freshness
-    const categorizeItem = (item: typeof allItems[0]) => {
+    const categorizeItem = (item: (typeof allItems)[0]) => {
       let typeKey: string = item.type;
       if (item.type === "post") {
-        const postItem = item as any;
+        const postItem = item as Record<string, unknown>;
         if (postItem.reel || postItem.reelId || postItem.postType === "reel") {
           typeKey = "reel";
         } else if (postItem.postType === "poll") {
@@ -478,61 +540,75 @@ export const getUnifiedFeed = query({
       } else if (item.type === "debate") {
         typeKey = "debate"; // Task 11.1: Debates as separate category
       }
-      
+
       // Also categorize by freshness
       const ageHours = (Date.now() - item.timestamp) / (1000 * 60 * 60);
-      const freshnessKey = ageHours < 6 ? "fresh" : ageHours < 24 ? "recent" : "older";
-      
+      const freshnessKey =
+        ageHours < 6 ? "fresh" : ageHours < 24 ? "recent" : "older";
+
       return { typeKey, freshnessKey };
     };
-    
+
     // Separate items into buckets
     const freshItems: typeof allItems = [];
     const recentItems: typeof allItems = [];
     const olderItems: typeof allItems = [];
-    
+
     for (const item of allItems) {
       const { freshnessKey } = categorizeItem(item);
       if (freshnessKey === "fresh") freshItems.push(item);
       else if (freshnessKey === "recent") recentItems.push(item);
       else olderItems.push(item);
     }
-    
+
     // Sort each bucket by score (already calculated in posts)
     // For non-posts, sort by timestamp
     const sortBucket = (bucket: typeof allItems) => {
       return bucket.sort((a, b) => {
         // Posts have scores, others use timestamp
-        const scoreA = (a as any).score ?? b.timestamp;
-        const scoreB = (b as any).score ?? a.timestamp;
-        return scoreB - scoreA;
+        const scoreA = (a as Record<string, unknown>).score ?? b.timestamp;
+        const scoreB = (b as Record<string, unknown>).score ?? a.timestamp;
+        return (scoreB as number) - (scoreA as number);
       });
     };
-    
+
     sortBucket(freshItems);
     sortBucket(recentItems);
     sortBucket(olderItems);
-    
+
     // Build final feed with smart mixing
     // Pattern: Fresh, Fresh, Recent, Fresh, Older, Fresh, Recent, Recent, Older...
     // This ensures new content dominates but older quality content still appears
     const interleaved: typeof allItems = [];
-    const pattern = ["fresh", "fresh", "recent", "fresh", "older", "fresh", "recent", "recent", "older", "fresh"];
-    
+    const pattern = [
+      "fresh",
+      "fresh",
+      "recent",
+      "fresh",
+      "older",
+      "fresh",
+      "recent",
+      "recent",
+      "older",
+      "fresh",
+    ];
+
     const buckets = {
       fresh: [...freshItems],
       recent: [...recentItems],
       older: [...olderItems],
     };
-    
+
     let patternIndex = 0;
     let consecutiveSameType = 0;
     let lastTypeKey = "";
-    
+
     while (interleaved.length < limit) {
-      const bucketKey = pattern[patternIndex % pattern.length] as keyof typeof buckets;
+      const bucketKey = pattern[
+        patternIndex % pattern.length
+      ] as keyof typeof buckets;
       let bucket = buckets[bucketKey];
-      
+
       // If preferred bucket is empty, try others
       if (bucket.length === 0) {
         const fallbackOrder = ["fresh", "recent", "older"];
@@ -543,10 +619,10 @@ export const getUnifiedFeed = query({
           }
         }
       }
-      
+
       // If all buckets empty, we're done
       if (bucket.length === 0) break;
-      
+
       // Find an item that doesn't create too many consecutive same-type items
       let selectedIndex = 0;
       for (let i = 0; i < Math.min(5, bucket.length); i++) {
@@ -556,10 +632,10 @@ export const getUnifiedFeed = query({
           break;
         }
       }
-      
+
       const selectedItem = bucket.splice(selectedIndex, 1)[0];
       const { typeKey } = categorizeItem(selectedItem);
-      
+
       // Track consecutive same-type items
       if (typeKey === lastTypeKey) {
         consecutiveSameType++;
@@ -567,11 +643,11 @@ export const getUnifiedFeed = query({
         consecutiveSameType = 1;
         lastTypeKey = typeKey;
       }
-      
+
       interleaved.push(selectedItem);
       patternIndex++;
     }
-    
+
     return interleaved.slice(0, limit);
   },
 });
@@ -582,7 +658,12 @@ export const getUnifiedFeed = query({
 export const getFilteredFeed = query({
   args: {
     contentType: v.optional(
-      v.union(v.literal("post"), v.literal("route"), v.literal("opportunity"), v.literal("all"))
+      v.union(
+        v.literal("post"),
+        v.literal("route"),
+        v.literal("opportunity"),
+        v.literal("all"),
+      ),
     ),
     limit: v.optional(v.number()),
   },
@@ -592,11 +673,8 @@ export const getFilteredFeed = query({
 
     if (contentType === "all") {
       // Return unified feed
-      const allFeed = await ctx.db
-        .query("posts")
-        .order("desc")
-        .take(limit);
-      
+      const allFeed = await ctx.db.query("posts").order("desc").take(limit);
+
       return allFeed.map((post) => ({
         ...post,
         type: "post" as const,
@@ -605,11 +683,8 @@ export const getFilteredFeed = query({
     }
 
     if (contentType === "post") {
-      const posts = await ctx.db
-        .query("posts")
-        .order("desc")
-        .take(limit);
-      
+      const posts = await ctx.db.query("posts").order("desc").take(limit);
+
       return posts.map((post) => ({
         ...post,
         type: "post" as const,
@@ -623,7 +698,7 @@ export const getFilteredFeed = query({
         .withIndex("by_sharing", (q) => q.eq("sharingLevel", "public"))
         .order("desc")
         .take(limit);
-      
+
       return routes.map((route) => ({
         ...route,
         type: "route" as const,
@@ -637,7 +712,7 @@ export const getFilteredFeed = query({
         .withIndex("by_active", (q) => q.eq("isActive", true))
         .order("desc")
         .take(limit);
-      
+
       return opportunities.map((opp) => ({
         ...opp,
         type: "opportunity" as const,
@@ -667,16 +742,15 @@ export const getPublicActivity = query({
     }> = [];
 
     // Get recent posts
-    const recentPosts = await ctx.db
-      .query("posts")
-      .order("desc")
-      .take(3);
+    const recentPosts = await ctx.db.query("posts").order("desc").take(3);
 
     for (const post of recentPosts) {
       const author = await ctx.db.get(post.authorId);
       const firstName = author?.name?.split(" ")[0] || "Someone";
-      const locationName = post.location?.name ? ` in ${post.location.name.split(",")[0]}` : "";
-      
+      const locationName = post.location?.name
+        ? ` in ${post.location.name.split(",")[0]}`
+        : "";
+
       activities.push({
         type: "post",
         message: `${firstName} shared a ${post.lifeDimension} experience${locationName}`,
@@ -695,8 +769,10 @@ export const getPublicActivity = query({
     for (const route of recentRoutes) {
       const creator = await ctx.db.get(route.creatorId);
       const firstName = creator?.name?.split(" ")[0] || "Someone";
-      const distance = route.distance ? `${(route.distance / 1000).toFixed(1)}km` : "";
-      
+      const distance = route.distance
+        ? `${(route.distance / 1000).toFixed(1)}km`
+        : "";
+
       activities.push({
         type: "route",
         message: `${firstName} shared a ${distance} safe route${route.tags?.length ? ` (${route.tags[0]})` : ""}`,
@@ -715,7 +791,7 @@ export const getPublicActivity = query({
     for (const opp of recentOpportunities) {
       const creator = await ctx.db.get(opp.creatorId);
       const firstName = creator?.name?.split(" ")[0] || "Someone";
-      
+
       activities.push({
         type: "opportunity",
         message: `${firstName} posted a ${opp.category} opportunity${opp.location ? ` in ${opp.location.split(",")[0]}` : ""}`,
@@ -729,7 +805,6 @@ export const getPublicActivity = query({
     return activities.slice(0, limit);
   },
 });
-
 
 /**
  * Get public feed for landing page (no auth required)
@@ -757,8 +832,10 @@ export const getPublicFeed = query({
       const publicPosts = await Promise.all(
         posts.map(async (post) => {
           try {
-            const author = post.authorId ? await ctx.db.get(post.authorId) : null;
-            
+            const author = post.authorId
+              ? await ctx.db.get(post.authorId)
+              : null;
+
             // Use stored commentCount instead of querying comments table
             const commentCount = post.commentCount ?? 0;
 
@@ -773,20 +850,22 @@ export const getPublicFeed = query({
               upvotes: post.upvotes || 0,
               commentCount: commentCount,
               isAnonymous: post.isAnonymous ?? false,
-              authorName: post.isAnonymous ? null : (author?.name || null),
+              authorName: post.isAnonymous ? null : author?.name || null,
               type: "post" as const,
             };
           } catch {
             // Skip posts that fail to process
             return null;
           }
-        })
+        }),
       );
 
       // Filter out null entries and posts with very little content
       const filteredPosts = publicPosts.filter(
-        (post): post is NonNullable<typeof post> => 
-          post !== null && typeof post.content === 'string' && post.content.length > 20
+        (post): post is NonNullable<typeof post> =>
+          post !== null &&
+          typeof post.content === "string" &&
+          post.content.length > 20,
       );
 
       return filteredPosts.slice(0, limit);

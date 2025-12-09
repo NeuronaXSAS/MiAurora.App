@@ -246,6 +246,7 @@ export default function ProfilePage() {
         isOwnProfile={true}
         onEditProfile={() => setShowEditDialog(true)}
         onEditAvatar={() => setShowAvatarCreator(true)}
+        onCoverUpload={() => alert("Custom cover uploads coming soon! Please use 'Change Aura' for now.")}
         actionButtons={
           <>
             {user.isPremium ? (
@@ -334,22 +335,24 @@ export default function ProfilePage() {
                       <Link key={post._id} href={`/feed?post=${post._id}`} className="block h-full">
                         <Card className="h-full hover:border-[var(--color-aurora-purple)] transition-colors cursor-pointer group overflow-hidden border-[var(--border)] bg-[var(--card)]">
                           <div className="aspect-video bg-[var(--accent)] relative overflow-hidden">
-                            {post.image ? (
-                              <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                            {post.media && post.media.length > 0 && post.media[0].type === "image" ? (
+                              <img src={post.media[0].url} alt="Post" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-[var(--muted-foreground)]">
                                 <FileText className="w-8 h-8 opacity-20" />
                               </div>
                             )}
-                            <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
+                            {/* Category - To be implemented when available in API */}
+                            {/* <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
                               {post.category || "Post"}
-                            </div>
+                            </div> */}
                           </div>
                           <CardContent className="p-3">
-                            <h4 className="font-semibold line-clamp-1 group-hover:text-[var(--color-aurora-purple)] transition-colors text-[var(--foreground)]">{post.title}</h4>
+                            <h4 className="font-semibold line-clamp-1 group-hover:text-[var(--color-aurora-purple)] transition-colors text-[var(--foreground)]">Post</h4>
                             <div className="flex items-center gap-3 mt-2 text-xs text-[var(--muted-foreground)]">
-                              <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> {post.likes || 0}</span>
-                              <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" /> {post.comments || 0}</span>
+                              {/* Likes and Comments - To be implemented when available in API */}
+                              {/* <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> {post.likes || 0}</span>
+                              <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" /> {post.comments || 0}</span> */}
                               <span className="ml-auto">{formatDistanceToNow(post._creationTime)} ago</span>
                             </div>
                           </CardContent>

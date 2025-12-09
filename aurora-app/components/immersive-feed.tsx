@@ -7,15 +7,9 @@
  * and enhanced engagement features for maximum user retention.
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import {
-  motion,
-  AnimatePresence,
-  useMotionValue,
-  useTransform,
-  PanInfo,
-} from "framer-motion";
-import { useQuery, useMutation } from "convex/react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -28,35 +22,68 @@ import {
   MessageCircle,
   Share2,
   Bookmark,
-  MoreHorizontal,
   ChevronUp,
   ChevronDown,
   Play,
-  Pause,
   Volume2,
   VolumeX,
   Sparkles,
   Shield,
   MapPin,
-  Users,
   Send,
   X,
   Gift,
-  ThumbsUp,
-  ThumbsDown,
-  Award,
   Flame,
   Eye,
   Clock,
   LayoutGrid,
-  Filter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
+interface FeedItem {
+  _id: string;
+  _creationTime: number;
+  type: string;
+  timestamp: number;
+  author?: {
+    _id: string;
+    name?: string;
+    profileImage?: string;
+  };
+  authorId?: string;
+  title?: string;
+  content?: string;
+  description?: string;
+  location?: string | { name?: string; city?: string };
+  views?: number;
+  upvotes?: number;
+  likes?: number;
+  comments?: number;
+  commentCount?: number;
+  shares?: number;
+  tags?: string[];
+  reel?: {
+    videoUrl?: string;
+    thumbnailUrl?: string;
+    caption?: string;
+    hashtags?: string[];
+    views?: number;
+  };
+  route?: {
+    rating?: number;
+  };
+  rating?: number;
+  postType?: string;
+  reelId?: string;
+  mediaUrl?: string;
+  imageUrl?: string;
+  isAnonymous?: boolean;
+}
+
 interface ImmersiveFeedProps {
   userId: Id<"users"> | null;
-  initialItems?: any[];
+  initialItems?: FeedItem[];
   onExitImmersive?: () => void;
   showControls?: boolean;
 }
@@ -73,7 +100,6 @@ const QUICK_REACTIONS = [
 // Side Action Bar Component
 function ActionBar({
   item,
-  userId,
   onLike,
   onComment,
   onShare,
@@ -84,8 +110,8 @@ function ActionBar({
   commentCount,
   shareCount,
 }: {
-  item: any;
-  userId: Id<"users"> | null;
+  item: FeedItem;
+  userId?: Id<"users"> | null;
   onLike: () => void;
   onComment: () => void;
   onShare: () => void;
@@ -228,18 +254,30 @@ function formatCount(count: number): string {
 }
 
 // Comment Drawer Component
+interface CommentType {
+  _id: string;
+  content: string;
+  authorId: string;
+  _creationTime: number;
+  likes?: number;
+  author?: {
+    _id: string;
+    name?: string;
+    profileImage?: string;
+  };
+}
+
 function CommentDrawer({
   isOpen,
   onClose,
-  postId,
   userId,
   comments,
 }: {
   isOpen: boolean;
   onClose: () => void;
-  postId: Id<"posts">;
+  postId?: string;
   userId: Id<"users"> | null;
-  comments: any[];
+  comments: CommentType[];
 }) {
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -305,7 +343,7 @@ function CommentDrawer({
                 </div>
               )}
 
-              {comments?.map((comment: any) => (
+              {comments.map((comment: CommentType) => (
                 <div key={comment._id} className="flex gap-3">
                   <Avatar className="w-8 h-8">
                     <AvatarImage src={comment.author?.profileImage} />
@@ -330,7 +368,7 @@ function CommentDrawer({
                     <div className="flex items-center gap-4 mt-2">
                       <button className="flex items-center gap-1 text-xs text-[var(--muted-foreground)] hover:text-[var(--color-aurora-pink)]">
                         <Heart className="w-4 h-4" />
-                        {comment.likes || 0}
+                        {comment.likes ?? 0}
                       </button>
                       <button className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
                         Reply
@@ -382,7 +420,7 @@ function FeedItemCard({
   isActive,
   onCommentOpen,
 }: {
-  item: any;
+  item: FeedItem;
   userId: Id<"users"> | null;
   isActive: boolean;
   onCommentOpen: () => void;
@@ -396,15 +434,21 @@ function FeedItemCard({
 
   // Auto-play/pause based on visibility
   useEffect(() => {
-    if (videoRef.current) {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Use requestAnimationFrame to avoid synchronous setState warnings
+    const frameId = requestAnimationFrame(() => {
       if (isActive) {
-        videoRef.current.play().catch(() => {});
+        video.play().catch(() => {});
         setIsPlaying(true);
       } else {
-        videoRef.current.pause();
+        video.pause();
         setIsPlaying(false);
       }
-    }
+    });
+
+    return () => cancelAnimationFrame(frameId);
   }, [isActive]);
 
   const handleLike = () => {
@@ -421,7 +465,7 @@ function FeedItemCard({
           text: item.content?.substring(0, 100) || "",
           url: `${window.location.origin}/feed?post=${item._id}`,
         });
-      } catch (err) {
+      } catch {
         // User cancelled or error
       }
     }
@@ -448,7 +492,7 @@ function FeedItemCard({
   const hasMedia = mediaUrl || imageUrl || videoUrl || thumbnailUrl;
 
   return (
-    <div className="relative w-full h-full snap-start snap-always">
+    <div className="relative w-full h-full snap-start snap-always flex flex-col overflow-hidden">
       {/* Background - Image or Video */}
       <div className="absolute inset-0 bg-gradient-to-b from-[var(--color-aurora-violet)] to-black">
         {isReel && videoUrl ? (
@@ -512,14 +556,14 @@ function FeedItemCard({
         </div>
       )}
 
-      {/* Content Overlay - Bottom */}
-      <div className="absolute bottom-0 left-0 right-16 p-4 z-10">
+      {/* Content Overlay - Bottom - Positioned to fit viewport */}
+      <div className="absolute bottom-[env(safe-area-inset-bottom,0px)] left-0 right-16 p-4 pb-6 z-10 max-h-[35vh] overflow-hidden">
         {/* Author Info */}
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-2 mb-2">
           <Link href={`/user/${item.authorId}`}>
-            <Avatar className="w-10 h-10 ring-2 ring-white/30">
+            <Avatar className="w-8 h-8 ring-2 ring-white/30">
               <AvatarImage src={item.author?.profileImage} />
-              <AvatarFallback className="bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white text-sm">
+              <AvatarFallback className="bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] text-white text-xs">
                 {item.author?.name?.charAt(0) || "A"}
               </AvatarFallback>
             </Avatar>
@@ -527,7 +571,7 @@ function FeedItemCard({
           <div className="flex-1 min-w-0">
             <Link
               href={`/user/${item.authorId}`}
-              className="font-semibold text-white hover:underline"
+              className="font-semibold text-white hover:underline text-sm"
             >
               {item.author?.name || "Anonymous"}
             </Link>
@@ -549,7 +593,7 @@ function FeedItemCard({
           </div>
           <Button
             size="sm"
-            className="bg-[var(--color-aurora-pink)] hover:bg-[var(--color-aurora-pink)]/90 text-white rounded-full px-4"
+            className="bg-[var(--color-aurora-pink)] hover:bg-[var(--color-aurora-pink)]/90 text-white rounded-full px-3 py-1 h-7 text-xs"
           >
             Follow
           </Button>
@@ -557,24 +601,25 @@ function FeedItemCard({
 
         {/* Post Title/Content */}
         {item.title && (
-          <h3 className="font-bold text-white text-lg mb-2 line-clamp-2">
+          <h3 className="font-bold text-white text-base mb-1 line-clamp-1">
             {item.title}
           </h3>
         )}
 
-        <p className="text-white/90 text-sm line-clamp-3 mb-3">
+        <p className="text-white/90 text-sm line-clamp-2 mb-2">
           {item.content || item.reel?.caption || item.description}
         </p>
 
-        {/* Tags/Hashtags */}
-        {(item.tags?.length > 0 || item.reel?.hashtags?.length > 0) && (
-          <div className="flex flex-wrap gap-2 mb-3">
-            {(item.tags || item.reel?.hashtags || [])
-              .slice(0, 4)
+        {/* Tags/Hashtags - Compact for viewport fit */}
+        {((item.tags?.length ?? 0) > 0 ||
+          (item.reel?.hashtags?.length ?? 0) > 0) && (
+          <div className="flex flex-wrap gap-1.5 mb-2 overflow-hidden max-h-[24px]">
+            {(item.tags ?? item.reel?.hashtags ?? [])
+              .slice(0, 3)
               .map((tag: string) => (
                 <span
                   key={tag}
-                  className="text-[var(--color-aurora-pink)] text-sm font-medium"
+                  className="text-[var(--color-aurora-pink)] text-xs font-medium"
                 >
                   #{tag}
                 </span>
@@ -584,35 +629,32 @@ function FeedItemCard({
 
         {/* Route Safety Badge */}
         {isRoute && (
-          <div className="flex items-center gap-2 mb-3">
-            <Badge className="bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0">
+          <div className="flex items-center gap-2 mb-2">
+            <Badge className="bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0 text-xs py-0.5">
               <Shield className="w-3 h-3 mr-1" />
-              Safety Score:{" "}
+              Safety:{" "}
               {Math.round((item.route?.rating || item.rating || 4) * 20)}%
             </Badge>
           </div>
         )}
 
-        {/* Engagement Stats */}
-        <div className="flex items-center gap-4 text-white/70 text-xs">
+        {/* Engagement Stats - Compact */}
+        <div className="flex items-center gap-3 text-white/70 text-xs">
           <span className="flex items-center gap-1">
-            <Eye className="w-4 h-4" />
-            {formatCount(
-              item.views ||
-                item.reel?.views ||
-                Math.floor(Math.random() * 10000),
-            )}{" "}
-            views
+            <Eye className="w-3 h-3" />
+            {formatCount(item.views || item.reel?.views || 0)}
           </span>
-          <span className="flex items-center gap-1">
-            <Flame className="w-4 h-4 text-[var(--color-aurora-pink)]" />
-            Trending
-          </span>
+          {(item.views || item.reel?.views || 0) > 100 && (
+            <span className="flex items-center gap-1">
+              <Flame className="w-3 h-3 text-[var(--color-aurora-pink)]" />
+              Trending
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Side Action Bar */}
-      <div className="absolute right-3 bottom-24 z-10">
+      {/* Side Action Bar - Positioned within viewport */}
+      <div className="absolute right-3 bottom-[15vh] z-10">
         <ActionBar
           item={item}
           userId={userId}
@@ -673,10 +715,14 @@ export function ImmersiveFeed({
     const handleInteraction = () => resetControlsTimeout();
     window.addEventListener("touchstart", handleInteraction);
     window.addEventListener("mousemove", handleInteraction);
-    resetControlsTimeout();
+    // Start the timeout on mount
+    const timeoutId = setTimeout(() => {
+      setControlsVisible(false);
+    }, 3000);
     return () => {
       window.removeEventListener("touchstart", handleInteraction);
       window.removeEventListener("mousemove", handleInteraction);
+      clearTimeout(timeoutId);
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
@@ -689,7 +735,9 @@ export function ImmersiveFeed({
     userId: userId || undefined,
   });
 
-  const items = feedItems || initialItems || [];
+  const items = useMemo(() => {
+    return (feedItems || initialItems || []) as FeedItem[];
+  }, [feedItems, initialItems]);
 
   // Handle scroll snap
   const handleScroll = useCallback(() => {
@@ -744,7 +792,7 @@ export function ImmersiveFeed({
   }
 
   return (
-    <div className="relative h-screen bg-black">
+    <div className="relative h-[100dvh] bg-black overflow-hidden">
       {/* Floating Control Bar - Centered, easy to reach */}
       {showControls && (
         <motion.div
@@ -847,17 +895,20 @@ export function ImmersiveFeed({
         </button>
       </div>
 
-      {/* Feed Container with Snap Scroll */}
+      {/* Feed Container with Snap Scroll - Fixed viewport height */}
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
-        style={{ scrollSnapType: "y mandatory" }}
+        className="h-[100dvh] overflow-y-scroll snap-y snap-mandatory scrollbar-hide overscroll-none"
+        style={{
+          scrollSnapType: "y mandatory",
+          WebkitOverflowScrolling: "touch",
+        }}
       >
-        {items.map((item: any, index: number) => (
+        {items.map((item: FeedItem, index: number) => (
           <div
             key={item._id}
-            className="h-screen w-full snap-start snap-always"
+            className="h-[100dvh] w-full snap-start snap-always flex-shrink-0"
           >
             <FeedItemCard
               item={item}
@@ -875,7 +926,7 @@ export function ImmersiveFeed({
         onClose={() => setShowComments(false)}
         postId={items[currentIndex]?._id}
         userId={userId}
-        comments={items[currentIndex]?.comments || []}
+        comments={[]}
       />
 
       {/* Credit Earned Toast */}

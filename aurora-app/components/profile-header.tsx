@@ -22,6 +22,7 @@ interface ProfileHeaderProps {
     isOwnProfile?: boolean;
     onEditProfile?: () => void;
     onEditAvatar?: () => void;
+    onCoverUpload?: () => void;
     actionButtons?: React.ReactNode;
     hideStats?: boolean;
 }
@@ -32,6 +33,7 @@ export function ProfileHeader({
     isOwnProfile = false,
     onEditProfile,
     onEditAvatar,
+    onCoverUpload,
     actionButtons,
     hideStats = false,
 }: ProfileHeaderProps) {
@@ -82,7 +84,12 @@ export function ProfileHeader({
                             <Sparkles className="w-4 h-4 mr-2" />
                             Change Aura
                         </Button>
-                        <Button variant="ghost" size="sm" className="bg-black/20 hover:bg-black/30 text-white border border-white/20 backdrop-blur-sm transition-all">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onCoverUpload}
+                            className="bg-black/20 hover:bg-black/30 text-white border border-white/20 backdrop-blur-sm transition-all"
+                        >
                             <Camera className="w-4 h-4 mr-2" />
                             Upload
                         </Button>

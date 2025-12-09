@@ -37,7 +37,7 @@ export function UserCard({ user, action, showBio = true }: UserCardProps) {
                 <Link href={`/user/${user._id}`} className="shrink-0">
                     <div className="relative">
                         <Avatar className="w-12 h-12 sm:w-14 sm:h-14 border-2 border-[var(--accent)] group-hover:border-[var(--color-aurora-purple)] transition-colors">
-                            <AvatarImage src={avatarUrl} objectFit="cover" />
+                            <AvatarImage src={avatarUrl} />
                             <AvatarFallback className="bg-[var(--accent)] text-[var(--color-aurora-purple)] font-bold">
                                 {user.name?.charAt(0).toUpperCase() || "U"}
                             </AvatarFallback>
