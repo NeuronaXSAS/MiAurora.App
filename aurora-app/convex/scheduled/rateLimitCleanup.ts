@@ -16,7 +16,7 @@ const crons = cronJobs();
 crons.hourly(
   "cleanup-expired-rate-limits",
   { minuteUTC: 30 }, // Run at 30 minutes past each hour
-  internal.rateLimit.cleanupExpiredRateLimits
+  (internal as any).rateLimit.cleanupExpiredRateLimits
 );
 
 export default crons;
