@@ -19,52 +19,68 @@ export default defineSchema({
     lastCreditReset: v.optional(v.number()), // Timestamp
 
     // Avatar configuration (Lorelei style)
-    avatarConfig: v.optional(v.object({
-      seed: v.string(),
-      backgroundColor: v.string(),
-      hairStyle: v.string(),
-      hairColor: v.string(),
-      skinColor: v.string(),
-      eyesStyle: v.string(),
-      mouthStyle: v.string(),
-      earrings: v.string(),
-      freckles: v.boolean(),
-    })),
+    avatarConfig: v.optional(
+      v.object({
+        seed: v.string(),
+        backgroundColor: v.string(),
+        hairStyle: v.string(),
+        hairColor: v.string(),
+        skinColor: v.string(),
+        eyesStyle: v.string(),
+        mouthStyle: v.string(),
+        earrings: v.string(),
+        freckles: v.boolean(),
+      }),
+    ),
 
     // Monetization
     isPremium: v.optional(v.boolean()), // Default: false - Premium users get ad-free experience
 
     // Privacy settings
-    privacySettings: v.optional(v.object({
-      dataSharing: v.boolean(),
-      analyticsTracking: v.boolean(),
-      personalizedAds: v.boolean(),
-      locationSharing: v.boolean(),
-      profileVisibility: v.union(v.literal('public'), v.literal('private'), v.literal('friends')),
-      messagePrivacy: v.union(v.literal('everyone'), v.literal('friends'), v.literal('none')),
-      activityStatus: v.boolean(),
-    })),
+    privacySettings: v.optional(
+      v.object({
+        dataSharing: v.boolean(),
+        analyticsTracking: v.boolean(),
+        personalizedAds: v.boolean(),
+        locationSharing: v.boolean(),
+        profileVisibility: v.union(
+          v.literal("public"),
+          v.literal("private"),
+          v.literal("friends"),
+        ),
+        messagePrivacy: v.union(
+          v.literal("everyone"),
+          v.literal("friends"),
+          v.literal("none"),
+        ),
+        activityStatus: v.boolean(),
+      }),
+    ),
 
     // Consent tracking
-    consents: v.optional(v.object({
-      termsAccepted: v.boolean(),
-      termsAcceptedAt: v.optional(v.number()),
-      privacyPolicyAccepted: v.boolean(),
-      privacyPolicyAcceptedAt: v.optional(v.number()),
-      marketingConsent: v.boolean(),
-      marketingConsentAt: v.optional(v.number()),
-      analyticsConsent: v.boolean(),
-      analyticsConsentAt: v.optional(v.number()),
-    })),
+    consents: v.optional(
+      v.object({
+        termsAccepted: v.boolean(),
+        termsAcceptedAt: v.optional(v.number()),
+        privacyPolicyAccepted: v.boolean(),
+        privacyPolicyAcceptedAt: v.optional(v.number()),
+        marketingConsent: v.boolean(),
+        marketingConsentAt: v.optional(v.number()),
+        analyticsConsent: v.boolean(),
+        analyticsConsentAt: v.optional(v.number()),
+      }),
+    ),
 
     // Life Canvas - Life visualization
     birthYear: v.optional(v.number()), // Year of birth for life visualization
     lifeExpectancy: v.optional(v.number()), // Expected years to live (default: 80)
-    gender: v.optional(v.union(
-      v.literal("female"),
-      v.literal("non-binary"),
-      v.literal("prefer-not-to-say")
-    )),
+    gender: v.optional(
+      v.union(
+        v.literal("female"),
+        v.literal("non-binary"),
+        v.literal("prefer-not-to-say"),
+      ),
+    ),
 
     // Account deletion
     deletionRequested: v.optional(v.boolean()),
@@ -82,7 +98,7 @@ export default defineSchema({
       v.literal("social"),
       v.literal("daily"),
       v.literal("travel"),
-      v.literal("financial")
+      v.literal("financial"),
     ),
     title: v.string(), // 10-200 chars
     description: v.string(), // 20-2000 chars
@@ -91,7 +107,7 @@ export default defineSchema({
       v.object({
         name: v.string(),
         coordinates: v.array(v.number()), // [lng, lat]
-      })
+      }),
     ),
     media: v.optional(
       v.array(
@@ -100,8 +116,8 @@ export default defineSchema({
           storageId: v.id("_storage"),
           url: v.string(),
           thumbnailUrl: v.optional(v.string()),
-        })
-      )
+        }),
+      ),
     ),
     verificationCount: v.number(), // Default: 0
     isVerified: v.boolean(), // True when verificationCount >= 5
@@ -111,24 +127,32 @@ export default defineSchema({
     upvotes: v.optional(v.number()), // Default: 0
     downvotes: v.optional(v.number()), // Default: 0
     commentCount: v.optional(v.number()), // Default: 0
-    postType: v.optional(v.union(
-      v.literal("standard"),
-      v.literal("poll"),
-      v.literal("ai_chat"),
-      v.literal("reel")
-    )),
-    pollOptions: v.optional(v.array(v.object({
-      text: v.string(),
-      votes: v.number(),
-    }))),
+    postType: v.optional(
+      v.union(
+        v.literal("standard"),
+        v.literal("poll"),
+        v.literal("ai_chat"),
+        v.literal("reel"),
+      ),
+    ),
+    pollOptions: v.optional(
+      v.array(
+        v.object({
+          text: v.string(),
+          votes: v.number(),
+        }),
+      ),
+    ),
     aiChatId: v.optional(v.id("messages")), // Link to shared AI chat
 
     // Moderation
-    moderationStatus: v.optional(v.union(
-      v.literal("pending"),
-      v.literal("approved"),
-      v.literal("flagged")
-    )),
+    moderationStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("approved"),
+        v.literal("flagged"),
+      ),
+    ),
     moderationScore: v.optional(v.number()),
     moderationReason: v.optional(v.string()),
   })
@@ -155,7 +179,7 @@ export default defineSchema({
       v.literal("mentorship"),
       v.literal("resource"),
       v.literal("event"),
-      v.literal("funding")
+      v.literal("funding"),
     ),
     creditCost: v.number(), // 5-100 credits to unlock
     company: v.optional(v.string()),
@@ -200,16 +224,18 @@ export default defineSchema({
       v.literal("walking"),
       v.literal("running"),
       v.literal("cycling"),
-      v.literal("commuting")
+      v.literal("commuting"),
     ),
 
     // GPS Data
-    coordinates: v.array(v.object({
-      lat: v.number(),
-      lng: v.number(),
-      timestamp: v.number(),
-      elevation: v.optional(v.number()),
-    })),
+    coordinates: v.array(
+      v.object({
+        lat: v.number(),
+        lng: v.number(),
+        timestamp: v.number(),
+        elevation: v.optional(v.number()),
+      }),
+    ),
 
     // Route Metrics
     distance: v.number(), // meters
@@ -238,7 +264,7 @@ export default defineSchema({
     sharingLevel: v.union(
       v.literal("private"),
       v.literal("anonymous"),
-      v.literal("public")
+      v.literal("public"),
     ),
 
     // Community Engagement
@@ -277,7 +303,7 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("reviewed"),
       v.literal("resolved"),
-      v.literal("dismissed")
+      v.literal("dismissed"),
     ),
     createdAt: v.number(),
     reviewedAt: v.optional(v.number()),
@@ -304,25 +330,40 @@ export default defineSchema({
     receiverId: v.id("users"),
     content: v.string(),
     isRead: v.boolean(),
-    media: v.optional(v.array(v.object({
-      type: v.union(v.literal("image"), v.literal("video"), v.literal("audio"), v.literal("file")),
-      storageId: v.id("_storage"),
-      url: v.string(),
-      fileName: v.optional(v.string()),
-      fileSize: v.optional(v.number()),
-    }))),
+    media: v.optional(
+      v.array(
+        v.object({
+          type: v.union(
+            v.literal("image"),
+            v.literal("video"),
+            v.literal("audio"),
+            v.literal("file"),
+          ),
+          storageId: v.id("_storage"),
+          url: v.string(),
+          fileName: v.optional(v.string()),
+          fileSize: v.optional(v.number()),
+        }),
+      ),
+    ),
     // Reply functionality
-    replyTo: v.optional(v.object({
-      messageId: v.id("directMessages"),
-      content: v.string(),
-      senderId: v.id("users"),
-    })),
+    replyTo: v.optional(
+      v.object({
+        messageId: v.id("directMessages"),
+        content: v.string(),
+        senderId: v.id("users"),
+      }),
+    ),
     // Reactions (emoji)
-    reactions: v.optional(v.array(v.object({
-      userId: v.id("users"),
-      emoji: v.string(),
-      timestamp: v.number(),
-    }))),
+    reactions: v.optional(
+      v.array(
+        v.object({
+          userId: v.id("users"),
+          emoji: v.string(),
+          timestamp: v.number(),
+        }),
+      ),
+    ),
     // Edit tracking
     isEdited: v.optional(v.boolean()),
     editedAt: v.optional(v.number()),
@@ -361,7 +402,7 @@ export default defineSchema({
       v.literal("accompaniment_request"),
       v.literal("accompaniment_update"),
       v.literal("emergency"),
-      v.literal("system") // Admin broadcasts
+      v.literal("system"), // Admin broadcasts
     ),
     title: v.string(),
     message: v.string(),
@@ -389,7 +430,7 @@ export default defineSchema({
       v.literal("active"),
       v.literal("resolved"),
       v.literal("cancelled"),
-      v.literal("false_alarm")
+      v.literal("false_alarm"),
     ),
     location: v.object({
       lat: v.number(),
@@ -402,7 +443,7 @@ export default defineSchema({
       v.literal("panic"),
       v.literal("check_in_failed"),
       v.literal("journey_alert"),
-      v.literal("manual")
+      v.literal("manual"),
     ),
     notifiedContacts: v.array(v.id("emergencyContacts")),
     nearbyUsersNotified: v.number(), // Count of nearby users alerted
@@ -421,13 +462,15 @@ export default defineSchema({
       v.literal("can_help"),
       v.literal("on_way"),
       v.literal("contacted_authorities"),
-      v.literal("false_alarm_report")
+      v.literal("false_alarm_report"),
     ),
     message: v.optional(v.string()),
-    location: v.optional(v.object({
-      lat: v.number(),
-      lng: v.number(),
-    })),
+    location: v.optional(
+      v.object({
+        lat: v.number(),
+        lng: v.number(),
+      }),
+    ),
   })
     .index("by_alert", ["alertId"])
     .index("by_responder", ["responderId"]),
@@ -439,7 +482,7 @@ export default defineSchema({
     provider: v.union(
       v.literal("cloudinary"),
       v.literal("aws"),
-      v.literal("custom")
+      v.literal("custom"),
     ),
     externalId: v.string(), // Provider-specific ID (e.g., Cloudinary public_id)
 
@@ -460,26 +503,32 @@ export default defineSchema({
     // Content
     caption: v.optional(v.string()), // 0-500 chars
     hashtags: v.optional(v.array(v.string())),
-    location: v.optional(v.object({
-      name: v.string(),
-      coordinates: v.array(v.number()), // [lng, lat]
-    })),
+    location: v.optional(
+      v.object({
+        name: v.string(),
+        coordinates: v.array(v.number()), // [lng, lat]
+      }),
+    ),
 
     // AI-extracted metadata (to be populated later by AI analysis)
-    aiMetadata: v.optional(v.object({
-      safetyCategory: v.optional(v.union(
-        v.literal("Harassment"),
-        v.literal("Joy"),
-        v.literal("Lighting Issue"),
-        v.literal("Infrastructure Problem"),
-        v.literal("Positive Experience"),
-        v.literal("Warning")
-      )),
-      sentiment: v.optional(v.number()), // -1 to 1
-      detectedObjects: v.optional(v.array(v.string())),
-      visualTags: v.optional(v.array(v.string())), // "dark street", "crowded area", etc.
-      transcription: v.optional(v.string()), // Voice-to-text
-    })),
+    aiMetadata: v.optional(
+      v.object({
+        safetyCategory: v.optional(
+          v.union(
+            v.literal("Harassment"),
+            v.literal("Joy"),
+            v.literal("Lighting Issue"),
+            v.literal("Infrastructure Problem"),
+            v.literal("Positive Experience"),
+            v.literal("Warning"),
+          ),
+        ),
+        sentiment: v.optional(v.number()), // -1 to 1
+        detectedObjects: v.optional(v.array(v.string())),
+        visualTags: v.optional(v.array(v.string())), // "dark street", "crowded area", etc.
+        transcription: v.optional(v.string()), // Voice-to-text
+      }),
+    ),
 
     // Engagement metrics
     views: v.number(), // Default: 0
@@ -495,7 +544,7 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("approved"),
       v.literal("flagged"),
-      v.literal("rejected")
+      v.literal("rejected"),
     ),
     moderationScore: v.optional(v.number()), // 0-100 AI confidence score
     moderationReason: v.optional(v.string()), // Why flagged
@@ -542,7 +591,7 @@ export default defineSchema({
     status: v.union(
       v.literal("live"),
       v.literal("ended"),
-      v.literal("scheduled")
+      v.literal("scheduled"),
     ),
 
     // Metrics
@@ -554,10 +603,12 @@ export default defineSchema({
     // Safety features
     safetyMode: v.boolean(), // Enable AI moderation
     isEmergency: v.boolean(), // Emergency broadcast
-    location: v.optional(v.object({
-      name: v.string(),
-      coordinates: v.array(v.number()), // [lng, lat]
-    })),
+    location: v.optional(
+      v.object({
+        name: v.string(),
+        coordinates: v.array(v.number()), // [lng, lat]
+      }),
+    ),
 
     // Timestamps
     scheduledFor: v.optional(v.number()),
@@ -599,29 +650,35 @@ export default defineSchema({
     metadata: v.optional(v.any()), // Event-specific data
 
     // Geolocation (optional)
-    geo: v.optional(v.object({
-      lat: v.number(),
-      lng: v.number(),
-      accuracy: v.optional(v.number()),
-      city: v.optional(v.string()),
-      country: v.optional(v.string()),
-    })),
+    geo: v.optional(
+      v.object({
+        lat: v.number(),
+        lng: v.number(),
+        accuracy: v.optional(v.number()),
+        city: v.optional(v.string()),
+        country: v.optional(v.string()),
+      }),
+    ),
 
     // Device/Browser info
-    device: v.optional(v.object({
-      userAgent: v.optional(v.string()),
-      platform: v.optional(v.string()),
-      isMobile: v.optional(v.boolean()),
-      screenWidth: v.optional(v.number()),
-      screenHeight: v.optional(v.number()),
-    })),
+    device: v.optional(
+      v.object({
+        userAgent: v.optional(v.string()),
+        platform: v.optional(v.string()),
+        isMobile: v.optional(v.boolean()),
+        screenWidth: v.optional(v.number()),
+        screenHeight: v.optional(v.number()),
+      }),
+    ),
 
     // Performance metrics
-    performance: v.optional(v.object({
-      loadTime: v.optional(v.number()),
-      renderTime: v.optional(v.number()),
-      networkLatency: v.optional(v.number()),
-    })),
+    performance: v.optional(
+      v.object({
+        loadTime: v.optional(v.number()),
+        renderTime: v.optional(v.number()),
+        networkLatency: v.optional(v.number()),
+      }),
+    ),
 
     timestamp: v.number(), // Event timestamp
   })
@@ -634,7 +691,7 @@ export default defineSchema({
       v.literal("reel"),
       v.literal("post"),
       v.literal("comment"),
-      v.literal("livestream_snapshot")
+      v.literal("livestream_snapshot"),
     ),
     contentId: v.string(), // ID of the flagged content
     authorId: v.id("users"),
@@ -654,7 +711,7 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("approved"),
       v.literal("rejected"),
-      v.literal("appealed")
+      v.literal("appealed"),
     ),
 
     // Admin action
@@ -673,7 +730,7 @@ export default defineSchema({
       v.literal("reel"),
       v.literal("post"),
       v.literal("comment"),
-      v.literal("livestream")
+      v.literal("livestream"),
     ),
     contentId: v.string(),
     reason: v.string(),
@@ -683,13 +740,13 @@ export default defineSchema({
       v.literal("inappropriate"),
       v.literal("misinformation"),
       v.literal("violence"),
-      v.literal("other")
+      v.literal("other"),
     ),
     description: v.optional(v.string()),
     status: v.union(
       v.literal("pending"),
       v.literal("reviewed"),
-      v.literal("dismissed")
+      v.literal("dismissed"),
     ),
   })
     .index("by_reporter", ["reporterId"])
@@ -704,7 +761,7 @@ export default defineSchema({
     status: v.union(
       v.literal("active"),
       v.literal("cancelled"),
-      v.literal("expired")
+      v.literal("expired"),
     ),
     renewsAt: v.number(),
   })
@@ -731,7 +788,7 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("processing"),
       v.literal("completed"),
-      v.literal("failed")
+      v.literal("failed"),
     ),
     requestedAt: v.number(),
     processedAt: v.optional(v.number()),
@@ -849,11 +906,13 @@ export default defineSchema({
     // Moderation
     isDeleted: v.boolean(), // Soft delete
     deletedAt: v.optional(v.number()),
-    moderationStatus: v.optional(v.union(
-      v.literal("pending"),
-      v.literal("approved"),
-      v.literal("flagged")
-    )),
+    moderationStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("approved"),
+        v.literal("flagged"),
+      ),
+    ),
   })
     .index("by_post", ["postId"])
     .index("by_author", ["authorId"])
@@ -887,12 +946,11 @@ export default defineSchema({
     type: v.union(
       v.literal("breathing"),
       v.literal("guided"),
-      v.literal("mindfulness")
+      v.literal("mindfulness"),
     ),
     completed: v.boolean(),
     creditsEarned: v.number(), // 5 credits per session
-  })
-    .index("by_user", ["userId"]),
+  }).index("by_user", ["userId"]),
 
   // Sister Accompaniment - Real-time location sharing for safety (Task 57.5)
   accompanimentSessions: defineTable({
@@ -905,16 +963,18 @@ export default defineSchema({
       v.literal("active"),
       v.literal("completed"),
       v.literal("cancelled"),
-      v.literal("emergency")
+      v.literal("emergency"),
     ),
     startTime: v.number(),
     endTime: v.optional(v.number()),
     lastUpdate: v.number(),
-    currentLocation: v.optional(v.object({
-      latitude: v.number(),
-      longitude: v.number(),
-      accuracy: v.optional(v.number()),
-    })),
+    currentLocation: v.optional(
+      v.object({
+        latitude: v.number(),
+        longitude: v.number(),
+        accuracy: v.optional(v.number()),
+      }),
+    ),
   })
     .index("by_user", ["userId"])
     .index("by_status", ["status"]),
@@ -928,12 +988,14 @@ export default defineSchema({
     userId: v.id("users"),
     date: v.string(), // YYYY-MM-DD
     type: v.union(v.literal("period"), v.literal("symptom"), v.literal("note")),
-    flow: v.optional(v.union(
-      v.literal("light"),
-      v.literal("medium"),
-      v.literal("heavy"),
-      v.literal("spotting")
-    )),
+    flow: v.optional(
+      v.union(
+        v.literal("light"),
+        v.literal("medium"),
+        v.literal("heavy"),
+        v.literal("spotting"),
+      ),
+    ),
     symptoms: v.optional(v.array(v.string())), // cramps, headache, bloating, etc.
     mood: v.optional(v.number()), // 1-5
     energy: v.optional(v.number()), // 1-5
@@ -954,7 +1016,7 @@ export default defineSchema({
       v.literal("financial"),
       v.literal("employment"),
       v.literal("education"),
-      v.literal("community")
+      v.literal("community"),
     ),
     description: v.string(),
     phone: v.optional(v.string()),
@@ -989,7 +1051,11 @@ export default defineSchema({
     userId: v.id("users"),
     reason: v.string(),
     details: v.optional(v.string()),
-    status: v.union(v.literal("pending"), v.literal("reviewed"), v.literal("resolved")),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("reviewed"),
+      v.literal("resolved"),
+    ),
   })
     .index("by_resource", ["resourceId"])
     .index("by_status", ["status"]),
@@ -1008,7 +1074,7 @@ export default defineSchema({
       v.literal("wellness"),
       v.literal("tech"),
       v.literal("entrepreneurship"),
-      v.literal("general")
+      v.literal("general"),
     ),
     creatorId: v.id("users"),
     isPrivate: v.boolean(),
@@ -1026,7 +1092,11 @@ export default defineSchema({
   circleMembers: defineTable({
     circleId: v.id("circles"),
     userId: v.id("users"),
-    role: v.union(v.literal("admin"), v.literal("moderator"), v.literal("member")),
+    role: v.union(
+      v.literal("admin"),
+      v.literal("moderator"),
+      v.literal("member"),
+    ),
     joinedAt: v.number(),
   })
     .index("by_circle", ["circleId"])
@@ -1052,13 +1122,15 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("confirmed"),
       v.literal("missed"),
-      v.literal("alert_sent")
+      v.literal("alert_sent"),
     ),
     confirmedAt: v.optional(v.number()),
-    location: v.optional(v.object({
-      lat: v.number(),
-      lng: v.number(),
-    })),
+    location: v.optional(
+      v.object({
+        lat: v.number(),
+        lng: v.number(),
+      }),
+    ),
     note: v.optional(v.string()),
     alertContacts: v.optional(v.array(v.id("emergencyContacts"))),
   })
@@ -1076,7 +1148,7 @@ export default defineSchema({
       v.literal("pay_inequality"),
       v.literal("hostile_environment"),
       v.literal("retaliation"),
-      v.literal("other")
+      v.literal("other"),
     ),
     description: v.string(),
     date: v.optional(v.string()), // When incident occurred
@@ -1087,14 +1159,16 @@ export default defineSchema({
       v.literal("submitted"),
       v.literal("reviewed"),
       v.literal("verified"),
-      v.literal("resolved")
+      v.literal("resolved"),
     ),
     verificationCount: v.optional(v.number()),
     // Location for safety map integration
-    location: v.optional(v.object({
-      name: v.string(),
-      coordinates: v.array(v.number()), // [lng, lat]
-    })),
+    location: v.optional(
+      v.object({
+        name: v.string(),
+        coordinates: v.array(v.number()), // [lng, lat]
+      }),
+    ),
   })
     .index("by_reporter", ["reporterId"])
     .index("by_company", ["companyName"])
@@ -1113,7 +1187,7 @@ export default defineSchema({
       v.literal("pending"), // Request sent
       v.literal("accepted"), // Both connected
       v.literal("declined"), // Request declined
-      v.literal("blocked") // Blocked
+      v.literal("blocked"), // Blocked
     ),
     requestedAt: v.number(),
     acceptedAt: v.optional(v.number()),
@@ -1137,14 +1211,16 @@ export default defineSchema({
       v.literal("emergency_alert"), // Panic button pressed
       v.literal("location_share"), // Started sharing location
       v.literal("accompaniment_request"), // Wants accompaniment
-      v.literal("safe_arrival") // Arrived safely
+      v.literal("safe_arrival"), // Arrived safely
     ),
     message: v.string(),
-    location: v.optional(v.object({
-      lat: v.number(),
-      lng: v.number(),
-      address: v.optional(v.string()),
-    })),
+    location: v.optional(
+      v.object({
+        lat: v.number(),
+        lng: v.number(),
+        address: v.optional(v.string()),
+      }),
+    ),
     isRead: v.boolean(),
     isActioned: v.boolean(), // Guardian took action
     actionTaken: v.optional(v.string()),
@@ -1164,21 +1240,27 @@ export default defineSchema({
       v.literal("active"),
       v.literal("arrived"),
       v.literal("cancelled"),
-      v.literal("emergency")
+      v.literal("emergency"),
     ),
     startedAt: v.number(),
     endedAt: v.optional(v.number()),
-    lastLocation: v.optional(v.object({
-      lat: v.number(),
-      lng: v.number(),
-      accuracy: v.optional(v.number()),
-      timestamp: v.number(),
-    })),
-    locationHistory: v.optional(v.array(v.object({
-      lat: v.number(),
-      lng: v.number(),
-      timestamp: v.number(),
-    }))),
+    lastLocation: v.optional(
+      v.object({
+        lat: v.number(),
+        lng: v.number(),
+        accuracy: v.optional(v.number()),
+        timestamp: v.number(),
+      }),
+    ),
+    locationHistory: v.optional(
+      v.array(
+        v.object({
+          lat: v.number(),
+          lng: v.number(),
+          timestamp: v.number(),
+        }),
+      ),
+    ),
   })
     .index("by_user", ["userId"])
     .index("by_status", ["status"])
@@ -1210,14 +1292,13 @@ export default defineSchema({
     type: v.union(
       v.literal("text_chat"),
       v.literal("voice_chat"),
-      v.literal("shared_chat")
+      v.literal("shared_chat"),
     ),
     messageCount: v.optional(v.number()),
     duration: v.optional(v.number()), // seconds for voice
     sentiment: v.optional(v.string()), // positive, neutral, negative
     topics: v.optional(v.array(v.string())), // detected topics
-  })
-    .index("by_user", ["userId"]),
+  }).index("by_user", ["userId"]),
 
   // Opportunity Comments - Credit-based interactions (2 credits per comment)
   opportunityComments: defineTable({
@@ -1272,8 +1353,7 @@ export default defineSchema({
       badge: v.string(), // "none", "premium", "pro", "vip"
     }),
     isActive: v.boolean(),
-  })
-    .index("by_tier_id", ["tierId"]),
+  }).index("by_tier_id", ["tierId"]),
 
   // User Subscriptions (Premium)
   userSubscriptions: defineTable({
@@ -1288,7 +1368,7 @@ export default defineSchema({
       v.literal("active"),
       v.literal("cancelled"),
       v.literal("past_due"),
-      v.literal("trialing")
+      v.literal("trialing"),
     ),
     cancelAtPeriodEnd: v.optional(v.boolean()),
   })
@@ -1317,7 +1397,11 @@ export default defineSchema({
     tier: v.string(), // "free", "supporter", "vip"
     subscribedAt: v.number(),
     renewsAt: v.number(),
-    status: v.union(v.literal("active"), v.literal("cancelled"), v.literal("expired")),
+    status: v.union(
+      v.literal("active"),
+      v.literal("cancelled"),
+      v.literal("expired"),
+    ),
     autoRenew: v.optional(v.boolean()),
   })
     .index("by_circle", ["circleId"])
@@ -1335,12 +1419,12 @@ export default defineSchema({
       v.literal("audio"),
       v.literal("video"),
       v.literal("forum"),
-      v.literal("broadcast")
+      v.literal("broadcast"),
     ),
     visibility: v.union(
       v.literal("public"),
       v.literal("members"),
-      v.literal("tier")
+      v.literal("tier"),
     ),
     requiredTier: v.optional(v.string()), // Required tier for access
     maxParticipants: v.optional(v.number()), // 16 for video, 9 hosts for broadcast
@@ -1348,14 +1432,16 @@ export default defineSchema({
     isActive: v.boolean(),
     agoraChannel: v.optional(v.string()),
     // Chat room features
-    features: v.optional(v.object({
-      threads: v.optional(v.boolean()),
-      reactions: v.optional(v.boolean()),
-      gifs: v.optional(v.boolean()),
-      polls: v.optional(v.boolean()),
-      pins: v.optional(v.boolean()),
-      mentions: v.optional(v.boolean()),
-    })),
+    features: v.optional(
+      v.object({
+        threads: v.optional(v.boolean()),
+        reactions: v.optional(v.boolean()),
+        gifs: v.optional(v.boolean()),
+        polls: v.optional(v.boolean()),
+        pins: v.optional(v.boolean()),
+        mentions: v.optional(v.boolean()),
+      }),
+    ),
   })
     .index("by_circle", ["circleId"])
     .index("by_type", ["type"])
@@ -1365,7 +1451,11 @@ export default defineSchema({
   roomParticipants: defineTable({
     roomId: v.id("rooms"),
     userId: v.id("users"),
-    role: v.union(v.literal("host"), v.literal("speaker"), v.literal("listener")),
+    role: v.union(
+      v.literal("host"),
+      v.literal("speaker"),
+      v.literal("listener"),
+    ),
     joinedAt: v.number(),
     leftAt: v.optional(v.number()),
     isActive: v.boolean(),
@@ -1381,16 +1471,24 @@ export default defineSchema({
     content: v.string(),
     parentId: v.optional(v.id("roomMessages")), // For threads
     isPinned: v.optional(v.boolean()),
-    reactions: v.optional(v.array(v.object({
-      emoji: v.string(),
-      count: v.number(),
-      users: v.array(v.id("users")),
-    }))),
-    attachments: v.optional(v.array(v.object({
-      type: v.string(),
-      url: v.string(),
-      name: v.optional(v.string()),
-    }))),
+    reactions: v.optional(
+      v.array(
+        v.object({
+          emoji: v.string(),
+          count: v.number(),
+          users: v.array(v.id("users")),
+        }),
+      ),
+    ),
+    attachments: v.optional(
+      v.array(
+        v.object({
+          type: v.string(),
+          url: v.string(),
+          name: v.optional(v.string()),
+        }),
+      ),
+    ),
     isDeleted: v.optional(v.boolean()),
   })
     .index("by_room", ["roomId"])
@@ -1405,7 +1503,7 @@ export default defineSchema({
       v.literal("hearts"),
       v.literal("sparkles"),
       v.literal("crowns"),
-      v.literal("aurora_special")
+      v.literal("aurora_special"),
     ),
     credits: v.number(),
     animationUrl: v.string(),
@@ -1450,8 +1548,16 @@ export default defineSchema({
     hostId: v.id("users"),
     title: v.string(),
     description: v.string(),
-    type: v.union(v.literal("virtual"), v.literal("in-person"), v.literal("hybrid")),
-    pricing: v.union(v.literal("free"), v.literal("paid"), v.literal("tier-exclusive")),
+    type: v.union(
+      v.literal("virtual"),
+      v.literal("in-person"),
+      v.literal("hybrid"),
+    ),
+    pricing: v.union(
+      v.literal("free"),
+      v.literal("paid"),
+      v.literal("tier-exclusive"),
+    ),
     price: v.optional(v.number()), // In credits or USD
     priceType: v.optional(v.union(v.literal("credits"), v.literal("usd"))),
     requiredTier: v.optional(v.string()),
@@ -1460,11 +1566,13 @@ export default defineSchema({
     startTime: v.number(),
     endTime: v.number(),
     timezone: v.optional(v.string()),
-    location: v.optional(v.object({
-      name: v.string(),
-      address: v.optional(v.string()),
-      coordinates: v.optional(v.array(v.number())),
-    })),
+    location: v.optional(
+      v.object({
+        name: v.string(),
+        address: v.optional(v.string()),
+        coordinates: v.optional(v.array(v.number())),
+      }),
+    ),
     roomId: v.optional(v.id("rooms")), // For virtual events
     coverImage: v.optional(v.string()),
     status: v.union(
@@ -1472,7 +1580,7 @@ export default defineSchema({
       v.literal("upcoming"),
       v.literal("live"),
       v.literal("ended"),
-      v.literal("cancelled")
+      v.literal("cancelled"),
     ),
     attendeeCount: v.optional(v.number()),
     averageRating: v.optional(v.number()),
@@ -1490,7 +1598,7 @@ export default defineSchema({
       v.literal("going"),
       v.literal("maybe"),
       v.literal("waitlist"),
-      v.literal("cancelled")
+      v.literal("cancelled"),
     ),
     paidAmount: v.optional(v.number()),
     paymentType: v.optional(v.union(v.literal("credits"), v.literal("usd"))),
@@ -1523,13 +1631,16 @@ export default defineSchema({
     isActive: v.boolean(),
     sortOrder: v.optional(v.number()),
     // Regional pricing
-    regionalPricing: v.optional(v.array(v.object({
-      region: v.string(),
-      currency: v.string(),
-      price: v.number(),
-    }))),
-  })
-    .index("by_package_id", ["packageId"]),
+    regionalPricing: v.optional(
+      v.array(
+        v.object({
+          region: v.string(),
+          currency: v.string(),
+          price: v.number(),
+        }),
+      ),
+    ),
+  }).index("by_package_id", ["packageId"]),
 
   // Credit Purchases
   creditPurchases: defineTable({
@@ -1544,7 +1655,7 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("completed"),
       v.literal("failed"),
-      v.literal("refunded")
+      v.literal("refunded"),
     ),
   })
     .index("by_user", ["userId"])
@@ -1558,7 +1669,7 @@ export default defineSchema({
     status: v.union(
       v.literal("pending"),
       v.literal("completed"),
-      v.literal("expired")
+      v.literal("expired"),
     ),
     referrerCredited: v.boolean(),
     refereeCredited: v.boolean(),
@@ -1597,7 +1708,11 @@ export default defineSchema({
     tier: v.string(),
     subscribedAt: v.number(),
     renewsAt: v.number(),
-    status: v.union(v.literal("active"), v.literal("cancelled"), v.literal("expired")),
+    status: v.union(
+      v.literal("active"),
+      v.literal("cancelled"),
+      v.literal("expired"),
+    ),
     autoRenew: v.optional(v.boolean()),
   })
     .index("by_creator", ["creatorId"])
@@ -1613,15 +1728,17 @@ export default defineSchema({
     userId: v.id("users"),
     userMessage: v.string(),
     aiResponse: v.string(),
-    extractedData: v.optional(v.object({
-      income: v.optional(v.number()),
-      expenses: v.optional(v.number()),
-      savingsGoal: v.optional(v.number()),
-      currentSavings: v.optional(v.number()),
-      debtAmount: v.optional(v.number()),
-      budgetCategory: v.optional(v.string()),
-      actionType: v.optional(v.string()),
-    })),
+    extractedData: v.optional(
+      v.object({
+        income: v.optional(v.number()),
+        expenses: v.optional(v.number()),
+        savingsGoal: v.optional(v.number()),
+        currentSavings: v.optional(v.number()),
+        debtAmount: v.optional(v.number()),
+        budgetCategory: v.optional(v.string()),
+        actionType: v.optional(v.string()),
+      }),
+    ),
     timestamp: v.number(),
   })
     .index("by_user", ["userId"])
@@ -1637,8 +1754,7 @@ export default defineSchema({
     totalDebt: v.number(),
     wellnessScore: v.number(), // 0-100
     lastUpdated: v.number(),
-  })
-    .index("by_user", ["userId"]),
+  }).index("by_user", ["userId"]),
 
   // Financial Goals - Individual savings/investment goals
   financialGoals: defineTable({
@@ -1666,7 +1782,7 @@ export default defineSchema({
       v.literal("pending"), // One-sided like, waiting for other to like back
       v.literal("matched"), // Both users liked each other - can now chat!
       v.literal("declined"), // User explicitly declined
-      v.literal("blocked") // User blocked
+      v.literal("blocked"), // User blocked
     ),
     createdAt: v.number(),
     matchedAt: v.optional(v.number()), // When mutual match happened
@@ -1708,8 +1824,7 @@ export default defineSchema({
     used: v.number(), // Number of API calls made
     limit: v.number(), // 2000 for free tier
     lastUpdated: v.number(), // Timestamp of last update
-  })
-    .index("by_month", ["month"]),
+  }).index("by_month", ["month"]),
 
   // ============================================
   // COMMUNITY TRUTH SCORE™ - Crowdsourced Search Intelligence
@@ -1737,7 +1852,7 @@ export default defineSchema({
       v.literal("building"), // < 5 votes
       v.literal("low"), // 5-14 votes
       v.literal("medium"), // 15-49 votes
-      v.literal("high") // 50+ votes
+      v.literal("high"), // 50+ votes
     ),
     lastUpdated: v.number(),
   })
@@ -1749,8 +1864,7 @@ export default defineSchema({
     sessionHash: v.string(),
     hourKey: v.string(), // "2024-12-05-14" format (date + hour)
     voteCount: v.number(),
-  })
-    .index("by_session_hour", ["sessionHash", "hourKey"]),
+  }).index("by_session_hour", ["sessionHash", "hourKey"]),
 
   // ============================================
   // DAILY NEWS PANELS - "What Sisters Think" 💜
@@ -1773,7 +1887,7 @@ export default defineSchema({
       v.literal("career"),
       v.literal("finance"),
       v.literal("tech"),
-      v.literal("world")
+      v.literal("world"),
     ),
     // Voting stats (denormalized for fast display)
     agreeCount: v.number(),
@@ -1795,7 +1909,7 @@ export default defineSchema({
     vote: v.union(
       v.literal("agree"),
       v.literal("disagree"),
-      v.literal("neutral")
+      v.literal("neutral"),
     ),
     timestamp: v.number(),
   })
@@ -1835,7 +1949,7 @@ export default defineSchema({
       v.literal("health"),
       v.literal("rights"),
       v.literal("tech"),
-      v.literal("world")
+      v.literal("world"),
     ),
     title: v.string(),
     summary: v.string(),
@@ -1878,7 +1992,11 @@ export default defineSchema({
     voterType: v.union(v.literal("anonymous"), v.literal("member")),
     anonymousId: v.optional(v.id("anonymousDebaters")),
     memberId: v.optional(v.id("users")),
-    vote: v.union(v.literal("agree"), v.literal("disagree"), v.literal("neutral")),
+    vote: v.union(
+      v.literal("agree"),
+      v.literal("disagree"),
+      v.literal("neutral"),
+    ),
     timestamp: v.number(),
   })
     .index("by_debate", ["debateId"])
@@ -1916,7 +2034,7 @@ export default defineSchema({
     frequency: v.union(
       v.literal("daily"),
       v.literal("weekly"),
-      v.literal("custom")
+      v.literal("custom"),
     ),
     targetDays: v.optional(v.array(v.number())), // 0-6 for custom (0=Sunday)
     reminderTime: v.optional(v.string()), // "09:00" format
@@ -1958,15 +2076,19 @@ export default defineSchema({
       v.literal("creativity"),
       v.literal("mindfulness"),
       v.literal("fitness"),
-      v.literal("other")
+      v.literal("other"),
     ),
     targetDate: v.optional(v.string()), // YYYY-MM-DD
     progress: v.number(), // 0-100
-    milestones: v.optional(v.array(v.object({
-      title: v.string(),
-      completed: v.boolean(),
-      completedAt: v.optional(v.number()),
-    }))),
+    milestones: v.optional(
+      v.array(
+        v.object({
+          title: v.string(),
+          completed: v.boolean(),
+          completedAt: v.optional(v.number()),
+        }),
+      ),
+    ),
     isCompleted: v.boolean(),
     completedAt: v.optional(v.number()),
     isActive: v.boolean(),
@@ -1984,13 +2106,12 @@ export default defineSchema({
       v.literal("growth"),
       v.literal("healing"),
       v.literal("success"),
-      v.literal("peace")
+      v.literal("peace"),
     ),
     text: v.string(),
     author: v.optional(v.string()),
     isActive: v.boolean(),
-  })
-    .index("by_category", ["category"]),
+  }).index("by_category", ["category"]),
 
   // User Affirmation History - Track which affirmations shown
   userAffirmationHistory: defineTable({
@@ -1998,8 +2119,7 @@ export default defineSchema({
     affirmationId: v.id("dailyAffirmations"),
     shownAt: v.number(),
     liked: v.optional(v.boolean()),
-  })
-    .index("by_user", ["userId"]),
+  }).index("by_user", ["userId"]),
 
   // ============================================
   // LIFE CANVAS - Life Visualization & Daily Journal
@@ -2028,15 +2148,19 @@ export default defineSchema({
     exerciseMinutes: v.optional(v.number()),
 
     // Life dimensions (what areas did you focus on today?)
-    dimensions: v.optional(v.array(v.union(
-      v.literal("career"),
-      v.literal("health"),
-      v.literal("relationships"),
-      v.literal("growth"),
-      v.literal("creativity"),
-      v.literal("adventure"),
-      v.literal("rest")
-    ))),
+    dimensions: v.optional(
+      v.array(
+        v.union(
+          v.literal("career"),
+          v.literal("health"),
+          v.literal("relationships"),
+          v.literal("growth"),
+          v.literal("creativity"),
+          v.literal("adventure"),
+          v.literal("rest"),
+        ),
+      ),
+    ),
 
     // Tags for filtering/searching
     tags: v.optional(v.array(v.string())),
@@ -2090,8 +2214,7 @@ export default defineSchema({
     routesToday: v.number(),
     newUsers: v.number(),
     activeUsers: v.number(),
-  })
-    .index("by_date", ["date"]),
+  }).index("by_date", ["date"]),
 
   // ============================================
   // AI-GENERATED CONTENT - Bootstrap the ecosystem
@@ -2111,14 +2234,16 @@ export default defineSchema({
       ar: v.optional(v.string()),
       hi: v.optional(v.string()),
     }),
-    optionTranslations: v.optional(v.object({
-      en: v.array(v.string()),
-      es: v.optional(v.array(v.string())),
-      pt: v.optional(v.array(v.string())),
-      fr: v.optional(v.array(v.string())),
-      ar: v.optional(v.array(v.string())),
-      hi: v.optional(v.array(v.string())),
-    })),
+    optionTranslations: v.optional(
+      v.object({
+        en: v.array(v.string()),
+        es: v.optional(v.array(v.string())),
+        pt: v.optional(v.array(v.string())),
+        fr: v.optional(v.array(v.string())),
+        ar: v.optional(v.array(v.string())),
+        hi: v.optional(v.array(v.string())),
+      }),
+    ),
     scheduledDate: v.string(),
     status: v.string(),
     votes: v.any(), // { optionIndex: count }
@@ -2184,8 +2309,7 @@ export default defineSchema({
     status: v.string(),
     responseCount: v.number(),
     createdAt: v.number(),
-  })
-    .index("by_category", ["category"]),
+  }).index("by_category", ["category"]),
 
   // Generated Weekly Challenges
   generatedChallenges: defineTable({
@@ -2201,8 +2325,7 @@ export default defineSchema({
     credits: v.number(),
     participantCount: v.number(),
     status: v.string(),
-  })
-    .index("by_week", ["weekStart"]),
+  }).index("by_week", ["weekStart"]),
 
   // User-Suggested Debates - Community takes over
   debateSuggestions: defineTable({
@@ -2247,17 +2370,23 @@ export default defineSchema({
       v.literal("person1"),
       v.literal("person2"),
       v.literal("tie"),
-      v.literal("both_wrong")
+      v.literal("both_wrong"),
     ),
     toxicityScore: v.number(), // 0-100
     communicationScore: v.number(), // 0-100
     argumentType: v.string(), // e.g., "Emotional Neglect", "Miscommunication"
 
     // Red flags detected
-    redFlags: v.array(v.object({
-      type: v.string(),
-      severity: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
-    })),
+    redFlags: v.array(
+      v.object({
+        type: v.string(),
+        severity: v.union(
+          v.literal("low"),
+          v.literal("medium"),
+          v.literal("high"),
+        ),
+      }),
+    ),
 
     // Metadata
     imageCount: v.number(), // Number of screenshots analyzed
@@ -2283,8 +2412,7 @@ export default defineSchema({
       tie: v.number(),
       bothWrong: v.number(),
     }),
-  })
-    .index("by_date", ["date"]),
+  }).index("by_date", ["date"]),
 
   // Community Judge Cases - Users share their verdicts for community voting
   communityJudgeCases: defineTable({
@@ -2308,7 +2436,7 @@ export default defineSchema({
       v.literal("person1"),
       v.literal("person2"),
       v.literal("tie"),
-      v.literal("both_wrong")
+      v.literal("both_wrong"),
     ),
     aiToxicityScore: v.number(),
     aiSuggestion: v.string(),
@@ -2325,7 +2453,7 @@ export default defineSchema({
       v.literal("pending"), // Awaiting moderation
       v.literal("active"), // Open for voting
       v.literal("closed"), // Voting ended
-      v.literal("removed") // Moderation removal
+      v.literal("removed"), // Moderation removal
     ),
     featuredAt: v.optional(v.number()), // If featured on home
     expiresAt: v.optional(v.number()), // When voting closes
@@ -2346,11 +2474,7 @@ export default defineSchema({
     voterType: v.union(v.literal("anonymous"), v.literal("member")),
     anonymousId: v.optional(v.id("anonymousDebaters")),
     memberId: v.optional(v.id("users")),
-    vote: v.union(
-      v.literal("person1"),
-      v.literal("person2"),
-      v.literal("tie")
-    ),
+    vote: v.union(v.literal("person1"), v.literal("person2"), v.literal("tie")),
     timestamp: v.number(),
   })
     .index("by_case", ["caseId"])
@@ -2375,7 +2499,6 @@ export default defineSchema({
     .index("by_anonymous", ["anonymousId"])
     .index("by_member", ["memberId"]),
 
-
   // ============================================
   // AWS BEDROCK SEEDED CONTENT
   // Pre-generated content to bootstrap the platform
@@ -2391,7 +2514,7 @@ export default defineSchema({
       v.literal("wellness_tip"),
       v.literal("discussion_prompt"),
       v.literal("sister_story"),
-      v.literal("city_guide")
+      v.literal("city_guide"),
     ),
 
     // Categorization
@@ -2401,17 +2524,23 @@ export default defineSchema({
 
     // Content
     content: v.string(), // The actual content (English)
-    translations: v.optional(v.object({
-      es: v.optional(v.string()),
-      pt: v.optional(v.string()),
-      fr: v.optional(v.string()),
-      ar: v.optional(v.string()),
-      de: v.optional(v.string()),
-    })),
+    translations: v.optional(
+      v.object({
+        es: v.optional(v.string()),
+        pt: v.optional(v.string()),
+        fr: v.optional(v.string()),
+        ar: v.optional(v.string()),
+        de: v.optional(v.string()),
+      }),
+    ),
 
     // Metadata
     language: v.string(), // Primary language "en"
-    source: v.union(v.literal("aws_bedrock"), v.literal("gemini"), v.literal("manual")),
+    source: v.union(
+      v.literal("aws_bedrock"),
+      v.literal("gemini"),
+      v.literal("manual"),
+    ),
 
     // Usage tracking (for smart rotation)
     usageCount: v.number(), // How often shown
@@ -2443,6 +2572,23 @@ export default defineSchema({
     wellnessTipId: v.optional(v.id("seededContent")),
     isPublished: v.boolean(),
     publishedAt: v.optional(v.number()),
+  }).index("by_date", ["date"]),
+
+  // ============================================
+  // RATE LIMITING - Persistent Enterprise-Grade
+  // ============================================
+
+  // Rate Limits - Persistent rate limiting storage
+  rateLimits: defineTable({
+    key: v.string(), // Composite key: "{identifier}:{actionType}"
+    identifier: v.string(), // User ID or session ID
+    actionType: v.string(), // Action type (aiChat, createPost, etc.)
+    count: v.number(), // Current request count in window
+    resetTime: v.number(), // When the window resets (timestamp)
+    lastUpdated: v.number(), // Last update timestamp
   })
-    .index("by_date", ["date"]),
+    .index("by_key", ["key"])
+    .index("by_identifier", ["identifier"])
+    .index("by_action_type", ["actionType"])
+    .index("by_reset_time", ["resetTime"]),
 });

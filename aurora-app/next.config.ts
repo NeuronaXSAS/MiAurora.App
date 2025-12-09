@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV === "development";
+
 const nextConfig: NextConfig = {
   reactCompiler: true,
 
@@ -75,6 +77,26 @@ const nextConfig: NextConfig = {
           {
             key: "Permissions-Policy",
             value: "camera=(self), microphone=(self), geolocation=(self)",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains",
+          },
+          {
+            key: "Content-Security-Policy",
+            // In development, we need 'unsafe-eval' for hot reloading
+            // In production, we remove it for better security
+            value: isDev
+              ? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; media-src 'self' blob: https://res.cloudinary.com; connect-src 'self' https://*.convex.cloud https://api.mapbox.com https://*.posthog.com https://api.search.brave.com https://generativelanguage.googleapis.com wss://*.convex.cloud; frame-src 'self' https://www.google.com https://checkout.stripe.com; frame-ancestors 'self';"
+              : "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; media-src 'self' blob: https://res.cloudinary.com; connect-src 'self' https://*.convex.cloud https://api.mapbox.com https://*.posthog.com https://api.search.brave.com https://generativelanguage.googleapis.com wss://*.convex.cloud; frame-src 'self' https://www.google.com https://checkout.stripe.com; frame-ancestors 'self';",
           },
         ],
       },

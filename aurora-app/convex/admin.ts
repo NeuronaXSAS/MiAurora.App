@@ -1,11 +1,21 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 
-// Admin email whitelist - CEO/CTO access only
-const ADMIN_EMAILS: string[] = [
-  "neuronax.sas@gmail.com",      // CEO - Primary admin
-  "auroraapp.info@gmail.com",    // Secondary admin
-];
+/**
+ * Get admin emails from environment variable
+ * Set ADMIN_EMAILS in your Convex dashboard environment variables
+ * Format: "email1@example.com,email2@example.com"
+ */
+function getAdminEmails(): string[] {
+  const adminEmailsEnv = process.env.ADMIN_EMAILS || "";
+  if (!adminEmailsEnv) {
+    console.warn(
+      "⚠️ ADMIN_EMAILS environment variable not set. No admins configured.",
+    );
+    return [];
+  }
+  return adminEmailsEnv.split(",").map((email) => email.trim().toLowerCase());
+}
 
 // Check if user is admin
 export const isAdmin = query({
@@ -13,7 +23,8 @@ export const isAdmin = query({
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
     if (!user) return false;
-    return ADMIN_EMAILS.includes(user.email.toLowerCase());
+    const adminEmails = getAdminEmails();
+    return adminEmails.includes(user.email.toLowerCase());
   },
 });
 
@@ -23,15 +34,16 @@ export const getDashboardStats = query({
   handler: async (ctx, args) => {
     // Verify admin access
     const user = await ctx.db.get(args.userId);
-    if (!user || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+    const adminEmails = getAdminEmails();
+    if (!user || !adminEmails.includes(user.email.toLowerCase())) {
       throw new Error("Unauthorized: Admin access required");
     }
 
     // Get all users
     const users = await ctx.db.query("users").collect();
     const totalUsers = users.length;
-    const premiumUsers = users.filter(u => u.isPremium).length;
-    const activeToday = users.filter(u => {
+    const premiumUsers = users.filter((u) => u.isPremium).length;
+    const activeToday = users.filter((u) => {
       const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
       return u._creationTime > dayAgo;
     }).length;
@@ -39,7 +51,7 @@ export const getDashboardStats = query({
     // Get posts stats
     const posts = await ctx.db.query("posts").collect();
     const totalPosts = posts.length;
-    const postsToday = posts.filter(p => {
+    const postsToday = posts.filter((p) => {
       const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
       return p._creationTime > dayAgo;
     }).length;
@@ -47,7 +59,9 @@ export const getDashboardStats = query({
     // Get routes stats
     const routes = await ctx.db.query("routes").collect();
     const totalRoutes = routes.length;
-    const publicRoutes = routes.filter(r => r.sharingLevel === "public").length;
+    const publicRoutes = routes.filter(
+      (r) => r.sharingLevel === "public",
+    ).length;
 
     // Get reels stats
     const reels = await ctx.db.query("reels").collect();
@@ -56,17 +70,21 @@ export const getDashboardStats = query({
 
     // Get livestreams stats
     const livestreams = await ctx.db.query("livestreams").collect();
-    const activeLivestreams = livestreams.filter(l => l.status === "live").length;
+    const activeLivestreams = livestreams.filter(
+      (l) => l.status === "live",
+    ).length;
     const totalLivestreams = livestreams.length;
 
     // Get emergency alerts
     const emergencyAlerts = await ctx.db.query("emergencyAlerts").collect();
-    const activeEmergencies = emergencyAlerts.filter(e => e.status === "active").length;
+    const activeEmergencies = emergencyAlerts.filter(
+      (e) => e.status === "active",
+    ).length;
     const totalEmergencies = emergencyAlerts.length;
 
     // Get opportunities
     const opportunities = await ctx.db.query("opportunities").collect();
-    const activeOpportunities = opportunities.filter(o => o.isActive).length;
+    const activeOpportunities = opportunities.filter((o) => o.isActive).length;
 
     // Get circles
     const circles = await ctx.db.query("circles").collect();
@@ -74,23 +92,28 @@ export const getDashboardStats = query({
 
     // Get messages (DMs)
     const messages = await ctx.db.query("directMessages").collect();
-    const messagesToday = messages.filter(m => {
+    const messagesToday = messages.filter((m) => {
       const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
       return m._creationTime > dayAgo;
     }).length;
 
     // Calculate engagement metrics
-    const totalCreditsInCirculation = users.reduce((sum, u) => sum + (u.credits || 0), 0);
-    const avgTrustScore = users.length > 0 
-      ? users.reduce((sum, u) => sum + (u.trustScore || 0), 0) / users.length 
-      : 0;
+    const totalCreditsInCirculation = users.reduce(
+      (sum, u) => sum + (u.credits || 0),
+      0,
+    );
+    const avgTrustScore =
+      users.length > 0
+        ? users.reduce((sum, u) => sum + (u.trustScore || 0), 0) / users.length
+        : 0;
 
     return {
       users: {
         total: totalUsers,
         premium: premiumUsers,
         newToday: activeToday,
-        premiumRate: totalUsers > 0 ? ((premiumUsers / totalUsers) * 100).toFixed(1) : "0",
+        premiumRate:
+          totalUsers > 0 ? ((premiumUsers / totalUsers) * 100).toFixed(1) : "0",
       },
       content: {
         posts: totalPosts,
@@ -107,9 +130,13 @@ export const getDashboardStats = query({
       safety: {
         activeEmergencies,
         totalEmergencies,
-        emergencyResponseRate: totalEmergencies > 0 
-          ? (((totalEmergencies - activeEmergencies) / totalEmergencies) * 100).toFixed(1) 
-          : "100",
+        emergencyResponseRate:
+          totalEmergencies > 0
+            ? (
+                ((totalEmergencies - activeEmergencies) / totalEmergencies) *
+                100
+              ).toFixed(1)
+            : "100",
       },
       community: {
         circles: totalCircles,
@@ -130,19 +157,21 @@ export const getRecentActivity = query({
   handler: async (ctx, args) => {
     // Verify admin access
     const user = await ctx.db.get(args.userId);
-    if (!user || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+    const adminEmails = getAdminEmails();
+    if (!user || !adminEmails.includes(user.email.toLowerCase())) {
       throw new Error("Unauthorized: Admin access required");
     }
 
     const limit = args.limit || 20;
-    const activities: any[] = [];
+    const activities: Array<{
+      type: string;
+      timestamp: number;
+      data: Record<string, unknown>;
+    }> = [];
 
     // Get recent users
-    const recentUsers = await ctx.db
-      .query("users")
-      .order("desc")
-      .take(5);
-    
+    const recentUsers = await ctx.db.query("users").order("desc").take(5);
+
     for (const u of recentUsers) {
       activities.push({
         type: "user_joined",
@@ -152,17 +181,18 @@ export const getRecentActivity = query({
     }
 
     // Get recent posts
-    const recentPosts = await ctx.db
-      .query("posts")
-      .order("desc")
-      .take(5);
-    
+    const recentPosts = await ctx.db.query("posts").order("desc").take(5);
+
     for (const p of recentPosts) {
       const author = await ctx.db.get(p.authorId);
       activities.push({
         type: "post_created",
         timestamp: p._creationTime,
-        data: { title: p.title, author: author?.name || "Anonymous", dimension: p.lifeDimension },
+        data: {
+          title: p.title,
+          author: author?.name || "Anonymous",
+          dimension: p.lifeDimension,
+        },
       });
     }
 
@@ -171,15 +201,15 @@ export const getRecentActivity = query({
       .query("emergencyAlerts")
       .order("desc")
       .take(3);
-    
+
     for (const e of recentEmergencies) {
       const alertUser = await ctx.db.get(e.userId);
       activities.push({
         type: "emergency_alert",
         timestamp: e._creationTime,
-        data: { 
-          user: alertUser?.name || "Unknown", 
-          status: e.status, 
+        data: {
+          user: alertUser?.name || "Unknown",
+          status: e.status,
           type: e.alertType,
           location: e.location?.address || "Unknown location",
         },
@@ -191,15 +221,15 @@ export const getRecentActivity = query({
       .query("livestreams")
       .order("desc")
       .take(3);
-    
+
     for (const l of recentLivestreams) {
       const host = await ctx.db.get(l.hostId);
       activities.push({
         type: "livestream",
         timestamp: l._creationTime,
-        data: { 
-          title: l.title, 
-          host: host?.name || "Unknown", 
+        data: {
+          title: l.title,
+          host: host?.name || "Unknown",
           status: l.status,
           viewers: l.viewerCount,
         },
@@ -207,9 +237,7 @@ export const getRecentActivity = query({
     }
 
     // Sort by timestamp and limit
-    return activities
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, limit);
+    return activities.sort((a, b) => b.timestamp - a.timestamp).slice(0, limit);
   },
 });
 
@@ -219,17 +247,18 @@ export const getUserGrowthData = query({
   handler: async (ctx, args) => {
     // Verify admin access
     const user = await ctx.db.get(args.userId);
-    if (!user || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+    const adminEmails = getAdminEmails();
+    if (!user || !adminEmails.includes(user.email.toLowerCase())) {
       throw new Error("Unauthorized: Admin access required");
     }
 
     const days = args.days || 30;
     const users = await ctx.db.query("users").collect();
-    
+
     // Group users by day
     const dailyData: Record<string, number> = {};
     const now = Date.now();
-    
+
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(now - i * 24 * 60 * 60 * 1000);
       const dateStr = date.toISOString().split("T")[0];
@@ -252,22 +281,29 @@ export const getUserGrowthData = query({
 
 // Add admin email (only existing admins can add)
 export const addAdminEmail = mutation({
-  args: { 
-    userId: v.id("users"), 
-    newAdminEmail: v.string() 
+  args: {
+    userId: v.id("users"),
+    newAdminEmail: v.string(),
   },
   handler: async (ctx, args) => {
     // Verify admin access
     const user = await ctx.db.get(args.userId);
-    if (!user || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+    const adminEmails = getAdminEmails();
+    if (!user || !adminEmails.includes(user.email.toLowerCase())) {
       throw new Error("Unauthorized: Admin access required");
     }
 
-    // Note: In production, you'd want to store admin emails in the database
-    // For now, this is a placeholder that logs the request
-    console.log(`Admin ${user.email} requested to add ${args.newAdminEmail} as admin`);
-    
-    return { success: true, message: "Admin email addition logged. Update ADMIN_EMAILS array in code." };
+    // Log the request - to add a new admin, update the ADMIN_EMAILS environment variable
+    // in your Convex dashboard
+    console.log(
+      `Admin ${user.email} requested to add ${args.newAdminEmail} as admin`,
+    );
+
+    return {
+      success: true,
+      message:
+        "To add a new admin, update the ADMIN_EMAILS environment variable in your Convex dashboard. Format: email1@example.com,email2@example.com",
+    };
   },
 });
 
@@ -281,7 +317,7 @@ export const sendBroadcast = mutation({
     targetAudience: v.union(
       v.literal("all"),
       v.literal("premium"),
-      v.literal("new")
+      v.literal("new"),
     ),
     title: v.string(),
     message: v.string(),
@@ -290,19 +326,20 @@ export const sendBroadcast = mutation({
   handler: async (ctx, args) => {
     // Verify admin access
     const admin = await ctx.db.get(args.adminId);
-    if (!admin || !ADMIN_EMAILS.includes(admin.email.toLowerCase())) {
+    const adminEmails = getAdminEmails();
+    if (!admin || !adminEmails.includes(admin.email.toLowerCase())) {
       throw new Error("Unauthorized: Admin access required");
     }
 
     // Get target users based on audience
     let users = await ctx.db.query("users").collect();
-    
+
     if (args.targetAudience === "premium") {
-      users = users.filter(u => u.isPremium);
+      users = users.filter((u) => u.isPremium);
     } else if (args.targetAudience === "new") {
       // Users who joined in the last 7 days
       const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      users = users.filter(u => u._creationTime > weekAgo);
+      users = users.filter((u) => u._creationTime > weekAgo);
     }
 
     // Create notifications for each user
@@ -320,7 +357,9 @@ export const sendBroadcast = mutation({
     }
 
     // Log the broadcast
-    console.log(`[BROADCAST] Admin ${admin.email} sent "${args.title}" to ${sentCount} ${args.targetAudience} users`);
+    console.log(
+      `[BROADCAST] Admin ${admin.email} sent "${args.title}" to ${sentCount} ${args.targetAudience} users`,
+    );
 
     return { success: true, sentTo: sentCount };
   },
@@ -334,7 +373,8 @@ export const getBroadcastHistory = query({
   handler: async (ctx, args) => {
     // Verify admin access
     const user = await ctx.db.get(args.userId);
-    if (!user || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+    const adminEmails = getAdminEmails();
+    if (!user || !adminEmails.includes(user.email.toLowerCase())) {
       throw new Error("Unauthorized: Admin access required");
     }
 

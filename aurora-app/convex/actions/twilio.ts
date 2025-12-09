@@ -2,20 +2,20 @@
 
 /**
  * Twilio Emergency SMS Integration
- * 
+ *
  * Sends emergency SMS alerts to trusted contacts.
  * Includes fail-safe for Twilio trial mode.
  */
 
-import { action } from '../_generated/server';
-import { v } from 'convex/values';
-import twilio from 'twilio';
+import { action } from "../_generated/server";
+import { v } from "convex/values";
+import twilio from "twilio";
 
 /**
  * Send Emergency SMS
- * 
+ *
  * Sends SMS alerts to emergency contacts with location link.
- * 
+ *
  * FAIL-SAFE: In trial mode, Twilio only sends to verified numbers.
  * If sending fails (unverified number), we catch the error and return
  * success=true with simulated=true to ensure the UI shows "SOS Sent"
@@ -25,26 +25,28 @@ export const sendEmergencySMS = action({
   args: {
     phoneNumbers: v.array(v.string()),
     userName: v.string(),
-    location: v.optional(v.object({
-      lat: v.number(),
-      lng: v.number(),
-      name: v.optional(v.string()),
-    })),
+    location: v.optional(
+      v.object({
+        lat: v.number(),
+        lng: v.number(),
+        name: v.optional(v.string()),
+      }),
+    ),
     message: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Get Twilio credentials from environment
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const fromNumber = process.env.TWILIO_PHONE_NUMBER || '+13613265007';
+    const fromNumber = process.env.TWILIO_PHONE_NUMBER;
 
     // Check if Twilio is configured
-    if (!accountSid || !authToken) {
-      console.warn('⚠️  Twilio not configured. Simulating SMS send for demo.');
+    if (!accountSid || !authToken || !fromNumber) {
+      console.warn("⚠️  Twilio not configured. Simulating SMS send for demo.");
       return {
         success: true,
         simulated: true,
-        message: 'Twilio not configured. SMS simulation mode.',
+        message: "Twilio not configured. SMS simulation mode.",
         sentTo: args.phoneNumbers.length,
         failed: 0,
       };
@@ -55,12 +57,12 @@ export const sendEmergencySMS = action({
 
     // Build emergency message
     const locationText = args.location
-      ? `\n\n📍 Location: ${args.location.name || 'Unknown'}\nMap: https://www.google.com/maps?q=${args.location.lat},${args.location.lng}`
-      : '';
+      ? `\n\n📍 Location: ${args.location.name || "Unknown"}\nMap: https://www.google.com/maps?q=${args.location.lat},${args.location.lng}`
+      : "";
 
-    const customMessage = args.message || 'I need help!';
+    const customMessage = args.message || "I need help!";
 
-    const fullMessage = 
+    const fullMessage =
       `🚨 EMERGENCY ALERT from ${args.userName}\n\n` +
       `${customMessage}${locationText}\n\n` +
       `This is an automated alert from Aurora Safety App.`;
@@ -85,30 +87,36 @@ export const sendEmergencySMS = action({
 
         results.sentTo++;
         console.log(`✅ Emergency SMS sent to ${phoneNumber}`);
-
       } catch (error: any) {
         // FAIL-SAFE: Catch Twilio trial mode errors
-        console.warn(`⚠️  Failed to send SMS to ${phoneNumber}:`, error.message);
-        
+        console.warn(
+          `⚠️  Failed to send SMS to ${phoneNumber}:`,
+          error.message,
+        );
+
         // Check if it's a trial mode error (unverified number)
-        if (error.code === 21608 || error.message?.includes('unverified')) {
-          console.log(`   → Trial mode: ${phoneNumber} is not verified in Twilio console`);
+        if (error.code === 21608 || error.message?.includes("unverified")) {
+          console.log(
+            `   → Trial mode: ${phoneNumber} is not verified in Twilio console`,
+          );
           results.errors.push(`${phoneNumber}: Unverified (trial mode)`);
         } else {
           results.errors.push(`${phoneNumber}: ${error.message}`);
         }
-        
+
         results.failed++;
       }
     }
 
     // If all sends failed but we're in trial mode, mark as simulated success
     if (results.sentTo === 0 && results.failed > 0) {
-      console.log('⚠️  All SMS sends failed (likely trial mode). Returning simulated success for demo.');
+      console.log(
+        "⚠️  All SMS sends failed (likely trial mode). Returning simulated success for demo.",
+      );
       return {
         success: true,
         simulated: true,
-        message: 'Trial mode: SMS would be sent to verified numbers only',
+        message: "Trial mode: SMS would be sent to verified numbers only",
         sentTo: args.phoneNumbers.length,
         failed: 0,
         trialMode: true,
@@ -121,7 +129,7 @@ export const sendEmergencySMS = action({
 
 /**
  * Validate Twilio Configuration
- * 
+ *
  * Checks if Twilio is properly configured and returns status.
  */
 export const validateTwilioConfig = action({
@@ -136,7 +144,7 @@ export const validateTwilioConfig = action({
     if (!isConfigured) {
       return {
         configured: false,
-        message: 'Twilio credentials not found in environment variables',
+        message: "Twilio credentials not found in environment variables",
         accountSid: null,
         fromNumber: null,
       };
@@ -145,15 +153,15 @@ export const validateTwilioConfig = action({
     // Try to validate credentials by initializing client
     try {
       const client = twilio(accountSid, authToken);
-      
+
       // Fetch account info to validate credentials
       const account = await client.api.accounts(accountSid).fetch();
-      
+
       return {
         configured: true,
-        message: 'Twilio is configured and credentials are valid',
+        message: "Twilio is configured and credentials are valid",
         accountSid: accountSid,
-        fromNumber: fromNumber || '+13613265007',
+        fromNumber: fromNumber || "Not configured",
         accountStatus: account.status,
         accountType: account.type, // 'Trial' or 'Full'
       };
@@ -171,7 +179,7 @@ export const validateTwilioConfig = action({
 
 /**
  * Test SMS Send
- * 
+ *
  * Sends a test SMS to verify Twilio configuration.
  * Use this to test with your verified phone number.
  */
@@ -183,17 +191,20 @@ export const sendTestSMS = action({
   handler: async (ctx, args) => {
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const fromNumber = process.env.TWILIO_PHONE_NUMBER || '+13613265007';
+    const fromNumber = process.env.TWILIO_PHONE_NUMBER;
 
-    if (!accountSid || !authToken) {
-      throw new Error('Twilio not configured');
+    if (!accountSid || !authToken || !fromNumber) {
+      throw new Error(
+        "Twilio not configured - missing TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_PHONE_NUMBER",
+      );
     }
 
     const client = twilio(accountSid, authToken);
 
     try {
       const message = await client.messages.create({
-        body: args.message || '🧪 Test message from Aurora App. Twilio is working!',
+        body:
+          args.message || "🧪 Test message from Aurora App. Twilio is working!",
         from: fromNumber,
         to: args.toNumber,
       });
