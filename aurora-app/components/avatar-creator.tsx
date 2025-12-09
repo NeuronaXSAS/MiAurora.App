@@ -122,7 +122,7 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={open} onOpenChange={() => { }}>
       <DialogContent className="max-w-2xl w-[95vw] h-[90vh] sm:h-auto sm:max-h-[85vh] p-0 bg-gradient-to-br from-[var(--color-aurora-violet)] to-[var(--color-aurora-purple)] border-0 flex flex-col mx-auto">
         {/* Header - Fixed */}
         <div className="px-5 pt-5 pb-3 flex-shrink-0 border-b border-white/10 text-center">
@@ -135,11 +135,11 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
           <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6 items-start">
             {/* Avatar Preview - Properly Centered */}
             <div className="flex flex-col items-center justify-center gap-3 mx-auto">
-              <div 
-                className="w-40 h-40 rounded-2xl overflow-hidden shadow-lg flex items-center justify-center mx-auto"
+              <div
+                className="w-48 h-48 rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center mx-auto ring-4 ring-white/10"
                 style={{ backgroundColor: `#${config.backgroundColor}` }}
               >
-                <div className="w-36 h-36 flex items-center justify-center">
+                <div className="w-full h-full flex items-center justify-center p-2">
                   <AvatarPreview config={config} />
                 </div>
               </div>
@@ -165,11 +165,10 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
                       <button
                         key={bg.id}
                         onClick={() => setConfig({ ...config, backgroundColor: bg.id })}
-                        className={`w-8 h-8 rounded-lg border-2 transition-all ${
-                          config.backgroundColor === bg.id
+                        className={`w-8 h-8 rounded-lg border-2 transition-all ${config.backgroundColor === bg.id
                             ? "border-white shadow-lg scale-110"
                             : "border-white/20 hover:border-white/50"
-                        }`}
+                          }`}
                         style={{ backgroundColor: bg.color }}
                       />
                     ))}
@@ -182,11 +181,10 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
                       <button
                         key={tone.id}
                         onClick={() => setConfig({ ...config, skinColor: tone.id })}
-                        className={`w-8 h-8 rounded-full border-2 transition-all ${
-                          config.skinColor === tone.id
+                        className={`w-8 h-8 rounded-full border-2 transition-all ${config.skinColor === tone.id
                             ? "border-white shadow-lg scale-110"
                             : "border-white/20 hover:border-white/50"
-                        }`}
+                          }`}
                         style={{ backgroundColor: tone.color }}
                       />
                     ))}
@@ -202,11 +200,10 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
                     <button
                       key={style.id}
                       onClick={() => setConfig({ ...config, hairStyle: style.id })}
-                      className={`h-10 rounded-lg text-lg transition-all flex items-center justify-center ${
-                        config.hairStyle === style.id
+                      className={`h-10 rounded-lg text-lg transition-all flex items-center justify-center ${config.hairStyle === style.id
                           ? "bg-[var(--color-aurora-pink)] shadow-md"
                           : "bg-white/10 hover:bg-white/20"
-                      }`}
+                        }`}
                     >
                       {style.emoji}
                     </button>
@@ -222,11 +219,10 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
                     <button
                       key={color.id}
                       onClick={() => setConfig({ ...config, hairColor: color.id })}
-                      className={`w-8 h-8 rounded-full border-2 transition-all ${
-                        config.hairColor === color.id
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${config.hairColor === color.id
                           ? "border-white shadow-lg scale-110"
                           : "border-white/20 hover:border-white/50"
-                      }`}
+                        }`}
                       style={{ backgroundColor: color.color }}
                     />
                   ))}
@@ -242,11 +238,10 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
                       <button
                         key={eye.id}
                         onClick={() => setConfig({ ...config, eyesStyle: eye.id })}
-                        className={`w-9 h-9 rounded-lg text-base flex items-center justify-center transition-all ${
-                          config.eyesStyle === eye.id
+                        className={`w-9 h-9 rounded-lg text-base flex items-center justify-center transition-all ${config.eyesStyle === eye.id
                             ? "bg-[var(--color-aurora-pink)]"
                             : "bg-white/10 hover:bg-white/20"
-                        }`}
+                          }`}
                       >
                         {eye.emoji}
                       </button>
@@ -260,11 +255,10 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
                       <button
                         key={mouth.id}
                         onClick={() => setConfig({ ...config, mouthStyle: mouth.id })}
-                        className={`w-9 h-9 rounded-lg text-base flex items-center justify-center transition-all ${
-                          config.mouthStyle === mouth.id
+                        className={`w-9 h-9 rounded-lg text-base flex items-center justify-center transition-all ${config.mouthStyle === mouth.id
                             ? "bg-[var(--color-aurora-pink)]"
                             : "bg-white/10 hover:bg-white/20"
-                        }`}
+                          }`}
                       >
                         {mouth.emoji}
                       </button>
@@ -278,11 +272,10 @@ export function AvatarCreator({ open, onComplete, onSkip }: AvatarCreatorProps) 
                       <button
                         key={ear.id}
                         onClick={() => setConfig({ ...config, earrings: ear.id })}
-                        className={`w-9 h-9 rounded-lg text-base flex items-center justify-center transition-all ${
-                          config.earrings === ear.id
+                        className={`w-9 h-9 rounded-lg text-base flex items-center justify-center transition-all ${config.earrings === ear.id
                             ? "bg-[var(--color-aurora-pink)]"
                             : "bg-white/10 hover:bg-white/20"
-                        }`}
+                          }`}
                       >
                         {ear.emoji}
                       </button>

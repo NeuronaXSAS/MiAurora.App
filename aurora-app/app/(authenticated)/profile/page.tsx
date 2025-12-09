@@ -74,6 +74,22 @@ export default function ProfilePage() {
     careerGoals: "",
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [coverTheme, setCoverTheme] = useState("aurora");
+
+  const THEMES = {
+    aurora: "bg-gradient-to-r from-[var(--color-aurora-purple)] via-[var(--color-aurora-violet)] to-[var(--color-aurora-pink)]",
+    ocean: "bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500",
+    sunset: "bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600",
+    forest: "bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-600",
+    midnight: "bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900",
+  };
+
+  const cycleTheme = () => {
+    const keys = Object.keys(THEMES);
+    const currentIndex = keys.indexOf(coverTheme);
+    const nextIndex = (currentIndex + 1) % keys.length;
+    setCoverTheme(keys[nextIndex]);
+  };
 
   // Mutation to update avatar
   const updateAvatar = useMutation(api.users.updateAvatar);

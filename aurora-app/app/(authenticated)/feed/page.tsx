@@ -306,7 +306,7 @@ export default function FeedPage() {
         </div>
 
         {/* Full-screen immersive feed */}
-        <ImmersiveFeed userId={userId} />
+        <ImmersiveFeed userId={userId} showControls={false} />
       </div>
     );
   }
