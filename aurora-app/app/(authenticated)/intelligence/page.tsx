@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,14 +18,23 @@ import {
   Clock,
   Users,
   BarChart3,
+  RefreshCw,
+  Key,
+  WifiOff,
 } from "lucide-react";
 import Map, { Source, Layer, type MapRef } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useRef } from "react";
+
+// Map configuration
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+const AURORA_MAP_STYLE = "mapbox://styles/malunao/cm84u5ecf000x01qled5j8bvl";
+const FALLBACK_STYLE = "mapbox://styles/mapbox/streets-v12";
 
 export default function IntelligenceDashboard() {
   const stats = useQuery(api.intelligence.getAggregationStats);
-  const topCompanies = useQuery(api.intelligence.getTopCompanies, { limit: 10 });
+  const topCompanies = useQuery(api.intelligence.getTopCompanies, {
+    limit: 10,
+  });
   const worstCompanies = useQuery(api.intelligence.getTopCompanies, {
     limit: 10,
     sortBy: "worst",
@@ -38,6 +47,47 @@ export default function IntelligenceDashboard() {
   });
 
   const mapRef = useRef<MapRef>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [usingFallbackStyle, setUsingFallbackStyle] = useState(false);
+  const styleAttempts = useRef(0);
+
+  // Handle map load error - try fallback style
+  const handleMapError = useCallback(
+    (evt: any) => {
+      console.debug("Map error:", evt);
+
+      // If custom style fails, try fallback
+      if (!usingFallbackStyle && styleAttempts.current < 1) {
+        styleAttempts.current++;
+        setUsingFallbackStyle(true);
+        return;
+      }
+
+      // Network or other errors
+      if (
+        evt.error?.message?.includes("Failed to fetch") ||
+        evt.error?.message?.includes("NetworkError")
+      ) {
+        setMapError(
+          "Network error loading map. Check your connection or disable ad blockers.",
+        );
+      }
+    },
+    [usingFallbackStyle],
+  );
+
+  const handleMapLoad = useCallback(() => {
+    setMapLoaded(true);
+    setMapError(null);
+  }, []);
+
+  const handleRetryMap = useCallback(() => {
+    setMapError(null);
+    setMapLoaded(false);
+    styleAttempts.current = 0;
+    setUsingFallbackStyle(false);
+  }, []);
 
   // Fetch urban safety data for current viewport
   const urbanData = useQuery(
@@ -49,7 +99,7 @@ export default function IntelligenceDashboard() {
           minLng: viewport.longitude - 0.1,
           maxLng: viewport.longitude + 0.1,
         }
-      : "skip"
+      : "skip",
   );
 
   // Convert urban data to GeoJSON for heatmap
@@ -80,7 +130,10 @@ export default function IntelligenceDashboard() {
         "Corporate Data Quality",
         `${Math.round(stats?.corporate.avgDataQuality || 0)}%`,
       ],
-      ["Urban Data Quality", `${Math.round(stats?.urban.avgDataQuality || 0)}%`],
+      [
+        "Urban Data Quality",
+        `${Math.round(stats?.urban.avgDataQuality || 0)}%`,
+      ],
       [
         "Last Corporate Update",
         stats?.corporate.lastAggregated
@@ -139,9 +192,13 @@ export default function IntelligenceDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-[var(--muted-foreground)] mb-1">Total Safety Reports</p>
+                  <p className="text-sm text-[var(--muted-foreground)] mb-1">
+                    Total Safety Reports
+                  </p>
                   <p className="text-3xl font-bold text-[var(--foreground)]">
-                    {((stats?.corporate.totalCompanies || 0) * 15).toLocaleString()}
+                    {(
+                      (stats?.corporate.totalCompanies || 0) * 15
+                    ).toLocaleString()}
                   </p>
                   <p className="text-xs text-[var(--color-aurora-mint)] mt-1 flex items-center gap-1">
                     <TrendingUp className="w-3 h-3" />
@@ -159,7 +216,9 @@ export default function IntelligenceDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-[var(--muted-foreground)] mb-1">Verified Incidents</p>
+                  <p className="text-sm text-[var(--muted-foreground)] mb-1">
+                    Verified Incidents
+                  </p>
                   <p className="text-3xl font-bold text-[var(--foreground)]">
                     {((stats?.urban.totalGridCells || 0) * 3).toLocaleString()}
                   </p>
@@ -179,7 +238,9 @@ export default function IntelligenceDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-[var(--muted-foreground)] mb-1">Corporate Partners</p>
+                  <p className="text-sm text-[var(--muted-foreground)] mb-1">
+                    Corporate Partners
+                  </p>
                   <p className="text-3xl font-bold text-[var(--foreground)]">
                     {stats?.corporate.totalCompanies || 0}
                   </p>
@@ -199,7 +260,9 @@ export default function IntelligenceDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-[var(--muted-foreground)] mb-1">Active Users</p>
+                  <p className="text-sm text-[var(--muted-foreground)] mb-1">
+                    Active Users
+                  </p>
                   <p className="text-3xl font-bold text-[var(--foreground)]">
                     {((stats?.urban.totalGridCells || 0) * 50).toLocaleString()}
                   </p>
@@ -256,51 +319,115 @@ export default function IntelligenceDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[600px] rounded-lg overflow-hidden border">
-                  <Map
-                    ref={mapRef}
-                    {...viewport}
-                    onMove={(evt) => setViewport(evt.viewState)}
-                    mapStyle="mapbox://styles/malunao/cm84u5ecf000x01qled5j8bvl"
-                    mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-                  >
-                    {heatmapData && (
-                      <Source type="geojson" data={heatmapData}>
-                        <Layer
-                          id="safety-heatmap"
-                          type="heatmap"
-                          paint={{
-                            "heatmap-weight": ["get", "intensity"],
-                            "heatmap-intensity": 1,
-                            "heatmap-color": [
-                              "interpolate",
-                              ["linear"],
-                              ["heatmap-density"],
-                              0,
-                              "rgba(0, 0, 255, 0)",
-                              0.3,
-                              "rgb(255, 0, 0)",
-                              0.5,
-                              "rgb(255, 165, 0)",
-                              0.7,
-                              "rgb(255, 255, 0)",
-                              1,
-                              "rgb(0, 255, 0)",
-                            ],
-                            "heatmap-radius": 30,
-                            "heatmap-opacity": 0.7,
-                          }}
-                        />
-                      </Source>
-                    )}
-                  </Map>
+                <div className="h-[600px] rounded-lg overflow-hidden border relative">
+                  {/* Token missing error */}
+                  {!MAPBOX_TOKEN ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[var(--color-aurora-cream)] to-[var(--color-aurora-lavender)]/30">
+                      <div className="text-center p-8 max-w-md">
+                        <div className="w-16 h-16 bg-[var(--color-aurora-yellow)]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                          <Key className="w-8 h-8 text-[var(--color-aurora-yellow)]" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
+                          Mapbox API Key Required
+                        </h3>
+                        <p className="text-[var(--muted-foreground)] text-sm">
+                          Please add NEXT_PUBLIC_MAPBOX_TOKEN to your
+                          environment variables.
+                        </p>
+                      </div>
+                    </div>
+                  ) : mapError ? (
+                    /* Map error state */
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[var(--color-aurora-cream)] to-[var(--color-aurora-lavender)]/30">
+                      <div className="text-center p-8 max-w-md">
+                        <div className="w-16 h-16 bg-[var(--color-aurora-yellow)]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                          <WifiOff className="w-8 h-8 text-[var(--color-aurora-yellow)]" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
+                          Map Unavailable
+                        </h3>
+                        <p className="text-[var(--muted-foreground)] text-sm mb-4">
+                          {mapError}
+                        </p>
+                        <Button
+                          onClick={handleRetryMap}
+                          className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white"
+                        >
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Try Again
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Map component */
+                    <Map
+                      ref={mapRef}
+                      {...viewport}
+                      onMove={(evt) => setViewport(evt.viewState)}
+                      mapStyle={
+                        usingFallbackStyle ? FALLBACK_STYLE : AURORA_MAP_STYLE
+                      }
+                      mapboxAccessToken={MAPBOX_TOKEN}
+                      onLoad={handleMapLoad}
+                      onError={handleMapError}
+                      reuseMaps
+                    >
+                      {heatmapData && mapLoaded && (
+                        <Source type="geojson" data={heatmapData}>
+                          <Layer
+                            id="safety-heatmap"
+                            type="heatmap"
+                            paint={{
+                              "heatmap-weight": ["get", "intensity"],
+                              "heatmap-intensity": 1,
+                              "heatmap-color": [
+                                "interpolate",
+                                ["linear"],
+                                ["heatmap-density"],
+                                0,
+                                "rgba(0, 0, 255, 0)",
+                                0.3,
+                                "rgb(255, 0, 0)",
+                                0.5,
+                                "rgb(255, 165, 0)",
+                                0.7,
+                                "rgb(255, 255, 0)",
+                                1,
+                                "rgb(0, 255, 0)",
+                              ],
+                              "heatmap-radius": 30,
+                              "heatmap-opacity": 0.7,
+                            }}
+                          />
+                        </Source>
+                      )}
+                    </Map>
+                  )}
+
+                  {/* Loading overlay */}
+                  {MAPBOX_TOKEN && !mapLoaded && !mapError && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[var(--color-aurora-cream)] to-[var(--color-aurora-lavender)]/30 pointer-events-none">
+                      <div className="bg-[var(--card)]/95 backdrop-blur-sm rounded-2xl p-5 shadow-xl border border-[var(--border)]">
+                        <div className="flex items-center gap-3">
+                          <RefreshCw className="w-5 h-5 animate-spin text-[var(--color-aurora-purple)]" />
+                          <span className="text-sm font-medium text-[var(--foreground)]">
+                            {usingFallbackStyle
+                              ? "Loading standard map..."
+                              : "Loading Aurora map..."}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-900">
-                    <strong>Data Coverage:</strong> {urbanData?.length || 0} geographic
-                    cells analyzed • Updated{" "}
+                    <strong>Data Coverage:</strong> {urbanData?.length || 0}{" "}
+                    geographic cells analyzed • Updated{" "}
                     {stats?.urban.lastAggregated
-                      ? new Date(stats.urban.lastAggregated).toLocaleDateString()
+                      ? new Date(
+                          stats.urban.lastAggregated,
+                        ).toLocaleDateString()
                       : "recently"}
                   </p>
                 </div>
@@ -420,7 +547,9 @@ export default function IntelligenceDashboard() {
                     <div className="space-y-3">
                       <div>
                         <div className="flex justify-between text-sm mb-1">
-                          <span className="text-gray-600">Data Completeness</span>
+                          <span className="text-gray-600">
+                            Data Completeness
+                          </span>
                           <span className="font-semibold">
                             {Math.round(stats?.corporate.avgDataQuality || 0)}%
                           </span>
@@ -436,7 +565,9 @@ export default function IntelligenceDashboard() {
                       </div>
                       <div>
                         <div className="flex justify-between text-sm mb-1">
-                          <span className="text-gray-600">Companies Indexed</span>
+                          <span className="text-gray-600">
+                            Companies Indexed
+                          </span>
                           <span className="font-semibold">
                             {stats?.corporate.totalCompanies || 0}
                           </span>
@@ -454,7 +585,7 @@ export default function IntelligenceDashboard() {
                           Last updated:{" "}
                           {stats?.corporate.lastAggregated
                             ? new Date(
-                                stats.corporate.lastAggregated
+                                stats.corporate.lastAggregated,
                               ).toLocaleString()
                             : "N/A"}
                         </span>
@@ -469,7 +600,9 @@ export default function IntelligenceDashboard() {
                     <div className="space-y-3">
                       <div>
                         <div className="flex justify-between text-sm mb-1">
-                          <span className="text-gray-600">Data Completeness</span>
+                          <span className="text-gray-600">
+                            Data Completeness
+                          </span>
                           <span className="font-semibold">
                             {Math.round(stats?.urban.avgDataQuality || 0)}%
                           </span>
@@ -485,7 +618,9 @@ export default function IntelligenceDashboard() {
                       </div>
                       <div>
                         <div className="flex justify-between text-sm mb-1">
-                          <span className="text-gray-600">Grid Cells Analyzed</span>
+                          <span className="text-gray-600">
+                            Grid Cells Analyzed
+                          </span>
                           <span className="font-semibold">
                             {stats?.urban.totalGridCells || 0}
                           </span>
@@ -502,7 +637,9 @@ export default function IntelligenceDashboard() {
                         <span>
                           Last updated:{" "}
                           {stats?.urban.lastAggregated
-                            ? new Date(stats.urban.lastAggregated).toLocaleString()
+                            ? new Date(
+                                stats.urban.lastAggregated,
+                              ).toLocaleString()
                             : "N/A"}
                         </span>
                       </div>
@@ -521,8 +658,8 @@ export default function IntelligenceDashboard() {
                   </h3>
                   <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
                     Get full API access to Aurora's safety intelligence data.
-                    Perfect for governments, insurance companies, and urban planning
-                    organizations.
+                    Perfect for governments, insurance companies, and urban
+                    planning organizations.
                   </p>
                   <div className="flex gap-4 justify-center">
                     <Button size="lg" className="bg-blue-600 hover:bg-blue-700">

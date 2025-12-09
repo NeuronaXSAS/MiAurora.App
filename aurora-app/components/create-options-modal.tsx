@@ -24,13 +24,16 @@ interface CreateOptionsModalProps {
   onOpenChange: (open: boolean) => void;
   onSelectPost?: () => void;
   onSelectPoll?: () => void;
+  onOptionSelect?: () => void;
 }
+
 
 export function CreateOptionsModal({
   open,
   onOpenChange,
   onSelectPost,
   onSelectPoll,
+  onOptionSelect,
 }: CreateOptionsModalProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -45,6 +48,7 @@ export function CreateOptionsModal({
       hoverColor: "hover:bg-blue-50",
       action: () => {
         onOpenChange(false);
+        onOptionSelect?.();
         onSelectPost?.();
       },
     },
@@ -57,6 +61,7 @@ export function CreateOptionsModal({
       hoverColor: "hover:bg-green-50",
       action: () => {
         onOpenChange(false);
+        onOptionSelect?.();
         onSelectPoll?.();
       },
     },
@@ -69,6 +74,7 @@ export function CreateOptionsModal({
       hoverColor: "hover:bg-purple-50",
       action: () => {
         onOpenChange(false);
+        onOptionSelect?.();
         router.push("/reels/create");
       },
     },
@@ -81,6 +87,7 @@ export function CreateOptionsModal({
       hoverColor: "hover:bg-orange-50",
       action: () => {
         onOpenChange(false);
+        onOptionSelect?.();
         router.push("/routes/track");
       },
     },
@@ -93,6 +100,7 @@ export function CreateOptionsModal({
       hoverColor: "hover:bg-red-50",
       action: () => {
         onOpenChange(false);
+        onOptionSelect?.();
         router.push("/live/broadcast");
       },
     },
@@ -105,6 +113,7 @@ export function CreateOptionsModal({
       hoverColor: "hover:bg-pink-50",
       action: () => {
         onOpenChange(false);
+        onOptionSelect?.();
         router.push("/opportunities");
       },
     },

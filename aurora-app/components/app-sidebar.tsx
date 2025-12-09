@@ -74,7 +74,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
     const wellnessPaths = ['/health', '/assistant'];
     const financePaths = ['/wallet', '/finance'];
     const growthPaths = ['/profile', '/settings', '/premium'];
-    
+
     setExpandedSections({
       safety: safetyPaths.some(p => pathname.startsWith(p)),
       social: socialPaths.some(p => pathname.startsWith(p)),
@@ -82,6 +82,8 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
       finance: financePaths.some(p => pathname.startsWith(p)),
       growth: growthPaths.some(p => pathname.startsWith(p)),
     });
+    // Close mobile sidebar on navigation
+    setMobileOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -184,8 +186,8 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
     <Link href={href} onClick={() => setMobileOpen(false)}>
       <div className={cn(
         "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group",
-        isActive(href) 
-          ? "bg-[var(--color-aurora-purple)]/20 text-[var(--foreground)]" 
+        isActive(href)
+          ? "bg-[var(--color-aurora-purple)]/20 text-[var(--foreground)]"
           : "text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--foreground)]",
         compact && "justify-center px-2"
       )}>
@@ -268,7 +270,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
                 </div>
               </div>
             </div>
-            
+
             {/* Create Button */}
             <Button
               onClick={() => setShowCreateModal(true)}
@@ -350,13 +352,13 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
                   </div>
                 </Link>
               )}
-              
+
               {/* Theme Toggle */}
               <div className="flex items-center justify-between px-3 py-2.5 rounded-xl text-[var(--muted-foreground)]">
                 <span className="text-sm font-medium">Theme</span>
                 <ThemeToggle />
               </div>
-              
+
               {growthNav.map(item => (
                 <NavItem key={item.href} {...item} />
               ))}
@@ -371,19 +373,19 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
 
         {/* Legal & Logout - Now part of scrollable content */}
         <div className="pt-3 mt-3 border-t border-[var(--border)]">
-          <Link 
-            href="/legal/terms" 
+          <Link
+            href="/legal/terms"
             className="block px-3 py-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)] rounded-xl transition-colors"
           >
             Terms of Service
           </Link>
-          <Link 
-            href="/legal/privacy" 
+          <Link
+            href="/legal/privacy"
             className="block px-3 py-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)] rounded-xl transition-colors"
           >
             Privacy Policy
           </Link>
-          
+
           <Button
             variant="ghost"
             className="w-full min-h-[44px] justify-start mt-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)] rounded-xl"
@@ -434,6 +436,7 @@ export function AppSidebar({ collapsed = false, onToggle }: AppSidebarProps) {
         onOpenChange={setShowCreateModal}
         onSelectPost={() => setShowPostDialog(true)}
         onSelectPoll={() => setShowPollDialog(true)}
+        onOptionSelect={() => setMobileOpen(false)}
       />
       {userId && (
         <>

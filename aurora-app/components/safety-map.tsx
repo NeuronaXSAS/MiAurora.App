@@ -2,16 +2,33 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Crosshair, Navigation, Plus, Search, X, MapPin as MapPinIcon, AlertTriangle } from "lucide-react";
+import {
+  Crosshair,
+  Navigation,
+  Plus,
+  Search,
+  X,
+  MapPin as MapPinIcon,
+  AlertTriangle,
+  RefreshCw,
+  WifiOff,
+  Key,
+} from "lucide-react";
+
+// Get Mapbox token with validation
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+const AURORA_MAP_STYLE = "mapbox://styles/malunao/cm84u5ecf000x01qled5j8bvl";
+const FALLBACK_STYLE = "mapbox://styles/mapbox/streets-v12";
 
 // Set access token only if available
-if (process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
-  mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+if (MAPBOX_TOKEN) {
+  mapboxgl.accessToken = MAPBOX_TOKEN;
 }
 
 // Debounce helper for search
@@ -27,25 +44,57 @@ function useDebounce<T>(value: T, delay: number): T {
 interface SafetyMapProps {
   lifeDimension?: string;
   onMarkerClick?: (postId: string) => void;
-  onLocationSelect?: (location: { lat: number; lng: number; address: string }) => void;
-  ratingFilter?: number; // Filter by minimum rating
+  onLocationSelect?: (location: {
+    lat: number;
+    lng: number;
+    address: string;
+  }) => void;
+  ratingFilter?: number;
 }
 
-export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, ratingFilter }: SafetyMapProps) {
+// Error states for better debugging
+type MapErrorType =
+  | "no_token"
+  | "style_error"
+  | "network_error"
+  | "webgl_error"
+  | "unknown";
+
+interface MapError {
+  type: MapErrorType;
+  message: string;
+  details?: string;
+}
+
+export function SafetyMap({
+  lifeDimension,
+  onMarkerClick,
+  onLocationSelect,
+  ratingFilter,
+}: SafetyMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
   const userLocationMarker = useRef<mapboxgl.Marker | null>(null);
   const markersCreated = useRef(false);
+  const styleLoadAttempts = useRef(0);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapError, setMapError] = useState<string | null>(null);
+  const [mapError, setMapError] = useState<MapError | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [mapState, setMapState] = useState<{ center: [number, number]; zoom: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [mapState, setMapState] = useState<{
+    center: [number, number];
+    zoom: number;
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [nearbyPosts, setNearbyPosts] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [usingFallbackStyle, setUsingFallbackStyle] = useState(false);
 
   // Debounce search query
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -53,7 +102,7 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
   // Fetch posts with location data - OPTIMIZED with limit for mobile
   const posts = useQuery(api.posts.getPostsForMap, {
     lifeDimension: lifeDimension as any,
-    limit: 150, // Limit markers for mobile performance
+    limit: 100, // Reduced limit for better mobile performance
     minRating: ratingFilter || 1,
   });
 
@@ -69,159 +118,274 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
     });
   }, [posts, ratingFilter]);
 
-  // Initialize map - optimized for faster load
-  useEffect(() => {
-    if (!mapContainer.current || map.current) return;
-
-    // Check if Mapbox token is available
-    if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
-      setMapError("Map configuration unavailable");
-      return;
-    }
-
+  // Check WebGL support
+  const checkWebGLSupport = useCallback((): boolean => {
     try {
-      // Use custom Aurora style
-      const MAP_STYLE = "mapbox://styles/malunao/cm84u5ecf000x01qled5j8bvl";
-      
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: MAP_STYLE,
-        center: mapState?.center || [-98.5795, 39.8283], // Use saved state or USA center
-        zoom: mapState?.zoom || 4,
-        attributionControl: false, // Faster init, add later if needed
-        fadeDuration: 0, // Instant tile transitions
-        trackResize: true,
-        renderWorldCopies: false, // Better performance
-      });
-
-      // Handle map errors silently
-      map.current.on("error", (e) => {
-        if (e.error?.message?.includes("Failed to fetch") || 
-            e.error?.message?.includes("NetworkError")) {
-          console.debug("Map resource blocked");
-        }
-      });
-
-      map.current.on("load", () => {
-        setMapLoaded(true);
-        setMapError(null);
-      });
-    } catch (error) {
-      console.debug("Map initialization failed:", error);
-      setMapError("Unable to load map. Try disabling ad-blocker if you have one.");
-      return;
+      const canvas = document.createElement("canvas");
+      const gl =
+        canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+      return !!gl;
+    } catch {
+      return false;
     }
+  }, []);
 
-    // Debounced map state save - avoid excessive updates
-    let moveEndTimeout: NodeJS.Timeout;
-    map.current?.on("moveend", () => {
-      clearTimeout(moveEndTimeout);
-      moveEndTimeout = setTimeout(() => {
-        if (map.current) {
-          setMapState({
-            center: map.current.getCenter().toArray() as [number, number],
-            zoom: map.current.getZoom(),
-          });
-        }
-      }, 150);
-    });
+  // Initialize map with better error handling
+  const initializeMap = useCallback(
+    (useCustomStyle: boolean = true) => {
+      if (!mapContainer.current) return;
 
-    // Add click handler for location selection
-    map.current?.on("click", async (e) => {
-      if (!isSelectingLocation || !onLocationSelect) return;
-
-      const { lng, lat } = e.lngLat;
-
-      // Reverse geocode to get address
-      try {
-        const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`
-        );
-        const data = await response.json();
-        const address = data.features[0]?.place_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-
-        // Save current map state before opening dialog
-        if (map.current) {
-          setMapState({
-            center: map.current.getCenter().toArray() as [number, number],
-            zoom: map.current.getZoom(),
-          });
-        }
-        
-        onLocationSelect({ lat, lng, address });
-        setIsSelectingLocation(false);
-      } catch (error) {
-        console.error("Geocoding error:", error);
-        
-        // Save current map state before opening dialog
-        if (map.current) {
-          setMapState({
-            center: map.current.getCenter().toArray() as [number, number],
-            zoom: map.current.getZoom(),
-          });
-        }
-        
-        onLocationSelect({ lat, lng, address: `${lat.toFixed(4)}, ${lng.toFixed(4)}` });
-        setIsSelectingLocation(false);
+      // Check for token first
+      if (!MAPBOX_TOKEN) {
+        setMapError({
+          type: "no_token",
+          message: "Mapbox API key not configured",
+          details:
+            "Please add NEXT_PUBLIC_MAPBOX_TOKEN to your environment variables.",
+        });
+        return;
       }
-    });
+
+      // Check WebGL support
+      if (!checkWebGLSupport()) {
+        setMapError({
+          type: "webgl_error",
+          message: "WebGL not supported",
+          details:
+            "Your browser or device does not support WebGL, which is required for interactive maps.",
+        });
+        return;
+      }
+
+      // Cleanup existing map
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+
+      try {
+        const styleToUse = useCustomStyle ? AURORA_MAP_STYLE : FALLBACK_STYLE;
+
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: styleToUse,
+          center: mapState?.center || [-98.5795, 39.8283], // Use saved state or USA center
+          zoom: mapState?.zoom || 4,
+          attributionControl: false,
+          fadeDuration: 0, // Instant tile transitions for better perceived performance
+          trackResize: true,
+          renderWorldCopies: false, // Better performance
+          maxZoom: 18,
+          minZoom: 2,
+        });
+
+        // Handle style load errors
+        map.current.on("error", (e) => {
+          console.debug("Map error event:", e);
+
+          // Check for style-related errors
+          if (
+            e.error?.message?.includes("style") ||
+            e.error?.message?.includes("Style")
+          ) {
+            if (useCustomStyle && styleLoadAttempts.current < 1) {
+              styleLoadAttempts.current++;
+              console.log("Custom style failed, trying fallback style...");
+              setUsingFallbackStyle(true);
+              initializeMap(false);
+              return;
+            }
+          }
+
+          // Check for network errors
+          if (
+            e.error?.message?.includes("Failed to fetch") ||
+            e.error?.message?.includes("NetworkError") ||
+            e.error?.message?.includes("net::ERR")
+          ) {
+            // Don't show error for individual tile failures
+            if (!mapLoaded) {
+              setMapError({
+                type: "network_error",
+                message: "Network error loading map",
+                details:
+                  "Check your internet connection or try disabling ad blockers.",
+              });
+            }
+          }
+        });
+
+        map.current.on("load", () => {
+          console.log("Map loaded successfully");
+          setMapLoaded(true);
+          setMapError(null);
+          setIsRetrying(false);
+        });
+
+        // Debounced map state save
+        let moveEndTimeout: NodeJS.Timeout;
+        map.current.on("moveend", () => {
+          clearTimeout(moveEndTimeout);
+          moveEndTimeout = setTimeout(() => {
+            if (map.current) {
+              setMapState({
+                center: map.current.getCenter().toArray() as [number, number],
+                zoom: map.current.getZoom(),
+              });
+            }
+          }, 150);
+        });
+
+        // Add click handler for location selection
+        map.current.on("click", async (e) => {
+          if (!isSelectingLocation || !onLocationSelect) return;
+
+          const { lng, lat } = e.lngLat;
+
+          try {
+            const response = await fetch(
+              `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}`,
+            );
+            const data = await response.json();
+            const address =
+              data.features[0]?.place_name ||
+              `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+            if (map.current) {
+              setMapState({
+                center: map.current.getCenter().toArray() as [number, number],
+                zoom: map.current.getZoom(),
+              });
+            }
+
+            onLocationSelect({ lat, lng, address });
+            setIsSelectingLocation(false);
+          } catch (error) {
+            console.error("Geocoding error:", error);
+
+            if (map.current) {
+              setMapState({
+                center: map.current.getCenter().toArray() as [number, number],
+                zoom: map.current.getZoom(),
+              });
+            }
+
+            onLocationSelect({
+              lat,
+              lng,
+              address: `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+            });
+            setIsSelectingLocation(false);
+          }
+        });
+      } catch (error) {
+        console.error("Map initialization error:", error);
+        setMapError({
+          type: "unknown",
+          message: "Failed to initialize map",
+          details:
+            error instanceof Error ? error.message : "Unknown error occurred",
+        });
+      }
+    },
+    [
+      mapState,
+      checkWebGLSupport,
+      isSelectingLocation,
+      onLocationSelect,
+      mapLoaded,
+    ],
+  );
+
+  // Initialize map on mount
+  useEffect(() => {
+    initializeMap(true);
 
     return () => {
-      // Cleanup markers
       markers.current.forEach((marker) => marker.remove());
       markers.current = [];
-      
+
       if (userLocationMarker.current) {
         userLocationMarker.current.remove();
       }
-      
-      // Cleanup map
+
       if (map.current) {
         map.current.remove();
         map.current = null;
       }
     };
-  }, [isSelectingLocation, onLocationSelect]);
+  }, []);
 
-  // Incident labels - defined outside to avoid recreation
-  const incidentLabels: Record<string, string> = useMemo(() => ({
-    harassment: "Sexual Harassment",
-    discrimination: "Discrimination",
-    pay_inequality: "Pay Inequality",
-    hostile_environment: "Hostile Environment",
-    retaliation: "Retaliation",
-    other: "Workplace Issue",
-  }), []);
+  // Retry handler
+  const handleRetry = useCallback(() => {
+    setIsRetrying(true);
+    setMapError(null);
+    styleLoadAttempts.current = 0;
+    setTimeout(() => {
+      initializeMap(true);
+    }, 500);
+  }, [initializeMap]);
+
+  // Incident labels
+  const incidentLabels: Record<string, string> = useMemo(
+    () => ({
+      harassment: "Sexual Harassment",
+      discrimination: "Discrimination",
+      pay_inequality: "Pay Inequality",
+      hostile_environment: "Hostile Environment",
+      retaliation: "Retaliation",
+      other: "Workplace Issue",
+    }),
+    [],
+  );
 
   // Create marker element - optimized helper
   const createPostMarker = useCallback((post: any, onClick?: () => void) => {
-    const color = post.rating >= 4 ? "#22c55e" : post.rating >= 3 ? "#eab308" : "#ef4444";
-    
+    const color =
+      post.rating >= 4 ? "#22c55e" : post.rating >= 3 ? "#eab308" : "#ef4444";
+
     const el = document.createElement("div");
-    el.className = "custom-marker";
+    el.className = "aurora-safety-marker";
     el.style.cssText = `
       width: 28px; height: 28px; border-radius: 50%;
       background-color: ${color}; border: 2px solid white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       cursor: pointer; display: flex; align-items: center;
-      justify-content: center; font-size: 13px; font-weight: bold; color: white;
+      justify-content: center; font-size: 12px; font-weight: bold; color: white;
+      transition: transform 0.15s ease;
     `;
     el.textContent = post.rating.toString();
-    
+
+    el.addEventListener("mouseenter", () => {
+      el.style.transform = "scale(1.15)";
+    });
+    el.addEventListener("mouseleave", () => {
+      el.style.transform = "scale(1)";
+    });
+
     if (onClick) el.addEventListener("click", onClick);
     return el;
   }, []);
 
   const createWorkplaceMarker = useCallback(() => {
     const el = document.createElement("div");
-    el.className = "workplace-marker";
+    el.className = "aurora-workplace-marker";
     el.style.cssText = `
       width: 28px; height: 28px; background-color: #ec4c28;
-      border: 2px solid white; box-shadow: 0 2px 4px rgba(236, 76, 40, 0.4);
+      border: 2px solid white; box-shadow: 0 2px 6px rgba(236, 76, 40, 0.5);
       cursor: pointer; display: flex; align-items: center;
-      justify-content: center; font-size: 14px; border-radius: 4px; transform: rotate(45deg);
+      justify-content: center; font-size: 12px; border-radius: 4px; transform: rotate(45deg);
+      transition: transform 0.15s ease;
     `;
     el.innerHTML = '<span style="transform: rotate(-45deg);">⚠️</span>';
+
+    el.addEventListener("mouseenter", () => {
+      el.style.transform = "rotate(45deg) scale(1.15)";
+    });
+    el.addEventListener("mouseleave", () => {
+      el.style.transform = "rotate(45deg) scale(1)";
+    });
+
     return el;
   }, []);
 
@@ -233,7 +397,7 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
     markers.current.forEach((marker) => marker.remove());
     markers.current = [];
 
-    // Batch marker creation using requestAnimationFrame for smoother rendering
+    // Batch marker creation using requestAnimationFrame
     const createMarkers = () => {
       if (!map.current) return;
 
@@ -241,29 +405,41 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
       filteredPosts.forEach((post) => {
         if (!post.location || !map.current) return;
 
-        const el = createPostMarker(post, onMarkerClick ? () => onMarkerClick(post._id) : undefined);
+        const el = createPostMarker(
+          post,
+          onMarkerClick ? () => onMarkerClick(post._id) : undefined,
+        );
 
-        // Lazy popup - only create on hover/click
         const marker = new mapboxgl.Marker(el)
           .setLngLat(post.location.coordinates as [number, number])
           .addTo(map.current!);
 
-        // Add popup on first interaction for better performance
-        // Store location name for popup (already checked above)
-        const locationName = post.location!.name;
+        const locationName = post.location.name || "Unknown location";
         let popupAdded = false;
+
         el.addEventListener("mouseenter", () => {
-          if (!popupAdded) {
-            popupAdded = true;
-            marker.setPopup(new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(`
-              <div style="padding: 6px; min-width: 180px;">
-                <h3 style="font-weight: bold; margin-bottom: 2px; font-size: 13px;">${post.title}</h3>
-                <p style="font-size: 11px; color: #666; margin-bottom: 4px;">${locationName}</p>
-                <div style="font-size: 11px; color: #666;">
-                  Rating: ${post.rating}/5 • ${post.verificationCount} verifications
+          if (!popupAdded && map.current) {
+            marker.setPopup(
+              new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(`
+              <div style="padding: 8px; max-width: 200px;">
+                <div style="font-weight: 600; font-size: 13px; color: #1a1a1a; margin-bottom: 4px;">${post.title}</div>
+                <div style="font-size: 11px; color: #666;">${locationName}</div>
+                <div style="margin-top: 6px; display: flex; align-items: center; gap: 4px;">
+                  <span style="background: ${post.rating >= 4 ? "#22c55e" : post.rating >= 3 ? "#eab308" : "#ef4444"}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;">
+                    ${post.rating}★
+                  </span>
                 </div>
               </div>
-            `));
+            `),
+            );
+            popupAdded = true;
+            marker.togglePopup();
+          }
+        });
+
+        el.addEventListener("mouseleave", () => {
+          if (marker.getPopup()?.isOpen()) {
+            marker.togglePopup();
           }
         });
 
@@ -271,205 +447,201 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
       });
 
       // Add workplace report markers
-      workplaceReports?.forEach((report) => {
-        if (!report.location || !map.current) return;
+      if (workplaceReports) {
+        workplaceReports.forEach((report) => {
+          if (!report.location || !map.current) return;
 
-        const el = createWorkplaceMarker();
+          const el = createWorkplaceMarker();
 
-        const marker = new mapboxgl.Marker(el)
-          .setLngLat(report.location.coordinates as [number, number])
-          .addTo(map.current!);
+          const marker = new mapboxgl.Marker(el)
+            .setLngLat(report.location.coordinates as [number, number])
+            .addTo(map.current!);
 
-        // Lazy popup
-        let popupAdded = false;
-        el.addEventListener("mouseenter", () => {
-          if (!popupAdded) {
-            popupAdded = true;
-            marker.setPopup(new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(`
-              <div style="padding: 6px; min-width: 180px;">
-                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
-                  <span>⚠️</span>
-                  <span style="font-weight: bold; color: #ec4c28; font-size: 12px;">Workplace Report</span>
+          let popupAdded = false;
+
+          el.addEventListener("mouseenter", () => {
+            if (!popupAdded && map.current) {
+              marker.setPopup(
+                new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(`
+                <div style="padding: 8px; max-width: 200px;">
+                  <div style="font-weight: 600; font-size: 13px; color: #ec4c28; margin-bottom: 4px;">⚠️ Workplace Report</div>
+                  <div style="font-size: 12px; color: #1a1a1a; font-weight: 500;">${report.companyName}</div>
+                  <div style="font-size: 11px; color: #666; margin-top: 2px;">${incidentLabels[report.incidentType] || report.incidentType}</div>
                 </div>
-                <h3 style="font-weight: bold; margin-bottom: 2px; font-size: 13px;">${report.companyName}</h3>
-                <p style="font-size: 11px; color: #666;">${incidentLabels[report.incidentType] || report.incidentType}</p>
-              </div>
-            `));
-          }
+              `),
+              );
+              popupAdded = true;
+              marker.togglePopup();
+            }
+          });
+
+          el.addEventListener("mouseleave", () => {
+            if (marker.getPopup()?.isOpen()) {
+              marker.togglePopup();
+            }
+          });
+
+          markers.current.push(marker);
         });
+      }
 
-        markers.current.push(marker);
-      });
-
-      // Fit bounds only on initial load
-      if (!markersCreated.current && !mapState) {
-        const allLocations: [number, number][] = [
-          ...filteredPosts.filter(p => p.location).map(p => p.location!.coordinates as [number, number]),
-          ...(workplaceReports?.filter(r => r.location).map(r => r.location!.coordinates as [number, number]) || [])
+      // Fit to markers if we have data and map hasn't been interacted with
+      if (markers.current.length > 0 && !markersCreated.current && !mapState) {
+        const allLocations = [
+          ...filteredPosts
+            .filter((p) => p.location)
+            .map((p) => p.location!.coordinates as [number, number]),
+          ...(workplaceReports || [])
+            .filter((r) => r.location)
+            .map((r) => r.location!.coordinates as [number, number]),
         ];
 
-        if (allLocations.length > 0 && map.current) {
+        if (allLocations.length > 1) {
           const bounds = new mapboxgl.LngLatBounds();
-          allLocations.forEach((coords) => bounds.extend(coords));
-          map.current.fitBounds(bounds, { padding: 50, maxZoom: 12, duration: 0 });
+          allLocations.forEach((coord) => bounds.extend(coord));
+          map.current?.fitBounds(bounds, {
+            padding: 60,
+            maxZoom: 12,
+            duration: 500,
+          });
         }
         markersCreated.current = true;
       }
     };
 
-    // Use requestAnimationFrame for smoother marker rendering
     requestAnimationFrame(createMarkers);
-  }, [filteredPosts, workplaceReports, mapLoaded, onMarkerClick, mapState, createPostMarker, createWorkplaceMarker, incidentLabels]);
+  }, [
+    filteredPosts,
+    workplaceReports,
+    mapLoaded,
+    onMarkerClick,
+    createPostMarker,
+    createWorkplaceMarker,
+    incidentLabels,
+    mapState,
+  ]);
 
-  // Restore user location marker when map loads
-  useEffect(() => {
-    if (!map.current || !mapLoaded || !userLocation) return;
-
-    // Add or update user location marker
-    if (userLocationMarker.current) {
-      userLocationMarker.current.setLngLat([userLocation.lng, userLocation.lat]);
-    } else {
-      const el = document.createElement("div");
-      el.className = "user-location-marker";
-      el.style.width = "20px";
-      el.style.height = "20px";
-      el.style.borderRadius = "50%";
-      el.style.backgroundColor = "#3b82f6";
-      el.style.border = "3px solid white";
-      el.style.boxShadow = "0 0 10px rgba(59, 130, 246, 0.5)";
-
-      userLocationMarker.current = new mapboxgl.Marker(el)
-        .setLngLat([userLocation.lng, userLocation.lat])
-        .setPopup(
-          new mapboxgl.Popup({ offset: 25 }).setHTML(
-            '<div style="padding: 8px;"><strong>Your Location</strong></div>'
-          )
-        )
-        .addTo(map.current);
-    }
-  }, [userLocation, mapLoaded]);
-
-  // Search for location - memoized
+  // Search handler
   const handleSearch = useCallback(async () => {
-    if (!searchQuery.trim()) return;
-    setIsSearching(true);
+    if (!debouncedSearchQuery.trim() || !MAPBOX_TOKEN) return;
 
+    setIsSearching(true);
     try {
       const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?access_token=${mapboxgl.accessToken}&limit=5`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(debouncedSearchQuery)}.json?access_token=${MAPBOX_TOKEN}&limit=5`,
       );
       const data = await response.json();
       setSearchResults(data.features || []);
     } catch (error) {
       console.error("Search error:", error);
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }
-  }, [searchQuery]);
+  }, [debouncedSearchQuery]);
 
-  // Navigate to search result - memoized
-  const handleSelectSearchResult = useCallback((result: any) => {
-    if (!map.current) return;
+  // Auto-search on debounced query change
+  useEffect(() => {
+    if (debouncedSearchQuery.trim()) {
+      handleSearch();
+    } else {
+      setSearchResults([]);
+    }
+  }, [debouncedSearchQuery, handleSearch]);
 
-    const [lng, lat] = result.center;
-    map.current.flyTo({
-      center: [lng, lat],
-      zoom: 14,
-      duration: 1500, // Slightly faster for better UX
-      essential: true,
-    });
+  const handleSelectSearchResult = useCallback(
+    (result: any) => {
+      const [lng, lat] = result.center;
 
-    setSearchQuery("");
-    setSearchResults([]);
-
-    // Show nearby posts
-    if (posts) {
-      const nearby = posts.filter((post) => {
-        if (!post.location) return false;
-        const [postLng, postLat] = post.location.coordinates;
-        const distance = Math.sqrt(
-          Math.pow(postLng - lng, 2) + Math.pow(postLat - lat, 2)
-        );
-        return distance < 0.1; // Roughly 10km
+      map.current?.flyTo({
+        center: [lng, lat],
+        zoom: 14,
+        duration: 1000,
+        essential: true,
       });
-      setNearbyPosts(nearby);
-    }
-  }, [posts]);
 
-  // Get user's GPS location - memoized and optimized with Safari/iOS support
-  const handleGetUserLocation = useCallback(() => {
-    // Check if geolocation is available
-    if (!navigator.geolocation) {
-      // Show helpful message for browsers without geolocation
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      
-      if (isSafari || isIOS) {
-        alert("To use location on Safari:\n\n1. Go to Settings > Privacy > Location Services\n2. Enable Location Services\n3. Scroll down and enable for Safari\n4. Refresh this page");
-      } else {
-        alert("Geolocation is not supported by your browser. Please try a different browser.");
+      setSearchQuery("");
+      setSearchResults([]);
+
+      // Find nearby posts
+      if (filteredPosts.length > 0) {
+        const nearby = filteredPosts.filter((post) => {
+          if (!post.location) return false;
+          const [postLng, postLat] = post.location.coordinates;
+          const distance = Math.sqrt(
+            Math.pow(postLng - lng, 2) + Math.pow(postLat - lat, 2),
+          );
+          return distance < 0.05; // ~5km radius
+        });
+        setNearbyPosts(nearby);
       }
+    },
+    [filteredPosts],
+  );
+
+  // Get user location
+  const handleGetUserLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
       return;
     }
 
-    // Check if we're on HTTPS (required for geolocation)
-    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-      alert("Location requires a secure connection (HTTPS). Please access Aurora App via https://");
-      return;
-    }
-
-    // Request GPS position with progressive enhancement
-    // First try with low accuracy for faster response, then upgrade
     const successCallback = (position: GeolocationPosition) => {
       const { latitude, longitude } = position.coords;
-      
       setUserLocation({ lat: latitude, lng: longitude });
 
-      if (map.current) {
-        // Remove existing user marker if any
-        if (userLocationMarker.current) {
-          userLocationMarker.current.remove();
-          userLocationMarker.current = null;
+      // Remove existing user marker
+      if (userLocationMarker.current) {
+        userLocationMarker.current.remove();
+      }
+
+      // Create new user location marker
+      const el = document.createElement("div");
+      el.className = "aurora-user-marker";
+      el.style.cssText = `
+        width: 20px; height: 20px; border-radius: 50%;
+        background-color: #3b82f6; border: 3px solid white;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 0 2px 6px rgba(0,0,0,0.3);
+        animation: pulse 2s ease-in-out infinite;
+      `;
+
+      // Add pulse animation
+      const style = document.createElement("style");
+      style.textContent = `
+        @keyframes pulse {
+          0%, 100% { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 0 2px 6px rgba(0,0,0,0.3); }
+          50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.1), 0 2px 6px rgba(0,0,0,0.3); }
         }
+      `;
+      document.head.appendChild(style);
 
-        // Create user location marker - simplified for performance
-        const el = document.createElement("div");
-        el.className = "user-location-marker";
-        el.style.cssText = `
-          width: 24px;
-          height: 24px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-          border: 4px solid white;
-          box-shadow: 0 0 12px rgba(59, 130, 246, 0.5), 0 2px 6px rgba(0,0,0,0.2);
-        `;
-
+      if (map.current) {
         userLocationMarker.current = new mapboxgl.Marker(el)
           .setLngLat([longitude, latitude])
           .setPopup(
             new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(
-              `<div style="padding: 6px;"><strong>📍 Your Location</strong></div>`
-            )
+              '<div style="padding: 4px 8px; font-size: 12px; font-weight: 500;">Your location</div>',
+            ),
           )
           .addTo(map.current);
 
-        // Fly to user location - faster animation
         map.current.flyTo({
           center: [longitude, latitude],
-          zoom: 15,
-          duration: 1200,
+          zoom: 14,
+          duration: 1000,
           essential: true,
         });
 
-        // Show nearby posts
-        if (posts) {
-          const nearby = posts.filter((post) => {
+        // Find nearby posts
+        if (filteredPosts.length > 0) {
+          const nearby = filteredPosts.filter((post) => {
             if (!post.location) return false;
             const [postLng, postLat] = post.location.coordinates;
             const distance = Math.sqrt(
-              Math.pow(postLng - longitude, 2) + Math.pow(postLat - latitude, 2)
+              Math.pow(postLng - longitude, 2) +
+                Math.pow(postLat - latitude, 2),
             );
-            return distance < 0.1;
+            return distance < 0.05;
           });
           setNearbyPosts(nearby);
         }
@@ -477,59 +649,76 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
     };
 
     const errorCallback = (error: GeolocationPositionError) => {
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      
-      let errorMessage = "Unable to get your location.";
-      let helpText = "";
-      
+      let message = "Unable to get your location";
       switch (error.code) {
         case error.PERMISSION_DENIED:
-          if (isSafari || isIOS) {
-            errorMessage = "Location access denied.";
-            helpText = "\n\nTo enable on Safari/iOS:\n1. Settings > Privacy > Location Services\n2. Enable for Safari\n3. Refresh this page";
-          } else {
-            errorMessage = "Location permission denied.";
-            helpText = "\n\nClick the location icon in your browser's address bar to enable.";
-          }
+          message =
+            "Location access denied. Please enable location permissions in your browser settings.";
           break;
         case error.POSITION_UNAVAILABLE:
-          errorMessage = "Location unavailable.";
-          helpText = "\n\nMake sure GPS is enabled on your device.";
+          message = "Location information is unavailable.";
           break;
         case error.TIMEOUT:
-          errorMessage = "Location request timed out.";
-          helpText = "\n\nPlease try again. Make sure you have a clear view of the sky.";
+          message = "Location request timed out. Please try again.";
           break;
       }
-      alert(errorMessage + helpText);
+      alert(message);
     };
 
-    // Use progressive enhancement: start with fast/low accuracy, then upgrade
-    navigator.geolocation.getCurrentPosition(
-      successCallback,
-      errorCallback,
-      {
-        enableHighAccuracy: false, // Faster initial response
-        timeout: 15000, // Longer timeout for mobile
-        maximumAge: 120000 // Allow 2 minute cached position for speed
-      }
-    );
-  }, [posts]);
+    navigator.geolocation.getCurrentPosition(successCallback, errorCallback, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000,
+    });
+  }, [filteredPosts]);
 
-  // Show error state if map failed to load
+  // Error states with helpful messages
   if (mapError) {
     return (
-      <div className="absolute inset-0 flex items-center justify-center bg-[var(--background)]">
-        <div className="text-center p-8 max-w-md">
+      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[var(--color-aurora-cream)] to-[var(--color-aurora-lavender)]/30">
+        <div className="text-center p-8 max-w-md mx-4">
           <div className="w-16 h-16 bg-[var(--color-aurora-yellow)]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle className="w-8 h-8 text-[var(--color-aurora-yellow)]" />
+            {mapError.type === "no_token" ? (
+              <Key className="w-8 h-8 text-[var(--color-aurora-yellow)]" />
+            ) : mapError.type === "network_error" ? (
+              <WifiOff className="w-8 h-8 text-[var(--color-aurora-yellow)]" />
+            ) : (
+              <AlertTriangle className="w-8 h-8 text-[var(--color-aurora-yellow)]" />
+            )}
           </div>
-          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">Map Unavailable</h3>
-          <p className="text-[var(--muted-foreground)] text-sm mb-4">{mapError}</p>
-          <p className="text-[var(--muted-foreground)] text-xs">
-            If you have an ad-blocker enabled, try disabling it for this site to view the map.
+          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
+            {mapError.message}
+          </h3>
+          <p className="text-[var(--muted-foreground)] text-sm mb-4">
+            {mapError.details}
           </p>
+
+          {mapError.type !== "no_token" && (
+            <Button
+              onClick={handleRetry}
+              disabled={isRetrying}
+              className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] text-white"
+            >
+              {isRetrying ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Retrying...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Try Again
+                </>
+              )}
+            </Button>
+          )}
+
+          {mapError.type === "network_error" && (
+            <p className="text-xs text-[var(--muted-foreground)] mt-4">
+              💡 Tip: Ad blockers can sometimes block map tiles. Try disabling
+              them for this site.
+            </p>
+          )}
         </div>
       </div>
     );
@@ -537,12 +726,40 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
 
   return (
     <div className="absolute inset-0">
-      <div 
-        ref={mapContainer} 
-        className={`w-full h-full ${isSelectingLocation ? 'cursor-crosshair' : ''}`}
+      {/* Map container */}
+      <div
+        ref={mapContainer}
+        className={`w-full h-full ${isSelectingLocation ? "cursor-crosshair" : ""}`}
+        style={{
+          background: "linear-gradient(135deg, #f5f0ff 0%, #e8f4f8 100%)",
+        }}
       />
 
-      {/* Search Bar - Clean positioning for mobile */}
+      {/* Loading overlay */}
+      {!mapLoaded && !mapError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[var(--color-aurora-cream)] to-[var(--color-aurora-lavender)]/30 pointer-events-none">
+          <div className="bg-[var(--card)]/95 backdrop-blur-sm rounded-2xl p-5 shadow-xl border border-[var(--border)] max-w-[280px] mx-4">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-xl flex items-center justify-center mb-3 shadow-lg">
+                <MapPinIcon className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex items-center gap-2 mb-1">
+                <RefreshCw className="w-4 h-4 animate-spin text-[var(--color-aurora-purple)]" />
+                <p className="font-semibold text-[var(--foreground)] text-sm">
+                  Loading Map
+                </p>
+              </div>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                {usingFallbackStyle
+                  ? "Using standard map style..."
+                  : "Loading Aurora style..."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Search Bar */}
       <div className="absolute top-4 left-4 right-4 z-10 max-w-md mx-auto">
         <div className="relative">
           <Input
@@ -558,8 +775,13 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
             size="icon"
             className="absolute right-0 top-0 h-full text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
             variant="ghost"
+            disabled={isSearching}
           >
-            <Search className="w-4 h-4" />
+            {isSearching ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Search className="w-4 h-4" />
+            )}
           </Button>
         </div>
 
@@ -574,18 +796,21 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
               >
                 <MapPinIcon className="w-4 h-4 text-[var(--color-aurora-purple)] mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate text-[var(--foreground)]">{result.text}</p>
-                  <p className="text-xs text-[var(--muted-foreground)] truncate">{result.place_name}</p>
+                  <p className="font-medium text-sm truncate text-[var(--foreground)]">
+                    {result.text}
+                  </p>
+                  <p className="text-xs text-[var(--muted-foreground)] truncate">
+                    {result.place_name}
+                  </p>
                 </div>
               </button>
             ))}
           </div>
         )}
       </div>
-      
-      {/* Control Buttons - Right side, clean positioning */}
+
+      {/* Control Buttons */}
       <div className="absolute top-20 right-4 flex flex-col gap-2 z-10">
-        {/* GPS Location Button */}
         <Button
           onClick={handleGetUserLocation}
           className="bg-[var(--card)]/95 backdrop-blur-sm text-[var(--foreground)] hover:bg-[var(--accent)] shadow-lg border border-[var(--border)] min-w-[48px] min-h-[48px] rounded-xl"
@@ -595,7 +820,6 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
           <Navigation className="w-5 h-5 text-[var(--color-aurora-purple)]" />
         </Button>
 
-        {/* Select Location Button */}
         {onLocationSelect && (
           <Button
             onClick={() => setIsSelectingLocation(!isSelectingLocation)}
@@ -607,41 +831,57 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
             size="icon"
             title="Click map to mark location"
           >
-            {isSelectingLocation ? <Crosshair className="w-5 h-5" /> : <Plus className="w-5 h-5 text-[var(--color-aurora-purple)]" />}
+            {isSelectingLocation ? (
+              <Crosshair className="w-5 h-5" />
+            ) : (
+              <Plus className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+            )}
           </Button>
         )}
       </div>
 
       {/* Selection Mode Indicator */}
       {isSelectingLocation && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-[var(--color-aurora-purple)] text-white px-4 py-2 rounded-xl shadow-lg z-10">
-          <p className="text-sm font-medium">Click anywhere on the map to select a location</p>
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-[var(--color-aurora-purple)] text-white px-4 py-2 rounded-xl shadow-lg z-20">
+          <p className="text-sm font-medium">
+            Click anywhere on the map to select a location
+          </p>
         </div>
       )}
 
-      {/* Legend - Always visible, positioned above bottom controls on mobile, left side on desktop */}
+      {/* Legend */}
       <div className="absolute bottom-28 sm:bottom-24 lg:bottom-6 left-4 bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg p-3 z-30 max-w-[280px]">
-        <p className="text-[10px] sm:text-xs font-semibold text-[var(--foreground)] mb-2">Safety Legend</p>
+        <p className="text-[10px] sm:text-xs font-semibold text-[var(--foreground)] mb-2">
+          Safety Legend
+        </p>
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <div className="flex items-center gap-1.5">
               <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#22c55e] border-2 border-white shadow-sm" />
-              <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Safe (4-5★)</span>
+              <span className="text-[10px] sm:text-xs text-[var(--foreground)]">
+                Safe (4-5★)
+              </span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#eab308] border-2 border-white shadow-sm" />
-              <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Neutral (3★)</span>
+              <span className="text-[10px] sm:text-xs text-[var(--foreground)]">
+                Neutral (3★)
+              </span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#ef4444] border-2 border-white shadow-sm" />
-              <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Unsafe (1-2★)</span>
+              <span className="text-[10px] sm:text-xs text-[var(--foreground)]">
+                Unsafe (1-2★)
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-1.5 pt-1 border-t border-[var(--border)]">
             <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-[#ec4c28] border-2 border-white shadow-sm rounded-sm rotate-45 flex items-center justify-center">
               <span className="text-[6px] sm:text-[8px] -rotate-45">⚠️</span>
             </div>
-            <span className="text-[10px] sm:text-xs text-[var(--foreground)]">Workplace Report</span>
+            <span className="text-[10px] sm:text-xs text-[var(--foreground)]">
+              Workplace Report
+            </span>
           </div>
         </div>
       </div>
@@ -650,7 +890,9 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
       {nearbyPosts.length > 0 && (
         <div className="absolute bottom-24 sm:bottom-6 right-4 bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg p-3 z-10 max-w-[280px] max-h-[40vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="font-semibold text-xs text-[var(--foreground)]">Nearby ({nearbyPosts.length})</h4>
+            <h4 className="font-semibold text-xs text-[var(--foreground)]">
+              Nearby ({nearbyPosts.length})
+            </h4>
             <Button
               variant="ghost"
               size="icon"
@@ -673,15 +915,19 @@ export function SafetyMap({ lifeDimension, onMarkerClick, onLocationSelect, rati
                       post.rating >= 4
                         ? "bg-[#22c55e]"
                         : post.rating >= 3
-                        ? "bg-[#eab308]"
-                        : "bg-[#ef4444]"
+                          ? "bg-[#eab308]"
+                          : "bg-[#ef4444]"
                     }`}
                   >
                     {post.rating}
                   </Badge>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-xs truncate text-[var(--foreground)]">{post.title}</p>
-                    <p className="text-[10px] text-[var(--muted-foreground)] truncate">{post.location?.name}</p>
+                    <p className="font-medium text-xs truncate text-[var(--foreground)]">
+                      {post.title}
+                    </p>
+                    <p className="text-[10px] text-[var(--muted-foreground)] truncate">
+                      {post.location?.name}
+                    </p>
                   </div>
                 </div>
               </button>
