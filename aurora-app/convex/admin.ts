@@ -1,6 +1,38 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 
+// Type definitions for demographics
+type GenderType =
+  | "woman"
+  | "non-binary"
+  | "trans-woman"
+  | "agender"
+  | "two-spirit"
+  | "questioning"
+  | "custom"
+  | "prefer-not-to-say"
+  | "not-specified";
+
+type AgeRangeType =
+  | "13-17"
+  | "18-24"
+  | "25-34"
+  | "35-44"
+  | "45-54"
+  | "55-64"
+  | "65+"
+  | "prefer-not-to-say"
+  | "not-specified";
+
+type PronounType =
+  | "she/her"
+  | "they/them"
+  | "she/they"
+  | "he/him"
+  | "any"
+  | "custom"
+  | "not-specified";
+
 /**
  * Get admin emails from environment variable
  * Set ADMIN_EMAILS in your Convex dashboard environment variables
@@ -368,6 +400,218 @@ export const sendBroadcast = mutation({
 /**
  * Get broadcast history
  */
+/**
+ * Get demographic statistics for admin analytics
+ * Privacy-preserving: Only returns aggregated, anonymized data
+ * No individual user data is exposed
+ */
+export const getDemographicStats = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    // Verify admin access
+    const user = await ctx.db.get(args.userId);
+    const adminEmails = getAdminEmails();
+    if (!user || !adminEmails.includes(user.email.toLowerCase())) {
+      throw new Error("Unauthorized: Admin access required");
+    }
+
+    // Get all users for demographic analysis
+    const users = await ctx.db.query("users").collect();
+    const totalUsers = users.length;
+
+    // Gender distribution (privacy-preserving aggregation)
+    const genderDistribution: Record<GenderType, number> = {
+      woman: 0,
+      "non-binary": 0,
+      "trans-woman": 0,
+      agender: 0,
+      "two-spirit": 0,
+      questioning: 0,
+      custom: 0,
+      "prefer-not-to-say": 0,
+      "not-specified": 0,
+    };
+
+    // Age range distribution
+    const ageDistribution: Record<AgeRangeType, number> = {
+      "13-17": 0,
+      "18-24": 0,
+      "25-34": 0,
+      "35-44": 0,
+      "45-54": 0,
+      "55-64": 0,
+      "65+": 0,
+      "prefer-not-to-say": 0,
+      "not-specified": 0,
+    };
+
+    // Pronoun distribution
+    const pronounDistribution: Record<PronounType, number> = {
+      "she/her": 0,
+      "they/them": 0,
+      "she/they": 0,
+      "he/him": 0,
+      any: 0,
+      custom: 0,
+      "not-specified": 0,
+    };
+
+    // Geographic distribution (top countries)
+    const countryDistribution: Record<string, number> = {};
+
+    // Identity tags distribution
+    const identityTagsDistribution: Record<string, number> = {};
+
+    // Process each user
+    for (const u of users) {
+      // Gender
+      if (
+        u.gender &&
+        genderDistribution[u.gender as GenderType] !== undefined
+      ) {
+        genderDistribution[u.gender as GenderType]++;
+      } else {
+        genderDistribution["not-specified"]++;
+      }
+
+      // Age range
+      if (
+        u.ageRange &&
+        ageDistribution[u.ageRange as AgeRangeType] !== undefined
+      ) {
+        ageDistribution[u.ageRange as AgeRangeType]++;
+      } else {
+        ageDistribution["not-specified"]++;
+      }
+
+      // Pronouns
+      if (
+        u.pronouns &&
+        pronounDistribution[u.pronouns as PronounType] !== undefined
+      ) {
+        pronounDistribution[u.pronouns as PronounType]++;
+      } else {
+        pronounDistribution["not-specified"]++;
+      }
+
+      // Country
+      if (u.countryCode) {
+        countryDistribution[u.countryCode] =
+          (countryDistribution[u.countryCode] || 0) + 1;
+      }
+
+      // Identity tags
+      if (u.identityTags && Array.isArray(u.identityTags)) {
+        for (const tag of u.identityTags) {
+          identityTagsDistribution[tag] =
+            (identityTagsDistribution[tag] || 0) + 1;
+        }
+      }
+    }
+
+    // Calculate percentages and format for display
+    const formatDistribution = (dist: Record<string, number>) => {
+      return Object.entries(dist)
+        .map(([key, count]) => ({
+          label: key,
+          count,
+          percentage:
+            totalUsers > 0 ? ((count / totalUsers) * 100).toFixed(1) : "0",
+        }))
+        .sort((a, b) => b.count - a.count);
+    };
+
+    // Get top countries (limit to top 10)
+    const topCountries = Object.entries(countryDistribution)
+      .map(([code, count]) => ({
+        code,
+        count,
+        percentage:
+          totalUsers > 0 ? ((count / totalUsers) * 100).toFixed(1) : "0",
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    // Get top identity tags (limit to top 15)
+    const topIdentityTags = Object.entries(identityTagsDistribution)
+      .map(([tag, count]) => ({
+        tag,
+        count,
+        percentage:
+          totalUsers > 0 ? ((count / totalUsers) * 100).toFixed(1) : "0",
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15);
+
+    // Calculate engagement by demographic (users with completed onboarding)
+    const completedOnboarding = users.filter(
+      (u) => u.onboardingCompleted,
+    ).length;
+    const onboardingRate =
+      totalUsers > 0
+        ? ((completedOnboarding / totalUsers) * 100).toFixed(1)
+        : "0";
+
+    // Premium users by demographic
+    const premiumByGender: Record<string, number> = {};
+    for (const u of users) {
+      if (u.isPremium) {
+        const gender = u.gender || "not-specified";
+        premiumByGender[gender] = (premiumByGender[gender] || 0) + 1;
+      }
+    }
+
+    // Users with demographics filled out
+    const withGender = users.filter(
+      (u) => u.gender && u.gender !== "prefer-not-to-say",
+    ).length;
+    const withAgeRange = users.filter(
+      (u) => u.ageRange && u.ageRange !== "prefer-not-to-say",
+    ).length;
+    const withPronouns = users.filter((u) => u.pronouns).length;
+    const withCountry = users.filter((u) => u.countryCode).length;
+
+    return {
+      totalUsers,
+      gender: {
+        distribution: formatDistribution(genderDistribution),
+        filledCount: withGender,
+        filledPercentage:
+          totalUsers > 0 ? ((withGender / totalUsers) * 100).toFixed(1) : "0",
+      },
+      ageRange: {
+        distribution: formatDistribution(ageDistribution),
+        filledCount: withAgeRange,
+        filledPercentage:
+          totalUsers > 0 ? ((withAgeRange / totalUsers) * 100).toFixed(1) : "0",
+      },
+      pronouns: {
+        distribution: formatDistribution(pronounDistribution),
+        filledCount: withPronouns,
+        filledPercentage:
+          totalUsers > 0 ? ((withPronouns / totalUsers) * 100).toFixed(1) : "0",
+      },
+      geography: {
+        topCountries,
+        filledCount: withCountry,
+        filledPercentage:
+          totalUsers > 0 ? ((withCountry / totalUsers) * 100).toFixed(1) : "0",
+      },
+      identityTags: topIdentityTags,
+      engagement: {
+        onboardingRate,
+        completedOnboarding,
+        premiumByGender: Object.entries(premiumByGender)
+          .map(([gender, count]) => ({ gender, count }))
+          .sort((a, b) => b.count - a.count),
+      },
+      // Privacy notice
+      privacyNote:
+        "All demographic data is aggregated and anonymized. Individual user data is never exposed.",
+    };
+  },
+});
+
 export const getBroadcastHistory = query({
   args: { userId: v.id("users"), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {

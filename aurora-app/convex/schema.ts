@@ -74,13 +74,55 @@ export default defineSchema({
     // Life Canvas - Life visualization
     birthYear: v.optional(v.number()), // Year of birth for life visualization
     lifeExpectancy: v.optional(v.number()), // Expected years to live (default: 80)
+
+    // Demographics - Inclusive gender identity options
+    // Following LGBTQ+ inclusive best practices while respecting privacy
     gender: v.optional(
       v.union(
-        v.literal("female"),
-        v.literal("non-binary"),
+        v.literal("woman"), // Cisgender or transgender woman
+        v.literal("non-binary"), // Non-binary, genderqueer, genderfluid
+        v.literal("trans-woman"), // Transgender woman (optional specific identity)
+        v.literal("agender"), // Agender / no gender
+        v.literal("two-spirit"), // Two-Spirit (Indigenous identity)
+        v.literal("questioning"), // Questioning / exploring
+        v.literal("custom"), // Custom identity (stored in genderCustom)
+        v.literal("prefer-not-to-say"), // Privacy preference
+      ),
+    ),
+    genderCustom: v.optional(v.string()), // Custom gender identity text
+    pronouns: v.optional(
+      v.union(
+        v.literal("she/her"),
+        v.literal("they/them"),
+        v.literal("she/they"),
+        v.literal("he/him"),
+        v.literal("any"),
+        v.literal("custom"),
+      ),
+    ),
+    pronounsCustom: v.optional(v.string()), // Custom pronouns text
+
+    // Additional demographics for community insights (all optional, privacy-respecting)
+    ageRange: v.optional(
+      v.union(
+        v.literal("13-17"),
+        v.literal("18-24"),
+        v.literal("25-34"),
+        v.literal("35-44"),
+        v.literal("45-54"),
+        v.literal("55-64"),
+        v.literal("65+"),
         v.literal("prefer-not-to-say"),
       ),
     ),
+    countryCode: v.optional(v.string()), // ISO 3166-1 alpha-2 country code
+    region: v.optional(v.string()), // State/Province/Region
+    timezone: v.optional(v.string()), // IANA timezone
+    languagePreference: v.optional(v.string()), // Primary language ISO code
+
+    // Identity and community (optional self-identification)
+    identityTags: v.optional(v.array(v.string())), // e.g., ["lgbtq+", "bipoc", "disabled", "immigrant", "veteran", "single-parent"]
+    communityAffiliations: v.optional(v.array(v.string())), // Community groups user identifies with
 
     // Account deletion
     deletionRequested: v.optional(v.boolean()),

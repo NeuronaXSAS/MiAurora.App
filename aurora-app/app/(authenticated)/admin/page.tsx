@@ -2,7 +2,7 @@
 
 /**
  * Aurora App - Admin Dashboard 2.0
- * 
+ *
  * Complete admin control center with:
  * - Real-time stats via Convex subscriptions
  * - Broadcast messaging to all users
@@ -19,17 +19,44 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Users, FileText, MapPin, Video, Radio, Shield, Briefcase, MessageSquare,
-  Coins, TrendingUp, AlertTriangle, Crown, Activity, Eye, Clock, UserPlus,
-  Heart, Send, Newspaper, Bell, Megaphone, Settings, BarChart3, Zap,
-  RefreshCw, Globe, Search, Sparkles, Target, Gift
+import {
+  Users,
+  FileText,
+  MapPin,
+  Video,
+  Radio,
+  Shield,
+  Briefcase,
+  MessageSquare,
+  Coins,
+  TrendingUp,
+  AlertTriangle,
+  Crown,
+  Activity,
+  Eye,
+  Clock,
+  UserPlus,
+  Heart,
+  Send,
+  Newspaper,
+  Bell,
+  Megaphone,
+  Settings,
+  BarChart3,
+  Zap,
+  RefreshCw,
+  Globe,
+  Search,
+  Sparkles,
+  Target,
+  Gift,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Id } from "@/convex/_generated/dataModel";
 import { ResourceMonitor } from "@/components/admin/resource-monitor";
 import { DailyDebatesAdmin } from "@/components/admin/daily-debates-admin";
 import { DebatesMonitor } from "@/components/admin/debates-monitor";
+import { DemographicsAnalytics } from "@/components/admin/demographics-analytics";
 
 export default function AdminDashboard() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
@@ -59,17 +86,17 @@ export default function AdminDashboard() {
 
   // Check admin status
   const isAdmin = useQuery(api.admin.isAdmin, userId ? { userId } : "skip");
-  
+
   // Get dashboard stats (real-time via Convex)
   const stats = useQuery(
-    api.admin.getDashboardStats, 
-    userId && isAdmin ? { userId } : "skip"
+    api.admin.getDashboardStats,
+    userId && isAdmin ? { userId } : "skip",
   );
-  
+
   // Get recent activity
   const recentActivity = useQuery(
     api.admin.getRecentActivity,
-    userId && isAdmin ? { userId, limit: 20 } : "skip"
+    userId && isAdmin ? { userId, limit: 20 } : "skip",
   );
 
   // Loading state
@@ -78,7 +105,9 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-[var(--color-aurora-purple)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[var(--muted-foreground)]">Verifying admin access...</p>
+          <p className="text-[var(--muted-foreground)]">
+            Verifying admin access...
+          </p>
         </div>
       </div>
     );
@@ -93,7 +122,9 @@ export default function AdminDashboard() {
             <div className="w-16 h-16 bg-[var(--color-aurora-salmon)]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Shield className="w-8 h-8 text-[var(--color-aurora-salmon)]" />
             </div>
-            <h2 className="text-xl font-bold text-[var(--foreground)] mb-2">Access Denied</h2>
+            <h2 className="text-xl font-bold text-[var(--foreground)] mb-2">
+              Access Denied
+            </h2>
             <p className="text-[var(--muted-foreground)] mb-4">
               This page is restricted to Aurora App administrators only.
             </p>
@@ -137,28 +168,53 @@ export default function AdminDashboard() {
 
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-6 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl p-1">
-            <TabsTrigger value="overview" className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg">
+          <TabsList className="grid grid-cols-7 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl p-1">
+            <TabsTrigger
+              value="overview"
+              className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg"
+            >
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="debates" className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg">
+            <TabsTrigger
+              value="demographics"
+              className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg"
+            >
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Demographics</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="debates"
+              className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg"
+            >
               <MessageSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Debates</span>
             </TabsTrigger>
-            <TabsTrigger value="broadcast" className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg">
+            <TabsTrigger
+              value="broadcast"
+              className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg"
+            >
               <Megaphone className="w-4 h-4" />
               <span className="hidden sm:inline">Broadcast</span>
             </TabsTrigger>
-            <TabsTrigger value="news" className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg">
+            <TabsTrigger
+              value="news"
+              className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg"
+            >
               <Newspaper className="w-4 h-4" />
               <span className="hidden sm:inline">Content</span>
             </TabsTrigger>
-            <TabsTrigger value="resources" className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg">
+            <TabsTrigger
+              value="resources"
+              className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg"
+            >
               <Zap className="w-4 h-4" />
               <span className="hidden sm:inline">Resources</span>
             </TabsTrigger>
-            <TabsTrigger value="activity" className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg">
+            <TabsTrigger
+              value="activity"
+              className="flex items-center gap-2 data-[state=active]:bg-[var(--color-aurora-purple)] data-[state=active]:text-white rounded-lg"
+            >
               <TrendingUp className="w-4 h-4" />
               <span className="hidden sm:inline">Activity</span>
             </TabsTrigger>
@@ -167,6 +223,11 @@ export default function AdminDashboard() {
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6 mt-6">
             <OverviewStats stats={stats} />
+          </TabsContent>
+
+          {/* Demographics Tab - Community demographics analytics */}
+          <TabsContent value="demographics" className="mt-6">
+            <DemographicsAnalytics userId={userId} />
           </TabsContent>
 
           {/* Debates Monitor Tab - Real-time analytics & archive */}
@@ -201,8 +262,11 @@ export default function AdminDashboard() {
 
         {/* Footer */}
         <div className="text-center text-xs text-[var(--muted-foreground)] py-4">
-          Aurora App Admin Dashboard • Data refreshes in real-time via Convex • 
-          <span className="text-[var(--color-aurora-purple)]"> Made with 💜 for women everywhere</span>
+          Aurora App Admin Dashboard • Data refreshes in real-time via Convex •
+          <span className="text-[var(--color-aurora-purple)]">
+            {" "}
+            Made with 💜 for women everywhere
+          </span>
         </div>
       </div>
     </div>
@@ -215,7 +279,10 @@ function OverviewStats({ stats }: { stats: any }) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[...Array(8)].map((_, i) => (
-          <Card key={i} className="bg-[var(--card)] border-[var(--border)] animate-pulse">
+          <Card
+            key={i}
+            className="bg-[var(--card)] border-[var(--border)] animate-pulse"
+          >
             <CardContent className="p-4 h-24" />
           </Card>
         ))}
@@ -272,14 +339,34 @@ function OverviewStats({ stats }: { stats: any }) {
           iconColor="text-red-500"
           value={stats.live.totalLivestreams}
           label="Total Streams"
-          badge={stats.live.activeLivestreams > 0 ? `${stats.live.activeLivestreams} LIVE` : "None live"}
-          badgeColor={stats.live.activeLivestreams > 0 ? "bg-red-500 text-white animate-pulse" : "bg-[var(--muted)]/50"}
+          badge={
+            stats.live.activeLivestreams > 0
+              ? `${stats.live.activeLivestreams} LIVE`
+              : "None live"
+          }
+          badgeColor={
+            stats.live.activeLivestreams > 0
+              ? "bg-red-500 text-white animate-pulse"
+              : "bg-[var(--muted)]/50"
+          }
         />
         <StatCard
           icon={AlertTriangle}
-          iconColor={stats.safety.activeEmergencies > 0 ? "text-[var(--color-aurora-orange)]" : "text-[var(--muted-foreground)]"}
-          value={stats.safety.activeEmergencies > 0 ? stats.safety.activeEmergencies : stats.safety.totalEmergencies}
-          label={stats.safety.activeEmergencies > 0 ? "Active Emergencies!" : "Total Alerts"}
+          iconColor={
+            stats.safety.activeEmergencies > 0
+              ? "text-[var(--color-aurora-orange)]"
+              : "text-[var(--muted-foreground)]"
+          }
+          value={
+            stats.safety.activeEmergencies > 0
+              ? stats.safety.activeEmergencies
+              : stats.safety.totalEmergencies
+          }
+          label={
+            stats.safety.activeEmergencies > 0
+              ? "Active Emergencies!"
+              : "Total Alerts"
+          }
           badge={`${stats.safety.emergencyResponseRate}% resolved`}
           badgeColor="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)]"
           highlight={stats.safety.activeEmergencies > 0}
@@ -302,8 +389,12 @@ function OverviewStats({ stats }: { stats: any }) {
               <Heart className="w-6 h-6 text-[var(--color-aurora-pink)]" />
             </div>
             <div>
-              <p className="text-xl font-bold text-[var(--foreground)]">{stats.community.circles}</p>
-              <p className="text-xs text-[var(--muted-foreground)]">Active Circles</p>
+              <p className="text-xl font-bold text-[var(--foreground)]">
+                {stats.community.circles}
+              </p>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                Active Circles
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -313,8 +404,12 @@ function OverviewStats({ stats }: { stats: any }) {
               <Briefcase className="w-6 h-6 text-[var(--color-aurora-blue)]" />
             </div>
             <div>
-              <p className="text-xl font-bold text-[var(--foreground)]">{stats.community.opportunities}</p>
-              <p className="text-xs text-[var(--muted-foreground)]">Active Opportunities</p>
+              <p className="text-xl font-bold text-[var(--foreground)]">
+                {stats.community.opportunities}
+              </p>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                Active Opportunities
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -324,8 +419,12 @@ function OverviewStats({ stats }: { stats: any }) {
               <MessageSquare className="w-6 h-6 text-[var(--color-aurora-purple)]" />
             </div>
             <div>
-              <p className="text-xl font-bold text-[var(--foreground)]">{stats.community.messagesToday}</p>
-              <p className="text-xs text-[var(--muted-foreground)]">Messages Today</p>
+              <p className="text-xl font-bold text-[var(--foreground)]">
+                {stats.community.messagesToday}
+              </p>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                Messages Today
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -335,14 +434,14 @@ function OverviewStats({ stats }: { stats: any }) {
 }
 
 // Stat Card Component
-function StatCard({ 
-  icon: Icon, 
-  iconColor, 
-  value, 
-  label, 
-  badge, 
+function StatCard({
+  icon: Icon,
+  iconColor,
+  value,
+  label,
+  badge,
   badgeColor,
-  highlight = false 
+  highlight = false,
 }: {
   icon: any;
   iconColor: string;
@@ -353,7 +452,9 @@ function StatCard({
   highlight?: boolean;
 }) {
   return (
-    <Card className={`bg-[var(--card)] border-[var(--border)] ${highlight ? 'ring-2 ring-[var(--color-aurora-orange)]' : ''}`}>
+    <Card
+      className={`bg-[var(--card)] border-[var(--border)] ${highlight ? "ring-2 ring-[var(--color-aurora-orange)]" : ""}`}
+    >
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-2">
           <Icon className={`w-5 h-5 ${iconColor}`} />
@@ -368,7 +469,9 @@ function StatCard({
 
 // Broadcast Center Component
 function BroadcastCenter({ userId }: { userId: Id<"users"> | null }) {
-  const [broadcastType, setBroadcastType] = useState<"all" | "premium" | "new">("all");
+  const [broadcastType, setBroadcastType] = useState<"all" | "premium" | "new">(
+    "all",
+  );
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [actionUrl, setActionUrl] = useState("");
@@ -379,7 +482,7 @@ function BroadcastCenter({ userId }: { userId: Id<"users"> | null }) {
 
   const handleSend = async () => {
     if (!title || !message || !userId) return;
-    
+
     setIsSending(true);
     try {
       const result = await sendBroadcast({
@@ -401,25 +504,29 @@ function BroadcastCenter({ userId }: { userId: Id<"users"> | null }) {
   };
 
   const templates = [
-    { 
-      title: "Welcome to Aurora App! 💜", 
-      message: "We're so glad you're here. Explore safety routes, connect with sisters, and discover opportunities. Your journey starts now!",
-      icon: Sparkles
+    {
+      title: "Welcome to Aurora App! 💜",
+      message:
+        "We're so glad you're here. Explore safety routes, connect with sisters, and discover opportunities. Your journey starts now!",
+      icon: Sparkles,
     },
-    { 
-      title: "New Feature Alert! 🚀", 
-      message: "We just launched something amazing! Check out our latest feature designed just for you.",
-      icon: Zap
+    {
+      title: "New Feature Alert! 🚀",
+      message:
+        "We just launched something amazing! Check out our latest feature designed just for you.",
+      icon: Zap,
     },
-    { 
-      title: "Safety Tip of the Day 🛡️", 
-      message: "Remember to share your location with trusted contacts when traveling. Stay safe, sister!",
-      icon: Shield
+    {
+      title: "Safety Tip of the Day 🛡️",
+      message:
+        "Remember to share your location with trusted contacts when traveling. Stay safe, sister!",
+      icon: Shield,
     },
-    { 
-      title: "Community Spotlight ✨", 
-      message: "Our community is growing! Join a Circle today and connect with like-minded women.",
-      icon: Heart
+    {
+      title: "Community Spotlight ✨",
+      message:
+        "Our community is growing! Join a Circle today and connect with like-minded women.",
+      icon: Heart,
     },
   ];
 
@@ -454,7 +561,9 @@ function BroadcastCenter({ userId }: { userId: Id<"users"> | null }) {
                       : "border-[var(--border)] hover:border-[var(--color-aurora-purple)]/50"
                   }`}
                 >
-                  <opt.icon className={`w-5 h-5 ${broadcastType === opt.value ? "text-[var(--color-aurora-purple)]" : "text-[var(--muted-foreground)]"}`} />
+                  <opt.icon
+                    className={`w-5 h-5 ${broadcastType === opt.value ? "text-[var(--color-aurora-purple)]" : "text-[var(--muted-foreground)]"}`}
+                  />
                   <span className="text-xs">{opt.label}</span>
                 </button>
               ))}
@@ -545,8 +654,12 @@ function BroadcastCenter({ userId }: { userId: Id<"users"> | null }) {
                   <template.icon className="w-5 h-5 text-[var(--color-aurora-purple)]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[var(--foreground)] text-sm">{template.title}</p>
-                  <p className="text-xs text-[var(--muted-foreground)] line-clamp-1">{template.message}</p>
+                  <p className="font-medium text-[var(--foreground)] text-sm">
+                    {template.title}
+                  </p>
+                  <p className="text-xs text-[var(--muted-foreground)] line-clamp-1">
+                    {template.message}
+                  </p>
                 </div>
               </div>
             </button>
@@ -573,28 +686,46 @@ function ActivityFeed({ activity }: { activity: any[] | undefined }) {
       <CardContent>
         <div className="space-y-3 max-h-[500px] overflow-y-auto">
           {activity?.map((item: any, index: number) => (
-            <div 
+            <div
               key={index}
               className="flex items-start gap-3 p-3 rounded-xl bg-[var(--accent)]/50 hover:bg-[var(--accent)] transition-colors"
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                item.type === 'user_joined' ? 'bg-[var(--color-aurora-purple)]/20' :
-                item.type === 'post_created' ? 'bg-[var(--color-aurora-blue)]/20' :
-                item.type === 'emergency_alert' ? 'bg-[var(--color-aurora-orange)]/20' :
-                item.type === 'livestream' ? 'bg-red-500/20' :
-                'bg-[var(--muted)]/50'
-              }`}>
-                {item.type === 'user_joined' && <UserPlus className="w-5 h-5 text-[var(--color-aurora-purple)]" />}
-                {item.type === 'post_created' && <FileText className="w-5 h-5 text-[var(--color-aurora-blue)]" />}
-                {item.type === 'emergency_alert' && <AlertTriangle className="w-5 h-5 text-[var(--color-aurora-orange)]" />}
-                {item.type === 'livestream' && <Radio className="w-5 h-5 text-red-500" />}
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  item.type === "user_joined"
+                    ? "bg-[var(--color-aurora-purple)]/20"
+                    : item.type === "post_created"
+                      ? "bg-[var(--color-aurora-blue)]/20"
+                      : item.type === "emergency_alert"
+                        ? "bg-[var(--color-aurora-orange)]/20"
+                        : item.type === "livestream"
+                          ? "bg-red-500/20"
+                          : "bg-[var(--muted)]/50"
+                }`}
+              >
+                {item.type === "user_joined" && (
+                  <UserPlus className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+                )}
+                {item.type === "post_created" && (
+                  <FileText className="w-5 h-5 text-[var(--color-aurora-blue)]" />
+                )}
+                {item.type === "emergency_alert" && (
+                  <AlertTriangle className="w-5 h-5 text-[var(--color-aurora-orange)]" />
+                )}
+                {item.type === "livestream" && (
+                  <Radio className="w-5 h-5 text-red-500" />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-[var(--foreground)]">
-                  {item.type === 'user_joined' && `${item.data.name} joined Aurora App`}
-                  {item.type === 'post_created' && `New ${item.data.dimension} post: "${item.data.title}"`}
-                  {item.type === 'emergency_alert' && `Emergency alert from ${item.data.user}`}
-                  {item.type === 'livestream' && `${item.data.host} ${item.data.status === 'live' ? 'went live' : 'streamed'}: "${item.data.title}"`}
+                  {item.type === "user_joined" &&
+                    `${item.data.name} joined Aurora App`}
+                  {item.type === "post_created" &&
+                    `New ${item.data.dimension} post: "${item.data.title}"`}
+                  {item.type === "emergency_alert" &&
+                    `Emergency alert from ${item.data.user}`}
+                  {item.type === "livestream" &&
+                    `${item.data.host} ${item.data.status === "live" ? "went live" : "streamed"}: "${item.data.title}"`}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <Clock className="w-3 h-3 text-[var(--muted-foreground)]" />
@@ -605,7 +736,7 @@ function ActivityFeed({ activity }: { activity: any[] | undefined }) {
               </div>
             </div>
           ))}
-          
+
           {(!activity || activity.length === 0) && (
             <div className="text-center py-8 text-[var(--muted-foreground)]">
               <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />

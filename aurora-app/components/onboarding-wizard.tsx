@@ -6,26 +6,21 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
-import { 
-  Sparkles, 
-  Briefcase, 
-  Shield, 
-  ArrowRight, 
-  ArrowLeft, 
+  Sparkles,
+  Briefcase,
+  Shield,
+  ArrowRight,
+  ArrowLeft,
   Check,
   Globe,
   Heart,
   MapPin,
   Users,
   Zap,
-  Star
+  Star,
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { AvatarCreator, AvatarConfig } from "@/components/avatar-creator";
@@ -49,23 +44,88 @@ const ROLES = [
 const currentYear = new Date().getFullYear();
 const BIRTH_YEARS = Array.from({ length: 68 }, (_, i) => currentYear - 13 - i);
 
+// Inclusive gender identity options following best practices
+const GENDER_OPTIONS = [
+  {
+    id: "woman",
+    emoji: "👩",
+    label: "Woman",
+    desc: "Cisgender or transgender woman",
+  },
+  {
+    id: "non-binary",
+    emoji: "🌈",
+    label: "Non-binary",
+    desc: "Non-binary, genderqueer, genderfluid",
+  },
+  {
+    id: "trans-woman",
+    emoji: "🏳️‍⚧️",
+    label: "Trans Woman",
+    desc: "Transgender woman",
+  },
+  { id: "agender", emoji: "✨", label: "Agender", desc: "No gender identity" },
+  {
+    id: "two-spirit",
+    emoji: "🪶",
+    label: "Two-Spirit",
+    desc: "Indigenous identity",
+  },
+  {
+    id: "questioning",
+    emoji: "💭",
+    label: "Questioning",
+    desc: "Exploring my identity",
+  },
+  { id: "custom", emoji: "💜", label: "Custom", desc: "I'll describe my own" },
+  {
+    id: "prefer-not-to-say",
+    emoji: "🔒",
+    label: "Prefer not to say",
+    desc: "Keep private",
+  },
+] as const;
+
+const PRONOUN_OPTIONS = [
+  { id: "she/her", label: "She/Her" },
+  { id: "they/them", label: "They/Them" },
+  { id: "she/they", label: "She/They" },
+  { id: "he/him", label: "He/Him" },
+  { id: "any", label: "Any Pronouns" },
+  { id: "custom", label: "Custom" },
+] as const;
+
 const INTERESTS = [
   { id: "Safe Commuting", emoji: "🚶‍♀️", color: "from-blue-500 to-cyan-500" },
   { id: "Nightlife Safety", emoji: "🌙", color: "from-purple-500 to-pink-500" },
-  { id: "Career Mentorship", emoji: "👩‍🏫", color: "from-amber-500 to-orange-500" },
+  {
+    id: "Career Mentorship",
+    emoji: "👩‍🏫",
+    color: "from-amber-500 to-orange-500",
+  },
   { id: "B2B Networking", emoji: "🤝", color: "from-emerald-500 to-teal-500" },
   { id: "Workplace Safety", emoji: "🏢", color: "from-red-500 to-rose-500" },
   { id: "Travel Safety", emoji: "🗺️", color: "from-sky-500 to-blue-500" },
-  { id: "Financial Growth", emoji: "💰", color: "from-yellow-500 to-amber-500" },
+  {
+    id: "Financial Growth",
+    emoji: "💰",
+    color: "from-yellow-500 to-amber-500",
+  },
   { id: "Skill Building", emoji: "📈", color: "from-violet-500 to-purple-500" },
 ];
 
-export function OnboardingWizard({ open, onComplete, userId: _userId }: OnboardingWizardProps) {
+export function OnboardingWizard({
+  open,
+  onComplete,
+  userId: _userId,
+}: OnboardingWizardProps) {
   const [step, setStep] = useState(0);
   const [role, setRole] = useState("");
   const [bio, setBio] = useState("");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-  const [visibility, setVisibility] = useState<"public" | "anonymous" | "private">("public");
+  const [visibility, setVisibility] = useState<
+    "public" | "anonymous" | "private"
+  >("public");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workosId, setWorkosId] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -74,6 +134,10 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
   const [showTutorial, setShowTutorial] = useState(false);
   const [location, setLocation] = useState("");
   const [birthYear, setBirthYear] = useState<number | null>(null);
+  const [gender, setGender] = useState<string>("");
+  const [genderCustom, setGenderCustom] = useState("");
+  const [pronouns, setPronouns] = useState<string>("");
+  const [pronounsCustom, setPronounsCustom] = useState("");
 
   const completeOnboarding = useMutation(api.users.completeOnboarding);
   const updatePrivacy = useMutation(api.privacy.updatePrivacySettings);
@@ -97,11 +161,35 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
     getWorkosId();
   }, []);
 
+  // Helper to convert birth year to age range
+  const getAgeRange = (
+    year: number,
+  ):
+    | "13-17"
+    | "18-24"
+    | "25-34"
+    | "35-44"
+    | "45-54"
+    | "55-64"
+    | "65+"
+    | "prefer-not-to-say" => {
+    const age = currentYear - year;
+    if (age < 18) return "13-17";
+    if (age < 25) return "18-24";
+    if (age < 35) return "25-34";
+    if (age < 45) return "35-44";
+    if (age < 55) return "45-54";
+    if (age < 65) return "55-64";
+    return "65+";
+  };
+
   const handleInterestToggle = (interest: string) => {
     setSelectedInterests((prev) =>
       prev.includes(interest)
         ? prev.filter((i) => i !== interest)
-        : prev.length < 5 ? [...prev, interest] : prev
+        : prev.length < 5
+          ? [...prev, interest]
+          : prev,
     );
   };
 
@@ -113,7 +201,7 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
 
     setIsSubmitting(true);
     setError("");
-    
+
     try {
       await completeOnboarding({
         workosId,
@@ -122,6 +210,30 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
         industry: role || undefined,
         careerGoals: selectedInterests.join(", ") || undefined,
         interests: selectedInterests.length > 0 ? selectedInterests : undefined,
+        // Demographics
+        gender: gender
+          ? (gender as
+              | "woman"
+              | "non-binary"
+              | "trans-woman"
+              | "agender"
+              | "two-spirit"
+              | "questioning"
+              | "custom"
+              | "prefer-not-to-say")
+          : undefined,
+        genderCustom: gender === "custom" ? genderCustom : undefined,
+        pronouns: pronouns
+          ? (pronouns as
+              | "she/her"
+              | "they/them"
+              | "she/they"
+              | "he/him"
+              | "any"
+              | "custom")
+          : undefined,
+        pronounsCustom: pronouns === "custom" ? pronounsCustom : undefined,
+        ageRange: birthYear ? getAgeRange(birthYear) : undefined,
       });
 
       if (avatarConfig && _userId) {
@@ -135,7 +247,11 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
       // Save birth year for Life Canvas
       if (birthYear && _userId) {
         try {
-          await updateLifeSettings({ userId: _userId, birthYear, lifeExpectancy: 80 });
+          await updateLifeSettings({
+            userId: _userId,
+            birthYear,
+            lifeExpectancy: 80,
+          });
         } catch (e) {
           console.warn("Life settings save failed:", e);
         }
@@ -143,7 +259,8 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
 
       try {
         await updatePrivacy({
-          profileVisibility: visibility === 'anonymous' ? 'private' : visibility,
+          profileVisibility:
+            visibility === "anonymous" ? "private" : visibility,
         });
       } catch (e) {
         console.warn("Privacy update failed:", e);
@@ -151,7 +268,8 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
 
       setShowTutorial(true);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       setError(`Failed to save: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
@@ -161,7 +279,7 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
   const handleAvatarComplete = (config: AvatarConfig) => {
     setAvatarConfig(config);
     try {
-      localStorage.setItem('aurora-avatar-config', JSON.stringify(config));
+      localStorage.setItem("aurora-avatar-config", JSON.stringify(config));
     } catch (e) {}
     setShowAvatarCreator(false);
     setStep(2);
@@ -176,21 +294,28 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
       <AvatarCreator
         open={open}
         onComplete={handleAvatarComplete}
-        onSkip={() => { setShowAvatarCreator(false); setStep(2); }}
+        onSkip={() => {
+          setShowAvatarCreator(false);
+          setStep(2);
+        }}
       />
     );
   }
 
   const totalSteps = 4;
-  const canProceed = step === 0 || step === 1 || (step === 2 && role) || (step === 3 && selectedInterests.length > 0) || step === 4;
+  const canProceed =
+    step === 0 ||
+    step === 1 ||
+    (step === 2 && role) ||
+    (step === 3 && selectedInterests.length > 0) ||
+    step === 4;
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="w-full max-w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl h-[100dvh] sm:h-auto sm:max-h-[90vh] bg-gradient-to-br from-[var(--color-aurora-violet)] via-[#1a1625] to-[var(--color-aurora-purple)] border-0 sm:border sm:border-[var(--color-aurora-pink)]/20 shadow-2xl p-0 sm:rounded-3xl rounded-none overflow-hidden">
-        
         {/* Progress Bar - Top */}
         <div className="h-1 bg-white/10 w-full">
-          <motion.div 
+          <motion.div
             className="h-full bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)]"
             initial={{ width: 0 }}
             animate={{ width: `${(step / totalSteps) * 100}%` }}
@@ -212,28 +337,54 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                   className="text-center space-y-6"
                 >
                   <div className="w-20 h-20 mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-[var(--color-aurora-purple)]/50">
-                    <img src="/Au_Logo_1.png" alt="Aurora App" className="w-full h-full object-cover" />
+                    <img
+                      src="/Au_Logo_1.png"
+                      alt="Aurora App"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                  
+
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                       Welcome to Aurora App! 💜
                     </h1>
                     <p className="text-[var(--color-aurora-cream)]/80 text-sm sm:text-base max-w-md mx-auto">
-                      Your safety, community, and growth platform designed by women, for women worldwide.
+                      Your safety, community, and growth platform designed by
+                      women, for women worldwide.
                     </p>
                   </div>
 
                   {/* Key Features */}
                   <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
                     {[
-                      { icon: Shield, label: "Safety First", color: "text-[var(--color-aurora-mint)]" },
-                      { icon: Users, label: "Community", color: "text-[var(--color-aurora-pink)]" },
-                      { icon: Zap, label: "Opportunities", color: "text-[var(--color-aurora-yellow)]" },
-                      { icon: Heart, label: "Wellness", color: "text-[var(--color-aurora-lavender)]" },
+                      {
+                        icon: Shield,
+                        label: "Safety First",
+                        color: "text-[var(--color-aurora-mint)]",
+                      },
+                      {
+                        icon: Users,
+                        label: "Community",
+                        color: "text-[var(--color-aurora-pink)]",
+                      },
+                      {
+                        icon: Zap,
+                        label: "Opportunities",
+                        color: "text-[var(--color-aurora-yellow)]",
+                      },
+                      {
+                        icon: Heart,
+                        label: "Wellness",
+                        color: "text-[var(--color-aurora-lavender)]",
+                      },
                     ].map((item) => (
-                      <div key={item.label} className="bg-white/5 rounded-xl p-3 border border-white/10">
-                        <item.icon className={`w-6 h-6 ${item.color} mx-auto mb-1`} />
+                      <div
+                        key={item.label}
+                        className="bg-white/5 rounded-xl p-3 border border-white/10"
+                      >
+                        <item.icon
+                          className={`w-6 h-6 ${item.color} mx-auto mb-1`}
+                        />
                         <p className="text-xs text-white/80">{item.label}</p>
                       </div>
                     ))}
@@ -243,11 +394,15 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                   <div className="bg-white/5 rounded-xl p-4 border border-white/10 max-w-sm mx-auto">
                     <div className="flex items-center gap-2 mb-2">
                       <Globe className="w-4 h-4 text-[var(--color-aurora-blue)]" />
-                      <span className="text-sm font-medium text-white">Global Platform</span>
+                      <span className="text-sm font-medium text-white">
+                        Global Platform
+                      </span>
                     </div>
                     <p className="text-xs text-[var(--color-aurora-cream)]/70 text-left">
-                      Aurora App is in English to serve women worldwide. Need another language? 
-                      Use your browser's built-in translator (right-click → Translate) for the best experience.
+                      Aurora App is in English to serve women worldwide. Need
+                      another language? Use your browser&apos;s built-in
+                      translator (right-click → Translate) for the best
+                      experience.
                     </p>
                   </div>
                 </motion.div>
@@ -267,26 +422,29 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                       Create Your Aurora Companion ✨
                     </h2>
                     <p className="text-[var(--color-aurora-cream)]/80 text-sm">
-                      She'll be your AI friend, wellness tracker, and safety buddy
+                      She&apos;ll be your AI friend, wellness tracker, and
+                      safety buddy
                     </p>
                   </div>
 
                   {/* Example Avatars Gallery */}
                   <div className="bg-white/5 rounded-2xl p-4 border border-white/10 max-w-md mx-auto">
-                    <p className="text-xs text-[var(--color-aurora-cream)]/60 mb-3">See what other sisters created:</p>
+                    <p className="text-xs text-[var(--color-aurora-cream)]/60 mb-3">
+                      See what other sisters created:
+                    </p>
                     <div className="flex justify-center gap-2 mb-4">
                       {[
-                        { bg: '#FFE8E8', hair: '#6F4E37', skin: '#EDB98A' },
-                        { bg: '#E8E4FF', hair: '#2C1B18', skin: '#D08B5B' },
-                        { bg: '#D6F4EC', hair: '#B5651D', skin: '#F5D0C5' },
-                        { bg: '#FFF0F5', hair: '#8B5CF6', skin: '#8D5524' },
+                        { bg: "#FFE8E8", hair: "#6F4E37", skin: "#EDB98A" },
+                        { bg: "#E8E4FF", hair: "#2C1B18", skin: "#D08B5B" },
+                        { bg: "#D6F4EC", hair: "#B5651D", skin: "#F5D0C5" },
+                        { bg: "#FFF0F5", hair: "#8B5CF6", skin: "#8D5524" },
                       ].map((example, i) => (
                         <div
                           key={i}
                           className="w-14 h-14 rounded-xl overflow-hidden shadow-md"
                           style={{ backgroundColor: example.bg }}
                         >
-                          <img 
+                          <img
                             src={`https://api.dicebear.com/7.x/lorelei/svg?seed=aurora-example-${i}&backgroundColor=${example.bg.slice(1)}&hairColor=${example.hair.slice(1)}&skinColor=${example.skin.slice(1)}`}
                             alt={`Example avatar ${i + 1}`}
                             className="w-full h-full"
@@ -316,26 +474,122 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                       When were you born? (optional)
                     </Label>
                     <p className="text-xs text-[var(--color-aurora-cream)]/60 mb-3">
-                      This unlocks your Life Canvas - a beautiful visualization of your journey
+                      This unlocks your Life Canvas - a beautiful visualization
+                      of your journey
                     </p>
                     <select
                       value={birthYear || ""}
-                      onChange={(e) => setBirthYear(e.target.value ? parseInt(e.target.value) : null)}
+                      onChange={(e) =>
+                        setBirthYear(
+                          e.target.value ? parseInt(e.target.value) : null,
+                        )
+                      }
                       className="w-full h-12 px-4 rounded-xl bg-white/10 border border-white/20 text-white appearance-none cursor-pointer"
                     >
-                      <option value="" className="bg-[var(--color-aurora-violet)]">Select year (optional)</option>
+                      <option
+                        value=""
+                        className="bg-[var(--color-aurora-violet)]"
+                      >
+                        Select year (optional)
+                      </option>
                       {BIRTH_YEARS.map((year) => (
-                        <option key={year} value={year} className="bg-[var(--color-aurora-violet)]">
+                        <option
+                          key={year}
+                          value={year}
+                          className="bg-[var(--color-aurora-violet)]"
+                        >
                           {year} ({currentYear - year} years old)
                         </option>
                       ))}
                     </select>
                     {birthYear && (
                       <p className="text-xs text-[var(--color-aurora-mint)] mt-2">
-                        ✨ You've lived ~{Math.floor((currentYear - birthYear) * 365.25).toLocaleString()} amazing days!
+                        ✨ You&apos;ve lived ~
+                        {Math.floor(
+                          (currentYear - birthYear) * 365.25,
+                        ).toLocaleString()}{" "}
+                        amazing days!
                       </p>
                     )}
                   </div>
+
+                  {/* Gender Identity - Inclusive options */}
+                  <div className="bg-white/5 rounded-2xl p-4 border border-white/10 max-w-md mx-auto">
+                    <Label className="text-white font-medium mb-2 flex items-center justify-center gap-2">
+                      <Users className="w-4 h-4 text-[var(--color-aurora-purple)]" />
+                      How do you identify? (optional)
+                    </Label>
+                    <p className="text-xs text-[var(--color-aurora-cream)]/60 mb-3">
+                      This helps us understand our community and serve you
+                      better
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {GENDER_OPTIONS.map((option) => (
+                        <button
+                          key={option.id}
+                          onClick={() => setGender(option.id)}
+                          className={`p-2 rounded-xl text-left transition-all flex items-center gap-2 ${
+                            gender === option.id
+                              ? "bg-gradient-to-r from-[var(--color-aurora-pink)]/30 to-[var(--color-aurora-purple)]/30 border-2 border-[var(--color-aurora-pink)]"
+                              : "bg-white/5 border border-white/10 hover:border-[var(--color-aurora-pink)]/50"
+                          }`}
+                        >
+                          <span className="text-lg">{option.emoji}</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-white text-xs truncate">
+                              {option.label}
+                            </p>
+                          </div>
+                          {gender === option.id && (
+                            <Check className="w-3 h-3 text-[var(--color-aurora-pink)] flex-shrink-0" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    {gender === "custom" && (
+                      <Input
+                        value={genderCustom}
+                        onChange={(e) => setGenderCustom(e.target.value)}
+                        placeholder="Describe your identity..."
+                        className="mt-3 bg-white/5 border-white/20 text-white placeholder:text-white/40 rounded-xl"
+                      />
+                    )}
+                  </div>
+
+                  {/* Pronouns */}
+                  <div className="bg-white/5 rounded-2xl p-4 border border-white/10 max-w-md mx-auto">
+                    <Label className="text-white font-medium mb-2 flex items-center justify-center gap-2">
+                      💬 Your pronouns (optional)
+                    </Label>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {PRONOUN_OPTIONS.map((option) => (
+                        <button
+                          key={option.id}
+                          onClick={() => setPronouns(option.id)}
+                          className={`px-3 py-2 rounded-full text-sm transition-all ${
+                            pronouns === option.id
+                              ? "bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] text-white"
+                              : "bg-white/10 text-white/70 hover:bg-white/20"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                    {pronouns === "custom" && (
+                      <Input
+                        value={pronounsCustom}
+                        onChange={(e) => setPronounsCustom(e.target.value)}
+                        placeholder="e.g., xe/xem, ze/zir..."
+                        className="mt-3 bg-white/5 border-white/20 text-white placeholder:text-white/40 rounded-xl"
+                      />
+                    )}
+                  </div>
+
+                  <p className="text-center text-xs text-[var(--color-aurora-cream)]/50">
+                    🔒 Your identity info is private and only used for
+                    aggregated community insights
+                  </p>
                 </motion.div>
               )}
 
@@ -376,10 +630,16 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                         >
                           <span className="text-2xl">{r.emoji}</span>
                           <div>
-                            <p className="font-medium text-white text-sm">{r.id}</p>
-                            <p className="text-xs text-[var(--color-aurora-cream)]/60">{r.desc}</p>
+                            <p className="font-medium text-white text-sm">
+                              {r.id}
+                            </p>
+                            <p className="text-xs text-[var(--color-aurora-cream)]/60">
+                              {r.desc}
+                            </p>
                           </div>
-                          {role === r.id && <Check className="w-5 h-5 text-[var(--color-aurora-pink)] ml-auto" />}
+                          {role === r.id && (
+                            <Check className="w-5 h-5 text-[var(--color-aurora-pink)] ml-auto" />
+                          )}
                         </button>
                       ))}
                     </div>
@@ -403,15 +663,25 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                         variant="outline"
                         onClick={async () => {
                           try {
-                            const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-                              navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
-                            });
+                            const pos = await new Promise<GeolocationPosition>(
+                              (resolve, reject) => {
+                                navigator.geolocation.getCurrentPosition(
+                                  resolve,
+                                  reject,
+                                  { timeout: 10000 },
+                                );
+                              },
+                            );
                             const res = await fetch(
-                              `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`
+                              `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`,
                             );
                             const data = await res.json();
-                            const city = data.address?.city || data.address?.town || data.address?.village || '';
-                            const country = data.address?.country || '';
+                            const city =
+                              data.address?.city ||
+                              data.address?.town ||
+                              data.address?.village ||
+                              "";
+                            const country = data.address?.country || "";
                             setLocation(city ? `${city}, ${country}` : country);
                           } catch {
                             // Silently fail - user can enter manually
@@ -424,7 +694,8 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                       </Button>
                     </div>
                     <p className="text-xs text-[var(--color-aurora-cream)]/50 mt-2">
-                      💡 Sharing your location helps our safety intelligence community warn others about unsafe areas
+                      💡 Sharing your location helps our safety intelligence
+                      community warn others about unsafe areas
                     </p>
                   </div>
                 </motion.div>
@@ -450,12 +721,16 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
 
                   <div className="grid grid-cols-2 gap-2">
                     {INTERESTS.map((interest) => {
-                      const isSelected = selectedInterests.includes(interest.id);
+                      const isSelected = selectedInterests.includes(
+                        interest.id,
+                      );
                       return (
                         <button
                           key={interest.id}
                           onClick={() => handleInterestToggle(interest.id)}
-                          disabled={!isSelected && selectedInterests.length >= 5}
+                          disabled={
+                            !isSelected && selectedInterests.length >= 5
+                          }
                           className={`p-3 rounded-xl text-left transition-all min-h-[60px] ${
                             isSelected
                               ? `bg-gradient-to-r ${interest.color} text-white shadow-lg`
@@ -464,10 +739,14 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                         >
                           <div className="flex items-center gap-2">
                             <span className="text-xl">{interest.emoji}</span>
-                            <span className={`text-xs sm:text-sm font-medium ${isSelected ? "text-white" : "text-[var(--color-aurora-cream)]"}`}>
+                            <span
+                              className={`text-xs sm:text-sm font-medium ${isSelected ? "text-white" : "text-[var(--color-aurora-cream)]"}`}
+                            >
                               {interest.id}
                             </span>
-                            {isSelected && <Check className="w-4 h-4 ml-auto" />}
+                            {isSelected && (
+                              <Check className="w-4 h-4 ml-auto" />
+                            )}
                           </div>
                         </button>
                       );
@@ -500,9 +779,27 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
 
                   <div className="space-y-3">
                     {[
-                      { value: "public" as const, icon: Users, title: "Public", desc: "Connect openly with the community", color: "text-[var(--color-aurora-mint)]" },
-                      { value: "anonymous" as const, icon: Shield, title: "Anonymous", desc: "Share without revealing identity", color: "text-[var(--color-aurora-purple)]" },
-                      { value: "private" as const, icon: Star, title: "Private", desc: "Keep your activity to yourself", color: "text-[var(--color-aurora-pink)]" },
+                      {
+                        value: "public" as const,
+                        icon: Users,
+                        title: "Public",
+                        desc: "Connect openly with the community",
+                        color: "text-[var(--color-aurora-mint)]",
+                      },
+                      {
+                        value: "anonymous" as const,
+                        icon: Shield,
+                        title: "Anonymous",
+                        desc: "Share without revealing identity",
+                        color: "text-[var(--color-aurora-purple)]",
+                      },
+                      {
+                        value: "private" as const,
+                        icon: Star,
+                        title: "Private",
+                        desc: "Keep your activity to yourself",
+                        color: "text-[var(--color-aurora-pink)]",
+                      },
                     ].map((option) => (
                       <button
                         key={option.value}
@@ -513,12 +810,18 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                             : "bg-white/5 border border-white/10 hover:border-[var(--color-aurora-pink)]/50"
                         }`}
                       >
-                        <div className={`w-10 h-10 rounded-full bg-white/10 flex items-center justify-center ${option.color}`}>
+                        <div
+                          className={`w-10 h-10 rounded-full bg-white/10 flex items-center justify-center ${option.color}`}
+                        >
                           <option.icon className="w-5 h-5" />
                         </div>
                         <div className="flex-1">
-                          <p className="font-semibold text-white">{option.title}</p>
-                          <p className="text-xs text-[var(--color-aurora-cream)]/60">{option.desc}</p>
+                          <p className="font-semibold text-white">
+                            {option.title}
+                          </p>
+                          <p className="text-xs text-[var(--color-aurora-cream)]/60">
+                            {option.desc}
+                          </p>
                         </div>
                         {visibility === option.value && (
                           <Check className="w-5 h-5 text-[var(--color-aurora-pink)]" />
@@ -550,7 +853,11 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                 <div
                   key={s}
                   className={`h-1.5 rounded-full transition-all ${
-                    s === step ? "w-6 bg-[var(--color-aurora-pink)]" : s < step ? "w-1.5 bg-[var(--color-aurora-purple)]" : "w-1.5 bg-white/20"
+                    s === step
+                      ? "w-6 bg-[var(--color-aurora-pink)]"
+                      : s < step
+                        ? "w-1.5 bg-[var(--color-aurora-purple)]"
+                        : "w-1.5 bg-white/20"
                   }`}
                 />
               ))}
@@ -568,7 +875,7 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                   Back
                 </Button>
               )}
-              
+
               <Button
                 onClick={() => {
                   if (step === 1 && !avatarConfig) {
@@ -579,14 +886,18 @@ export function OnboardingWizard({ open, onComplete, userId: _userId }: Onboardi
                     handleComplete();
                   }
                 }}
-                disabled={(step === 2 && !role) || (step === 3 && selectedInterests.length === 0) || isSubmitting}
+                disabled={
+                  (step === 2 && !role) ||
+                  (step === 3 && selectedInterests.length === 0) ||
+                  isSubmitting
+                }
                 className="flex-1 min-h-[52px] bg-gradient-to-r from-[var(--color-aurora-pink)] to-[var(--color-aurora-purple)] hover:opacity-90 shadow-lg disabled:opacity-50 font-semibold text-base"
               >
                 {isSubmitting ? (
                   <span className="animate-pulse">Saving...</span>
                 ) : step === 4 ? (
                   <>
-                    Let's Go!
+                    Let&apos;s Go!
                     <Sparkles className="w-5 h-5 ml-2" />
                   </>
                 ) : step === 1 && !avatarConfig ? (
