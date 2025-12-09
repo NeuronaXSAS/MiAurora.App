@@ -479,6 +479,18 @@ function SearchResultCard({ result, index }: { result: WebSearchResult; index: n
   };
   const genderIndicator = getGenderIndicator();
 
+  const getVibeIndicator = () => {
+    const t = emotionalTone.toLowerCase();
+    if (t.includes("inspir") || t.includes("positive") || t.includes("empower")) return { label: "Inspiring", emoji: "✨", color: "var(--color-aurora-purple)" };
+    if (t.includes("calm") || t.includes("neutral") || t.includes("balanced")) return { label: "Chill", emoji: "🧘‍♀️", color: "#60a5fa" };
+    if (t.includes("toxic") || t.includes("negat") || t.includes("hate") || t.includes("biase")) return { label: "Toxic", emoji: "💀", color: "#ef4444" };
+    if (t.includes("urgent") || t.includes("alarm") || t.includes("click") || t.includes("extreme")) return { label: "Intense", emoji: "🔥", color: "#f97316" };
+    if (t.includes("contro") || t.includes("debat") || t.includes("polar")) return { label: "Heated", emoji: "⚡", color: "#eab308" };
+    if (t.includes("educa") || t.includes("info")) return { label: "Smart", emoji: "🧠", color: "#8b5cf6" };
+    return { label: "Neutral", emoji: "🌊", color: "var(--color-aurora-blue)" };
+  };
+  const vibe = getVibeIndicator();
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
       {index === 3 && <LandingAd variant="search-results" className="mb-3" />}
@@ -509,12 +521,12 @@ function SearchResultCard({ result, index }: { result: WebSearchResult; index: n
               <span className="text-xs font-semibold text-[var(--foreground)]">Aurora Metrics</span>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-              {/* Row 1: Trust, Gender, Political */}
+              {/* Row 1: Vibe, Gender, Political */}
               <MetricCard
-                label="Trust"
-                value={trustScore}
-                max={100}
-                color={trustScore >= 70 ? "var(--color-aurora-mint)" : trustScore >= 40 ? "var(--color-aurora-yellow)" : "var(--color-aurora-salmon)"}
+                label="Vibe"
+                value={vibe.label}
+                emoji={vibe.emoji}
+                color={vibe.color}
               />
               <MetricCard
                 label="Gender"
@@ -553,7 +565,7 @@ function SearchResultCard({ result, index }: { result: WebSearchResult; index: n
             <a href={result.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-aurora-purple)] hover:underline">
               Visit site <ExternalLink className="w-3 h-3" />
             </a>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--accent)] text-[var(--muted-foreground)]">{emotionalTone}</span>
+
           </div>
         </div>
       </Card>
