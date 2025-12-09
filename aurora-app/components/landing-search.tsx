@@ -1,8 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
+
 /**
  * Aurora App - Revolutionary Women-First Search Engine
- * 
+ *
  * Landing page search experience with:
  * - Unified search bar with integrated results
  * - Judge mode results flow from within the search box
@@ -20,16 +22,37 @@ import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Search, Globe, ExternalLink, Heart, Loader2, Shield, Bot, Scale,
-  ArrowRight, Zap, Sparkles, Users, MessageSquare, MapPin, Briefcase, Flame
+  Search,
+  Globe,
+  ExternalLink,
+  Heart,
+  Loader2,
+  Shield,
+  Bot,
+  Scale,
+  ArrowRight,
+  Zap,
+  Sparkles,
+  Users,
+  MessageSquare,
+  MapPin,
+  Briefcase,
+  Flame,
 } from "lucide-react";
 import { LandingAd } from "@/components/ads/landing-ad";
 import { calculateTrustScore } from "@/lib/search/trust-score";
 import { DailyDebatesPanel } from "@/components/search/daily-debates-panel";
 import { SafetyAlertBadge } from "@/components/search/safety-alert-badge";
-import { AuroraVerifiedBadge, getVerificationLevel } from "@/components/search/aurora-verified-badge";
+import {
+  AuroraVerifiedBadge,
+  getVerificationLevel,
+} from "@/components/search/aurora-verified-badge";
 import { useLocale } from "@/lib/locale-context";
-import { AuroraSearchBox, type SearchMode, type SearchData } from "@/components/search/aurora-search-box";
+import {
+  AuroraSearchBox,
+  type SearchMode,
+  type SearchData,
+} from "@/components/search/aurora-search-box";
 
 // ==================== TYPES ====================
 
@@ -41,7 +64,9 @@ interface WebSearchResult {
   age?: string;
   aiContentScore?: number;
   biasScore?: number;
-  credibilityScore?: number | { score: number; label: string; factors?: unknown };
+  credibilityScore?:
+    | number
+    | { score: number; label: string; factors?: unknown };
   sustainabilityScore?: number; // Environmental/sustainability score 0-100
   biasAnalysis?: {
     genderBias: { score: number; label: string };
@@ -84,7 +109,7 @@ export function LandingSearch() {
     api.publicSearch.publicSearch,
     debouncedQuery.length >= 2 && activeMode === "community"
       ? { query: debouncedQuery, limit: 12 }
-      : "skip"
+      : "skip",
   );
 
   // Debounce query
@@ -102,7 +127,9 @@ export function LandingSearch() {
     const fetchResults = async () => {
       setIsSearching(true);
       try {
-        const res = await fetch(`/api/search/brave?q=${encodeURIComponent(debouncedQuery)}&count=8`);
+        const res = await fetch(
+          `/api/search/brave?q=${encodeURIComponent(debouncedQuery)}&count=8`,
+        );
         const data = await res.json();
         if (data.results) setWebResults(data.results);
       } catch (err) {
@@ -129,21 +156,24 @@ export function LandingSearch() {
   }, [webResults, debouncedQuery, activeMode]);
 
   // Handle search from AuroraSearchBox
-  const handleSearch = useCallback(async (searchQuery: string, mode: SearchMode, _data?: SearchData) => {
-    // Judge mode is handled entirely within the AuroraSearchBox now
-    if (mode === "judge") {
-      setActiveMode(null); // Don't show external results for judge
-      return;
-    }
+  const handleSearch = useCallback(
+    async (searchQuery: string, mode: SearchMode, _data?: SearchData) => {
+      // Judge mode is handled entirely within the AuroraSearchBox now
+      if (mode === "judge") {
+        setActiveMode(null); // Don't show external results for judge
+        return;
+      }
 
-    setQuery(searchQuery);
-    setActiveMode(mode);
+      setQuery(searchQuery);
+      setActiveMode(mode);
 
-    if (mode === "web") {
-      setWebResults([]);
-      setAiInsight(null);
-    }
-  }, []);
+      if (mode === "web") {
+        setWebResults([]);
+        setAiInsight(null);
+      }
+    },
+    [],
+  );
 
   // Reset to home
   const handleReset = useCallback(() => {
@@ -155,8 +185,10 @@ export function LandingSearch() {
   }, []);
 
   const hasWebResults = webResults.length > 0;
-  const hasCommunityResults = communityResults?.results && communityResults.results.length > 0;
-  const showExternalResults = activeMode === "web" || activeMode === "community";
+  const hasCommunityResults =
+    communityResults?.results && communityResults.results.length > 0;
+  const showExternalResults =
+    activeMode === "web" || activeMode === "community";
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 force-light-theme">
@@ -164,19 +196,31 @@ export function LandingSearch() {
       <div className="text-center mb-6">
         <div className="flex items-center justify-center gap-3 mb-4">
           <div className="relative">
-            <Image src="/Au_Logo_1.png" alt="Aurora App" width={56} height={56} className="w-12 h-12 md:w-14 md:h-14 object-contain" />
+            <Image
+              src="/Au_Logo_1.png"
+              alt="Aurora App"
+              width={56}
+              height={56}
+              className="w-12 h-12 md:w-14 md:h-14 object-contain"
+            />
             <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[var(--color-aurora-mint)] rounded-full flex items-center justify-center shadow-sm">
               <Search className="w-3 h-3 text-[var(--color-aurora-violet)]" />
             </div>
           </div>
           <div className="text-left">
-            <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-aurora-violet)]">Aurora App</h1>
-            <p className="text-[10px] md:text-xs text-[var(--color-aurora-purple)] font-semibold tracking-widest uppercase">Search Engine</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-aurora-violet)]">
+              Aurora App
+            </h1>
+            <p className="text-[10px] md:text-xs text-[var(--color-aurora-purple)] font-semibold tracking-widest uppercase">
+              Search Engine
+            </p>
           </div>
         </div>
         <p className="text-sm text-[var(--muted-foreground)] mb-2 max-w-lg mx-auto">
           The world&apos;s first search engine designed for women.{" "}
-          <span className="text-[var(--color-aurora-purple)] font-medium">See the truth behind every result.</span>
+          <span className="text-[var(--color-aurora-purple)] font-medium">
+            See the truth behind every result.
+          </span>
         </p>
       </div>
 
@@ -204,8 +248,12 @@ export function LandingSearch() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Flame className="w-5 h-5 text-[var(--color-aurora-pink)]" />
-                <h3 className="font-semibold text-[var(--foreground)]">Hot Debates Today</h3>
-                <Badge className="text-xs bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] border-0">Join the conversation</Badge>
+                <h3 className="font-semibold text-[var(--foreground)]">
+                  Hot Debates Today
+                </h3>
+                <Badge className="text-xs bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] border-0">
+                  Join the conversation
+                </Badge>
               </div>
               <DailyDebatesPanel userId={null} />
             </div>
@@ -213,15 +261,45 @@ export function LandingSearch() {
             {/* Feature Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { icon: Bot, label: "AI Detection", desc: "Spot AI content", color: "var(--color-aurora-blue)" },
-                { icon: Scale, label: "Bias Analysis", desc: "Gender & political", color: "var(--color-aurora-purple)" },
-                { icon: Shield, label: "Credibility", desc: "Source trust", color: "var(--color-aurora-mint)" },
-                { icon: Heart, label: "Women First", desc: "Your perspective", color: "var(--color-aurora-pink)" },
+                {
+                  icon: Bot,
+                  label: "AI Detection",
+                  desc: "Spot AI content",
+                  color: "var(--color-aurora-blue)",
+                },
+                {
+                  icon: Scale,
+                  label: "Bias Analysis",
+                  desc: "Gender & political",
+                  color: "var(--color-aurora-purple)",
+                },
+                {
+                  icon: Shield,
+                  label: "Credibility",
+                  desc: "Source trust",
+                  color: "var(--color-aurora-mint)",
+                },
+                {
+                  icon: Heart,
+                  label: "Women First",
+                  desc: "Your perspective",
+                  color: "var(--color-aurora-pink)",
+                },
               ].map((item, i) => (
-                <div key={i} className="text-center p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]">
-                  <item.icon className="w-6 h-6 mx-auto mb-2" style={{ color: item.color }} />
-                  <p className="text-xs font-medium text-[var(--foreground)]">{item.label}</p>
-                  <p className="text-[10px] text-[var(--muted-foreground)]">{item.desc}</p>
+                <div
+                  key={i}
+                  className="text-center p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]"
+                >
+                  <item.icon
+                    className="w-6 h-6 mx-auto mb-2"
+                    style={{ color: item.color }}
+                  />
+                  <p className="text-xs font-medium text-[var(--foreground)]">
+                    {item.label}
+                  </p>
+                  <p className="text-[10px] text-[var(--muted-foreground)]">
+                    {item.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -238,7 +316,10 @@ export function LandingSearch() {
             className="space-y-4"
           >
             {/* Back Button */}
-            <button onClick={handleReset} className="flex items-center gap-2 text-sm text-[var(--color-aurora-purple)] hover:underline">
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-2 text-sm text-[var(--color-aurora-purple)] hover:underline"
+            >
               <ArrowRight className="w-4 h-4 rotate-180" /> Back to Home
             </button>
 
@@ -247,12 +328,20 @@ export function LandingSearch() {
               <div className="bg-[var(--color-aurora-violet)] rounded-xl p-4">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <Image src="/Au_Logo_1.png" alt="Aurora" width={28} height={28} className="w-7 h-7" />
+                    <Image
+                      src="/Au_Logo_1.png"
+                      alt="Aurora"
+                      width={28}
+                      height={28}
+                      className="w-7 h-7"
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-[var(--color-aurora-pink)]" />
-                      <span className="text-xs font-semibold text-white/90">Aurora says...</span>
+                      <span className="text-xs font-semibold text-white/90">
+                        Aurora says...
+                      </span>
                     </div>
                     {isLoadingAI ? (
                       <div className="space-y-2">
@@ -260,7 +349,9 @@ export function LandingSearch() {
                         <div className="h-4 bg-white/20 rounded animate-pulse w-3/4" />
                       </div>
                     ) : (
-                      <p className="text-sm text-white leading-relaxed">{aiInsight}</p>
+                      <p className="text-sm text-white leading-relaxed">
+                        {aiInsight}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -271,7 +362,9 @@ export function LandingSearch() {
             {isSearching && !hasWebResults && (
               <div className="text-center py-12">
                 <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-[var(--color-aurora-purple)]" />
-                <p className="text-sm text-[var(--muted-foreground)]">Searching with bias detection...</p>
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  Searching with bias detection...
+                </p>
               </div>
             )}
 
@@ -280,7 +373,9 @@ export function LandingSearch() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Globe className="w-4 h-4 text-[var(--color-aurora-purple)]" />
-                  <span className="text-sm font-medium text-[var(--foreground)]">Web Results ({webResults.length})</span>
+                  <span className="text-sm font-medium text-[var(--foreground)]">
+                    Web Results ({webResults.length})
+                  </span>
                   <Badge className="ml-auto text-[10px] bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0">
                     Brave Search
                   </Badge>
@@ -295,7 +390,9 @@ export function LandingSearch() {
             {!isSearching && !hasWebResults && query && (
               <div className="text-center py-12">
                 <Search className="w-8 h-8 mx-auto mb-3 text-[var(--muted-foreground)]" />
-                <p className="text-sm text-[var(--muted-foreground)]">No results found. Try a different search.</p>
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  No results found. Try a different search.
+                </p>
               </div>
             )}
           </motion.div>
@@ -311,14 +408,19 @@ export function LandingSearch() {
             className="space-y-4"
           >
             {/* Back Button */}
-            <button onClick={handleReset} className="flex items-center gap-2 text-sm text-[var(--color-aurora-purple)] hover:underline">
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-2 text-sm text-[var(--color-aurora-purple)] hover:underline"
+            >
               <ArrowRight className="w-4 h-4 rotate-180" /> Back to Home
             </button>
 
             {/* Community Header */}
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-[var(--color-aurora-pink)]" />
-              <span className="font-medium text-[var(--foreground)]">Aurora App Community</span>
+              <span className="font-medium text-[var(--foreground)]">
+                Aurora App Community
+              </span>
               {hasCommunityResults && (
                 <Badge className="text-[10px] bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] border-0">
                   {communityResults?.total || 0} results
@@ -330,7 +432,9 @@ export function LandingSearch() {
             {debouncedQuery.length >= 2 && !communityResults && (
               <div className="text-center py-12">
                 <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-[var(--color-aurora-purple)]" />
-                <p className="text-sm text-[var(--muted-foreground)]">Searching community...</p>
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  Searching community...
+                </p>
               </div>
             )}
 
@@ -338,26 +442,38 @@ export function LandingSearch() {
             {hasCommunityResults && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {communityResults?.results.map((result, i) => (
-                  <CommunityResultCard key={i} result={result as unknown as CommunityResult} index={i} />
+                  <CommunityResultCard
+                    key={i}
+                    result={result as unknown as CommunityResult}
+                    index={i}
+                  />
                 ))}
               </div>
             )}
 
             {/* No Results */}
-            {communityResults && communityResults.results.length === 0 && debouncedQuery.length >= 2 && (
-              <div className="text-center py-12">
-                <Users className="w-8 h-8 mx-auto mb-3 text-[var(--muted-foreground)]" />
-                <p className="text-sm text-[var(--muted-foreground)]">No community content found for &quot;{debouncedQuery}&quot;</p>
-                <p className="text-xs text-[var(--muted-foreground)] mt-1">Try a different search</p>
-              </div>
-            )}
+            {communityResults &&
+              communityResults.results.length === 0 &&
+              debouncedQuery.length >= 2 && (
+                <div className="text-center py-12">
+                  <Users className="w-8 h-8 mx-auto mb-3 text-[var(--muted-foreground)]" />
+                  <p className="text-sm text-[var(--muted-foreground)]">
+                    No community content found for &quot;{debouncedQuery}&quot;
+                  </p>
+                  <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                    Try a different search
+                  </p>
+                </div>
+              )}
 
             {/* Show debates when no search */}
             {(!debouncedQuery || debouncedQuery.length < 2) && (
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Flame className="w-5 h-5 text-[var(--color-aurora-pink)]" />
-                  <h3 className="font-semibold text-[var(--foreground)]">Hot Debates Today</h3>
+                  <h3 className="font-semibold text-[var(--foreground)]">
+                    Hot Debates Today
+                  </h3>
                 </div>
                 <DailyDebatesPanel userId={null} />
               </div>
@@ -372,8 +488,12 @@ export function LandingSearch() {
                       <Zap className="w-5 h-5 text-[var(--color-aurora-violet)]" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-[var(--foreground)]">Join Aurora App Community</p>
-                      <p className="text-xs text-[var(--muted-foreground)]">Get full access + earn credits</p>
+                      <p className="text-sm font-semibold text-[var(--foreground)]">
+                        Join Aurora App Community
+                      </p>
+                      <p className="text-xs text-[var(--muted-foreground)]">
+                        Get full access + earn credits
+                      </p>
                     </div>
                   </div>
                   <Link href="/api/auth/login">
@@ -393,31 +513,45 @@ export function LandingSearch() {
 
 // ==================== COMMUNITY RESULT CARD ====================
 
-function CommunityResultCard({ result, index }: { result: CommunityResult; index: number }) {
-  const getIcon = () => {
-    switch (result.type) {
-      case "post": return MessageSquare;
-      case "route": return MapPin;
-      case "circle": return Users;
-      case "opportunity": return Briefcase;
-      case "resource": return Shield;
-      default: return MessageSquare;
-    }
-  };
+function CommunityResultCard({
+  result,
+  index,
+}: {
+  result: CommunityResult;
+  index: number;
+}) {
+  const { Icon, color } = useMemo(() => {
+    let icon;
+    let clr;
 
-  const getColor = () => {
     switch (result.type) {
-      case "post": return "var(--color-aurora-purple)";
-      case "route": return "var(--color-aurora-mint)";
-      case "circle": return "var(--color-aurora-pink)";
-      case "opportunity": return "var(--color-aurora-blue)";
-      case "resource": return "var(--color-aurora-yellow)";
-      default: return "var(--color-aurora-purple)";
+      case "post":
+        icon = MessageSquare;
+        clr = "var(--color-aurora-purple)";
+        break;
+      case "route":
+        icon = MapPin;
+        clr = "var(--color-aurora-mint)";
+        break;
+      case "circle":
+        icon = Users;
+        clr = "var(--color-aurora-pink)";
+        break;
+      case "opportunity":
+        icon = Briefcase;
+        clr = "var(--color-aurora-blue)";
+        break;
+      case "resource":
+        icon = Shield;
+        clr = "var(--color-aurora-yellow)";
+        break;
+      default:
+        icon = MessageSquare;
+        clr = "var(--color-aurora-purple)";
     }
-  };
 
-  const Icon = getIcon();
-  const color = getColor();
+    return { Icon: icon, color: clr };
+  }, [result.type]);
 
   return (
     <motion.div
@@ -427,20 +561,32 @@ function CommunityResultCard({ result, index }: { result: CommunityResult; index
     >
       <Card className="p-4 bg-[var(--card)] border-[var(--border)] hover:border-[var(--color-aurora-purple)]/40 hover:shadow-md transition-all cursor-pointer">
         <div className="flex gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}20` }}>
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: `${color}20` }}
+          >
             <Icon className="w-5 h-5" style={{ color }} />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <Badge className="text-[9px] capitalize" style={{ backgroundColor: `${color}20`, color, border: 'none' }}>
+              <Badge
+                className="text-[9px] capitalize"
+                style={{ backgroundColor: `${color}20`, color, border: "none" }}
+              >
                 {result.type}
               </Badge>
               {result.category && (
-                <span className="text-[10px] text-[var(--muted-foreground)]">{result.category}</span>
+                <span className="text-[10px] text-[var(--muted-foreground)]">
+                  {result.category}
+                </span>
               )}
             </div>
-            <h4 className="font-medium text-sm text-[var(--foreground)] line-clamp-1">{result.previewTitle}</h4>
-            <p className="text-xs text-[var(--muted-foreground)] line-clamp-2 mt-0.5">{result.previewSnippet}</p>
+            <h4 className="font-medium text-sm text-[var(--foreground)] line-clamp-1">
+              {result.previewTitle}
+            </h4>
+            <p className="text-xs text-[var(--muted-foreground)] line-clamp-2 mt-0.5">
+              {result.previewSnippet}
+            </p>
             {result.stats && (
               <div className="flex items-center gap-1 mt-2 text-[10px] text-[var(--muted-foreground)]">
                 <span className="capitalize">{result.stats.label}:</span>
@@ -456,51 +602,118 @@ function CommunityResultCard({ result, index }: { result: CommunityResult; index
 
 // ==================== WEB SEARCH RESULT CARD ====================
 
-function SearchResultCard({ result, index }: { result: WebSearchResult; index: number }) {
-  const aiScore = result.aiContentScore ?? result.aiContentDetection?.percentage ?? 0;
-  const biasScore = result.biasScore ?? result.biasAnalysis?.genderBias?.score ?? 50;
-  const credScore = typeof result.credibilityScore === 'number' ? result.credibilityScore : (result.credibilityScore?.score ?? 50);
-  const politicalBias = result.biasAnalysis?.politicalBias?.indicator || "Center";
+function SearchResultCard({
+  result,
+  index,
+}: {
+  result: WebSearchResult;
+  index: number;
+}) {
+  const aiScore =
+    result.aiContentScore ?? result.aiContentDetection?.percentage ?? 0;
+  const biasScore =
+    result.biasScore ?? result.biasAnalysis?.genderBias?.score ?? 50;
+  const credScore =
+    typeof result.credibilityScore === "number"
+      ? result.credibilityScore
+      : (result.credibilityScore?.score ?? 50);
+  const politicalBias =
+    result.biasAnalysis?.politicalBias?.indicator || "Center";
   const emotionalTone = result.biasAnalysis?.emotionalTone || "Neutral";
 
   const trustScoreResult = calculateTrustScore({
-    genderBiasScore: biasScore, credibilityScore: credScore, aiContentPercentage: aiScore,
-    publishedDate: result.age, isWomenFocused: result.isWomenFocused, domain: result.domain,
-    contentType: emotionalTone, title: result.title,
+    genderBiasScore: biasScore,
+    credibilityScore: credScore,
+    aiContentPercentage: aiScore,
+    publishedDate: result.age,
+    isWomenFocused: result.isWomenFocused,
+    domain: result.domain,
+    contentType: emotionalTone,
+    title: result.title,
   });
   const trustScore = trustScoreResult.score;
-  const verificationLevel = getVerificationLevel(result.domain, credScore, result.isWomenFocused);
+  const verificationLevel = getVerificationLevel(
+    result.domain,
+    credScore,
+    result.isWomenFocused,
+  );
 
   const getGenderIndicator = () => {
-    if (biasScore <= 30) return { label: "Women+", color: "var(--color-aurora-mint)", emoji: "💚" };
-    if (biasScore <= 50) return { label: "Balanced", color: "var(--color-aurora-blue)", emoji: "⚖️" };
-    if (biasScore <= 70) return { label: "Caution", color: "var(--color-aurora-yellow)", emoji: "⚠️" };
+    if (biasScore <= 30)
+      return {
+        label: "Women+",
+        color: "var(--color-aurora-mint)",
+        emoji: "💚",
+      };
+    if (biasScore <= 50)
+      return {
+        label: "Balanced",
+        color: "var(--color-aurora-blue)",
+        emoji: "⚖️",
+      };
+    if (biasScore <= 70)
+      return {
+        label: "Caution",
+        color: "var(--color-aurora-yellow)",
+        emoji: "⚠️",
+      };
     return { label: "Alert", color: "var(--color-aurora-salmon)", emoji: "🚨" };
   };
   const genderIndicator = getGenderIndicator();
 
   const getVibeIndicator = () => {
     const t = emotionalTone.toLowerCase();
-    if (t.includes("inspir") || t.includes("positive") || t.includes("empower")) return { label: "Inspiring", emoji: "✨", color: "var(--color-aurora-purple)" };
-    if (t.includes("calm") || t.includes("neutral") || t.includes("balanced")) return { label: "Chill", emoji: "🧘‍♀️", color: "#60a5fa" };
-    if (t.includes("toxic") || t.includes("negat") || t.includes("hate") || t.includes("biase")) return { label: "Toxic", emoji: "💀", color: "#ef4444" };
-    if (t.includes("urgent") || t.includes("alarm") || t.includes("click") || t.includes("extreme")) return { label: "Intense", emoji: "🔥", color: "#f97316" };
-    if (t.includes("contro") || t.includes("debat") || t.includes("polar")) return { label: "Heated", emoji: "⚡", color: "#eab308" };
-    if (t.includes("educa") || t.includes("info")) return { label: "Smart", emoji: "🧠", color: "#8b5cf6" };
+    if (t.includes("inspir") || t.includes("positive") || t.includes("empower"))
+      return {
+        label: "Inspiring",
+        emoji: "✨",
+        color: "var(--color-aurora-purple)",
+      };
+    if (t.includes("calm") || t.includes("neutral") || t.includes("balanced"))
+      return { label: "Chill", emoji: "🧘‍♀️", color: "#60a5fa" };
+    if (
+      t.includes("toxic") ||
+      t.includes("negat") ||
+      t.includes("hate") ||
+      t.includes("biase")
+    )
+      return { label: "Toxic", emoji: "💀", color: "#ef4444" };
+    if (
+      t.includes("urgent") ||
+      t.includes("alarm") ||
+      t.includes("click") ||
+      t.includes("extreme")
+    )
+      return { label: "Intense", emoji: "🔥", color: "#f97316" };
+    if (t.includes("contro") || t.includes("debat") || t.includes("polar"))
+      return { label: "Heated", emoji: "⚡", color: "#eab308" };
+    if (t.includes("educa") || t.includes("info"))
+      return { label: "Smart", emoji: "🧠", color: "#8b5cf6" };
     return { label: "Neutral", emoji: "🌊", color: "var(--color-aurora-blue)" };
   };
   const vibe = getVibeIndicator();
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+    >
       {index === 3 && <LandingAd variant="search-results" className="mb-3" />}
 
       <Card className="overflow-hidden border-[var(--border)] hover:border-[var(--color-aurora-purple)]/40 hover:shadow-lg transition-all bg-[var(--card)]">
         <div className="p-4">
           <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-            <span className="text-xs text-[var(--color-aurora-purple)] font-semibold">{result.domain}</span>
-            <SafetyAlertBadge domain={result.domain} safetyFlags={result.safetyFlags} />
-            {verificationLevel && <AuroraVerifiedBadge level={verificationLevel} />}
+            <span className="text-xs text-[var(--color-aurora-purple)] font-semibold">
+              {result.domain}
+            </span>
+            <SafetyAlertBadge
+              domain={result.domain}
+              safetyFlags={result.safetyFlags}
+            />
+            {verificationLevel && (
+              <AuroraVerifiedBadge level={verificationLevel} />
+            )}
             {result.isWomenFocused && !verificationLevel && (
               <Badge className="text-[9px] bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] border-0 h-5 px-1.5">
                 <Heart className="w-2.5 h-2.5 mr-0.5" /> Women
@@ -508,17 +721,26 @@ function SearchResultCard({ result, index }: { result: WebSearchResult; index: n
             )}
           </div>
 
-          <a href={result.url} target="_blank" rel="noopener noreferrer" className="group block mb-1">
+          <a
+            href={result.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group block mb-1"
+          >
             <h3 className="font-semibold text-[var(--foreground)] group-hover:text-[var(--color-aurora-purple)] transition-colors line-clamp-2 text-base">
               {result.title}
             </h3>
           </a>
-          <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mb-3 leading-relaxed">{result.description}</p>
+          <p className="text-sm text-[var(--muted-foreground)] line-clamp-2 mb-3 leading-relaxed">
+            {result.description}
+          </p>
 
           <div className="p-3 rounded-xl bg-[var(--accent)]/50 border border-[var(--border)]">
             <div className="flex items-center gap-1.5 mb-2">
               <Shield className="w-3.5 h-3.5 text-[var(--color-aurora-purple)]" />
-              <span className="text-xs font-semibold text-[var(--foreground)]">Aurora Metrics</span>
+              <span className="text-xs font-semibold text-[var(--foreground)]">
+                Aurora Metrics
+              </span>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
               {/* Row 1: Vibe, Gender, Political */}
@@ -537,35 +759,74 @@ function SearchResultCard({ result, index }: { result: WebSearchResult; index: n
               <MetricCard
                 label="Political"
                 value={politicalBias}
-                emoji={politicalBias === "Left" ? "🔵" : politicalBias === "Right" ? "🔴" : "🟢"}
-                color={politicalBias === "Center" ? "var(--color-aurora-mint)" : "var(--color-aurora-yellow)"}
+                emoji={
+                  politicalBias === "Left"
+                    ? "🔵"
+                    : politicalBias === "Right"
+                      ? "🔴"
+                      : "🟢"
+                }
+                color={
+                  politicalBias === "Center"
+                    ? "var(--color-aurora-mint)"
+                    : "var(--color-aurora-yellow)"
+                }
               />
               {/* Row 2: AI, Sustainability, Credibility */}
               <MetricCard
                 label="AI"
                 value={`${aiScore}%`}
-                color={aiScore > 50 ? "var(--color-aurora-salmon)" : aiScore > 20 ? "var(--color-aurora-yellow)" : "var(--color-aurora-mint)"}
+                color={
+                  aiScore > 50
+                    ? "var(--color-aurora-salmon)"
+                    : aiScore > 20
+                      ? "var(--color-aurora-yellow)"
+                      : "var(--color-aurora-mint)"
+                }
               />
               <MetricCard
                 label="Eco"
                 value={result.sustainabilityScore ?? "N/A"}
-                emoji={result.sustainabilityScore && result.sustainabilityScore >= 60 ? "🌱" : result.sustainabilityScore && result.sustainabilityScore < 40 ? "⚠️" : "🌍"}
-                color={(result.sustainabilityScore ?? 50) >= 60 ? "var(--color-aurora-mint)" : (result.sustainabilityScore ?? 50) >= 40 ? "var(--color-aurora-yellow)" : "var(--color-aurora-salmon)"}
+                emoji={
+                  result.sustainabilityScore && result.sustainabilityScore >= 60
+                    ? "🌱"
+                    : result.sustainabilityScore &&
+                        result.sustainabilityScore < 40
+                      ? "⚠️"
+                      : "🌍"
+                }
+                color={
+                  (result.sustainabilityScore ?? 50) >= 60
+                    ? "var(--color-aurora-mint)"
+                    : (result.sustainabilityScore ?? 50) >= 40
+                      ? "var(--color-aurora-yellow)"
+                      : "var(--color-aurora-salmon)"
+                }
               />
               <MetricCard
                 label="Credibility"
                 value={credScore}
                 max={100}
-                color={credScore >= 70 ? "var(--color-aurora-mint)" : credScore >= 40 ? "var(--color-aurora-yellow)" : "var(--color-aurora-salmon)"}
+                color={
+                  credScore >= 70
+                    ? "var(--color-aurora-mint)"
+                    : credScore >= 40
+                      ? "var(--color-aurora-yellow)"
+                      : "var(--color-aurora-salmon)"
+                }
               />
             </div>
           </div>
 
           <div className="flex items-center gap-3 mt-3 flex-wrap">
-            <a href={result.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-aurora-purple)] hover:underline">
+            <a
+              href={result.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-aurora-purple)] hover:underline"
+            >
               Visit site <ExternalLink className="w-3 h-3" />
             </a>
-
           </div>
         </div>
       </Card>
@@ -575,22 +836,46 @@ function SearchResultCard({ result, index }: { result: WebSearchResult; index: n
 
 // ==================== METRIC CARD ====================
 
-function MetricCard({ label, value, max, emoji, color }: {
-  label: string; value: string | number; max?: number; emoji?: string; color: string;
+function MetricCard({
+  label,
+  value,
+  max,
+  emoji,
+  color,
+}: {
+  label: string;
+  value: string | number;
+  max?: number;
+  emoji?: string;
+  color: string;
 }) {
   const numValue = typeof value === "number" ? value : null;
   const percentage = numValue && max ? (numValue / max) * 100 : null;
 
   return (
-    <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
-      <div className="text-[10px] font-medium text-[var(--foreground)]/70 mb-0.5">{label}</div>
-      <div className="flex items-center gap-1">
-        {emoji && <span className="text-sm">{emoji}</span>}
-        <span className="text-sm font-bold text-[var(--foreground)]">{value}{max ? <span className="text-[var(--muted-foreground)] font-normal text-xs">/{max}</span> : ""}</span>
+    <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)] min-w-0 overflow-hidden">
+      <div className="text-[10px] font-medium text-[var(--foreground)]/70 mb-0.5 truncate">
+        {label}
+      </div>
+      <div className="flex items-center gap-1 min-w-0">
+        {emoji && <span className="text-xs flex-shrink-0">{emoji}</span>}
+        <span className="text-xs font-bold text-[var(--foreground)] truncate">
+          {value}
+          {max ? (
+            <span className="text-[var(--muted-foreground)] font-normal text-[10px]">
+              /{max}
+            </span>
+          ) : (
+            ""
+          )}
+        </span>
       </div>
       {percentage !== null && (
         <div className="mt-1.5 h-1.5 bg-[var(--accent)] rounded-full overflow-hidden">
-          <div className="h-full rounded-full transition-all" style={{ width: `${percentage}%`, backgroundColor: color }} />
+          <div
+            className="h-full rounded-full transition-all"
+            style={{ width: `${percentage}%`, backgroundColor: color }}
+          />
         </div>
       )}
     </div>
@@ -599,22 +884,42 @@ function MetricCard({ label, value, max, emoji, color }: {
 
 // ==================== AURORA INSIGHT GENERATOR ====================
 
-function generateAuroraInsight(query: string, webResults: WebSearchResult[]): string {
+function generateAuroraInsight(
+  query: string,
+  webResults: WebSearchResult[],
+): string {
   const q = query.toLowerCase();
-  const avgCredibility = webResults.reduce((sum, r) => {
-    const score = typeof r.credibilityScore === 'number' ? r.credibilityScore : (r.credibilityScore?.score ?? 50);
-    return sum + score;
-  }, 0) / webResults.length;
+  const avgCredibility =
+    webResults.reduce((sum, r) => {
+      const score =
+        typeof r.credibilityScore === "number"
+          ? r.credibilityScore
+          : (r.credibilityScore?.score ?? 50);
+      return sum + score;
+    }, 0) / webResults.length;
 
-  const womenFocusedCount = webResults.filter(r => r.isWomenFocused).length;
-  const hasHighAI = webResults.some(r => (r.aiContentDetection?.percentage ?? 0) > 50);
-  const domains = [...new Set(webResults.map(r => r.domain))];
+  const womenFocusedCount = webResults.filter((r) => r.isWomenFocused).length;
+  const hasHighAI = webResults.some(
+    (r) => (r.aiContentDetection?.percentage ?? 0) > 50,
+  );
+  const domains = [...new Set(webResults.map((r) => r.domain))];
 
-  const isSpanish = /[áéíóúñ¿¡]/.test(query) ||
+  const isSpanish =
+    /[áéíóúñ¿¡]/.test(query) ||
     /\b(estoy|tengo|quiero|como|para|que|por|con|una|los|las)\b/i.test(query);
 
-  const mentalHealthKeywords = ["depressed", "depression", "sad", "anxiety", "lonely", "hopeless", "deprimida", "triste", "ansiedad"];
-  const isMentalHealthQuery = mentalHealthKeywords.some(kw => q.includes(kw));
+  const mentalHealthKeywords = [
+    "depressed",
+    "depression",
+    "sad",
+    "anxiety",
+    "lonely",
+    "hopeless",
+    "deprimida",
+    "triste",
+    "ansiedad",
+  ];
+  const isMentalHealthQuery = mentalHealthKeywords.some((kw) => q.includes(kw));
 
   if (isMentalHealthQuery) {
     return isSpanish
@@ -622,7 +927,9 @@ function generateAuroraInsight(query: string, webResults: WebSearchResult[]): st
       : `💜 Thank you for sharing how you're feeling. You're not alone. I found ${webResults.length} resources, but most importantly: if you're going through a difficult time, please consider reaching out to someone you trust.`;
   }
 
-  const greetings = isSpanish ? ["¡Hola! 👋", "Veamos...", "¡Listo!"] : ["Hey! 👋", "Let's see...", "Got it!"];
+  const greetings = isSpanish
+    ? ["¡Hola! 👋", "Veamos...", "¡Listo!"]
+    : ["Hey! 👋", "Let's see...", "Got it!"];
   const greeting = greetings[Math.floor(Math.random() * greetings.length)];
 
   if (hasHighAI) {

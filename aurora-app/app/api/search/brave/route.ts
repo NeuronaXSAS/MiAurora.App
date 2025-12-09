@@ -1,6 +1,6 @@
 /**
  * Aurora AI Search Engine - Brave Search API Route
- * 
+ *
  * The world's first women-first search engine powered by Brave Search.
  * Provides unique value through:
  * - AI content detection (% of AI-written content)
@@ -10,7 +10,7 @@
  * - Source credibility scoring
  * - Women-safety indicators
  * - Privacy-first search (no tracking)
- * 
+ *
  * Requirements: 1.1, 2.1-2C, 3.1-3.5, 4.1-4.4, 7.1-7.4, 12.1-12.6
  */
 
@@ -25,7 +25,11 @@ import {
   getCredibilityLabel,
   getAIContentLabel,
 } from "@/lib/search";
-import { canUseBraveSearch, recordBraveSearchUsage } from "@/lib/resource-guard";
+import { calculateSustainability } from "@/lib/search/sustainability-scorer";
+import {
+  canUseBraveSearch,
+  recordBraveSearchUsage,
+} from "@/lib/resource-guard";
 import type {
   SearchResult,
   AuroraInsights,
@@ -152,14 +156,14 @@ export async function GET(request: NextRequest) {
   if (!query || query.trim().length < 2) {
     return NextResponse.json(
       { error: "Query must be at least 2 characters" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   // RESOURCE GUARD: Check if we have quota remaining
   const searchQuotaCheck = canUseBraveSearch();
   if (!searchQuotaCheck.allowed) {
-    console.warn('⚠️ Brave Search limit reached:', searchQuotaCheck.reason);
+    console.warn("⚠️ Brave Search limit reached:", searchQuotaCheck.reason);
     return NextResponse.json({
       query,
       totalResults: 0,
@@ -199,7 +203,9 @@ export async function GET(request: NextRequest) {
         politicalDistribution: {},
         womenFocusedCount: 0,
         womenFocusedPercentage: 0,
-        recommendations: ["Configure BRAVE_SEARCH_API_KEY in environment variables to enable web search."],
+        recommendations: [
+          "Configure BRAVE_SEARCH_API_KEY in environment variables to enable web search.",
+        ],
       },
       apiUsage: { used: 0, limit: 300, remaining: 300 },
       error: "Brave Search API key not configured",
@@ -216,7 +222,7 @@ export async function GET(request: NextRequest) {
 
     const response = await fetch(braveUrl.toString(), {
       headers: {
-        "Accept": "application/json",
+        Accept: "application/json",
         "Accept-Encoding": "gzip",
         "X-Subscription-Token": BRAVE_API_KEY,
       },
@@ -234,7 +240,7 @@ export async function GET(request: NextRequest) {
     // COST OPTIMIZATION: Only fetch additional results if explicitly requested
     // This reduces API calls from 4 to 1 for most searches
     const includeMedia = searchParams.get("includeMedia") === "true";
-    
+
     let videoResults: BraveVideoResult[] = [];
     let newsResults: BraveNewsResult[] = [];
     let imageResults: BraveImageResult[] = [];
@@ -244,21 +250,45 @@ export async function GET(request: NextRequest) {
     if (includeMedia) {
       const fetchPromises = [
         // Videos
-        fetch(`${BRAVE_VIDEO_URL}?q=${encodeURIComponent(query)}&count=4&safesearch=${safesearch}`, {
-          headers: { "Accept": "application/json", "X-Subscription-Token": BRAVE_API_KEY },
-        }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(
+          `${BRAVE_VIDEO_URL}?q=${encodeURIComponent(query)}&count=4&safesearch=${safesearch}`,
+          {
+            headers: {
+              Accept: "application/json",
+              "X-Subscription-Token": BRAVE_API_KEY,
+            },
+          },
+        )
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null),
         // News
-        fetch(`${BRAVE_NEWS_URL}?q=${encodeURIComponent(query)}&count=6&safesearch=${safesearch}`, {
-          headers: { "Accept": "application/json", "X-Subscription-Token": BRAVE_API_KEY },
-        }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(
+          `${BRAVE_NEWS_URL}?q=${encodeURIComponent(query)}&count=6&safesearch=${safesearch}`,
+          {
+            headers: {
+              Accept: "application/json",
+              "X-Subscription-Token": BRAVE_API_KEY,
+            },
+          },
+        )
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null),
         // Images
-        fetch(`${BRAVE_IMAGES_URL}?q=${encodeURIComponent(query)}&count=8&safesearch=${safesearch}`, {
-          headers: { "Accept": "application/json", "X-Subscription-Token": BRAVE_API_KEY },
-        }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(
+          `${BRAVE_IMAGES_URL}?q=${encodeURIComponent(query)}&count=8&safesearch=${safesearch}`,
+          {
+            headers: {
+              Accept: "application/json",
+              "X-Subscription-Token": BRAVE_API_KEY,
+            },
+          },
+        )
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null),
       ];
 
       const [videoData, newsData, imageData] = await Promise.all(fetchPromises);
-      
+
       if (videoData?.results) videoResults = videoData.results;
       if (newsData?.results) newsResults = newsData.results;
       if (imageData?.results) imageResults = imageData.results;
@@ -268,13 +298,24 @@ export async function GET(request: NextRequest) {
     const auroraResults: SearchResult[] = webResults.map((result) => {
       const domain = extractDomain(result.url);
       const fullText = `${result.title} ${result.description} ${(result.extra_snippets || []).join(" ")}`;
-      
+
       // Apply all analyzers
-      const biasAnalysis: BiasAnalysis = analyzeBias(fullText, domain, result.url);
-      const credibilityScore: CredibilityScore = calculateCredibility(result.url);
+      const biasAnalysis: BiasAnalysis = analyzeBias(
+        fullText,
+        domain,
+        result.url,
+      );
+      const credibilityScore: CredibilityScore = calculateCredibility(
+        result.url,
+      );
       const aiContentDetection: AIContentDetection = detectAIContent(fullText);
       const safetyFlags: SafetyFlag[] = detectSafetyFlags(fullText, result.url);
       const isWomenFocused = isContentWomenFocused(fullText, result.url);
+      const sustainabilityScore = calculateSustainability(
+        fullText,
+        domain,
+        result.url,
+      );
 
       return {
         id: generateId(),
@@ -288,6 +329,7 @@ export async function GET(request: NextRequest) {
         aiContentDetection,
         safetyFlags,
         isWomenFocused,
+        sustainabilityScore: sustainabilityScore.score,
         source: "web" as const,
       };
     });
@@ -307,7 +349,10 @@ export async function GET(request: NextRequest) {
       views: video.video?.views,
       creator: video.video?.creator || video.video?.publisher,
       age: video.age,
-      isWomenFocused: isContentWomenFocused(`${video.title} ${video.description || ""}`, video.url),
+      isWomenFocused: isContentWomenFocused(
+        `${video.title} ${video.description || ""}`,
+        video.url,
+      ),
       type: "video" as const,
     }));
 
@@ -321,7 +366,10 @@ export async function GET(request: NextRequest) {
       thumbnail: news.thumbnail?.src,
       source: news.source?.name || extractDomain(news.url),
       age: news.age,
-      isWomenFocused: isContentWomenFocused(`${news.title} ${news.description || ""}`, news.url),
+      isWomenFocused: isContentWomenFocused(
+        `${news.title} ${news.description || ""}`,
+        news.url,
+      ),
       type: "news" as const,
     }));
 
@@ -354,15 +402,14 @@ export async function GET(request: NextRequest) {
       },
       locations: data.locations?.results || [],
     });
-
   } catch (error) {
     console.error("Brave Search error:", error);
     return NextResponse.json(
-      { 
+      {
         error: "Search failed. Please try again.",
         fallback: "community",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -391,40 +438,45 @@ function calculateAuroraInsights(results: SearchResult[]): AuroraInsights {
 
   // Calculate averages (Property 5: Average Calculation Correctness)
   const avgGenderBias = Math.round(
-    results.reduce((sum, r) => sum + r.biasAnalysis.genderBias.score, 0) / totalResults
+    results.reduce((sum, r) => sum + r.biasAnalysis.genderBias.score, 0) /
+      totalResults,
   );
   const avgCredibility = Math.round(
-    results.reduce((sum, r) => sum + r.credibilityScore.score, 0) / totalResults
+    results.reduce((sum, r) => sum + r.credibilityScore.score, 0) /
+      totalResults,
   );
   const avgAIContent = Math.round(
-    results.reduce((sum, r) => sum + r.aiContentDetection.percentage, 0) / totalResults
+    results.reduce((sum, r) => sum + r.aiContentDetection.percentage, 0) /
+      totalResults,
   );
 
   // Calculate political distribution
   const politicalDistribution: Record<PoliticalBiasIndicator, number> = {
     "Far Left": 0,
-    "Left": 0,
+    Left: 0,
     "Center-Left": 0,
-    "Center": 0,
+    Center: 0,
     "Center-Right": 0,
-    "Right": 0,
+    Right: 0,
     "Far Right": 0,
   };
-  results.forEach(r => {
+  results.forEach((r) => {
     politicalDistribution[r.biasAnalysis.politicalBias.indicator]++;
   });
 
   // Count women-focused results
-  const womenFocusedCount = results.filter(r => r.isWomenFocused).length;
-  const womenFocusedPercentage = Math.round((womenFocusedCount / totalResults) * 100);
+  const womenFocusedCount = results.filter((r) => r.isWomenFocused).length;
+  const womenFocusedPercentage = Math.round(
+    (womenFocusedCount / totalResults) * 100,
+  );
 
   // Generate recommendations
   const recommendations: string[] = [];
-  
+
   // Requirement 2.5: Recommend community when bias < 50
   if (avgGenderBias < 50) {
     recommendations.push(
-      "These results may lack women's perspectives. Explore Aurora App community for women-first insights."
+      "These results may lack women's perspectives. Explore Aurora App community for women-first insights.",
     );
   }
 
@@ -432,21 +484,21 @@ function calculateAuroraInsights(results: SearchResult[]): AuroraInsights {
   const maxPolitical = Math.max(...Object.values(politicalDistribution));
   if (maxPolitical > totalResults * 0.6) {
     recommendations.push(
-      "Results appear politically skewed. Consider viewing alternative perspectives for balanced information."
+      "Results appear politically skewed. Consider viewing alternative perspectives for balanced information.",
     );
   }
 
   // High AI content warning
   if (avgAIContent > 50) {
     recommendations.push(
-      "High AI-generated content detected. Verify information from multiple sources."
+      "High AI-generated content detected. Verify information from multiple sources.",
     );
   }
 
   // Low credibility warning
   if (avgCredibility < 40) {
     recommendations.push(
-      "Average source credibility is low. Consider verifying information from trusted sources."
+      "Average source credibility is low. Consider verifying information from trusted sources.",
     );
   }
 

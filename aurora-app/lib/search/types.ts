@@ -1,6 +1,6 @@
 /**
  * Aurora AI Search Engine - Core Types and Interfaces
- * 
+ *
  * The world's first women-first search engine.
  * These types define the Aurora Intelligence Layer that differentiates
  * Aurora App from Google, Bing, and other search engines.
@@ -11,44 +11,44 @@
 // ============================================
 
 export type SafetyFlag =
-  | 'Verified Content'
-  | 'Women-Led'
-  | 'Safe Space'
-  | 'Scam Warning'
-  | 'Safety Concern'
-  | 'Women-Focused';
+  | "Verified Content"
+  | "Women-Led"
+  | "Safe Space"
+  | "Scam Warning"
+  | "Safety Concern"
+  | "Women-Focused";
 
 // ============================================
 // BIAS ANALYSIS
 // ============================================
 
 export type GenderBiasLabel =
-  | 'Women-Positive'
-  | 'Balanced'
-  | 'Neutral'
-  | 'Caution'
-  | 'Potential Bias';
+  | "Women-Positive"
+  | "Balanced"
+  | "Neutral"
+  | "Caution"
+  | "Potential Bias";
 
 export type PoliticalBiasIndicator =
-  | 'Far Left'
-  | 'Left'
-  | 'Center-Left'
-  | 'Center'
-  | 'Center-Right'
-  | 'Right'
-  | 'Far Right';
+  | "Far Left"
+  | "Left"
+  | "Center-Left"
+  | "Center"
+  | "Center-Right"
+  | "Right"
+  | "Far Right";
 
 export type EmotionalTone =
-  | 'Factual'
-  | 'Emotional'
-  | 'Sensational'
-  | 'Balanced'
-  | 'Inspiring'
-  | 'Toxic'
-  | 'Urgent'
-  | 'Controversial'
-  | 'Calm'
-  | 'Educational';
+  | "Factual"
+  | "Emotional"
+  | "Sensational"
+  | "Balanced"
+  | "Inspiring"
+  | "Toxic"
+  | "Urgent"
+  | "Controversial"
+  | "Calm"
+  | "Educational";
 
 export interface GenderBiasAnalysis {
   score: number; // 0-100, higher = more women-positive
@@ -78,18 +78,18 @@ export interface BiasAnalysis {
 // ============================================
 
 export type CredibilityLabel =
-  | 'Highly Trusted'
-  | 'Trusted'
-  | 'Moderate'
-  | 'Verify Source';
+  | "Highly Trusted"
+  | "Trusted"
+  | "Moderate"
+  | "Verify Source";
 
 export type DomainType =
-  | 'gov'
-  | 'edu'
-  | 'news'
-  | 'women-focused'
-  | 'commercial'
-  | 'unknown';
+  | "gov"
+  | "edu"
+  | "news"
+  | "women-focused"
+  | "commercial"
+  | "unknown";
 
 export interface CredibilityScore {
   score: number; // 0-100
@@ -107,16 +107,35 @@ export interface CredibilityScore {
 // ============================================
 
 export type AIContentLabel =
-  | 'Mostly Human'
-  | 'Some AI Content'
-  | 'High AI Content';
+  | "Mostly Human"
+  | "Some AI Content"
+  | "High AI Content";
 
-export type AIContentColor = 'green' | 'yellow' | 'red';
+export type AIContentColor = "green" | "yellow" | "red";
 
 export interface AIContentDetection {
   percentage: number; // 0-100
   label: AIContentLabel;
   color: AIContentColor;
+  indicators: string[];
+}
+
+// ============================================
+// SUSTAINABILITY SCORING
+// ============================================
+
+export type SustainabilityLabel =
+  | "Eco-Leader"
+  | "Eco-Aware"
+  | "Neutral"
+  | "Caution"
+  | "Concern"
+  | "N/A"
+  | "Unknown";
+
+export interface SustainabilityScore {
+  score: number | null; // 0-100, null if not applicable
+  label: SustainabilityLabel;
   indicators: string[];
 }
 
@@ -142,7 +161,7 @@ export interface SearchResult {
   // Metadata
   publishedDate?: string;
   isWomenFocused: boolean;
-  source: 'web' | 'aurora';
+  source: "web" | "aurora";
 }
 
 // ============================================
@@ -170,7 +189,7 @@ export interface BraveSearchRequest {
   query: string;
   count?: number; // default: 10
   offset?: number; // for pagination
-  freshness?: 'day' | 'week' | 'month' | 'year';
+  freshness?: "day" | "week" | "month" | "year";
 }
 
 export interface BraveSearchResponse {
@@ -194,7 +213,7 @@ export interface SummaryRequest {
 export interface SummaryResponse {
   summary: string;
   sources: string[];
-  perspective: 'women-first' | 'balanced';
+  perspective: "women-first" | "balanced";
   generatedAt: string;
 }
 
@@ -203,15 +222,15 @@ export interface SummaryResponse {
 // ============================================
 
 export type SearchErrorCode =
-  | 'INVALID_QUERY'
-  | 'API_LIMIT'
-  | 'API_ERROR'
-  | 'NETWORK_ERROR';
+  | "INVALID_QUERY"
+  | "API_LIMIT"
+  | "API_ERROR"
+  | "NETWORK_ERROR";
 
 export interface SearchError {
   code: SearchErrorCode;
   message: string;
-  fallback: 'cached' | 'community' | 'none';
+  fallback: "cached" | "community" | "none";
   retryAfter?: number; // seconds
 }
 
@@ -244,7 +263,12 @@ export interface APIUsage {
 // TRENDING & SUGGESTIONS
 // ============================================
 
-export type TrendingItemType = 'post' | 'route' | 'circle' | 'opportunity' | 'resource';
+export type TrendingItemType =
+  | "post"
+  | "route"
+  | "circle"
+  | "opportunity"
+  | "resource";
 
 export interface TrendingItem {
   type: TrendingItemType;
