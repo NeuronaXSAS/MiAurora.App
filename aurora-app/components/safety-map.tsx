@@ -78,6 +78,9 @@ export function SafetyMap({
   const userLocationMarker = useRef<mapboxgl.Marker | null>(null);
   const markersCreated = useRef(false);
   const styleLoadAttempts = useRef(0);
+  // Refs for values used inside map event handlers to avoid stale closures
+  const isSelectingLocationRef = useRef(false);
+  const onLocationSelectRef = useRef(onLocationSelect);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<MapError | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
@@ -95,6 +98,14 @@ export function SafetyMap({
   const [nearbyPosts, setNearbyPosts] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [usingFallbackStyle, setUsingFallbackStyle] = useState(false);
+
+  // Keep refs in sync with state/props for use in map event handlers
+  useEffect(() => {
+    isSelectingLocationRef.current = isSelectingLocation;
+  }, [isSelectingLocation]);
+  useEffect(() => {
+    onLocationSelectRef.current = onLocationSelect;
+  }, [onLocationSelect]);
 
   // Debounce search query
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -236,9 +247,9 @@ export function SafetyMap({
           }, 150);
         });
 
-        // Add click handler for location selection
+        // Add click handler for location selection (uses refs to avoid stale closures)
         map.current.on("click", async (e) => {
-          if (!isSelectingLocation || !onLocationSelect) return;
+          if (!isSelectingLocationRef.current || !onLocationSelectRef.current) return;
 
           const { lng, lat } = e.lngLat;
 
@@ -251,26 +262,12 @@ export function SafetyMap({
               data.features[0]?.place_name ||
               `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 
-            if (map.current) {
-              setMapState({
-                center: map.current.getCenter().toArray() as [number, number],
-                zoom: map.current.getZoom(),
-              });
-            }
-
-            onLocationSelect({ lat, lng, address });
+            onLocationSelectRef.current({ lat, lng, address });
             setIsSelectingLocation(false);
           } catch (error) {
             console.error("Geocoding error:", error);
 
-            if (map.current) {
-              setMapState({
-                center: map.current.getCenter().toArray() as [number, number],
-                zoom: map.current.getZoom(),
-              });
-            }
-
-            onLocationSelect({
+            onLocationSelectRef.current({
               lat,
               lng,
               address: `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
@@ -288,13 +285,7 @@ export function SafetyMap({
         });
       }
     },
-    [
-      mapState,
-      checkWebGLSupport,
-      isSelectingLocation,
-      onLocationSelect,
-      mapLoaded,
-    ],
+    [checkWebGLSupport],
   );
 
   // Initialize map on mount
@@ -339,41 +330,48 @@ export function SafetyMap({
     [],
   );
 
-  // Create marker element - optimized helper with touch support
+  // Create marker element - optimized helper with proper touch targets
   const createPostMarker = useCallback((post: any, onClick?: () => void) => {
     const color =
       post.rating >= 4 ? "#22c55e" : post.rating >= 3 ? "#eab308" : "#ef4444";
 
+    // Outer element provides 44x44px touch target (WCAG / AGENTS.md minimum)
     const el = document.createElement("div");
     el.className = "aurora-safety-marker";
     el.style.cssText = `
-      width: 28px; height: 28px; border-radius: 50%;
-      background-color: ${color}; border: 2px solid white;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      cursor: pointer; display: flex; align-items: center;
-      justify-content: center; font-size: 12px; font-weight: bold; color: white;
-      transition: transform 0.15s ease;
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
       position: relative;
       z-index: 1;
     `;
-    el.textContent = post.rating.toString();
+
+    // Inner visible circle (36px)
+    const inner = document.createElement("div");
+    inner.style.cssText = `
+      width: 36px; height: 36px; border-radius: 50%;
+      background-color: ${color}; border: 2.5px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: bold; color: white;
+      transition: transform 0.15s ease;
+      pointer-events: none;
+    `;
+    inner.textContent = post.rating.toString();
+    el.appendChild(inner);
 
     // Desktop hover effect
     el.addEventListener("mouseenter", () => {
-      el.style.transform = "scale(1.15)";
+      inner.style.transform = "scale(1.15)";
     });
     el.addEventListener("mouseleave", () => {
-      el.style.transform = "scale(1)";
+      inner.style.transform = "scale(1)";
     });
 
     if (onClick) {
-      // Support both click and touch for mobile
+      // Use only click — works for both mouse and touch; avoids double-fire
       el.addEventListener("click", (e) => {
-        e.stopPropagation();
-        onClick();
-      });
-      el.addEventListener("touchend", (e) => {
-        e.preventDefault();
         e.stopPropagation();
         onClick();
       });
@@ -382,24 +380,36 @@ export function SafetyMap({
   }, []);
 
   const createWorkplaceMarker = useCallback(() => {
+    // Outer element provides 44x44px touch target
     const el = document.createElement("div");
     el.className = "aurora-workplace-marker";
     el.style.cssText = `
-      width: 28px; height: 28px; background-color: #ec4c28;
-      border: 2px solid white; box-shadow: 0 2px 6px rgba(236, 76, 40, 0.5);
-      cursor: pointer; display: flex; align-items: center;
-      justify-content: center; font-size: 12px; border-radius: 4px; transform: rotate(45deg);
-      transition: transform 0.15s ease;
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
       position: relative;
       z-index: 1;
     `;
-    el.innerHTML = '<span style="transform: rotate(-45deg);">⚠️</span>';
+
+    // Inner visible diamond (36px)
+    const inner = document.createElement("div");
+    inner.style.cssText = `
+      width: 36px; height: 36px; background-color: #ec4c28;
+      border: 2.5px solid white; box-shadow: 0 2px 8px rgba(236, 76, 40, 0.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; border-radius: 6px; transform: rotate(45deg);
+      transition: transform 0.15s ease;
+      pointer-events: none;
+    `;
+    inner.innerHTML = '<span style="transform: rotate(-45deg);">⚠️</span>';
+    el.appendChild(inner);
 
     el.addEventListener("mouseenter", () => {
-      el.style.transform = "rotate(45deg) scale(1.15)";
+      inner.style.transform = "rotate(45deg) scale(1.15)";
     });
     el.addEventListener("mouseleave", () => {
-      el.style.transform = "rotate(45deg) scale(1)";
+      inner.style.transform = "rotate(45deg) scale(1)";
     });
 
     return el;
@@ -451,7 +461,7 @@ export function SafetyMap({
           if (!popupAdded && map.current) {
             marker.setPopup(
               new mapboxgl.Popup({ 
-                offset: [0, -14], 
+                offset: [0, -22], 
                 closeButton: true,
                 anchor: 'bottom',
                 className: 'aurora-map-popup'
@@ -483,11 +493,11 @@ export function SafetyMap({
           }
         });
 
-        // Mobile touch - show popup on touch
-        el.addEventListener("touchstart", (e) => {
-          e.stopPropagation();
+        // Mobile: click toggles popup (no touchstart/stopPropagation to avoid
+        // interfering with map panning)
+        el.addEventListener("click", () => {
           showPopup();
-        }, { passive: true });
+        });
 
         markers.current.push(marker);
       });
@@ -523,7 +533,7 @@ export function SafetyMap({
             if (!popupAdded && map.current) {
               marker.setPopup(
                 new mapboxgl.Popup({ 
-                  offset: [0, -14], 
+                  offset: [0, -22], 
                   closeButton: true,
                   anchor: 'bottom',
                   className: 'aurora-map-popup'
@@ -551,18 +561,17 @@ export function SafetyMap({
             }
           });
 
-          // Mobile touch - show popup on touch
-          el.addEventListener("touchstart", (e) => {
-            e.stopPropagation();
+          // Mobile: click toggles popup
+          el.addEventListener("click", () => {
             showPopup();
-          }, { passive: true });
+          });
 
           markers.current.push(marker);
         });
       }
 
       // Fit to markers if we have data and map hasn't been interacted with
-      if (markers.current.length > 0 && !markersCreated.current && !mapState) {
+      if (markers.current.length > 0 && !markersCreated.current) {
         const allLocations = [
           ...filteredPosts
             .filter((p) => p.location)
@@ -594,7 +603,8 @@ export function SafetyMap({
     createPostMarker,
     createWorkplaceMarker,
     incidentLabels,
-    mapState,
+    // NOTE: mapState intentionally excluded — including it causes markers to be
+    // destroyed and recreated on every pan/zoom because moveend updates mapState.
   ]);
 
   // Search handler

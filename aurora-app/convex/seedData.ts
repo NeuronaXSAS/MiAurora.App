@@ -421,6 +421,293 @@ export const seedRoutes = mutation({
   },
 });
 
+// ============================================
+// SAFETY MAP SEED POSTS (English, ~30 posts)
+// Diverse ratings (1-5), various public places worldwide
+// ============================================
+
+const SEED_SAFETY_MAP_POSTS = [
+  // === NORTH AMERICA ===
+  {
+    title: "Central Park at dusk — stay on main paths",
+    description: "Central Park is beautiful but can feel isolated on smaller trails after sunset. Stick to the main loop and well-lit areas near the Bethesda Fountain. Plenty of joggers and dog walkers until about 8pm. Avoid the Ramble alone at night.",
+    lifeDimension: "daily" as const,
+    rating: 3,
+    location: { name: "Central Park, New York, USA", coordinates: [-73.9654, 40.7829] },
+  },
+  {
+    title: "Times Square — safe but overwhelming at night",
+    description: "Extremely crowded and well-lit 24/7, which makes it physically safe. However, watch out for pickpockets and aggressive street vendors. The NYPD has a strong presence. Fine for solo women but stay alert to your belongings.",
+    lifeDimension: "travel" as const,
+    rating: 4,
+    location: { name: "Times Square, New York, USA", coordinates: [-73.9855, 40.7580] },
+  },
+  {
+    title: "Hollywood Blvd after dark — not as glamorous as it seems",
+    description: "Walk of Fame area gets sketchy after 10pm. Lots of people trying to sell things or scam tourists. Side streets are poorly lit. Stick to the main boulevard and travel in groups. Uber/Lyft pickup is easy though.",
+    lifeDimension: "travel" as const,
+    rating: 2,
+    location: { name: "Hollywood Blvd, Los Angeles, USA", coordinates: [-118.3287, 34.1016] },
+  },
+  {
+    title: "The 606 Trail in Chicago — great daytime, avoid late hours",
+    description: "Fantastic elevated trail for running and biking during the day. Well-maintained with good visibility. After dark, some sections near Western Ave can feel deserted. Best enjoyed before sunset. Water fountains and emergency phones available.",
+    lifeDimension: "daily" as const,
+    rating: 4,
+    location: { name: "The 606 Trail, Chicago, USA", coordinates: [-87.6876, 41.9122] },
+  },
+  {
+    title: "Downtown Portland transit — MAX light rail late night",
+    description: "The MAX runs late but some stops downtown feel unsafe after midnight. Pioneer Courthouse Square station has good lighting but attracts loiterers. TriMet security patrols are infrequent. Use the bus instead if traveling alone late.",
+    lifeDimension: "daily" as const,
+    rating: 2,
+    location: { name: "Pioneer Courthouse Square, Portland, USA", coordinates: [-122.6795, 45.5189] },
+  },
+  {
+    title: "Toronto PATH underground — safe and warm year-round",
+    description: "The PATH is a network of underground walkways connecting transit, malls, and offices. Well-lit, security cameras everywhere, lots of foot traffic during business hours. Quieter on weekends but still feels safe. Great option in winter.",
+    lifeDimension: "daily" as const,
+    rating: 5,
+    location: { name: "PATH Underground, Toronto, Canada", coordinates: [-79.3832, 43.6510] },
+  },
+
+  // === EUROPE ===
+  {
+    title: "Le Marais neighborhood — one of the safest in Paris",
+    description: "Wonderful for solo exploring day or night. Cobblestone streets lined with cafes, bakeries, and boutiques. Very LGBTQ+-friendly area. Well-patrolled and bustling even late. One of the few Paris neighborhoods where I feel totally at ease after dark.",
+    lifeDimension: "travel" as const,
+    rating: 5,
+    location: { name: "Le Marais, Paris, France", coordinates: [2.3596, 48.8606] },
+  },
+  {
+    title: "Gare du Nord area — be cautious around the station",
+    description: "The station itself is fine but the surrounding blocks, especially on the north side, can feel unsafe. Aggressive panhandlers and pickpockets target solo travelers. Keep your bags close and walk with purpose. Fine during rush hour.",
+    lifeDimension: "travel" as const,
+    rating: 2,
+    location: { name: "Gare du Nord, Paris, France", coordinates: [2.3553, 48.8809] },
+  },
+  {
+    title: "Retiro Park in Madrid — lovely and safe",
+    description: "Beautiful park with wide paths, fountains, and the Crystal Palace. Always busy with families, joggers, and tourists. Park police patrol regularly. Even the quieter southern sections feel safe during daylight. Closes at midnight.",
+    lifeDimension: "daily" as const,
+    rating: 5,
+    location: { name: "Retiro Park, Madrid, Spain", coordinates: [-3.6823, 40.4153] },
+  },
+  {
+    title: "Trastevere at night — charming but watch side streets",
+    description: "Main streets of Trastevere are lively with restaurants and bars until 2am. The atmosphere is fantastic. However, the narrow side alleys can be very dark and quiet. A few reports of bag snatching on Vespas. Stay on the busy streets.",
+    lifeDimension: "travel" as const,
+    rating: 3,
+    location: { name: "Trastevere, Rome, Italy", coordinates: [12.4700, 41.8893] },
+  },
+  {
+    title: "Alexanderplatz at night — proceed with caution",
+    description: "Major transit hub that gets rough after dark. Groups of intoxicated people, occasional confrontations. The area around the TV tower is better lit but the side streets toward Volkspark can be sketchy. Use the U-Bahn, do not linger.",
+    lifeDimension: "daily" as const,
+    rating: 2,
+    location: { name: "Alexanderplatz, Berlin, Germany", coordinates: [13.4132, 52.5219] },
+  },
+  {
+    title: "Vondelpark Amsterdam — safe jogging spot",
+    description: "One of the best parks in Europe for a morning run. Wide paths, good lighting, always other runners and cyclists. The park is well-maintained and patrolled. Even early morning (6am) feels safe. Avoid sleeping in the park overnight obviously.",
+    lifeDimension: "daily" as const,
+    rating: 5,
+    location: { name: "Vondelpark, Amsterdam, Netherlands", coordinates: [4.8698, 52.3579] },
+  },
+  {
+    title: "Soho London — vibrant and safe for nightlife",
+    description: "Great area for a night out with friends or even solo. Tons of bars, restaurants, and theatres. Well-lit, always crowded, strong police presence. The LGBTQ+ venues on Old Compton Street are especially welcoming. Black cabs readily available.",
+    lifeDimension: "social" as const,
+    rating: 5,
+    location: { name: "Soho, London, UK", coordinates: [-0.1340, 51.5137] },
+  },
+
+  // === ASIA ===
+  {
+    title: "Shibuya Crossing area — incredibly safe even at 3am",
+    description: "Tokyo in general is one of the safest cities in the world for women. Shibuya at night is bustling with people, convenience stores are open 24/7, and the police koban is right at the crossing. I have walked alone here at all hours without issue.",
+    lifeDimension: "travel" as const,
+    rating: 5,
+    location: { name: "Shibuya Crossing, Tokyo, Japan", coordinates: [139.7016, 35.6595] },
+  },
+  {
+    title: "Khao San Road Bangkok — fun but stay alert",
+    description: "Famous backpacker street that is extremely lively at night. Cheap food, music, and people from everywhere. However, drink spiking has been reported. Never leave your drink unattended. Tuk-tuk scams are common. Stick with trusted people after midnight.",
+    lifeDimension: "travel" as const,
+    rating: 3,
+    location: { name: "Khao San Road, Bangkok, Thailand", coordinates: [100.4979, 13.7589] },
+  },
+  {
+    title: "Marina Bay area Singapore — pristine and extremely safe",
+    description: "Singapore is one of the safest countries for women travelers. Marina Bay is immaculate, well-lit, and patrolled. Gardens by the Bay, the Merlion park, and the Esplanade are all great for evening walks. Public transit runs efficiently until midnight.",
+    lifeDimension: "travel" as const,
+    rating: 5,
+    location: { name: "Marina Bay, Singapore", coordinates: [103.8586, 1.2847] },
+  },
+  {
+    title: "Hauz Khas Village Delhi — trendy but mixed safety",
+    description: "Popular area with cafes, galleries, and nightlife. During the day it is great for exploring the ruins and deer park. At night, the bars attract a rowdy crowd and the surrounding streets are very poorly lit. Always take a cab home, never walk.",
+    lifeDimension: "social" as const,
+    rating: 3,
+    location: { name: "Hauz Khas Village, New Delhi, India", coordinates: [77.1945, 28.5494] },
+  },
+  {
+    title: "Myeongdong shopping district Seoul — safe and fun",
+    description: "Bustling shopping area that is well-lit and always packed with people. Street food vendors, K-beauty shops, and department stores. Very safe for solo women even at night. Metro station is nearby and efficient. Police booths on every corner.",
+    lifeDimension: "travel" as const,
+    rating: 5,
+    location: { name: "Myeongdong, Seoul, South Korea", coordinates: [126.9857, 37.5636] },
+  },
+
+  // === SOUTH AMERICA ===
+  {
+    title: "Copacabana Beach boardwalk — safe during the day",
+    description: "The boardwalk (calcadao) is fantastic during daylight with joggers, cyclists, and vendors. After dark, the beach itself becomes risky. Do not bring valuables to the sand. The street side with hotels and restaurants stays busy and safer. Use Uber at night.",
+    lifeDimension: "travel" as const,
+    rating: 3,
+    location: { name: "Copacabana Beach, Rio de Janeiro, Brazil", coordinates: [-43.1789, -22.9711] },
+  },
+  {
+    title: "La Boca neighborhood Buenos Aires — tourist area only",
+    description: "The colorful Caminito street is safe during the day with tourist police everywhere. But do NOT wander beyond the designated tourist blocks. Surrounding streets can be very dangerous. Visit during the day, take a taxi in and out, do not walk.",
+    lifeDimension: "travel" as const,
+    rating: 2,
+    location: { name: "La Boca, Buenos Aires, Argentina", coordinates: [-58.3634, -34.6345] },
+  },
+  {
+    title: "Parque Kennedy Miraflores Lima — safe green space",
+    description: "Beautiful park in the heart of Miraflores, Lima's safest neighborhood. Famous for its resident cats! Well-lit, surrounded by restaurants and shops. Safe for evening walks. Serenazgo (local security) patrols frequently. Free wifi too.",
+    lifeDimension: "daily" as const,
+    rating: 4,
+    location: { name: "Parque Kennedy, Miraflores, Lima, Peru", coordinates: [-77.0299, -12.1197] },
+  },
+
+  // === AFRICA ===
+  {
+    title: "V&A Waterfront Cape Town — safe tourist hub",
+    description: "The Waterfront is well-secured with private security, CCTV, and controlled access points. Shopping, restaurants, the aquarium — all great. Safe even after dark within the complex. However, walking to/from surrounding areas at night is not recommended. Use Uber.",
+    lifeDimension: "travel" as const,
+    rating: 4,
+    location: { name: "V&A Waterfront, Cape Town, South Africa", coordinates: [18.4210, -33.9036] },
+  },
+  {
+    title: "Medina of Marrakech — overwhelming but manageable",
+    description: "The old medina is a maze of narrow alleys. During the day, it is bustling and generally safe, though expect verbal harassment from some vendors. At night, stick to main thoroughfares near Jemaa el-Fna. Hiring a local guide for the first visit is strongly recommended.",
+    lifeDimension: "travel" as const,
+    rating: 2,
+    location: { name: "Medina, Marrakech, Morocco", coordinates: [-7.9891, 31.6295] },
+  },
+  {
+    title: "Zanzibar Stone Town — charming but narrow streets",
+    description: "Beautiful UNESCO heritage site with winding alleys. Safe during the day with many tourists and guides. At night, the lighting is minimal and navigation is confusing. Always have your accommodation arrange a guide or car for late evenings.",
+    lifeDimension: "travel" as const,
+    rating: 3,
+    location: { name: "Stone Town, Zanzibar, Tanzania", coordinates: [39.1880, -6.1622] },
+  },
+
+  // === OCEANIA ===
+  {
+    title: "Bondi to Coogee coastal walk — stunning and safe",
+    description: "One of Sydney's most popular walks. The coastal path is wide, well-maintained, and always busy with walkers and runners. Gorgeous ocean views the entire way. Safe at all hours though best enjoyed during daylight for the scenery. Public toilets and cafes along the route.",
+    lifeDimension: "daily" as const,
+    rating: 5,
+    location: { name: "Bondi Beach, Sydney, Australia", coordinates: [151.2743, -33.8915] },
+  },
+  {
+    title: "Melbourne CBD laneways — mostly safe and artsy",
+    description: "Famous laneways like Hosier Lane and Degraves Street are fantastic for coffee and street art. Well-trafficked during the day. Some laneways get quiet after business hours but the main ones near Flinders St stay lively. Exercise normal caution at night.",
+    lifeDimension: "travel" as const,
+    rating: 4,
+    location: { name: "Melbourne CBD, Australia", coordinates: [144.9631, -37.8136] },
+  },
+
+  // === MIDDLE EAST ===
+  {
+    title: "Dubai Marina walk — safe and well-patrolled",
+    description: "The Marina promenade is beautifully maintained with restaurants, shops, and waterfront views. Security presence is visible, CCTV everywhere. Safe for women walking alone even late at night. The tram and metro are clean and well-connected. Dress code is relaxed here compared to other areas.",
+    lifeDimension: "daily" as const,
+    rating: 5,
+    location: { name: "Dubai Marina, Dubai, UAE", coordinates: [55.1395, 25.0805] },
+  },
+  {
+    title: "Old City Jerusalem — intense but navigable",
+    description: "A deeply moving place to visit. The four quarters each have different vibes. Tourist areas are safe during the day with heavy security presence. The Muslim Quarter market can be overwhelming with aggressive sellers. Stick to main routes and go with a guide for your first visit.",
+    lifeDimension: "travel" as const,
+    rating: 3,
+    location: { name: "Old City, Jerusalem, Israel", coordinates: [35.2321, 31.7767] },
+  },
+  {
+    title: "Hamra Street Beirut — vibrant university district",
+    description: "One of Beirut's most cosmopolitan streets. The AUB campus area feels safe and progressive. Lots of cafes, bookshops, and students. Night life is lively on surrounding streets. General safety has improved but keep aware of the broader political context. Taxis are cheap and plentiful.",
+    lifeDimension: "social" as const,
+    rating: 3,
+    location: { name: "Hamra Street, Beirut, Lebanon", coordinates: [35.4835, 33.8969] },
+  },
+];
+
+/**
+ * Seed safety map posts (~30 English posts with diverse ratings and global locations)
+ * Run with: npx convex run seedData:seedSafetyMapPosts
+ */
+export const seedSafetyMapPosts = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Get or create seed user
+    let seedUser = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), "seed@aurora-app.com"))
+      .first();
+
+    if (!seedUser) {
+      const seedUserId = await ctx.db.insert("users", {
+        workosId: "seed-aurora-community",
+        name: "Aurora Community",
+        email: "seed@aurora-app.com",
+        profileImage: "/Au_Logo_1.png",
+        bio: "Official Aurora App community account",
+        location: "Global",
+        interests: ["safety", "travel", "community"],
+        onboardingCompleted: true,
+        credits: 1000,
+        trustScore: 500,
+        isPremium: false,
+      });
+      seedUser = await ctx.db.get(seedUserId);
+    }
+
+    if (!seedUser) throw new Error("Failed to create seed user");
+
+    let created = 0;
+    for (const post of SEED_SAFETY_MAP_POSTS) {
+      // Skip duplicates by title
+      const existing = await ctx.db
+        .query("posts")
+        .filter((q) => q.eq(q.field("title"), post.title))
+        .first();
+
+      if (!existing) {
+        await ctx.db.insert("posts", {
+          authorId: seedUser._id,
+          title: post.title,
+          description: post.description,
+          lifeDimension: post.lifeDimension,
+          location: post.location,
+          rating: post.rating,
+          isVerified: post.rating >= 4, // Higher-rated posts are "verified"
+          isAnonymous: false,
+          verificationCount: Math.floor(Math.random() * 25) + 3,
+          upvotes: Math.floor(Math.random() * 60) + 5,
+          commentCount: Math.floor(Math.random() * 12) + 1,
+          postType: "standard",
+        });
+        created++;
+      }
+    }
+
+    return { success: true, created, total: SEED_SAFETY_MAP_POSTS.length };
+  },
+});
+
 /**
  * Seed all data at once
  * Run with: npx convex run seedData:seedAll
