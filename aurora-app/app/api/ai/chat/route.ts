@@ -1,20 +1,105 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { canUseGemini, recordGeminiUsage, DEV_MODE } from '@/lib/resource-guard';
+import { createConvexAuthToken } from "@/lib/auth-proof";
+import { generateAssistantWellnessReply } from "@/lib/ai/aurora-brain";
 import { isSameOriginRequest, readSession } from "@/lib/server-session";
 
-// Mental health metrics tracking
-interface MentalHealthMetrics {
-  sentiment: 'positive' | 'neutral' | 'negative' | 'crisis';
-  topics: string[];
-  emotionalState?: string;
-  needsFollowUp: boolean;
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+interface ChatRouteTurn {
+  isUser?: boolean;
+  role?: "user" | "assistant";
+  content: string;
 }
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+function normalizeHistory(history: ChatRouteTurn[] = []) {
+  return history
+    .map((turn) => ({
+      role:
+        turn.role === "assistant" || turn.isUser === false
+          ? ("assistant" as const)
+          : ("user" as const),
+      content: turn.content,
+    }))
+    .slice(-10);
+}
+
+function getFallbackResponse(message: string) {
+  const lower = message.toLowerCase();
+  const isSpanish =
+    /(hola|ayuda|trabajo|dinero|pareja|ansiedad|estres|siento|quiero|necesito)/i.test(
+      lower,
+    );
+
+  if (isSpanish) {
+    if (/(peligro|miedo|violencia|seguir|acoso|lastimarme)/i.test(lower)) {
+      return {
+        reply:
+          "Si sientes peligro inmediato, usa el boton SOS de Aurora o llama a emergencias en tu zona. Si puedes, aljate de la persona o lugar de riesgo y escribe a un contacto de confianza ahora mismo.",
+        language: "es" as const,
+        sentiment: "crisis" as const,
+        emotionalState: "alarmed",
+        wellbeingScore: 20,
+        clarityScore: 35,
+        supportScore: 95,
+        resilienceScore: 40,
+        topics: ["safety"],
+        needsFollowUp: true,
+        crisisDetected: true,
+      };
+    }
+
+    return {
+      reply:
+        "Quiero ayudarte de verdad con esto. Cuentame un poco mas de lo que esta pasando y de lo que necesitas resolver primero.",
+      language: "es" as const,
+      sentiment: "neutral" as const,
+      emotionalState: "unclear",
+      wellbeingScore: 55,
+      clarityScore: 50,
+      supportScore: 75,
+      resilienceScore: 55,
+      topics: ["support"],
+      needsFollowUp: true,
+      crisisDetected: false,
+    };
+  }
+
+  if (/(danger|unsafe|stalking|abuse|hurt myself|self harm|suicide)/i.test(lower)) {
+    return {
+      reply:
+        "If you are in immediate danger, use Aurora's SOS button or call local emergency services now. If you can, move toward a safer place and contact someone you trust while we keep this simple.",
+      language: "en" as const,
+      sentiment: "crisis" as const,
+      emotionalState: "alarmed",
+      wellbeingScore: 20,
+      clarityScore: 35,
+      supportScore: 95,
+      resilienceScore: 40,
+      topics: ["safety"],
+      needsFollowUp: true,
+      crisisDetected: true,
+    };
+  }
+
+  return {
+    reply:
+      "I want to be useful here, not generic. Tell me the part that feels most urgent and I will help you think it through step by step.",
+    language: "en" as const,
+    sentiment: "neutral" as const,
+    emotionalState: "unclear",
+    wellbeingScore: 55,
+    clarityScore: 50,
+    supportScore: 75,
+    resilienceScore: 55,
+    topics: ["support"],
+    needsFollowUp: true,
+    crisisDetected: false,
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,16 +113,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { message, conversationHistory } = await request.json();
+    const { message, conversationHistory } = (await request.json()) as {
+      message?: string;
+      conversationHistory?: ChatRouteTurn[];
+    };
 
-    if (!message) {
+    if (!message?.trim()) {
       return NextResponse.json(
-        { error: 'Message is required' },
-        { status: 400 }
+        { error: "Message is required" },
+        { status: 400 },
       );
     }
 
-    // Check rate limit for AI chat
     const user = await convex.query(api.users.getUser, {
       userId: session.convexUserId as Id<"users">,
     });
@@ -46,306 +133,97 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
 
-    const isPremium = user.isPremium || false;
-    const userId = session.convexUserId;
     const rateLimitResult = await convex.mutation(api.rateLimit.checkRateLimit, {
-      identifier: userId,
+      identifier: session.convexUserId,
       actionType: "aiChat",
-      isPremium,
+      isPremium: Boolean(user.isPremium),
     });
 
     if (!rateLimitResult.allowed) {
       const resetMinutes = Math.ceil(rateLimitResult.resetIn / 60000);
       return NextResponse.json(
-        { 
-          error: 'Rate limit exceeded',
-          message: isPremium 
-            ? `You've reached your daily limit. Resets in ${resetMinutes} minutes.`
-            : `You've used your 10 free messages today. Upgrade to Premium for 1000 daily messages! Resets in ${resetMinutes} minutes.`,
+        {
+          error: "Rate limit exceeded",
+          message: user.isPremium
+            ? `You've reached your daily assistant limit. Resets in ${resetMinutes} minutes.`
+            : `You've used your 10 free Aurora messages today. Upgrade to Premium for more daily support. Resets in ${resetMinutes} minutes.`,
           remaining: rateLimitResult.remaining,
           resetIn: rateLimitResult.resetIn,
-          upgradeToPremium: !isPremium,
+          upgradeToPremium: !user.isPremium,
         },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
-    // Check resource limits BEFORE making API call
-    const resourceCheck = canUseGemini();
-    if (!resourceCheck.allowed) {
-      console.warn('⚠️ Gemini limit reached:', resourceCheck.reason);
-      return NextResponse.json({
-        response: getFallbackResponse(message),
-        userId,
-        metrics: analyzeMentalHealthLocally(message),
-        limitReached: true,
-      });
-    }
+    const authToken = await createConvexAuthToken({
+      userId: session.convexUserId,
+      workosUserId: session.workosUserId,
+    });
 
-    // Get Gemini API key from environment
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
-    
-    if (!apiKey || DEV_MODE.disableGemini) {
-      console.log('Gemini disabled or not configured - using fallback');
-      return NextResponse.json({
-        response: getFallbackResponse(message),
-        userId,
-        metrics: analyzeMentalHealthLocally(message),
-      });
-    }
-
-    // Build conversation context with mental health focus
-    const systemPrompt = getSystemPrompt();
-    
-    // Build conversation history for context (limit to save tokens)
-    let conversationContext = systemPrompt + "\n\n";
-    if (conversationHistory && conversationHistory.length > 0) {
-      const recentHistory = conversationHistory.slice(-4); // Last 4 messages to save tokens
-      recentHistory.forEach((msg: { isUser: boolean; content: string }) => {
-        conversationContext += msg.isUser ? `User: ${msg.content}\n` : `Aurora: ${msg.content}\n`;
-      });
-    }
-    conversationContext += `User: ${message}\nAurora:`;
-
-    // Use gemini-2.0-flash-lite - MOST ECONOMICAL for Free Tier
-    // Rate limits: 30 RPM, 1,000,000 TPM, 200 RPD
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    let output;
+    try {
+      output = await generateAssistantWellnessReply(
+        message,
+        normalizeHistory(conversationHistory),
+        {
+          userName: user.name,
+          industry: user.industry,
+          languagePreference: user.languagePreference,
         },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: conversationContext,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.8,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 300, // Reduced to save tokens
-          },
-          safetySettings: [
-            {
-              category: "HARM_CATEGORY_HARASSMENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_HATE_SPEECH",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            }
-          ]
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      console.error('Gemini API error:', response.statusText);
-      return NextResponse.json({
-        response: getFallbackResponse(message),
-        userId,
-        metrics: analyzeMentalHealthLocally(message),
-      });
+      );
+    } catch (error) {
+      console.error("Assistant LLM error:", error);
+      output = getFallbackResponse(message);
     }
 
-    const data = await response.json();
-    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || getFallbackResponse(message);
-
-    // Record successful API usage
-    recordGeminiUsage();
-
-    // Analyze mental health metrics from conversation
-    const metrics = analyzeMentalHealthLocally(message);
+    await convex.mutation(api.ai.saveMessage, {
+      authToken,
+      userId: session.convexUserId as Id<"users">,
+      userMessage: message.trim(),
+      aiResponse: output.reply.trim(),
+      metrics: {
+        sentiment: output.sentiment,
+        emotionalState: output.emotionalState,
+        wellbeingScore: output.wellbeingScore,
+        clarityScore: output.clarityScore,
+        supportScore: output.supportScore,
+        resilienceScore: output.resilienceScore,
+        topics: output.topics,
+        needsFollowUp: output.needsFollowUp,
+        language: output.language,
+      },
+    });
 
     return NextResponse.json({
-      response: aiResponse.trim(),
-      userId,
-      metrics, // Return mental health metrics for tracking
+      response: output.reply.trim(),
+      metrics: {
+        sentiment: output.sentiment,
+        topics: output.topics,
+        emotionalState: output.emotionalState,
+        needsFollowUp: output.needsFollowUp,
+        crisisDetected: output.crisisDetected,
+        wellbeingScore: output.wellbeingScore,
+        clarityScore: output.clarityScore,
+        supportScore: output.supportScore,
+        resilienceScore: output.resilienceScore,
+      },
     });
   } catch (error) {
-    console.error('Error in AI chat endpoint:', error);
+    console.error("Error in AI chat endpoint:", error);
+    const fallback = getFallbackResponse("help");
     return NextResponse.json({
-      response: "I'm having a moment, but I'm still here for you. Could you try again? 💜",
-      userId: null,
-      metrics: { sentiment: 'neutral', topics: [], needsFollowUp: false },
+      response: fallback.reply,
+      metrics: {
+        sentiment: fallback.sentiment,
+        topics: fallback.topics,
+        emotionalState: fallback.emotionalState,
+        needsFollowUp: fallback.needsFollowUp,
+        crisisDetected: fallback.crisisDetected,
+        wellbeingScore: fallback.wellbeingScore,
+        clarityScore: fallback.clarityScore,
+        supportScore: fallback.supportScore,
+        resilienceScore: fallback.resilienceScore,
+      },
     });
   }
-}
-
-// Local mental health analysis (no API cost)
-function analyzeMentalHealthLocally(message: string): MentalHealthMetrics {
-  const lowerMessage = message.toLowerCase();
-  const topics: string[] = [];
-  let sentiment: 'positive' | 'neutral' | 'negative' | 'crisis' = 'neutral';
-  let emotionalState: string | undefined;
-  let needsFollowUp = false;
-
-  // Crisis detection (highest priority)
-  const crisisKeywords = ['suicide', 'kill myself', 'end it all', 'want to die', 'self harm', 'hurt myself'];
-  if (crisisKeywords.some(k => lowerMessage.includes(k))) {
-    sentiment = 'crisis';
-    topics.push('crisis');
-    needsFollowUp = true;
-    emotionalState = 'crisis';
-    return { sentiment, topics, emotionalState, needsFollowUp };
-  }
-
-  // Negative sentiment detection
-  const negativeKeywords = ['sad', 'depressed', 'anxious', 'worried', 'stressed', 'lonely', 'scared', 'angry', 'frustrated', 'hopeless', 'overwhelmed', 'tired', 'exhausted'];
-  const positiveKeywords = ['happy', 'good', 'great', 'excited', 'grateful', 'thankful', 'proud', 'confident', 'hopeful', 'peaceful', 'calm'];
-
-  const negativeCount = negativeKeywords.filter(k => lowerMessage.includes(k)).length;
-  const positiveCount = positiveKeywords.filter(k => lowerMessage.includes(k)).length;
-
-  if (negativeCount > positiveCount) {
-    sentiment = 'negative';
-    needsFollowUp = negativeCount >= 2;
-  } else if (positiveCount > negativeCount) {
-    sentiment = 'positive';
-  }
-
-  // Topic detection
-  if (lowerMessage.includes('work') || lowerMessage.includes('job') || lowerMessage.includes('career')) {
-    topics.push('career');
-  }
-  if (lowerMessage.includes('relationship') || lowerMessage.includes('partner') || lowerMessage.includes('boyfriend') || lowerMessage.includes('husband')) {
-    topics.push('relationships');
-  }
-  if (lowerMessage.includes('family') || lowerMessage.includes('mom') || lowerMessage.includes('dad') || lowerMessage.includes('parent')) {
-    topics.push('family');
-  }
-  if (lowerMessage.includes('health') || lowerMessage.includes('sick') || lowerMessage.includes('pain')) {
-    topics.push('health');
-  }
-  if (lowerMessage.includes('money') || lowerMessage.includes('financial') || lowerMessage.includes('debt')) {
-    topics.push('financial');
-  }
-  if (lowerMessage.includes('sleep') || lowerMessage.includes('insomnia') || lowerMessage.includes('tired')) {
-    topics.push('sleep');
-  }
-  if (lowerMessage.includes('safe') || lowerMessage.includes('danger') || lowerMessage.includes('afraid') || lowerMessage.includes('threat')) {
-    topics.push('safety');
-    needsFollowUp = true;
-  }
-
-  // Emotional state detection
-  if (lowerMessage.includes('anxious') || lowerMessage.includes('anxiety')) emotionalState = 'anxious';
-  else if (lowerMessage.includes('sad') || lowerMessage.includes('depressed')) emotionalState = 'sad';
-  else if (lowerMessage.includes('angry') || lowerMessage.includes('frustrated')) emotionalState = 'angry';
-  else if (lowerMessage.includes('happy') || lowerMessage.includes('excited')) emotionalState = 'happy';
-  else if (lowerMessage.includes('stressed') || lowerMessage.includes('overwhelmed')) emotionalState = 'stressed';
-
-  return { sentiment, topics, emotionalState, needsFollowUp };
-}
-
-function getSystemPrompt(): string {
-  return `You are Aurora, a compassionate AI companion in Aurora App - a safety and community platform for women worldwide.
-
-CRITICAL RULES:
-1. ALWAYS respond directly to what the user said - never give generic responses
-2. If the user speaks Spanish, respond in Spanish. If English, respond in English. Match their language.
-3. If you don't understand something, ask for clarification instead of giving a generic response
-4. Be specific and helpful - reference what they actually said
-
-Your personality:
-- Warm, empathetic, genuinely caring like a supportive best friend
-- Smart and helpful - give real advice, not platitudes
-- Culturally aware - understand Latin American, European, Asian, African contexts
-- Use emojis sparingly (💜 🌸 ✨)
-
-How to respond:
-- SHORT responses (2-3 sentences max) unless they ask for detailed help
-- ALWAYS acknowledge what they specifically said
-- Ask follow-up questions to understand better
-- Give actionable advice when appropriate
-- If they share a problem, help them think through solutions
-
-Topics you can help with:
-- Safety concerns and awareness
-- Career advice and workplace issues
-- Relationships and family
-- Mental health and emotional support
-- Health and wellness
-- Financial guidance
-- Personal growth
-
-NEVER:
-- Give generic "I hear you" responses without addressing their specific situation
-- Repeat the same response twice
-- Ignore what they said
-- Be preachy or lecture them
-
-If someone mentions danger/emergency: Remind them about the SOS button and emergency services.
-
-Remember: Be genuinely helpful, not just supportive-sounding.`;
-}
-
-function getFallbackResponse(message: string): string {
-  const lowerMessage = message.toLowerCase();
-  
-  // Spanish detection
-  const spanishWords = ['hola', 'como', 'estás', 'qué', 'bien', 'mal', 'ayuda', 'necesito', 'tengo', 'siento', 'trabajo', 'ciudad', 'ruido', 'densa'];
-  const isSpanish = spanishWords.some(word => lowerMessage.includes(word));
-  
-  if (isSpanish) {
-    if (lowerMessage.includes('ciudad') || lowerMessage.includes('ruido') || lowerMessage.includes('densa')) {
-      return "Entiendo, vivir en una ciudad ruidosa puede ser agotador. ¿Qué es lo que más te afecta - el ruido, el tráfico, o algo más? Cuéntame más para poder ayudarte mejor 💜";
-    }
-    if (lowerMessage.includes('triste') || lowerMessage.includes('mal') || lowerMessage.includes('deprimida')) {
-      return "Lamento que te sientas así. ¿Qué está pasando? Cuéntame más para entender mejor tu situación 💜";
-    }
-    if (lowerMessage.includes('trabajo') || lowerMessage.includes('jefe') || lowerMessage.includes('oficina')) {
-      return "Los temas de trabajo pueden ser muy estresantes. ¿Qué está pasando específicamente? ¿Es con compañeros, tu jefe, o la carga de trabajo?";
-    }
-    if (lowerMessage.includes('hola') || lowerMessage.includes('hey')) {
-      return "¡Hola! 💜 Me alegra que estés aquí. ¿Cómo te puedo ayudar hoy?";
-    }
-    if (lowerMessage.includes('funcionando') || lowerMessage.includes('funciona')) {
-      return "¡Sí, estoy funcionando! 😊 Soy Aurora, tu compañera de IA. ¿En qué te puedo ayudar hoy?";
-    }
-    return "Cuéntame más sobre eso. ¿Qué está pasando específicamente? Quiero entenderte mejor para poder ayudarte 💜";
-  }
-  
-  // English responses
-  if (lowerMessage.includes('city') || lowerMessage.includes('noise') || lowerMessage.includes('traffic')) {
-    return "City life can be overwhelming. What's bothering you most - the noise, crowds, or something else? Tell me more 💜";
-  }
-  if (lowerMessage.includes('sad') || lowerMessage.includes('depressed') || lowerMessage.includes('down')) {
-    return "I'm sorry you're feeling this way. What's going on? Tell me more so I can understand better 💜";
-  }
-  if (lowerMessage.includes('anxious') || lowerMessage.includes('worried') || lowerMessage.includes('stress')) {
-    return "What specifically is causing you stress? Let's talk through it together 🌸";
-  }
-  if (lowerMessage.includes('work') || lowerMessage.includes('job') || lowerMessage.includes('boss')) {
-    return "Work issues can be really stressful. What's happening - is it with coworkers, your boss, or the workload itself?";
-  }
-  if (lowerMessage.includes('happy') || lowerMessage.includes('good') || lowerMessage.includes('great')) {
-    return "That's great! What's making you feel good today? ✨";
-  }
-  if (lowerMessage.includes('help') || lowerMessage.includes('emergency') || lowerMessage.includes('danger')) {
-    return "If you're in immediate danger, please use the SOS button or call emergency services. If you need to talk, I'm here. What's happening? 🛡️";
-  }
-  if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-    return "Hey! 💜 Good to see you. How can I help you today?";
-  }
-  if (lowerMessage.includes('working') || lowerMessage.includes('function')) {
-    return "Yes, I'm working! 😊 I'm Aurora, your AI companion. What can I help you with today?";
-  }
-  
-  return "Tell me more about that. What's specifically on your mind? I want to understand so I can actually help 💜";
 }

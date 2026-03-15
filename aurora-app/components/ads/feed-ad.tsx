@@ -1,39 +1,53 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { SmartAd } from "./smart-ad";
+import { useEffect, useState } from "react";
+import { AdSenseUnit } from "@/components/ads/adsense-unit";
 
 interface FeedAdProps {
   isPremium?: boolean;
 }
 
-/**
- * Feed Ad Component
- * 
- * Displays non-intrusive ads in the feed for free users.
- * Premium users see no ads.
- */
 export function FeedAd({ isPremium: propIsPremium }: FeedAdProps) {
   const [isPremium, setIsPremium] = useState(propIsPremium ?? false);
 
   useEffect(() => {
-    // If not passed as prop, check from API
-    if (propIsPremium === undefined) {
-      fetch('/api/auth/me')
-        .then(res => res.json())
-        .then(data => {
-          if (data.isPremium) setIsPremium(true);
-        })
-        .catch(() => {});
+    if (propIsPremium !== undefined) {
+      return;
     }
+
+    fetch("/api/auth/me")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.isPremium) {
+          setIsPremium(true);
+        }
+      })
+      .catch(() => {});
   }, [propIsPremium]);
 
-  // Premium users don't see ads
-  if (isPremium) return null;
+  if (isPremium) {
+    return null;
+  }
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      <SmartAd placement="feed" isPremium={isPremium} />
+    <div className="mx-auto my-3 w-full max-w-2xl overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--card)] shadow-sm">
+      <div className="border-b border-[var(--border)] bg-[var(--accent)]/50 px-4 py-2">
+        <span className="text-[10px] uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
+          Sponsored
+        </span>
+      </div>
+      {process.env.NODE_ENV === "development" ? (
+        <div className="p-5 text-sm text-[var(--muted-foreground)]">
+          AdSense feed slot placeholder in development mode.
+        </div>
+      ) : (
+        <AdSenseUnit
+          slot="5431899428"
+          format="auto"
+          className="block min-h-[120px] w-full"
+          style={{ minHeight: 120 }}
+        />
+      )}
     </div>
   );
 }

@@ -19,6 +19,7 @@
   "dependencies": {
     "@dicebear/collection": "^9.2.4",
     "@dicebear/core": "^9.2.4",
+    "@google/genai": "^1.45.0",
     "@google/generative-ai": "^0.24.1",
     "@mapbox/polyline": "^1.2.1",
     "@radix-ui/react-alert-dialog": "^1.1.15",

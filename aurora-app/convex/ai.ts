@@ -39,7 +39,7 @@ export const chat = action({
       }
 
       // Fetch user context
-      const user: any = await ctx.runQuery(api.users.getUser, { userId: args.userId });
+      const user = await ctx.runQuery(api.users.getUser, { userId: args.userId });
 
       // Build context for AI - optimized for token efficiency
       const context: string = `You are Aurora, a helpful AI companion in Aurora App for women.
@@ -112,7 +112,15 @@ Aurora:`;
         return { response: fallbackResponse };
       }
 
-      const data: any = await response.json();
+      const data = (await response.json()) as {
+        candidates?: Array<{
+          content?: {
+            parts?: Array<{
+              text?: string;
+            }>;
+          };
+        }>;
+      };
       
       let aiResponse: string;
       if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
@@ -215,6 +223,24 @@ export const saveMessage = mutation({
     userId: v.id("users"),
     userMessage: v.string(),
     aiResponse: v.string(),
+    metrics: v.optional(
+      v.object({
+        sentiment: v.union(
+          v.literal("positive"),
+          v.literal("neutral"),
+          v.literal("negative"),
+          v.literal("crisis"),
+        ),
+        emotionalState: v.optional(v.string()),
+        wellbeingScore: v.number(),
+        clarityScore: v.number(),
+        supportScore: v.number(),
+        resilienceScore: v.number(),
+        topics: v.array(v.string()),
+        needsFollowUp: v.boolean(),
+        language: v.optional(v.string()),
+      }),
+    ),
   },
   handler: async (ctx, args) => {
     const proof = await verifyConvexAuthToken(args.authToken);
@@ -235,6 +261,47 @@ export const saveMessage = mutation({
       role: "assistant",
       content: args.aiResponse,
     });
+
+    if (args.metrics) {
+      const existingProfile = await ctx.db
+        .query("assistantWellnessProfiles")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .first();
+
+      const crisisSignals =
+        (existingProfile?.crisisSignals || 0) +
+        (args.metrics.sentiment === "crisis" ? 1 : 0);
+      const interactionCount = (existingProfile?.interactionCount || 0) + 1;
+      const mergedTopics = Array.from(
+        new Set([...(existingProfile?.topics || []), ...args.metrics.topics]),
+      ).slice(0, 12);
+
+      const profileData = {
+        userId: args.userId,
+        wellbeingScore: args.metrics.wellbeingScore,
+        clarityScore: args.metrics.clarityScore,
+        supportScore: args.metrics.supportScore,
+        resilienceScore: args.metrics.resilienceScore,
+        interactionCount,
+        crisisSignals,
+        lastSentiment: args.metrics.sentiment,
+        emotionalState: args.metrics.emotionalState,
+        topics: mergedTopics,
+        preferredLanguage:
+          args.metrics.language || existingProfile?.preferredLanguage,
+        needsFollowUp: args.metrics.needsFollowUp,
+        lastInteractionAt: Date.now(),
+        isActive: true,
+        isDeleted: false,
+        updatedAt: Date.now(),
+      };
+
+      if (existingProfile) {
+        await ctx.db.patch(existingProfile._id, profileData);
+      } else {
+        await ctx.db.insert("assistantWellnessProfiles", profileData);
+      }
+    }
 
     return { success: true };
   },
@@ -262,5 +329,23 @@ export const getHistory = query({
       .take(args.limit ?? 50);
 
     return messages.reverse(); // Return in chronological order
+  },
+});
+
+export const getWellnessProfile = query({
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const proof = await verifyConvexAuthToken(args.authToken);
+    if (!proof || proof.userId !== String(args.userId)) {
+      throw new Error("Unauthorized");
+    }
+
+    return await ctx.db
+      .query("assistantWellnessProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
   },
 });

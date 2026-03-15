@@ -1,16 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useQuery, useAction } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { AIShareDialog } from "@/components/ai-share-dialog";
 import { AIVoiceAssistant } from "@/components/ai-voice-assistant";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, Sparkles, Loader2, Share2, Mic, MessageSquare, Heart, Brain, BarChart3, Search } from "lucide-react";
-import { Id } from "@/convex/_generated/dataModel";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Send, Loader2, Share2, Mic, MessageSquare, Heart, Brain, BarChart3, Search } from "lucide-react";
 import { AIInteractionsDashboard } from "@/components/ai-interactions-dashboard";
 import { AIAnswers } from "@/components/ai-answers";
 import { generateAvatarUrl, AvatarConfig } from "@/hooks/use-avatar";
@@ -24,12 +23,14 @@ export default function AssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { authToken, userId } = useAuthSession();
 
-  const chat = useAction(api.ai.chat);
-
   // Fetch chat history
   const messages = useQuery(
     api.ai.getHistory,
     userId && authToken ? { authToken, userId, limit: 50 } : "skip"
+  );
+  const wellnessProfile = useQuery(
+    api.ai.getWellnessProfile,
+    userId && authToken ? { authToken, userId } : "skip"
   );
 
   // Fetch user data
@@ -59,11 +60,23 @@ export default function AssistantPage() {
     setIsLoading(true);
 
     try {
-      await chat({
-        authToken,
-        userId,
-        message: userMessage,
+      const response = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          conversationHistory: (messages || []).map((msg) => ({
+            role: msg.role,
+            content: msg.content,
+          })),
+        }),
       });
+
+      if (!response.ok && response.status !== 429) {
+        throw new Error("Failed to send message");
+      }
     } catch (error) {
       console.error("Chat error:", error);
       alert("Failed to send message. Please try again.");
@@ -169,6 +182,43 @@ export default function AssistantPage() {
           </div>
         ) : (
           <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
+          {wellnessProfile && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                {
+                  label: "Wellbeing",
+                  value: wellnessProfile.wellbeingScore,
+                  className: "bg-[var(--color-aurora-pink)]/15 text-[var(--color-aurora-pink)]",
+                },
+                {
+                  label: "Clarity",
+                  value: wellnessProfile.clarityScore,
+                  className: "bg-[var(--color-aurora-lavender)]/20 text-[var(--color-aurora-violet)]",
+                },
+                {
+                  label: "Support",
+                  value: wellnessProfile.supportScore,
+                  className: "bg-[var(--color-aurora-mint)]/30 text-[var(--color-aurora-violet)]",
+                },
+                {
+                  label: "Resilience",
+                  value: wellnessProfile.resilienceScore,
+                  className: "bg-[var(--color-aurora-yellow)]/25 text-[var(--color-aurora-violet)]",
+                },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className={`rounded-2xl border border-[var(--border)] p-4 shadow-sm ${stat.className}`}
+                >
+                  <p className="text-xs uppercase tracking-[0.18em] opacity-70">
+                    {stat.label}
+                  </p>
+                  <p className="mt-2 text-2xl font-bold">{stat.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Welcome Message */}
           {(!messages || messages.length === 0) && (
             <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-lg">
@@ -185,7 +235,7 @@ export default function AssistantPage() {
                     Welcome to your safe space, {user?.name && user.name !== 'null' ? user.name.split(" ")[0] : "friend"} 💜
                   </h3>
                   <p className="text-[var(--muted-foreground)] mb-4">
-                    I'm here to support your mental and emotional wellbeing. This is a judgment-free zone where you can:
+                    I&apos;m here to support your mental and emotional wellbeing. This is a judgment-free zone where you can:
                   </p>
                   <ul className="space-y-2 text-sm text-[var(--muted-foreground)]">
                     <li className="flex items-center gap-2">
@@ -207,11 +257,11 @@ export default function AssistantPage() {
                   </ul>
                   <div className="mt-4 p-3 bg-[var(--color-aurora-pink)]/10 border border-[var(--color-aurora-pink)]/20 rounded-xl">
                     <p className="text-sm text-[var(--muted-foreground)] italic">
-                      💡 Remember: While I'm here to support you, I'm an AI assistant. For serious mental health concerns, please reach out to a licensed professional.
+                      Aurora can help you reflect, plan, and name red flags. If you are in immediate danger or crisis, use SOS or contact local emergency support right away.
                     </p>
                   </div>
                   <p className="text-[var(--foreground)] mt-4 font-medium">
-                    What's on your mind today?
+                    What&apos;s on your mind today?
                   </p>
                 </div>
               </div>

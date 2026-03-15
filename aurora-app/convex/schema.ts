@@ -253,6 +253,30 @@ export default defineSchema({
     content: v.string(),
   }).index("by_user", ["userId"]),
 
+  assistantWellnessProfiles: defineTable({
+    userId: v.id("users"),
+    wellbeingScore: v.number(),
+    clarityScore: v.number(),
+    supportScore: v.number(),
+    resilienceScore: v.number(),
+    interactionCount: v.number(),
+    crisisSignals: v.number(),
+    lastSentiment: v.union(
+      v.literal("positive"),
+      v.literal("neutral"),
+      v.literal("negative"),
+      v.literal("crisis"),
+    ),
+    emotionalState: v.optional(v.string()),
+    topics: v.array(v.string()),
+    preferredLanguage: v.optional(v.string()),
+    needsFollowUp: v.boolean(),
+    lastInteractionAt: v.number(),
+    isActive: v.boolean(),
+    isDeleted: v.boolean(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
   transactions: defineTable({
     userId: v.id("users"),
     amount: v.number(), // Positive for earn, negative for spend
@@ -1127,6 +1151,9 @@ export default defineSchema({
     postCount: v.number(),
     rules: v.optional(v.array(v.string())),
     tags: v.optional(v.array(v.string())),
+    focusPrompt: v.optional(v.string()),
+    companionMode: v.optional(v.literal("aurora_combo")),
+    lastActivityAt: v.optional(v.number()),
     isActive: v.boolean(),
   })
     .index("by_category", ["category"])
@@ -1157,6 +1184,25 @@ export default defineSchema({
   })
     .index("by_circle", ["circleId"])
     .index("by_author", ["authorId"]),
+
+  circleAiMessages: defineTable({
+    circleId: v.id("circles"),
+    userId: v.optional(v.id("users")),
+    senderType: v.union(
+      v.literal("user"),
+      v.literal("aurora"),
+      v.literal("companion"),
+    ),
+    senderName: v.string(),
+    personaId: v.optional(v.string()),
+    content: v.string(),
+    language: v.optional(v.string()),
+    createdAt: v.number(),
+    isActive: v.boolean(),
+    isDeleted: v.boolean(),
+  })
+    .index("by_circle", ["circleId"])
+    .index("by_circle_and_created", ["circleId", "createdAt"]),
 
   // Safety Check-ins - Scheduled "I'm OK" pings
   safetyCheckins: defineTable({

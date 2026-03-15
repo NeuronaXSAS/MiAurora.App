@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 import { requireAuthenticatedUser } from "./auth";
 
 // Create a new circle (support group)
@@ -25,16 +26,28 @@ export const createCircle = mutation({
     maxMembers: v.optional(v.number()),
     rules: v.optional(v.array(v.string())),
     tags: v.optional(v.array(v.string())),
+    focusPrompt: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { userId: creatorId } = await requireAuthenticatedUser(args.authToken, args.creatorId);
-    const { authToken, creatorId: _creatorId, ...circleData } = args;
+    const circleData = {
+      name: args.name,
+      description: args.description,
+      category: args.category,
+      isPrivate: args.isPrivate,
+      maxMembers: args.maxMembers,
+      rules: args.rules,
+      tags: args.tags,
+      focusPrompt: args.focusPrompt,
+    };
 
     const circleId = await ctx.db.insert("circles", {
       ...circleData,
       creatorId,
       memberCount: 1,
       postCount: 0,
+      companionMode: "aurora_combo",
+      lastActivityAt: Date.now(),
       isActive: true,
     });
 
@@ -436,6 +449,111 @@ export const getCircleDetails = query({
   },
 });
 
+export const getCircleMessages = query({
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+    circleId: v.id("circles"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const membership = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle_and_user", (q) =>
+        q.eq("circleId", args.circleId).eq("userId", userId),
+      )
+      .first();
+
+    if (!membership) {
+      throw new Error("Unauthorized");
+    }
+
+    const messages = await ctx.db
+      .query("circleAiMessages")
+      .withIndex("by_circle_and_created", (q) => q.eq("circleId", args.circleId))
+      .order("desc")
+      .take(args.limit || 60);
+
+    return messages.reverse();
+  },
+});
+
+export const appendCircleConversation = mutation({
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+    circleId: v.id("circles"),
+    userMessage: v.string(),
+    language: v.optional(v.string()),
+    aiMessages: v.array(
+      v.object({
+        senderType: v.union(v.literal("aurora"), v.literal("companion")),
+        senderName: v.string(),
+        personaId: v.optional(v.string()),
+        content: v.string(),
+      }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const membership = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle_and_user", (q) =>
+        q.eq("circleId", args.circleId).eq("userId", userId),
+      )
+      .first();
+
+    if (!membership) {
+      throw new Error("Unauthorized");
+    }
+
+    const now = Date.now();
+    const insertedIds = [];
+
+    insertedIds.push(
+      await ctx.db.insert("circleAiMessages", {
+        circleId: args.circleId,
+        userId,
+        senderType: "user",
+        senderName: "You",
+        content: args.userMessage,
+        language: args.language,
+        createdAt: now,
+        isActive: true,
+        isDeleted: false,
+      }),
+    );
+
+    for (let index = 0; index < args.aiMessages.length; index += 1) {
+      const message = args.aiMessages[index];
+      insertedIds.push(
+        await ctx.db.insert("circleAiMessages", {
+          circleId: args.circleId,
+          senderType: message.senderType,
+          senderName: message.senderName,
+          personaId: message.personaId,
+          content: message.content,
+          language: args.language,
+          createdAt: now + index + 1,
+          isActive: true,
+          isDeleted: false,
+        }),
+      );
+    }
+
+    const circle = await ctx.db.get(args.circleId);
+    if (circle) {
+      await ctx.db.patch(args.circleId, {
+        postCount: circle.postCount + args.aiMessages.length + 1,
+        lastActivityAt: now,
+      });
+    }
+
+    return insertedIds;
+  },
+});
+
 // Get circle members
 export const getCircleMembers = query({
   args: {
@@ -557,7 +675,23 @@ export const getSuggestedMembers = query({
       const userCircleIds = userMemberships.map(m => m.circleId);
       
       // Get members from same circles
-      const potentialMembers: Record<string, { user: any; sharedCircles: number }> = {};
+      const potentialMembers: Record<
+        string,
+        {
+          user: {
+            _id: Id<"users">;
+            name: string;
+            bio: string | null;
+            industry: string | null;
+            location: string | null;
+            interests: string[];
+            avatarConfig: unknown;
+            profileImage: string | null;
+            trustScore: number;
+          };
+          sharedCircles: number;
+        }
+      > = {};
       
       for (const circleId of userCircleIds) {
         const circleMembers = await ctx.db

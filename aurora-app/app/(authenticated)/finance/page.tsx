@@ -18,11 +18,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  TrendingUp,
   Target,
   PiggyBank,
   Send,
-  Sparkles,
   DollarSign,
   Shield,
   BarChart3,
@@ -30,7 +28,6 @@ import {
   ArrowUp,
   ArrowDown,
   Bot,
-  User,
   Loader2,
   Trash2,
   RefreshCw,
@@ -56,6 +53,11 @@ export default function FinancePage() {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showMetrics, setShowMetrics] = useState(true);
+  const [latestGuidance, setLatestGuidance] = useState<{
+    summary: string;
+    nextActions: string[];
+    riskLevel: "low" | "medium" | "high";
+  } | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -99,6 +101,14 @@ export default function FinancePage() {
       });
 
       const data = await response.json();
+
+      if (data.summary || data.nextActions) {
+        setLatestGuidance({
+          summary: data.summary || "Aurora updated your money plan.",
+          nextActions: Array.isArray(data.nextActions) ? data.nextActions : [],
+          riskLevel: data.riskLevel || "medium",
+        });
+      }
 
       // Save to Convex
       await sendFinancialMessage({
@@ -306,6 +316,44 @@ export default function FinancePage() {
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 py-4 max-w-3xl">
+          {latestGuidance && (
+            <div className="mb-4 rounded-3xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                    Aurora plan update
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold text-[var(--foreground)]">
+                    {latestGuidance.summary}
+                  </h2>
+                </div>
+                <Badge
+                  className={
+                    latestGuidance.riskLevel === "high"
+                      ? "bg-[var(--color-aurora-salmon)]/15 text-[var(--color-aurora-salmon)]"
+                      : latestGuidance.riskLevel === "low"
+                        ? "bg-[var(--color-aurora-mint)]/40 text-[var(--color-aurora-violet)]"
+                        : "bg-[var(--color-aurora-yellow)]/30 text-[var(--color-aurora-violet)]"
+                  }
+                >
+                  {latestGuidance.riskLevel} priority
+                </Badge>
+              </div>
+              {latestGuidance.nextActions.length > 0 && (
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                  {latestGuidance.nextActions.slice(0, 3).map((action) => (
+                    <div
+                      key={action}
+                      className="rounded-2xl bg-[var(--background)] p-3 text-sm text-[var(--foreground)]"
+                    >
+                      {action}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Welcome Message if no chat history */}
           {(!chatHistory || chatHistory.length === 0) && (
             <div className="text-center py-8">
@@ -313,11 +361,11 @@ export default function FinancePage() {
                 <Image src="/Au_Logo_1.png" alt="Aurora App" width={48} height={48} className="rounded-xl" />
               </div>
               <h2 className="text-xl font-bold text-[var(--foreground)] mb-2">
-                Hi! I'm your Aurora App Financial Advisor 💰
+                Hi! I&apos;m your Aurora App Financial Advisor 💰
               </h2>
               <p className="text-[var(--muted-foreground)] mb-6 max-w-md mx-auto">
-                I'm here to help you plan your finances, set goals, and make smarter money decisions. 
-                Just chat with me and I'll update your financial metrics in real-time!
+                I&apos;m here to help you plan your finances, set goals, and make smarter money decisions. 
+                Just chat with me and I&apos;ll update your financial metrics in real-time!
               </p>
 
               {/* Quick Actions */}

@@ -6,12 +6,10 @@ import {
   MessageSquare, 
   Mic, 
   Share2, 
-  TrendingUp,
   Heart,
   Brain,
   Sparkles,
   Clock,
-  Calendar,
   Activity
 } from "lucide-react";
 import { useQuery } from "convex/react";
@@ -28,6 +26,10 @@ export function AIInteractionsDashboard({ authToken, userId }: AIInteractionsDas
   const chatHistory = useQuery(
     api.ai.getHistory,
     authToken ? { authToken, userId, limit: 100 } : "skip",
+  );
+  const wellnessProfile = useQuery(
+    api.ai.getWellnessProfile,
+    authToken ? { authToken, userId } : "skip",
   );
   // AI interactions stats calculated from chat history
   const aiInteractions = { voiceSessions: 0, sharedChats: 0 };
@@ -80,6 +82,40 @@ export function AIInteractionsDashboard({ authToken, userId }: AIInteractionsDas
         </Card>
       </div>
 
+      {wellnessProfile && (
+        <Card className="bg-gradient-to-r from-[var(--color-aurora-pink)]/10 to-[var(--color-aurora-mint)]/20 border-[var(--color-aurora-lavender)]/30">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
+                  Wellness Pulse
+                </p>
+                <h3 className="mt-1 text-xl font-semibold text-[var(--foreground)]">
+                  {wellnessProfile.emotionalState || "Steady check-in"}
+                </h3>
+                <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                  Last sentiment: {wellnessProfile.lastSentiment}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-center">
+                <div className="rounded-2xl bg-white/50 px-4 py-3">
+                  <p className="text-xs text-[var(--muted-foreground)]">Check-ins</p>
+                  <p className="text-2xl font-bold text-[var(--foreground)]">
+                    {wellnessProfile.interactionCount}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white/50 px-4 py-3">
+                  <p className="text-xs text-[var(--muted-foreground)]">Needs follow-up</p>
+                  <p className="text-2xl font-bold text-[var(--foreground)]">
+                    {wellnessProfile.needsFollowUp ? "Yes" : "No"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Interaction Timeline */}
       <Card className="bg-[var(--card)] border-[var(--border)]">
         <CardHeader className="pb-2">
@@ -114,7 +150,7 @@ export function AIInteractionsDashboard({ authToken, userId }: AIInteractionsDas
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
             <Brain className="w-5 h-5 text-[var(--color-aurora-pink)]" />
-            Topics You've Discussed
+            Topics You&apos;ve Discussed
           </CardTitle>
         </CardHeader>
         <CardContent>
