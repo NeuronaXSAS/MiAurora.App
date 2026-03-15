@@ -13,9 +13,17 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import {
+  createBase64Part,
+  generateStructuredResponse,
+  Type,
+} from "@/lib/ai/google-genai";
 
-// Google AI Studio free tier
-const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
+const HAS_GOOGLE_AI = Boolean(
+  process.env.GOOGLE_AI_API_KEY ||
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY,
+);
 
 // Rate limiting - simple in-memory (would use Redis in production)
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
@@ -53,6 +61,85 @@ export interface AnalysisResult {
   shareableId?: string;
   analysisHash?: string;
 }
+
+interface ModelAnalysisResponse {
+  winner: "person1" | "person2" | "tie" | "both_wrong";
+  toxicityScore: number;
+  argumentType: string;
+  redFlags: Array<{
+    type: string;
+    severity: "low" | "medium" | "high";
+    who: "person1" | "person2" | "both";
+  }>;
+  receipts: Array<{
+    number: number;
+    text: string;
+    who: "person1" | "person2";
+    type: "negative" | "neutral" | "positive";
+  }>;
+  communicationScore: number;
+  suggestion: string;
+}
+
+const analysisResponseSchema = {
+  type: Type.OBJECT,
+  required: [
+    "winner",
+    "toxicityScore",
+    "argumentType",
+    "redFlags",
+    "receipts",
+    "communicationScore",
+    "suggestion",
+  ],
+  properties: {
+    winner: {
+      type: Type.STRING,
+      enum: ["person1", "person2", "tie", "both_wrong"],
+    },
+    toxicityScore: { type: Type.NUMBER },
+    argumentType: { type: Type.STRING },
+    communicationScore: { type: Type.NUMBER },
+    suggestion: { type: Type.STRING },
+    redFlags: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        required: ["type", "severity", "who"],
+        properties: {
+          type: { type: Type.STRING },
+          severity: {
+            type: Type.STRING,
+            enum: ["low", "medium", "high"],
+          },
+          who: {
+            type: Type.STRING,
+            enum: ["person1", "person2", "both"],
+          },
+        },
+      },
+    },
+    receipts: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        required: ["number", "text", "who", "type"],
+        properties: {
+          number: { type: Type.NUMBER },
+          text: { type: Type.STRING },
+          who: {
+            type: Type.STRING,
+            enum: ["person1", "person2"],
+          },
+          type: {
+            type: Type.STRING,
+            enum: ["negative", "neutral", "positive"],
+          },
+        },
+      },
+    },
+  },
+};
 
 // Red flag definitions
 const RED_FLAG_TYPES = {
@@ -292,12 +379,9 @@ export async function POST(request: NextRequest) {
 
     // Audio transcription support
     const audioFile = formData.get("audio") as File | null;
-    let transcribedText = "";
     if (audioFile && isAudioTranscription) {
-      // For now, we'll pass the audio as context
-      // In production, you'd use a speech-to-text service
-      transcribedText =
-        "[Audio transcription - analyze the conversation audio]";
+      // Placeholder path for future multimodal audio analysis.
+      // The current product flow still prioritizes screenshots.
     }
 
     if (images.length === 0 && !audioFile) {
@@ -311,7 +395,7 @@ export async function POST(request: NextRequest) {
     const imagesHash = await hashImages(images);
 
     // Use Google AI Studio (Gemini) - FREE TIER
-    if (GOOGLE_AI_API_KEY) {
+    if (HAS_GOOGLE_AI) {
       try {
         const aiResult = await analyzeWithGemini(
           images,
@@ -391,23 +475,14 @@ SUGGESTION QUALITY REQUIREMENTS (CRITICAL):
 - If you detected "gaslighting", the suggestion should address reality-questioning
 - Name what they did and what to do differently NEXT TIME in this specific dynamic
 
-Return ONLY valid JSON with these exact fields:
-{
-  "winner": "person1" | "person2" | "tie" | "both_wrong",
-  "toxicityScore": 0-100 (be precise based on actual content),
-  "argumentType": "specific description of dispute type",
-  "redFlags": [{"type": "gaslighting|stonewalling|invalidating|guilt_tripping|defensiveness|contempt|criticism|blame_shifting|passive_aggressive|social_comparison", "severity": "low|medium|high", "who": "person1|person2|both"}],
-  "receipts": [{"number": 1, "text": "EXACT quote or specific behavior observed", "who": "person1|person2", "type": "negative|neutral|positive"}],
-  "communicationScore": 0-100 (overall quality of communication),
-  "suggestion": "Specific advice that addresses the detected red flags and references the actual conversation content. Example: 'When [person] compared your relationship to their friends, redirect with: What do YOU need from me specifically?'"
-}
-
 RECEIPT REQUIREMENTS:
 - Quote ACTUAL text from the screenshots when possible
 - Identify WHO said/did it (person1 or person2)
 - Provide 2-4 receipts citing SPECIFIC moments
 
-Be fair, evidence-based, and make the suggestion genuinely helpful for THIS couple's specific issue.`;
+Be fair, evidence-based, and make the suggestion genuinely helpful for THIS couple's specific issue.
+
+Return data that matches the provided schema exactly.`;
 }
 
 // Get contextual suggestion based on detected red flags
@@ -439,25 +514,11 @@ function getContextualSuggestion(
 
 // Process AI response
 function processAIResponse(
-  content: string,
+  parsed: ModelAnalysisResponse,
   person1Label: string,
   person2Label: string,
   imagesHash: string,
 ): AnalysisResult {
-  // Clean up JSON
-  const cleanContent = content
-    .replace(/```json\n?/g, "")
-    .replace(/\n?```/g, "")
-    .trim();
-
-  // Find the JSON object
-  const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("No valid JSON found in response");
-  }
-
-  const parsed = JSON.parse(jsonMatch[0]);
-
   const enrichedRedFlags: RedFlag[] = (parsed.redFlags || []).map(
     (flag: { type: string; severity: string }) => {
       const flagInfo = RED_FLAG_TYPES[
@@ -548,44 +609,18 @@ async function analyzeWithGemini(
     isAudioTranscription,
   );
 
-  const parts: Array<
-    { text: string } | { inline_data: { mime_type: string; data: string } }
-  > = [{ text: prompt }];
-
-  // Add images (primary evidence)
-  images.forEach((img) => {
-    parts.push({ inline_data: { mime_type: img.mimeType, data: img.base64 } });
+  const parsed = await generateStructuredResponse<ModelAnalysisResponse>({
+    message: "Analyze the uploaded conversation and return the structured result.",
+    systemInstruction: prompt,
+    extraUserParts: images.map((image) =>
+      createBase64Part(image.base64, image.mimeType),
+    ),
+    responseSchema: analysisResponseSchema,
+    temperature: 0.3,
+    maxOutputTokens: 800,
   });
 
-  // Using temperature=0.3 for more consistent results
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_AI_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts }],
-        generationConfig: {
-          temperature: 0.3, // Lower temperature = more consistent
-          maxOutputTokens: 800,
-          topP: 0.8,
-        },
-      }),
-    },
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Gemini API error:", response.status, errorText);
-    throw new Error(`Gemini API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!content) throw new Error("No response from Gemini");
-
-  return processAIResponse(content, person1Label, person2Label, imagesHash);
+  return processAIResponse(parsed, person1Label, person2Label, imagesHash);
 }
 
 function generateRuling(
