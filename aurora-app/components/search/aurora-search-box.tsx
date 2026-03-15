@@ -261,7 +261,7 @@ const VoiceRecorder: React.FC<{
       {/* Live transcription preview */}
       {liveText && (
         <div className="mt-3 px-4 w-full">
-          <div className="p-2 rounded-lg bg-white/50 dark:bg-[var(--color-aurora-violet)]/30 border border-[var(--color-aurora-purple)]/20">
+           <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--color-aurora-purple)]/20">
             <p className="text-sm text-[var(--foreground)] leading-relaxed">
               {liveText}
               <span className="inline-block w-0.5 h-4 bg-[var(--color-aurora-purple)] animate-pulse ml-0.5 align-middle" />
@@ -858,7 +858,7 @@ export const AuroraSearchBox = React.forwardRef<HTMLDivElement, AuroraSearchBoxP
         <div
           ref={ref}
           className={cn(
-            "w-full rounded-3xl border-2 bg-white dark:bg-[var(--color-aurora-violet)]/90 p-3 shadow-xl transition-all duration-300",
+            "w-full rounded-3xl border-2 bg-[var(--card)] p-3 shadow-xl transition-all duration-300",
             isFocused ? "border-[var(--color-aurora-purple)] shadow-[var(--color-aurora-purple)]/20" : "border-[var(--color-aurora-lavender)] hover:border-[var(--color-aurora-purple)]/50",
             (isLoading || isAnalyzing) && "opacity-80",
             className
@@ -905,7 +905,7 @@ export const AuroraSearchBox = React.forwardRef<HTMLDivElement, AuroraSearchBoxP
             rows={1}
             className={cn(
               "w-full bg-transparent px-2 py-2 text-base resize-none",
-              "text-[var(--color-aurora-violet)] dark:text-[var(--color-aurora-cream)]",
+              "text-[var(--foreground)]",
               "placeholder:text-[var(--color-aurora-purple)]/50 focus:outline-none disabled:opacity-50 min-h-[44px] max-h-[120px]",
               isRecording && "hidden" // Hide during recording since we show live text in recorder
             )}
