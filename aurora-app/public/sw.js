@@ -1,5 +1,5 @@
-// Aurora Service Worker v3.0.0 - Fixed chunk loading and cache issues
-const CACHE_VERSION = 'v3';
+// Aurora Service Worker v4.0.0 - Fixed chunk loading and cache issues
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `aurora-cache-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline';
 
@@ -9,7 +9,6 @@ const PRECACHE_ASSETS = [
   '/offline',
   '/manifest.json',
   '/icon.png',
-  '/favicon.ico',
 ];
 
 // Paths that should NEVER be cached (dynamic chunks, etc.)

@@ -11,12 +11,16 @@ export interface ConvexAuthProof {
 
 function getAuthSecret(): string {
   const secret =
+    process.env.CONVEX_AUTH_PROOF_SECRET ||
+    process.env.AUTH_PROOF_SECRET ||
     process.env.AUTH_SESSION_SECRET ||
     process.env.SESSION_SECRET ||
     process.env.WORKOS_API_KEY;
 
   if (!secret) {
-    throw new Error("Missing auth proof secret configuration");
+    throw new Error(
+      "Missing auth proof secret configuration. Set CONVEX_AUTH_PROOF_SECRET, AUTH_PROOF_SECRET, AUTH_SESSION_SECRET, SESSION_SECRET, or WORKOS_API_KEY in both Next.js and Convex environments.",
+    );
   }
 
   return secret;

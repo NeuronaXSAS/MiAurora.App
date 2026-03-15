@@ -19,6 +19,8 @@ export interface AuroraSession {
 
 function getSessionSecret(): string {
   const secret =
+    process.env.CONVEX_AUTH_PROOF_SECRET ||
+    process.env.AUTH_PROOF_SECRET ||
     process.env.AUTH_SESSION_SECRET ||
     process.env.SESSION_SECRET ||
     process.env.WORKOS_API_KEY;
