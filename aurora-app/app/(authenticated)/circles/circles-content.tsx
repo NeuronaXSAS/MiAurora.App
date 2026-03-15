@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -112,16 +113,6 @@ export function CirclesPageContent() {
       ? { authToken, circleId: selectedCircleId, userId }
       : "skip",
   );
-  const rawCircleMessages = useQuery(
-    api.circles.getCircleMessages,
-    selectedCircleId && userId && authToken
-      ? { authToken, userId, circleId: selectedCircleId, limit: 60 }
-      : "skip",
-  );
-  const circleMessages = useMemo(
-    () => (rawCircleMessages ?? []) as CircleMessage[],
-    [rawCircleMessages],
-  );
 
   const createCircle = useMutation(api.circles.createCircle);
 
@@ -130,11 +121,6 @@ export function CirclesPageContent() {
       setSelectedCircleId(safeCircles[0]._id);
     }
   }, [safeCircles, selectedCircleId]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [circleMessages]);
-
   const selectedMeta = useMemo(() => {
     if (!circleDetails) return CATEGORY_META.relationships;
     return CATEGORY_META[circleDetails.category] || CATEGORY_META.relationships;
@@ -445,58 +431,15 @@ export function CirclesPageContent() {
                     </p>
                   </div>
 
-                  <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
-                    {circleMessages.length === 0 && (
-                      <div className="rounded-3xl border border-dashed border-[var(--color-aurora-lavender)] bg-[var(--color-aurora-lavender)]/10 p-6">
-                        <h3 className="text-lg font-semibold text-[var(--foreground)]">
-                          Start the first conversation
-                        </h3>
-                        <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-                          Describe the situation with enough context for Aurora and the combo to respond with distinct, helpful viewpoints.
-                        </p>
-                      </div>
-                    )}
-
-                    {circleMessages.map((entry) => {
-                      const isUser = entry.senderType === "user";
-                      const bubbleClass = isUser
-                        ? "bg-[var(--color-aurora-blue)] text-white ml-auto"
-                        : entry.senderType === "aurora"
-                          ? "bg-[var(--color-aurora-lavender)]/20 text-[var(--foreground)]"
-                          : "bg-[var(--background)] text-[var(--foreground)] border border-[var(--border)]";
-
-                      return (
-                        <div key={entry._id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-                          <div className={`max-w-[85%] rounded-3xl px-4 py-3 shadow-sm ${bubbleClass}`}>
-                            <div className="mb-1 flex items-center gap-2 text-xs uppercase tracking-[0.14em] opacity-70">
-                              <span>{entry.senderName}</span>
-                              {entry.personaId && entry.personaId !== "aurora" && (
-                                <span className="normal-case tracking-normal opacity-80">
-                                  {entry.personaId.replace(/-/g, " ")}
-                                </span>
-                              )}
-                            </div>
-                            <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                              {entry.content}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    {isSending && (
-                      <div className="flex justify-start">
-                        <div className="rounded-3xl border border-[var(--border)] bg-[var(--background)] px-4 py-3">
-                          <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
-                            <Loader2 className="w-4 h-4 animate-spin text-[var(--color-aurora-purple)]" />
-                            Aurora Combo is thinking
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div ref={messagesEndRef} />
-                  </div>
+                  <ErrorBoundary fallback={<CircleMessagesFallback isSending={isSending} />}>
+                    <CircleMessagesPanel
+                      authToken={authToken}
+                      userId={userId}
+                      circleId={selectedCircleId!}
+                      isSending={isSending}
+                      messagesEndRef={messagesEndRef}
+                    />
+                  </ErrorBoundary>
 
                   <div className="border-t border-[var(--border)] bg-[var(--card)] px-4 py-4 sm:px-6">
                     <div className="flex gap-3">
@@ -529,5 +472,114 @@ export function CirclesPageContent() {
         </div>
       </div>
     </PageTransition>
+  );
+}
+
+function CircleMessagesPanel({
+  authToken,
+  userId,
+  circleId,
+  isSending,
+  messagesEndRef,
+}: {
+  authToken: string;
+  userId: NonNullable<ReturnType<typeof useAuthSession>["userId"]>;
+  circleId: Id<"circles">;
+  isSending: boolean;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const rawCircleMessages = useQuery(api.circles.getCircleMessages, {
+    authToken,
+    userId,
+    circleId,
+    limit: 60,
+  });
+  const circleMessages = useMemo(
+    () => (rawCircleMessages ?? []) as CircleMessage[],
+    [rawCircleMessages],
+  );
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [circleMessages, isSending, messagesEndRef]);
+
+  return (
+    <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
+      {circleMessages.length === 0 && (
+        <div className="rounded-3xl border border-dashed border-[var(--color-aurora-lavender)] bg-[var(--color-aurora-lavender)]/10 p-6">
+          <h3 className="text-lg font-semibold text-[var(--foreground)]">
+            Start the first conversation
+          </h3>
+          <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+            Describe the situation with enough context for Aurora and the combo to respond with distinct, helpful viewpoints.
+          </p>
+        </div>
+      )}
+
+      {circleMessages.map((entry) => {
+        const isUser = entry.senderType === "user";
+        const bubbleClass = isUser
+          ? "bg-[var(--color-aurora-blue)] text-white ml-auto"
+          : entry.senderType === "aurora"
+            ? "bg-[var(--color-aurora-lavender)]/20 text-[var(--foreground)]"
+            : "bg-[var(--background)] text-[var(--foreground)] border border-[var(--border)]";
+
+        return (
+          <div key={entry._id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+            <div className={`max-w-[85%] rounded-3xl px-4 py-3 shadow-sm ${bubbleClass}`}>
+              <div className="mb-1 flex items-center gap-2 text-xs uppercase tracking-[0.14em] opacity-70">
+                <span>{entry.senderName}</span>
+                {entry.personaId && entry.personaId !== "aurora" && (
+                  <span className="normal-case tracking-normal opacity-80">
+                    {entry.personaId.replace(/-/g, " ")}
+                  </span>
+                )}
+              </div>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                {entry.content}
+              </p>
+            </div>
+          </div>
+        );
+      })}
+
+      {isSending && (
+        <div className="flex justify-start">
+          <div className="rounded-3xl border border-[var(--border)] bg-[var(--background)] px-4 py-3">
+            <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
+              <Loader2 className="w-4 h-4 animate-spin text-[var(--color-aurora-purple)]" />
+              Aurora Combo is thinking
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div ref={messagesEndRef} />
+    </div>
+  );
+}
+
+function CircleMessagesFallback({ isSending }: { isSending: boolean }) {
+  return (
+    <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
+      <div className="rounded-3xl border border-[var(--color-aurora-lavender)]/40 bg-[var(--color-aurora-lavender)]/10 p-6">
+        <h3 className="text-lg font-semibold text-[var(--foreground)]">
+          This circle is still syncing
+        </h3>
+        <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+          You can keep sending messages. Aurora Combo will resume the full transcript as soon as the live backend catches up.
+        </p>
+      </div>
+      {isSending && (
+        <div className="flex justify-start">
+          <div className="rounded-3xl border border-[var(--border)] bg-[var(--background)] px-4 py-3">
+            <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
+              <Loader2 className="w-4 h-4 animate-spin text-[var(--color-aurora-purple)]" />
+              Aurora Combo is thinking
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

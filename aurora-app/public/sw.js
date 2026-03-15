@@ -88,6 +88,7 @@ const SKIP_DOMAINS = [
   'i.posthog.com',
   'googlesyndication.com',
   'googleads.g.doubleclick.net',
+  'api.dicebear.com',
   'mapbox.com',
   'events.mapbox.com',
   'api.mapbox.com',

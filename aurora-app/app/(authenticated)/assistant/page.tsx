@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Send, Loader2, Share2, Mic, MessageSquare, Heart, Brain, BarChart3, Search } from "lucide-react";
 import { AIInteractionsDashboard } from "@/components/ai-interactions-dashboard";
 import { AIAnswers } from "@/components/ai-answers";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { generateAvatarUrl, AvatarConfig } from "@/hooks/use-avatar";
 import { useAuthSession } from "@/hooks/use-auth-session";
 
@@ -27,10 +28,6 @@ export default function AssistantPage() {
   const messages = useQuery(
     api.ai.getHistory,
     userId && authToken ? { authToken, userId, limit: 50 } : "skip"
-  );
-  const wellnessProfile = useQuery(
-    api.ai.getWellnessProfile,
-    userId && authToken ? { authToken, userId } : "skip"
   );
 
   // Fetch user data
@@ -171,7 +168,9 @@ export default function AssistantPage() {
           </div>
         ) : activeTab === "stats" && userId ? (
           <div className="max-w-4xl mx-auto">
-            <AIInteractionsDashboard authToken={authToken} userId={userId} />
+            <ErrorBoundary fallback={<AssistantDataFallback title="Stats are still syncing" />}>
+              <AIInteractionsDashboard authToken={authToken} userId={userId} />
+            </ErrorBoundary>
           </div>
         ) : activeTab === "voice" ? (
           <div className="max-w-4xl mx-auto">
@@ -182,41 +181,10 @@ export default function AssistantPage() {
           </div>
         ) : (
           <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
-          {wellnessProfile && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[
-                {
-                  label: "Wellbeing",
-                  value: wellnessProfile.wellbeingScore,
-                  className: "bg-[var(--color-aurora-pink)]/15 text-[var(--color-aurora-pink)]",
-                },
-                {
-                  label: "Clarity",
-                  value: wellnessProfile.clarityScore,
-                  className: "bg-[var(--color-aurora-lavender)]/20 text-[var(--color-aurora-violet)]",
-                },
-                {
-                  label: "Support",
-                  value: wellnessProfile.supportScore,
-                  className: "bg-[var(--color-aurora-mint)]/30 text-[var(--color-aurora-violet)]",
-                },
-                {
-                  label: "Resilience",
-                  value: wellnessProfile.resilienceScore,
-                  className: "bg-[var(--color-aurora-yellow)]/25 text-[var(--color-aurora-violet)]",
-                },
-              ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className={`rounded-2xl border border-[var(--border)] p-4 shadow-sm ${stat.className}`}
-                >
-                  <p className="text-xs uppercase tracking-[0.18em] opacity-70">
-                    {stat.label}
-                  </p>
-                  <p className="mt-2 text-2xl font-bold">{stat.value}</p>
-                </div>
-              ))}
-            </div>
+          {userId && authToken && (
+            <ErrorBoundary fallback={<AssistantDataFallback title="Wellness snapshot is still syncing" />}>
+              <WellnessSnapshot authToken={authToken} userId={userId} />
+            </ErrorBoundary>
           )}
 
           {/* Welcome Message */}
@@ -369,6 +337,68 @@ export default function AssistantPage() {
           userId={userId}
         />
       )}
+    </div>
+  );
+}
+
+function WellnessSnapshot({
+  authToken,
+  userId,
+}: {
+  authToken: string;
+  userId: NonNullable<ReturnType<typeof useAuthSession>["userId"]>;
+}) {
+  const wellnessProfile = useQuery(api.ai.getWellnessProfile, { authToken, userId });
+
+  if (!wellnessProfile) {
+    return null;
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      {[
+        {
+          label: "Wellbeing",
+          value: wellnessProfile.wellbeingScore,
+          className: "bg-[var(--color-aurora-pink)]/15 text-[var(--color-aurora-pink)]",
+        },
+        {
+          label: "Clarity",
+          value: wellnessProfile.clarityScore,
+          className: "bg-[var(--color-aurora-lavender)]/20 text-[var(--color-aurora-violet)]",
+        },
+        {
+          label: "Support",
+          value: wellnessProfile.supportScore,
+          className: "bg-[var(--color-aurora-mint)]/30 text-[var(--color-aurora-violet)]",
+        },
+        {
+          label: "Resilience",
+          value: wellnessProfile.resilienceScore,
+          className: "bg-[var(--color-aurora-yellow)]/25 text-[var(--color-aurora-violet)]",
+        },
+      ].map((stat) => (
+        <div
+          key={stat.label}
+          className={`rounded-2xl border border-[var(--border)] p-4 shadow-sm ${stat.className}`}
+        >
+          <p className="text-xs uppercase tracking-[0.18em] opacity-70">
+            {stat.label}
+          </p>
+          <p className="mt-2 text-2xl font-bold">{stat.value}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AssistantDataFallback({ title }: { title: string }) {
+  return (
+    <div className="rounded-2xl border border-[var(--color-aurora-lavender)]/40 bg-[var(--color-aurora-lavender)]/10 p-4">
+      <p className="text-sm font-semibold text-[var(--foreground)]">{title}</p>
+      <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+        Chat still works. Aurora will keep responding while profile metrics catch up.
+      </p>
     </div>
   );
 }
