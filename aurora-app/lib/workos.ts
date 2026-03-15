@@ -11,15 +11,14 @@ export const WORKOS_REDIRECT_URI = process.env.NEXT_PUBLIC_WORKOS_REDIRECT_URI!;
  * @param provider - OAuth provider (authkit for full box, or specific provider)
  * @returns Authorization URL to redirect user to
  */
-export async function getAuthorizationUrl(provider?: 'GoogleOAuth' | 'MicrosoftOAuth' | 'authkit') {
-  // Use 'authkit' to show the full AuthKit box with all configured providers
-  const authorizationUrl = workos.userManagement.getAuthorizationUrl({
-    provider: provider || 'authkit',
+export async function beginAuthorization(
+  provider?: "GoogleOAuth" | "MicrosoftOAuth" | "authkit",
+) {
+  return workos.userManagement.getAuthorizationUrlWithPKCE({
+    provider: provider || "authkit",
     clientId: WORKOS_CLIENT_ID,
     redirectUri: WORKOS_REDIRECT_URI,
   });
-
-  return authorizationUrl;
 }
 
 /**
@@ -27,10 +26,11 @@ export async function getAuthorizationUrl(provider?: 'GoogleOAuth' | 'MicrosoftO
  * @param code - Authorization code from OAuth provider
  * @returns User profile and session information
  */
-export async function authenticateWithCode(code: string) {
+export async function authenticateWithCode(code: string, codeVerifier: string) {
   try {
     const { user, accessToken, refreshToken } = await workos.userManagement.authenticateWithCode({
       code,
+      codeVerifier,
       clientId: WORKOS_CLIENT_ID,
     });
 

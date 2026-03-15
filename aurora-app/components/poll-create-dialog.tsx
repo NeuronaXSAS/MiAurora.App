@@ -23,6 +23,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, X, BarChart3, MapPin, Loader2 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface PollCreateDialogProps {
   open: boolean;
@@ -44,6 +45,7 @@ export function PollCreateDialog({
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { authToken } = useAuthSession();
 
   const createPoll = useMutation(api.polls.createPoll);
 
@@ -107,7 +109,12 @@ export function PollCreateDialog({
     setLoading(true);
 
     try {
+      if (!authToken) {
+        throw new Error("Your session expired. Please refresh and try again.");
+      }
+
       const result = await createPoll({
+        authToken,
         authorId: userId,
         title: title.trim(),
         description: description.trim() || undefined,

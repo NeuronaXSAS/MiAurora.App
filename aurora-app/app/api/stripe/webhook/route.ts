@@ -132,6 +132,7 @@ export async function POST(request: NextRequest) {
             stripeSubscriptionId: subscription.id,
             stripeCustomerId: subscription.customer as string,
             status: subscription.status,
+            sourceEventId: event.id,
           });
           
           console.log(`Subscription updated for user ${userId}: ${subscription.status}`);
@@ -149,6 +150,7 @@ export async function POST(request: NextRequest) {
             eventType: 'customer.subscription.deleted',
             stripeSubscriptionId: subscription.id,
             stripeCustomerId: subscription.customer as string,
+            sourceEventId: event.id,
           });
           
           console.log(`Subscription cancelled for user ${userId}`);
@@ -167,6 +169,8 @@ export async function POST(request: NextRequest) {
           await convex.mutation(api.subscriptions.handleStripeWebhook, {
             eventType: 'invoice.payment_succeeded',
             stripeSubscriptionId: subscriptionId as string,
+            invoiceId: invoice.id,
+            sourceEventId: event.id,
           });
           
           console.log(`Invoice payment succeeded for subscription ${subscriptionId}`);
@@ -182,6 +186,8 @@ export async function POST(request: NextRequest) {
           await convex.mutation(api.subscriptions.handleStripeWebhook, {
             eventType: 'invoice.payment_failed',
             stripeSubscriptionId: subscriptionId as string,
+            invoiceId: invoice.id,
+            sourceEventId: event.id,
           });
           
           console.log(`Invoice payment failed for subscription ${subscriptionId}`);

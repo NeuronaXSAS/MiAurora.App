@@ -11,16 +11,16 @@ import { getUsageStats } from "@/lib/resource-guard";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { readSession } from "@/lib/server-session";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function GET() {
   try {
-    // Check authentication
     const cookieStore = await cookies();
-    const convexUserId = cookieStore.get("convex_user_id")?.value;
+    const session = await readSession(cookieStore);
 
-    if (!convexUserId) {
+    if (!session) {
       return NextResponse.json(
         { error: "Unauthorized - not authenticated" },
         { status: 401 },
@@ -29,7 +29,7 @@ export async function GET() {
 
     // Verify user is admin
     const isAdmin = await convex.query(api.admin.isAdmin, {
-      userId: convexUserId as Id<"users">,
+      userId: session.convexUserId as Id<"users">,
     });
 
     if (!isAdmin) {

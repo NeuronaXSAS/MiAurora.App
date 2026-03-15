@@ -26,40 +26,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export default function SettingsPage() {
   const { isOnline, isRegistered, updateAvailable, skipWaiting } = useServiceWorker();
   const { theme } = useTheme();
   const [activeSection, setActiveSection] = useState("appearance");
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const { authToken, userId } = useAuthSession();
   
   const deleteAccount = useMutation(api.users.deleteAccount);
 
-  // Get user ID
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
-
   const handleDeleteAccount = async () => {
-    if (!userId || deleteConfirmText !== "DELETE") return;
+    if (!userId || !authToken || deleteConfirmText !== "DELETE") return;
     
     setIsDeleting(true);
     try {
-      await deleteAccount({ userId });
+      await deleteAccount({ authToken, userId });
       // Logout and redirect
       await fetch("/api/auth/logout", { method: "POST" });
       window.location.href = "/?deleted=true";

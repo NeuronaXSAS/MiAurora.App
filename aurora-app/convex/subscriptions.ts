@@ -158,6 +158,26 @@ export const createSubscription = mutation({
     const now = Date.now();
     const periodDays = args.billingCycle === "annual" ? 365 : 30;
     const periodEnd = now + (periodDays * 24 * 60 * 60 * 1000);
+
+    const priorTransactions = await ctx.db
+      .query("transactions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+    const alreadyProvisioned = !!args.stripeSubscriptionId &&
+      priorTransactions.some(
+        (transaction) =>
+          transaction.type === "subscription_created" &&
+          transaction.relatedId === args.stripeSubscriptionId,
+      );
+
+    if (
+      existing &&
+      args.stripeSubscriptionId &&
+      existing.stripeSubscriptionId === args.stripeSubscriptionId &&
+      alreadyProvisioned
+    ) {
+      return { success: true, tier: existing.tier, duplicate: true };
+    }
     
     if (existing) {
       // Update existing subscription
@@ -190,7 +210,7 @@ export const createSubscription = mutation({
     });
     
     // Award monthly credits
-    if (tierConfig.benefits.monthlyCredits > 0) {
+    if (!alreadyProvisioned && tierConfig.benefits.monthlyCredits > 0) {
       await ctx.db.patch(args.userId, {
         credits: user.credits + tierConfig.benefits.monthlyCredits,
       });
@@ -205,12 +225,14 @@ export const createSubscription = mutation({
     }
     
     // Log subscription creation
-    await ctx.db.insert("transactions", {
-      userId: args.userId,
-      amount: 0,
-      type: "subscription_created",
-      relatedId: args.tier,
-    });
+    if (!alreadyProvisioned) {
+      await ctx.db.insert("transactions", {
+        userId: args.userId,
+        amount: 0,
+        type: "subscription_created",
+        relatedId: args.stripeSubscriptionId || args.tier,
+      });
+    }
     
     return { success: true, tier: args.tier };
   },
@@ -341,6 +363,8 @@ export const handleStripeWebhook = mutation({
     stripeSubscriptionId: v.string(),
     stripeCustomerId: v.optional(v.string()),
     status: v.optional(v.string()),
+    invoiceId: v.optional(v.string()),
+    sourceEventId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const subscription = await ctx.db
@@ -370,6 +394,23 @@ export const handleStripeWebhook = mutation({
         break;
         
       case "invoice.payment_succeeded":
+        if (args.invoiceId) {
+          const processedRenewal = await ctx.db
+            .query("transactions")
+            .withIndex("by_user", (q) => q.eq("userId", subscription.userId))
+            .collect();
+
+          if (
+            processedRenewal.some(
+              (transaction) =>
+                transaction.type === "subscription_renewal" &&
+                transaction.relatedId === args.invoiceId,
+            )
+          ) {
+            return { success: true, duplicate: true };
+          }
+        }
+
         // Renew subscription period
         const now = Date.now();
         const periodDays = subscription.billingCycle === "annual" ? 365 : 30;
@@ -387,8 +428,21 @@ export const handleStripeWebhook = mutation({
             await ctx.db.patch(subscription.userId, {
               credits: user.credits + tierConfig.benefits.monthlyCredits,
             });
+            await ctx.db.insert("transactions", {
+              userId: subscription.userId,
+              amount: tierConfig.benefits.monthlyCredits,
+              type: "subscription_renewal_credits",
+              relatedId: args.invoiceId || args.sourceEventId || args.stripeSubscriptionId,
+            });
           }
         }
+
+        await ctx.db.insert("transactions", {
+          userId: subscription.userId,
+          amount: 0,
+          type: "subscription_renewal",
+          relatedId: args.invoiceId || args.sourceEventId || args.stripeSubscriptionId,
+        });
         break;
         
       case "invoice.payment_failed":

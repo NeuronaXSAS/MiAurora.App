@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkRateLimit, getRateLimitStatus } from '@/lib/rate-limit';
+import { cookies } from "next/headers";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { checkRateLimit } from '@/lib/rate-limit';
 import { canUseGemini, recordGeminiUsage, DEV_MODE } from '@/lib/resource-guard';
+import { isSameOriginRequest, readSession } from "@/lib/server-session";
 
 // Mental health metrics tracking
 interface MentalHealthMetrics {
@@ -10,9 +15,21 @@ interface MentalHealthMetrics {
   needsFollowUp: boolean;
 }
 
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
 export async function POST(request: NextRequest) {
   try {
-    const { message, userId, conversationHistory, isPremium } = await request.json();
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+    }
+
+    const cookieStore = await cookies();
+    const session = await readSession(cookieStore);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { message, conversationHistory } = await request.json();
 
     if (!message) {
       return NextResponse.json(
@@ -22,24 +39,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Check rate limit for AI chat
-    if (userId) {
-      const rateLimitResult = checkRateLimit(userId, 'aiChat', isPremium || false);
-      
-      if (!rateLimitResult.success) {
-        const resetMinutes = Math.ceil(rateLimitResult.resetIn / 60000);
-        return NextResponse.json(
-          { 
-            error: 'Rate limit exceeded',
-            message: isPremium 
-              ? `You've reached your daily limit. Resets in ${resetMinutes} minutes.`
-              : `You've used your 10 free messages today. Upgrade to Premium for 1000 daily messages! Resets in ${resetMinutes} minutes.`,
-            remaining: rateLimitResult.remaining,
-            resetIn: rateLimitResult.resetIn,
-            upgradeToPremium: !isPremium,
-          },
-          { status: 429 }
-        );
-      }
+    const user = await convex.query(api.users.getUser, {
+      userId: session.convexUserId as Id<"users">,
+    });
+
+    if (!user || user.workosId !== session.workosUserId) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
+    const isPremium = user.isPremium || false;
+    const userId = session.convexUserId;
+    const rateLimitResult = checkRateLimit(userId, 'aiChat', isPremium);
+
+    if (!rateLimitResult.success) {
+      const resetMinutes = Math.ceil(rateLimitResult.resetIn / 60000);
+      return NextResponse.json(
+        { 
+          error: 'Rate limit exceeded',
+          message: isPremium 
+            ? `You've reached your daily limit. Resets in ${resetMinutes} minutes.`
+            : `You've used your 10 free messages today. Upgrade to Premium for 1000 daily messages! Resets in ${resetMinutes} minutes.`,
+          remaining: rateLimitResult.remaining,
+          resetIn: rateLimitResult.resetIn,
+          upgradeToPremium: !isPremium,
+        },
+        { status: 429 }
+      );
     }
 
     // Check resource limits BEFORE making API call

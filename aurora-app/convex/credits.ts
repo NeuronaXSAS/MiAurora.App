@@ -72,6 +72,22 @@ export const purchaseCredits = mutation({
     if (!user) {
       throw new Error("User not found");
     }
+
+    if (args.stripePaymentId) {
+      const existingPurchase = await ctx.db
+        .query("creditPurchases")
+        .withIndex("by_stripe_payment", (q) => q.eq("stripePaymentId", args.stripePaymentId))
+        .first();
+
+      if (existingPurchase) {
+        return {
+          success: true,
+          duplicate: true,
+          creditsAdded: 0,
+          newBalance: user.credits,
+        };
+      }
+    }
     
     const creditPackage = CREDIT_PACKAGES.find(p => p.packageId === args.packageId);
     if (!creditPackage) {

@@ -30,6 +30,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { NestedComment } from "@/components/nested-comment";
 import { Id } from "@/convex/_generated/dataModel";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface PostCardProps {
   post: {
@@ -97,6 +98,7 @@ export function PostCard({
   const [userVote, setUserVote] = useState<"upvote" | "downvote" | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifySuccess, setVerifySuccess] = useState(false);
+  const { authToken } = useAuthSession();
   
   const isAuthor = currentUserId === post.authorId;
   const dimensionColor =
@@ -117,7 +119,8 @@ export function PostCard({
   // Get user's current vote
   const currentVote = useQuery(
     api.comments.getUserVote,
-    currentUserId ? { 
+    currentUserId && authToken ? {
+      authToken,
       userId: currentUserId as Id<"users">, 
       targetId: post._id 
     } : "skip"
@@ -137,10 +140,11 @@ export function PostCard({
   }, [currentVote]);
 
   const handleVote = async (voteType: "upvote" | "downvote") => {
-    if (!currentUserId) return;
+    if (!currentUserId || !authToken) return;
     
     try {
       await vote({
+        authToken,
         userId: currentUserId as Id<"users">,
         targetId: post._id,
         targetType: "post",
@@ -170,10 +174,11 @@ export function PostCard({
   const displayPost = freshPost || post;
 
   const handleComment = async () => {
-    if (!currentUserId || !commentText.trim()) return;
+    if (!currentUserId || !commentText.trim() || !authToken) return;
     
     try {
       await createComment({
+        authToken,
         postId: post._id as Id<"posts">,
         authorId: currentUserId as Id<"users">,
         content: commentText,
@@ -433,6 +438,7 @@ export function PostCard({
               <div className="space-y-3">
                 {comments.map((comment: any) => (
                   <NestedComment
+                    authToken={authToken}
                     key={comment._id}
                     comment={comment}
                     currentUserId={currentUserId}

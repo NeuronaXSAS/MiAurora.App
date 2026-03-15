@@ -11,6 +11,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 
 interface NestedCommentProps {
+  authToken?: string | null;
   comment: any;
   currentUserId?: Id<"users">;
   postId: Id<"posts">;
@@ -19,6 +20,7 @@ interface NestedCommentProps {
 }
 
 export function NestedComment({
+  authToken,
   comment,
   currentUserId,
   postId,
@@ -33,10 +35,11 @@ export function NestedComment({
   const createComment = useMutation(api.comments.create);
 
   const handleReply = async () => {
-    if (!currentUserId || !replyText.trim()) return;
+    if (!currentUserId || !replyText.trim() || !authToken) return;
     
     try {
       await createComment({
+        authToken,
         postId,
         authorId: currentUserId,
         content: replyText,
@@ -50,10 +53,11 @@ export function NestedComment({
   };
 
   const handleVote = async (voteType: "upvote" | "downvote") => {
-    if (!currentUserId) return;
+    if (!currentUserId || !authToken) return;
     
     try {
       await vote({
+        authToken,
         userId: currentUserId,
         targetId: comment._id,
         targetType: "comment",
@@ -180,6 +184,7 @@ export function NestedComment({
             <div className="mt-3 space-y-3">
               {children.map((child: any) => (
                 <NestedComment
+                  authToken={authToken}
                   key={child._id}
                   comment={child}
                   currentUserId={currentUserId}

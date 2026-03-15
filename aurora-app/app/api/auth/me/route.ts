@@ -3,17 +3,17 @@ import { cookies } from 'next/headers';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
+import { createConvexAuthToken } from "@/lib/auth-proof";
+import { readSession } from "@/lib/server-session";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    
-    const userId = cookieStore.get('convex_user_id')?.value;
-    const workosUserId = cookieStore.get('workos_user_id')?.value;
+    const session = await readSession(cookieStore);
 
-    if (!userId || !workosUserId) {
+    if (!session) {
       return NextResponse.json(
         { error: 'Not authenticated' },
         { status: 401 }
@@ -25,17 +25,26 @@ export async function GET(request: NextRequest) {
     let email = null;
     try {
       const user = await convex.query(api.users.getUser, { 
-        userId: userId as Id<"users"> 
+        userId: session.convexUserId as Id<"users"> 
       });
-      isPremium = user?.isPremium || false;
-      email = user?.email || null;
+      if (!user || user.workosId !== session.workosUserId) {
+        return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+      }
+      isPremium = user.isPremium || false;
+      email = user.email || null;
     } catch (e) {
-      // Continue without premium status
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
 
+    const authToken = await createConvexAuthToken({
+      userId: session.convexUserId,
+      workosUserId: session.workosUserId,
+    });
+
     return NextResponse.json({
-      userId,
-      workosUserId,
+      authToken,
+      userId: session.convexUserId,
+      workosUserId: session.workosUserId,
       isPremium,
       email,
     });

@@ -25,6 +25,7 @@ import {
 import { Id } from "@/convex/_generated/dataModel";
 import { AvatarCreator, AvatarConfig } from "@/components/avatar-creator";
 import { OnboardingTutorial } from "@/components/onboarding-tutorial";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface OnboardingWizardProps {
   open: boolean;
@@ -127,7 +128,6 @@ export function OnboardingWizard({
     "public" | "anonymous" | "private"
   >("public");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [workosId, setWorkosId] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [avatarConfig, setAvatarConfig] = useState<AvatarConfig | null>(null);
   const [showAvatarCreator, setShowAvatarCreator] = useState(false);
@@ -143,23 +143,7 @@ export function OnboardingWizard({
   const updatePrivacy = useMutation(api.privacy.updatePrivacySettings);
   const updateAvatar = useMutation(api.users.updateAvatar);
   const updateLifeSettings = useMutation(api.lifeCanvas.updateLifeSettings);
-
-  useEffect(() => {
-    const getWorkosId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.workosUserId) {
-          setWorkosId(data.workosUserId);
-        } else if (data.workosId) {
-          setWorkosId(data.workosId);
-        }
-      } catch (error) {
-        console.error("Error getting workosId:", error);
-      }
-    };
-    getWorkosId();
-  }, []);
+  const { authToken, workosUserId: workosId } = useAuthSession();
 
   // Helper to convert birth year to age range
   const getAgeRange = (
@@ -194,7 +178,7 @@ export function OnboardingWizard({
   };
 
   const handleComplete = async () => {
-    if (!workosId) {
+    if (!authToken || !workosId) {
       setError("Unable to save. Please refresh and try again.");
       return;
     }
@@ -204,6 +188,7 @@ export function OnboardingWizard({
 
     try {
       await completeOnboarding({
+        authToken,
         workosId,
         bio: bio || undefined,
         location: location || undefined,
@@ -238,7 +223,7 @@ export function OnboardingWizard({
 
       if (avatarConfig && _userId) {
         try {
-          await updateAvatar({ userId: _userId, avatarConfig });
+          await updateAvatar({ authToken, userId: _userId, avatarConfig });
         } catch (e) {
           console.warn("Avatar save failed:", e);
         }

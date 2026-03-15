@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export interface AvatarConfig {
   seed: string;
@@ -47,6 +48,7 @@ export function useAvatar(userId?: Id<"users">) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarConfig, setAvatarConfig] = useState<AvatarConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { authToken } = useAuthSession();
 
   // Get user from Convex (includes avatarConfig)
   const user = useQuery(api.users.getUser, userId ? { userId } : "skip");
@@ -93,14 +95,14 @@ export function useAvatar(userId?: Id<"users">) {
     }
 
     // Save to Convex if we have userId
-    if (userId) {
+    if (userId && authToken) {
       try {
-        await updateAvatarMutation({ userId, avatarConfig: config });
+        await updateAvatarMutation({ authToken, userId, avatarConfig: config });
       } catch (error) {
         console.error('Error saving avatar to Convex:', error);
       }
     }
-  }, [userId, updateAvatarMutation]);
+  }, [authToken, userId, updateAvatarMutation]);
 
   // Clear avatar
   const clearAvatar = useCallback(() => {

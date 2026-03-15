@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthorizationUrl } from '@/lib/workos';
+import { cookies } from "next/headers";
+import { beginAuthorization } from '@/lib/workos';
+import { setOauthCookies } from "@/lib/server-session";
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,10 +14,12 @@ export async function GET(request: NextRequest) {
     const provider = providerParam as 'GoogleOAuth' | 'MicrosoftOAuth' | 'authkit' | undefined;
 
     // Generate authorization URL (defaults to authkit if no provider)
-    const authUrl = await getAuthorizationUrl(provider || undefined);
+    const { url, state, codeVerifier } = await beginAuthorization(provider || undefined);
+    const cookieStore = await cookies();
+    await setOauthCookies(cookieStore, state, codeVerifier);
 
     // Redirect to WorkOS authorization page
-    return NextResponse.redirect(authUrl);
+    return NextResponse.redirect(url);
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(

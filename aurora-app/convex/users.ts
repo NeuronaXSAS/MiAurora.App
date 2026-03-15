@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * Get or create user by WorkOS ID
@@ -90,6 +91,7 @@ export const getUser = query({
  */
 export const completeOnboarding = mutation({
   args: {
+    authToken: v.string(),
     workosId: v.string(),
     industry: v.optional(v.string()),
     location: v.optional(v.string()),
@@ -138,6 +140,8 @@ export const completeOnboarding = mutation({
     identityTags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, undefined, args.workosId);
+
     const user = await ctx.db
       .query("users")
       .withIndex("by_workos_id", (q) => q.eq("workosId", args.workosId))
@@ -281,10 +285,13 @@ export const updateTrustScore = mutation({
  */
 export const getTransactionHistory = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const transactions = await ctx.db
       .query("transactions")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -300,6 +307,7 @@ export const getTransactionHistory = query({
  */
 export const updateAvatar = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     avatarConfig: v.object({
       seed: v.string(),
@@ -314,6 +322,8 @@ export const updateAvatar = mutation({
     }),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const user = await ctx.db.get(args.userId);
     if (!user) {
       throw new Error("User not found");
@@ -333,6 +343,7 @@ export const updateAvatar = mutation({
  */
 export const updateDemographics = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     gender: v.optional(
       v.union(
@@ -378,6 +389,8 @@ export const updateDemographics = mutation({
     communityAffiliations: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const user = await ctx.db.get(args.userId);
     if (!user) {
       throw new Error("User not found");
@@ -444,8 +457,13 @@ export const getUserStats = query({
  * Delete user account and all associated data
  */
 export const deleteAccount = mutation({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const user = await ctx.db.get(args.userId);
 
     if (!user) {

@@ -61,10 +61,9 @@ import { DailyAffirmation } from "@/components/daily-affirmation";
 
 
 import { ProfileHeader } from "@/components/profile-header";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export default function ProfilePage() {
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
-  const [workosId, setWorkosId] = useState<string>("");
   const isPremium = useIsPremium();
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAvatarCreator, setShowAvatarCreator] = useState(false);
@@ -84,6 +83,11 @@ export default function ProfilePage() {
   const updateAvatar = useMutation(api.users.updateAvatar);
 
   const updateProfile = useMutation(api.users.completeOnboarding);
+  const {
+    authToken,
+    userId,
+    workosUserId: workosId,
+  } = useAuthSession();
 
   // Push notifications
   const {
@@ -103,7 +107,7 @@ export default function ProfilePage() {
   // Fetch transaction history
   const transactions = useQuery(
     api.users.getTransactionHistory,
-    userId ? { userId, limit: 10 } : "skip",
+    userId && authToken ? { authToken, userId, limit: 10 } : "skip",
   );
 
   // Fetch recent posts
@@ -115,27 +119,8 @@ export default function ProfilePage() {
   // Fetch saved posts
   const savedPosts = useQuery(
     api.savedPosts.getSavedPosts,
-    userId ? { userId, limit: 10 } : "skip",
+    userId && authToken ? { authToken, userId, limit: 10 } : "skip",
   );
-
-  // Get user ID and WorkOS ID
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-        if (data.workosUserId) {
-          setWorkosId(data.workosUserId);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
 
   // Populate edit form when user data loads
   useEffect(() => {
@@ -151,11 +136,12 @@ export default function ProfilePage() {
   }, [user]);
 
   const handleSaveProfile = async () => {
-    if (!workosId) return;
+    if (!authToken || !workosId) return;
 
     setIsSaving(true);
     try {
       await updateProfile({
+        authToken,
         workosId,
         bio: editForm.bio || undefined,
         location: editForm.location || undefined,
@@ -650,7 +636,10 @@ export default function ProfilePage() {
           open={showAvatarCreator}
           onComplete={async (avatarConfig) => {
             try {
-              await updateAvatar({ userId, avatarConfig });
+              if (!authToken) {
+                throw new Error("Your session expired. Please refresh and try again.");
+              }
+              await updateAvatar({ authToken, userId, avatarConfig });
               setShowAvatarCreator(false);
             } catch (error) {
               console.error("Error updating avatar:", error);

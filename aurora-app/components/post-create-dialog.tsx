@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import {
   Dialog,
@@ -24,6 +24,7 @@ import { FileUpload } from "@/components/file-upload";
 import { Star, MapPin, Sparkles, Lock, Crown, Users } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface PostCreateDialogProps {
   open: boolean;
@@ -51,6 +52,7 @@ export function PostCreateDialog({
   const [isGeocodingLocation, setIsGeocodingLocation] = useState(false);
   const [contentAccess, setContentAccess] = useState<"public" | "subscribers" | "premium">("public");
   const [requiredTier, setRequiredTier] = useState<string>("plus");
+  const { authToken } = useAuthSession();
 
   // Enable subscriber-only content for all users (creator feature)
   const isCreator = true; // All users can create subscriber-only content
@@ -125,6 +127,10 @@ export function PostCreateDialog({
     setLoading(true);
 
     try {
+      if (!authToken) {
+        throw new Error("Your session expired. Please refresh and try again.");
+      }
+
       // Geocode location if provided
       let coordinates: [number, number] | undefined = undefined;
       if (locationName.trim()) {
@@ -144,6 +150,7 @@ export function PostCreateDialog({
 
       // Create post
       const result = await createPost({
+        authToken,
         authorId: userId,
         lifeDimension: lifeDimension as any,
         title,
@@ -162,6 +169,7 @@ export function PostCreateDialog({
         // Add media if any
         if (uploadedFiles.length > 0) {
           await addMedia({
+            authToken,
             postId: result.postId,
             media: uploadedFiles.map((file) => ({
               type: file.type,

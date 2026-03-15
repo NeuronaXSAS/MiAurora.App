@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { clearAuthCookies, isSameOriginRequest } from "@/lib/server-session";
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+    }
+
     // Clear all auth cookies
     const cookieStore = await cookies();
-    
-    cookieStore.delete('workos_access_token');
-    cookieStore.delete('workos_refresh_token');
-    cookieStore.delete('workos_user_id');
+    clearAuthCookies(cookieStore);
 
     return NextResponse.json({ success: true });
   } catch (error) {

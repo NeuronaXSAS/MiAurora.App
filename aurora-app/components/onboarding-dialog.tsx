@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Sparkles } from "lucide-react";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface OnboardingDialogProps {
   open: boolean;
@@ -41,13 +42,19 @@ export function OnboardingDialog({
   const [interests, setInterests] = useState<string[]>([]);
   const [profileImage, setProfileImage] = useState("");
   const [loading, setLoading] = useState(false);
+  const { authToken } = useAuthSession();
 
   const completeOnboarding = useMutation(api.users.completeOnboarding);
 
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      if (!authToken) {
+        throw new Error("Your session expired. Please refresh and try again.");
+      }
+
       await completeOnboarding({
+        authToken,
         workosId,
         industry: industry || undefined,
         location: location || undefined,

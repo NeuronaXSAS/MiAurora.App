@@ -63,6 +63,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 type SortOption = "best" | "hot" | "new" | "top";
 type ViewMode = "card" | "immersive";
@@ -85,28 +86,28 @@ export default function FeedPage() {
   const [showPostDialog, setShowPostDialog] = useState(false);
   const [showPollDialog, setShowPollDialog] = useState(false);
   const router = useRouter();
+  const {
+    authToken,
+    error: authError,
+    isLoading: isAuthLoading,
+    userId: sessionUserId,
+  } = useAuthSession();
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        } else {
-          router.push("/");
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-        router.push("/");
-      }
-    };
-    getUserId();
-  }, [router]);
+    if (sessionUserId) {
+      setUserId(sessionUserId);
+    }
+  }, [sessionUserId]);
+
+  useEffect(() => {
+    if (!isAuthLoading && !sessionUserId && authError) {
+      router.push("/");
+    }
+  }, [authError, isAuthLoading, router, sessionUserId]);
 
   const user = useQuery(api.users.getUser, userId ? { userId } : "skip");
 
@@ -128,19 +129,19 @@ export default function FeedPage() {
   const deleteOpportunity = useMutation(api.opportunities.deleteOpportunity);
 
   const handleVerify = async (postId: Id<"posts">) => {
-    if (!userId) return;
+    if (!userId || !authToken) return;
     try {
-      await verifyPost({ postId, userId });
+      await verifyPost({ authToken, postId, userId });
     } catch (error) {
       console.error("Verification error:", error);
     }
   };
 
   const handleDelete = async (postId: Id<"posts">) => {
-    if (!userId) return;
+    if (!userId || !authToken) return;
     if (!confirm("Are you sure you want to delete this post?")) return;
     try {
-      await deletePost({ postId, userId });
+      await deletePost({ authToken, postId, userId });
     } catch (error) {
       console.error("Delete error:", error);
     }

@@ -1,17 +1,21 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * Create a comment on a post
  */
 export const create = mutation({
   args: {
+    authToken: v.string(),
     postId: v.id("posts"),
     authorId: v.id("users"),
     content: v.string(),
     parentCommentId: v.optional(v.id("comments")),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.authorId);
+
     // Calculate depth
     let depth = 0;
     if (args.parentCommentId) {
@@ -170,12 +174,15 @@ export const getByPost = query({
  */
 export const vote = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     targetId: v.string(),
     targetType: v.union(v.literal("post"), v.literal("comment")),
     voteType: v.union(v.literal("upvote"), v.literal("downvote")),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     // Check existing vote
     const existing = await ctx.db
       .query("votes")
@@ -250,10 +257,13 @@ export const vote = mutation({
  */
 export const deleteComment = mutation({
   args: {
+    authToken: v.string(),
     commentId: v.id("comments"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const comment = await ctx.db.get(args.commentId);
     
     if (!comment) {
@@ -284,10 +294,13 @@ export const deleteComment = mutation({
  */
 export const getUserVote = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     targetId: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const vote = await ctx.db
       .query("votes")
       .withIndex("by_user_and_target", (q) => 

@@ -45,6 +45,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 type FeedViewMode = "cards" | "immersive";
 
@@ -189,6 +190,11 @@ export function MobileFeed() {
   const [isPremium, setIsPremium] = useState(false);
   const [viewMode, setViewMode] = useState<FeedViewMode>("cards");
   const [visibleItems, setVisibleItems] = useState(10); // Progressive loading
+  const {
+    authToken,
+    isPremium: sessionIsPremium,
+    userId: sessionUserId,
+  } = useAuthSession();
 
   // Device performance detection
   const {
@@ -200,20 +206,11 @@ export function MobileFeed() {
 
   // Get user ID and premium status
   useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-          setIsPremium(data.isPremium || false);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
+    if (sessionUserId) {
+      setUserId(sessionUserId);
+    }
+    setIsPremium(sessionIsPremium);
+  }, [sessionIsPremium, sessionUserId]);
 
   // Get user data to check onboarding status
   const user = useQuery(api.users.getUser, userId ? { userId } : "skip");
@@ -238,27 +235,27 @@ export function MobileFeed() {
   // Handle verify post - memoized
   const handleVerify = useCallback(
     async (postId: Id<"posts">) => {
-      if (!userId) return;
+      if (!userId || !authToken) return;
       try {
-        await verifyPost({ postId, userId });
+        await verifyPost({ authToken, postId, userId });
       } catch (error) {
         console.error("Verify error:", error);
       }
     },
-    [userId, verifyPost],
+    [authToken, userId, verifyPost],
   );
 
   // Handle delete post - memoized
   const handleDelete = useCallback(
     async (postId: Id<"posts">) => {
-      if (!userId) return;
+      if (!userId || !authToken) return;
       try {
-        await deletePost({ postId, userId });
+        await deletePost({ authToken, postId, userId });
       } catch (error) {
         console.error("Delete error:", error);
       }
     },
-    [userId, deletePost],
+    [authToken, userId, deletePost],
   );
 
   // Load more items on scroll - progressive loading for performance

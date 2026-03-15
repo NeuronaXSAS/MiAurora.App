@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/server-session";
 
 // Define protected routes that require authentication
 const protectedRoutes = [
@@ -28,7 +29,7 @@ const protectedRoutes = [
 // Public routes that don't require auth
 const publicRoutes = ['/', '/offline', '/legal'];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const response = NextResponse.next();
 
@@ -41,10 +42,11 @@ export function middleware(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
 
   if (isProtectedRoute) {
-    // Check for authentication cookie
-    const accessToken = request.cookies.get('workos_access_token');
+    const session = await verifySessionToken(
+      request.cookies.get(SESSION_COOKIE_NAME)?.value,
+    );
 
-    if (!accessToken) {
+    if (!session) {
       // Redirect to home page if not authenticated
       const url = new URL('/', request.url);
       url.searchParams.set('redirect', pathname);

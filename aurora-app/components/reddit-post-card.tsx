@@ -30,6 +30,7 @@ import { api } from "@/convex/_generated/api";
 import { NestedComment } from "@/components/nested-comment";
 import { Id } from "@/convex/_generated/dataModel";
 import Link from "next/link";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface RedditPostCardProps {
   post: {
@@ -97,11 +98,14 @@ export function RedditPostCard({
 }: RedditPostCardProps) {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const { authToken } = useAuthSession();
 
   // Check if post is saved using Convex (real backend)
   const savedStatus = useQuery(
     api.savedPosts.isPostSaved,
-    currentUserId ? { userId: currentUserId, postId: post._id as Id<"posts"> } : "skip"
+    currentUserId && authToken
+      ? { authToken, userId: currentUserId, postId: post._id as Id<"posts"> }
+      : "skip"
   );
   const toggleSave = useMutation(api.savedPosts.toggleSave);
   
@@ -109,9 +113,9 @@ export function RedditPostCard({
 
   // Handle save/unsave post with real backend
   const handleSave = async () => {
-    if (!currentUserId) return;
+    if (!currentUserId || !authToken) return;
     try {
-      await toggleSave({ userId: currentUserId, postId: post._id as Id<"posts"> });
+      await toggleSave({ authToken, userId: currentUserId, postId: post._id as Id<"posts"> });
     } catch (error) {
       console.error("Save error:", error);
     }
@@ -133,8 +137,8 @@ export function RedditPostCard({
 
   const currentVote = useQuery(
     api.comments.getUserVote,
-    currentUserId
-      ? { userId: currentUserId as Id<"users">, targetId: post._id }
+    currentUserId && authToken
+      ? { authToken, userId: currentUserId as Id<"users">, targetId: post._id }
       : "skip"
   );
 
@@ -149,9 +153,10 @@ export function RedditPostCard({
   }, [currentVote]);
 
   const handleVote = async (voteType: "upvote" | "downvote") => {
-    if (!currentUserId) return;
+    if (!currentUserId || !authToken) return;
     try {
       await vote({
+        authToken,
         userId: currentUserId as Id<"users">,
         targetId: post._id,
         targetType: "post",
@@ -166,9 +171,10 @@ export function RedditPostCard({
   const voteScore = (displayPost.upvotes || 0) - (displayPost.downvotes || 0);
 
   const handleComment = async () => {
-    if (!currentUserId || !commentText.trim()) return;
+    if (!currentUserId || !commentText.trim() || !authToken) return;
     try {
       await createComment({
+        authToken,
         postId: post._id as Id<"posts">,
         authorId: currentUserId as Id<"users">,
         content: commentText,
@@ -400,6 +406,7 @@ export function RedditPostCard({
             <div className="space-y-3">
               {comments.map((comment: any) => (
                 <NestedComment
+                  authToken={authToken}
                   key={comment._id}
                   comment={comment}
                   currentUserId={currentUserId}

@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Id } from "@/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface AIChatCardProps {
   post: {
@@ -37,14 +38,16 @@ interface AIChatCardProps {
 export function AIChatCard({ post, currentUserId, onDelete, isMobile = false }: AIChatCardProps) {
   const votePost = useMutation(api.posts.votePost);
   const deletePost = useMutation(api.posts.deletePost);
+  const { authToken } = useAuthSession();
 
   const isAuthor = currentUserId === post.authorId;
 
   const handleVote = async (voteType: "upvote" | "downvote") => {
-    if (!currentUserId) return;
+    if (!currentUserId || !authToken) return;
     
     try {
       await votePost({
+        authToken,
         postId: post._id,
         userId: currentUserId,
         voteType,
@@ -55,7 +58,7 @@ export function AIChatCard({ post, currentUserId, onDelete, isMobile = false }: 
   };
 
   const handleDelete = async () => {
-    if (!currentUserId || !isAuthor) return;
+    if (!currentUserId || !isAuthor || !authToken) return;
     
     if (!confirm("Are you sure you want to delete this shared conversation?")) {
       return;
@@ -63,6 +66,7 @@ export function AIChatCard({ post, currentUserId, onDelete, isMobile = false }: 
     
     try {
       await deletePost({
+        authToken,
         postId: post._id,
         userId: currentUserId,
       });

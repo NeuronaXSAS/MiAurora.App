@@ -6,16 +6,20 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * Save a post (bookmark)
  */
 export const savePost = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     postId: v.id("posts"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     // Check if already saved
     const existing = await ctx.db
       .query("savedPosts")
@@ -43,10 +47,13 @@ export const savePost = mutation({
  */
 export const unsavePost = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     postId: v.id("posts"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const saved = await ctx.db
       .query("savedPosts")
       .withIndex("by_user_and_post", (q) =>
@@ -67,10 +74,13 @@ export const unsavePost = mutation({
  */
 export const toggleSave = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     postId: v.id("posts"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const existing = await ctx.db
       .query("savedPosts")
       .withIndex("by_user_and_post", (q) =>
@@ -96,10 +106,13 @@ export const toggleSave = mutation({
  */
 export const isPostSaved = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     postId: v.id("posts"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const saved = await ctx.db
       .query("savedPosts")
       .withIndex("by_user_and_post", (q) =>
@@ -116,10 +129,13 @@ export const isPostSaved = query({
  */
 export const getSavedPosts = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const limit = args.limit || 50;
 
     const savedPosts = await ctx.db
@@ -160,9 +176,12 @@ export const getSavedPosts = query({
  */
 export const getSavedPostIds = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const savedPosts = await ctx.db
       .query("savedPosts")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))

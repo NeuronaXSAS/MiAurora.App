@@ -9,6 +9,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from "next/headers";
+import { isSameOriginRequest, readSession } from "@/lib/server-session";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.miaurora.app';
 
@@ -77,8 +79,27 @@ function getPPPMultiplier(country: string): number {
   return PPP_MULTIPLIERS[country] || PPP_MULTIPLIERS.default;
 }
 
+function normalizeCountry(country: string | null): string {
+  const normalized = (country || "US").toUpperCase();
+  const euCountries = new Set([
+    "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR",
+    "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK",
+    "SI", "ES", "SE",
+  ]);
+
+  if (euCountries.has(normalized)) {
+    return "EU";
+  }
+
+  return normalized;
+}
+
 export async function POST(request: NextRequest) {
   try {
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+    }
+
     // Check if Stripe is configured
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
@@ -92,16 +113,22 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { 
-      userId, 
-      email, 
       type, // 'subscription' or 'credits'
       tier, // 'plus', 'pro', 'elite' for subscriptions
       billingCycle, // 'monthly' or 'annual'
       packageId, // 'small', 'medium', 'large', 'xl' for credits
-      country, // For regional pricing
     } = body;
+    const cookieStore = await cookies();
+    const authSession = await readSession(cookieStore);
+    const country = normalizeCountry(
+      request.headers.get("x-vercel-ip-country") || request.headers.get("cf-ipcountry"),
+    );
 
-    if (!userId || !email || !type) {
+    if (!authSession) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!type) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -184,19 +211,19 @@ export async function POST(request: NextRequest) {
         mode: 'subscription',
         payment_method_types: paymentMethods as any,
         line_items: lineItems,
-        customer_email: email,
+        customer_email: authSession.email,
         metadata: {
-          userId,
+          userId: authSession.convexUserId,
           type: 'subscription',
           tier,
           billingCycle,
-          country: country || 'US',
+          country,
         },
         success_url: `${APP_URL}/premium/success?session_id={CHECKOUT_SESSION_ID}&type=subscription`,
         cancel_url: `${APP_URL}/premium?canceled=true`,
         subscription_data: {
           metadata: {
-            userId,
+            userId: authSession.convexUserId,
             tier,
             billingCycle,
           },
@@ -261,13 +288,13 @@ export async function POST(request: NextRequest) {
         mode: 'payment',
         payment_method_types: paymentMethods as any,
         line_items: lineItems,
-        customer_email: email,
+        customer_email: authSession.email,
         metadata: {
-          userId,
+          userId: authSession.convexUserId,
           type: 'credits',
           packageId,
           credits: pkg.credits.toString(),
-          country: country || 'US',
+          country,
         },
         success_url: `${APP_URL}/premium/success?session_id={CHECKOUT_SESSION_ID}&type=credits`,
         cancel_url: `${APP_URL}/premium?canceled=true`,

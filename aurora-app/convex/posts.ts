@@ -1,11 +1,13 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * Create a new post and award credits to the author
  */
 export const create = mutation({
   args: {
+    authToken: v.string(),
     authorId: v.id("users"),
     lifeDimension: v.union(
       v.literal("professional"),
@@ -26,6 +28,8 @@ export const create = mutation({
     isAnonymous: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.authorId);
+
     // Validate input
     if (args.title.length < 10 || args.title.length > 200) {
       throw new Error("Title must be 10-200 characters");
@@ -410,10 +414,13 @@ export const getPost = query({
  */
 export const verify = mutation({
   args: {
+    authToken: v.string(),
     postId: v.id("posts"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const post = await ctx.db.get(args.postId);
     
     if (!post) {
@@ -515,6 +522,7 @@ export const getUserRecent = query({
  */
 export const addMedia = mutation({
   args: {
+    authToken: v.string(),
     postId: v.id("posts"),
     media: v.array(
       v.object({
@@ -531,6 +539,8 @@ export const addMedia = mutation({
     if (!post) {
       throw new Error("Post not found");
     }
+
+    await requireAuthenticatedUser(args.authToken, post.authorId);
 
     const existingMedia = post.media ?? [];
     const newMedia = [...existingMedia, ...args.media];
@@ -553,10 +563,13 @@ export const addMedia = mutation({
  */
 export const deletePost = mutation({
   args: {
+    authToken: v.string(),
     postId: v.id("posts"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const post = await ctx.db.get(args.postId);
     
     if (!post) {
@@ -590,11 +603,14 @@ export const deletePost = mutation({
  */
 export const votePost = mutation({
   args: {
+    authToken: v.string(),
     postId: v.id("posts"),
     userId: v.id("users"),
     voteType: v.union(v.literal("upvote"), v.literal("downvote")),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const post = await ctx.db.get(args.postId);
     
     if (!post) {

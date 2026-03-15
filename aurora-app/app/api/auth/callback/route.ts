@@ -3,6 +3,12 @@ import { authenticateWithCode } from '@/lib/workos';
 import { cookies } from 'next/headers';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
+import {
+  clearAuthCookies,
+  readOauthCodeVerifier,
+  readOauthState,
+  setSessionCookie,
+} from "@/lib/server-session";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -11,13 +17,25 @@ export async function GET(request: NextRequest) {
     // Get authorization code from query params
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get('code');
+    const state = searchParams.get("state");
 
-    if (!code) {
-      return NextResponse.redirect(new URL('/?error=no_code', request.url));
+    if (!code || !state) {
+      return NextResponse.redirect(new URL('/?error=invalid_oauth_callback', request.url));
+    }
+
+    const cookieStore = await cookies();
+    const [expectedState, codeVerifier] = await Promise.all([
+      readOauthState(cookieStore),
+      readOauthCodeVerifier(cookieStore),
+    ]);
+
+    if (!expectedState || !codeVerifier || expectedState !== state) {
+      clearAuthCookies(cookieStore);
+      return NextResponse.redirect(new URL("/?error=invalid_oauth_state", request.url));
     }
 
     // Exchange code for user profile and tokens
-    const { user, accessToken, refreshToken } = await authenticateWithCode(code);
+    const { user } = await authenticateWithCode(code, codeVerifier);
 
     // Create or get user in Convex
     // Construct name from available fields, fallback to email
@@ -37,47 +55,19 @@ export async function GET(request: NextRequest) {
       throw new Error('Failed to create or get user in Convex');
     }
 
-    // Set secure HTTP-only cookies
-    const cookieStore = await cookies();
-    
-    cookieStore.set('workos_access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    });
-
-    cookieStore.set('workos_refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      path: '/',
-    });
-
-    // Store user ID for quick access
-    cookieStore.set('workos_user_id', user.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    });
-
-    // Store Convex user ID
-    cookieStore.set('convex_user_id', convexUser._id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
+    clearAuthCookies(cookieStore);
+    await setSessionCookie(cookieStore, {
+      convexUserId: convexUser._id,
+      workosUserId: user.id,
+      email: user.email,
     });
 
     // Redirect to feed page (or onboarding if new user)
     return NextResponse.redirect(new URL('/feed', request.url));
   } catch (error) {
     console.error('Callback error:', error);
+    const cookieStore = await cookies();
+    clearAuthCookies(cookieStore);
     return NextResponse.redirect(new URL('/?error=auth_failed', request.url));
   }
 }

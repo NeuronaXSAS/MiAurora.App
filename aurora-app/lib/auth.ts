@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
-import { getUserProfile, refreshAccessToken } from './workos';
+import { getUserProfile } from './workos';
+import { readSession } from "./server-session";
 
 /**
  * Get current authenticated user from cookies
@@ -7,15 +8,14 @@ import { getUserProfile, refreshAccessToken } from './workos';
 export async function getCurrentUser() {
   try {
     const cookieStore = await cookies();
-    
-    const userId = cookieStore.get('workos_user_id')?.value;
+    const session = await readSession(cookieStore);
 
-    if (!userId) {
+    if (!session) {
       return null;
     }
 
     // Get user profile
-    const user = await getUserProfile(userId);
+    const user = await getUserProfile(session.workosUserId);
 
     return user;
   } catch (error) {

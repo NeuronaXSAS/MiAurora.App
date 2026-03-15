@@ -1,12 +1,14 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * Create a poll post
  */
 export const createPoll = mutation({
   args: {
+    authToken: v.string(),
     authorId: v.id("users"),
     title: v.string(),
     description: v.optional(v.string()),
@@ -22,6 +24,8 @@ export const createPoll = mutation({
     location: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.authorId);
+
     // Validation
     if (args.options.length < 2 || args.options.length > 6) {
       throw new Error("Polls must have 2-6 options");
@@ -81,11 +85,14 @@ export const createPoll = mutation({
  */
 export const votePoll = mutation({
   args: {
+    authToken: v.string(),
     postId: v.id("posts"),
     userId: v.id("users"),
     optionIndex: v.number(),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const post = await ctx.db.get(args.postId);
     
     if (!post) {
@@ -161,10 +168,13 @@ export const votePoll = mutation({
  */
 export const getUserVote = query({
   args: {
+    authToken: v.string(),
     postId: v.id("posts"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const vote = await ctx.db
       .query("pollVotes")
       .withIndex("by_post_and_user", (q) => 
@@ -181,10 +191,13 @@ export const getUserVote = query({
  */
 export const deletePoll = mutation({
   args: {
+    authToken: v.string(),
     postId: v.id("posts"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+
     const post = await ctx.db.get(args.postId);
     
     if (!post) {

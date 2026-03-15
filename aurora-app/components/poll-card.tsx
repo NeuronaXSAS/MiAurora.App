@@ -12,6 +12,7 @@ import { BarChart3, Users, Trash2, MessageSquare, ThumbsUp, ThumbsDown, Send } f
 import { formatDistanceToNow } from "date-fns";
 import { Id } from "@/convex/_generated/dataModel";
 import { NestedComment } from "@/components/nested-comment";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface PollCardProps {
   post: {
@@ -51,11 +52,14 @@ export function PollCard({ post, currentUserId, onDelete, isMobile = false }: Po
   const deletePoll = useMutation(api.polls.deletePoll);
   const votePost = useMutation(api.posts.votePost);
   const createComment = useMutation(api.comments.create);
+  const { authToken } = useAuthSession();
   
   // Get user's existing vote
   const userVote = useQuery(
     api.polls.getUserVote,
-    currentUserId ? { postId: post._id, userId: currentUserId } : "skip"
+    currentUserId && authToken
+      ? { authToken, postId: post._id, userId: currentUserId }
+      : "skip"
   );
 
   // Get comments for this poll
@@ -69,10 +73,11 @@ export function PollCard({ post, currentUserId, onDelete, isMobile = false }: Po
   const totalVotes = post.pollOptions?.reduce((sum, opt) => sum + opt.votes, 0) || 0;
 
   const handleComment = async () => {
-    if (!currentUserId || !commentText.trim()) return;
+    if (!currentUserId || !commentText.trim() || !authToken) return;
     
     try {
       await createComment({
+        authToken,
         postId: post._id,
         authorId: currentUserId,
         content: commentText,
@@ -84,11 +89,12 @@ export function PollCard({ post, currentUserId, onDelete, isMobile = false }: Po
   };
 
   const handleVote = async (optionIndex: number) => {
-    if (!currentUserId || isVoting) return;
+    if (!currentUserId || !authToken || isVoting) return;
     
     setIsVoting(true);
     try {
       await votePoll({
+        authToken,
         postId: post._id,
         userId: currentUserId,
         optionIndex,
@@ -102,10 +108,11 @@ export function PollCard({ post, currentUserId, onDelete, isMobile = false }: Po
   };
 
   const handlePostVote = async (voteType: "upvote" | "downvote") => {
-    if (!currentUserId) return;
+    if (!currentUserId || !authToken) return;
     
     try {
       await votePost({
+        authToken,
         postId: post._id,
         userId: currentUserId,
         voteType,
@@ -116,7 +123,7 @@ export function PollCard({ post, currentUserId, onDelete, isMobile = false }: Po
   };
 
   const handleDelete = async () => {
-    if (!currentUserId || !isAuthor) return;
+    if (!currentUserId || !isAuthor || !authToken) return;
     
     if (!confirm("Are you sure you want to delete this poll?")) {
       return;
@@ -124,6 +131,7 @@ export function PollCard({ post, currentUserId, onDelete, isMobile = false }: Po
     
     try {
       await deletePoll({
+        authToken,
         postId: post._id,
         userId: currentUserId,
       });
@@ -323,6 +331,7 @@ export function PollCard({ post, currentUserId, onDelete, isMobile = false }: Po
               <div className="space-y-3">
                 {comments.map((comment: any) => (
                   <NestedComment
+                    authToken={authToken}
                     key={comment._id}
                     comment={comment}
                     currentUserId={currentUserId}
