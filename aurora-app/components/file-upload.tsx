@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { X, Upload, Image as ImageIcon, Video } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface UploadedFile {
   storageId: Id<"_storage">;
@@ -24,8 +25,10 @@ export function FileUpload({ onFilesChange, maxFiles = 5 }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { authToken, userId } = useAuthSession();
 
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const registerUploadedFile = useMutation(api.files.registerUploadedFile);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
@@ -39,6 +42,10 @@ export function FileUpload({ onFilesChange, maxFiles = 5 }: FileUploadProps) {
     setUploading(true);
 
     try {
+      if (!authToken || !userId) {
+        throw new Error("You must be signed in to upload files.");
+      }
+
       const uploadedFiles: UploadedFile[] = [];
 
       for (const file of selectedFiles) {
@@ -71,6 +78,12 @@ export function FileUpload({ onFilesChange, maxFiles = 5 }: FileUploadProps) {
         });
 
         const { storageId } = await result.json();
+
+        await registerUploadedFile({
+          authToken,
+          userId,
+          storageId,
+        });
 
         // Get file URL
         const fileUrl = await fetch(
@@ -123,7 +136,7 @@ export function FileUpload({ onFilesChange, maxFiles = 5 }: FileUploadProps) {
           htmlFor="file-upload"
           className="cursor-pointer flex flex-col items-center gap-2"
         >
-          <Upload className="w-8 h-8 text-gray-400" />
+          <Upload className="w-8 h-8 text-muted-foreground" />
           <div className="text-sm text-gray-600">
             {uploading ? (
               <span>Uploading...</span>
@@ -166,7 +179,7 @@ export function FileUpload({ onFilesChange, maxFiles = 5 }: FileUploadProps) {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Video className="w-12 h-12 text-gray-400" />
+                    <Video className="w-12 h-12 text-muted-foreground" />
                   </div>
                 )}
               </div>

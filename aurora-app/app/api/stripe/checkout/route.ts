@@ -211,6 +211,7 @@ export async function POST(request: NextRequest) {
         mode: 'subscription',
         payment_method_types: paymentMethods as any,
         line_items: lineItems,
+        client_reference_id: authSession.convexUserId,
         customer_email: authSession.email,
         metadata: {
           userId: authSession.convexUserId,
@@ -288,6 +289,7 @@ export async function POST(request: NextRequest) {
         mode: 'payment',
         payment_method_types: paymentMethods as any,
         line_items: lineItems,
+        client_reference_id: authSession.convexUserId,
         customer_email: authSession.email,
         metadata: {
           userId: authSession.convexUserId,
@@ -295,6 +297,15 @@ export async function POST(request: NextRequest) {
           packageId,
           credits: pkg.credits.toString(),
           country,
+        },
+        payment_intent_data: {
+          metadata: {
+            userId: authSession.convexUserId,
+            type: 'credits',
+            packageId,
+            credits: pkg.credits.toString(),
+            country,
+          },
         },
         success_url: `${APP_URL}/premium/success?session_id={CHECKOUT_SESSION_ID}&type=credits`,
         cancel_url: `${APP_URL}/premium?canceled=true`,

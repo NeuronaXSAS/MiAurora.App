@@ -15,6 +15,84 @@ import { Id } from '@/convex/_generated/dataModel';
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
+async function resolveCheckoutUserId(stripe: any, session: any): Promise<Id<"users"> | null> {
+  const metadataUserId = session.metadata?.userId || session.client_reference_id;
+  if (metadataUserId) {
+    return metadataUserId as Id<"users">;
+  }
+
+  if (typeof session.subscription === "string") {
+    try {
+      const subscription = await stripe.subscriptions.retrieve(session.subscription);
+      const subscriptionUserId =
+        subscription.metadata?.userId || subscription.metadata?.convexUserId;
+      if (subscriptionUserId) {
+        return subscriptionUserId as Id<"users">;
+      }
+    } catch (error) {
+      console.error("Failed to resolve Stripe subscription metadata:", error);
+    }
+  }
+
+  return null;
+}
+
+async function processCheckoutSession(stripe: any, session: any) {
+  const metadata = session.metadata || {};
+  const userId = await resolveCheckoutUserId(stripe, session);
+
+  if (!userId) {
+    console.error("No userId found for checkout session", {
+      checkoutSessionId: session.id,
+      clientReferenceId: session.client_reference_id,
+    });
+    return;
+  }
+
+  if (metadata.type === 'subscription') {
+    const tier = metadata.tier;
+    const billingCycle = metadata.billingCycle as 'monthly' | 'annual';
+
+    if (!session.subscription) {
+      console.error("Missing subscription id for completed subscription checkout", {
+        checkoutSessionId: session.id,
+      });
+      return;
+    }
+
+    await convex.mutation(api.subscriptions.createSubscription, {
+      userId,
+      tier,
+      billingCycle,
+      stripeSubscriptionId: session.subscription as string,
+      stripeCustomerId: session.customer as string,
+    });
+
+    console.log(`Subscription created for user ${userId}: ${tier} (${billingCycle})`);
+    return;
+  }
+
+  if (metadata.type === 'credits') {
+    if (session.payment_status !== "paid") {
+      console.log("Skipping unpaid credit checkout session", {
+        checkoutSessionId: session.id,
+        paymentStatus: session.payment_status,
+      });
+      return;
+    }
+
+    const packageId = metadata.packageId;
+
+    await convex.mutation(api.credits.purchaseCredits, {
+      userId,
+      packageId,
+      stripePaymentId: session.payment_intent as string,
+    });
+
+    console.log(`Credits purchased for user ${userId}: ${packageId}`);
+  }
+}
+
 export async function POST(request: NextRequest) {
   // Check if Stripe is configured
   if (!process.env.STRIPE_SECRET_KEY || !webhookSecret) {
@@ -69,41 +147,13 @@ export async function POST(request: NextRequest) {
       // ============================================
       case 'checkout.session.completed': {
         const session = event.data.object;
-        const metadata = session.metadata || {};
-        const userId = metadata.userId as Id<"users">;
-        
-        if (!userId) {
-          console.error('No userId in checkout session metadata');
-          break;
-        }
+        await processCheckoutSession(stripe, session);
+        break;
+      }
 
-        if (metadata.type === 'subscription') {
-          // Handle subscription checkout
-          const tier = metadata.tier;
-          const billingCycle = metadata.billingCycle as 'monthly' | 'annual';
-          
-          await convex.mutation(api.subscriptions.createSubscription, {
-            userId,
-            tier,
-            billingCycle,
-            stripeSubscriptionId: session.subscription as string,
-            stripeCustomerId: session.customer as string,
-          });
-          
-          console.log(`Subscription created for user ${userId}: ${tier} (${billingCycle})`);
-          
-        } else if (metadata.type === 'credits') {
-          // Handle credit purchase
-          const packageId = metadata.packageId;
-          
-          await convex.mutation(api.credits.purchaseCredits, {
-            userId,
-            packageId,
-            stripePaymentId: session.payment_intent as string,
-          });
-          
-          console.log(`Credits purchased for user ${userId}: ${packageId}`);
-        }
+      case 'checkout.session.async_payment_succeeded': {
+        const session = event.data.object;
+        await processCheckoutSession(stripe, session);
         break;
       }
 
@@ -201,6 +251,12 @@ export async function POST(request: NextRequest) {
       case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object;
         console.log(`Payment intent succeeded: ${paymentIntent.id}`);
+        break;
+      }
+
+      case 'checkout.session.async_payment_failed': {
+        const session = event.data.object;
+        console.log(`Async checkout payment failed: ${session.id}`);
         break;
       }
 

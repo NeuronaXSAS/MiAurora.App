@@ -236,7 +236,8 @@ export default defineSchema({
   })
     .index("by_category", ["category"])
     .index("by_active", ["isActive"])
-    .index("by_creator", ["creatorId"]),
+    .index("by_creator", ["creatorId"])
+    .index("by_thumbnail_storage", ["thumbnailStorageId"]),
 
   unlocks: defineTable({
     userId: v.id("users"),
@@ -321,7 +322,8 @@ export default defineSchema({
     .index("by_sharing", ["sharingLevel"])
     .index("by_rating", ["rating"])
     .index("by_type", ["routeType"]) // For filtering by route type
-    .index("by_sharing_and_rating", ["sharingLevel", "rating"]), // Compound index for discovery
+    .index("by_sharing_and_rating", ["sharingLevel", "rating"]) // Compound index for discovery
+    .index("by_voice_note_storage", ["voiceNoteStorageId"]),
 
   routeCompletions: defineTable({
     routeId: v.id("routes"),
@@ -2220,7 +2222,17 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_and_date", ["userId", "date"]) // For fetching all entries for a date
-    .index("by_date", ["date"]),
+    .index("by_date", ["date"])
+    .index("by_photo_storage", ["photoStorageId"])
+    .index("by_voice_note_storage", ["voiceNoteStorageId"]),
+
+  uploadedFiles: defineTable({
+    storageId: v.id("_storage"),
+    ownerId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_storage", ["storageId"])
+    .index("by_owner", ["ownerId"]),
 
   // ============================================
   // DAILY ENGAGEMENT - Login Streaks & Challenges

@@ -28,8 +28,16 @@ export async function GET(request: NextRequest) {
 
     // Get file URL from Convex
     const url = await convex.mutation(api.files.getUrl, {
+      requesterUserId: session.convexUserId as Id<"users">,
       storageId: storageId as Id<"_storage">,
     });
+
+    if (!url) {
+      return NextResponse.json(
+        { error: "File not found" },
+        { status: 404 },
+      );
+    }
 
     return NextResponse.json({ url });
   } catch (error) {
