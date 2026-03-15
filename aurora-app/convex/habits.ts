@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 // ============================================
 // HABIT QUERIES
@@ -9,12 +10,16 @@ import { mutation, query } from "./_generated/server";
  * Get all active habits for a user
  */
 export const getHabits = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     return await ctx.db
       .query("habits")
       .withIndex("by_user_active", (q) => 
-        q.eq("userId", args.userId).eq("isActive", true)
+        q.eq("userId", userId).eq("isActive", true)
       )
       .collect();
   },
@@ -25,14 +30,16 @@ export const getHabits = query({
  */
 export const getCompletions = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     startDate: v.string(),
     endDate: v.string(),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const completions = await ctx.db
       .query("habitCompletions")
-      .withIndex("by_user_date", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user_date", (q) => q.eq("userId", userId))
       .collect();
     
     // Filter by date range in memory (more efficient for small datasets)
@@ -46,20 +53,24 @@ export const getCompletions = query({
  * Get today's habit status for quick dashboard view
  */
 export const getTodayStatus = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const today = new Date().toISOString().split("T")[0];
     
     const habits = await ctx.db
       .query("habits")
       .withIndex("by_user_active", (q) => 
-        q.eq("userId", args.userId).eq("isActive", true)
+        q.eq("userId", userId).eq("isActive", true)
       )
       .collect();
 
     const completions = await ctx.db
       .query("habitCompletions")
-      .withIndex("by_user_date", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user_date", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("date"), today))
       .collect();
 
@@ -77,11 +88,15 @@ export const getTodayStatus = query({
  * Get habit statistics for profile/dashboard
  */
 export const getHabitStats = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const habits = await ctx.db
       .query("habits")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     const activeHabits = habits.filter((h) => h.isActive && !h.isArchived);
@@ -108,6 +123,7 @@ export const getHabitStats = query({
  */
 export const createHabit = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     name: v.string(),
     emoji: v.string(),
@@ -118,8 +134,9 @@ export const createHabit = mutation({
     color: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const habitId = await ctx.db.insert("habits", {
-      userId: args.userId,
+      userId,
       name: args.name,
       emoji: args.emoji,
       type: args.type,
@@ -135,14 +152,14 @@ export const createHabit = mutation({
     });
 
     // Award credits for creating a habit (encourages engagement)
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (user) {
-      await ctx.db.patch(args.userId, {
+      await ctx.db.patch(userId, {
         credits: user.credits + 5,
         monthlyCreditsEarned: (user.monthlyCreditsEarned || 0) + 5,
       });
       await ctx.db.insert("transactions", {
-        userId: args.userId,
+        userId,
         amount: 5,
         type: "habit_created",
         relatedId: habitId,
@@ -158,6 +175,7 @@ export const createHabit = mutation({
  */
 export const toggleCompletion = mutation({
   args: {
+    authToken: v.string(),
     habitId: v.id("habits"),
     userId: v.id("users"),
     date: v.optional(v.string()),
@@ -165,9 +183,10 @@ export const toggleCompletion = mutation({
     difficulty: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const today = args.date || new Date().toISOString().split("T")[0];
     const habit = await ctx.db.get(args.habitId);
-    if (!habit || habit.userId !== args.userId) {
+    if (!habit || habit.userId !== userId) {
       throw new Error("Habit not found");
     }
 
@@ -195,7 +214,7 @@ export const toggleCompletion = mutation({
       // Complete the habit
       await ctx.db.insert("habitCompletions", {
         habitId: args.habitId,
-        userId: args.userId,
+        userId,
         date: today,
         completed: true,
         note: args.note,
@@ -218,14 +237,14 @@ export const toggleCompletion = mutation({
       if (newStreak === 30) creditsEarned += 50; // Month streak bonus
       if (newStreak === 100) creditsEarned += 200; // 100 day bonus
 
-      const user = await ctx.db.get(args.userId);
+      const user = await ctx.db.get(userId);
       if (user) {
-        await ctx.db.patch(args.userId, {
+        await ctx.db.patch(userId, {
           credits: user.credits + creditsEarned,
           monthlyCreditsEarned: (user.monthlyCreditsEarned || 0) + creditsEarned,
         });
         await ctx.db.insert("transactions", {
-          userId: args.userId,
+          userId,
           amount: creditsEarned,
           type: "habit_completion",
           relatedId: args.habitId,
@@ -248,6 +267,7 @@ export const toggleCompletion = mutation({
  */
 export const updateHabit = mutation({
   args: {
+    authToken: v.string(),
     habitId: v.id("habits"),
     userId: v.id("users"),
     name: v.optional(v.string()),
@@ -257,8 +277,9 @@ export const updateHabit = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const habit = await ctx.db.get(args.habitId);
-    if (!habit || habit.userId !== args.userId) {
+    if (!habit || habit.userId !== userId) {
       throw new Error("Habit not found");
     }
 
@@ -279,12 +300,14 @@ export const updateHabit = mutation({
  */
 export const archiveHabit = mutation({
   args: {
+    authToken: v.string(),
     habitId: v.id("habits"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const habit = await ctx.db.get(args.habitId);
-    if (!habit || habit.userId !== args.userId) {
+    if (!habit || habit.userId !== userId) {
       throw new Error("Habit not found");
     }
 
@@ -336,12 +359,16 @@ async function calculateStreak(
 // ============================================
 
 export const getGoals = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     return await ctx.db
       .query("personalGoals")
       .withIndex("by_user_active", (q) => 
-        q.eq("userId", args.userId).eq("isActive", true)
+        q.eq("userId", userId).eq("isActive", true)
       )
       .collect();
   },
@@ -349,6 +376,7 @@ export const getGoals = query({
 
 export const createGoal = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     title: v.string(),
     description: v.optional(v.string()),
@@ -370,8 +398,9 @@ export const createGoal = mutation({
     }))),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const goalId = await ctx.db.insert("personalGoals", {
-      userId: args.userId,
+      userId,
       title: args.title,
       description: args.description,
       category: args.category,
@@ -389,6 +418,7 @@ export const createGoal = mutation({
 
 export const updateGoalProgress = mutation({
   args: {
+    authToken: v.string(),
     goalId: v.id("personalGoals"),
     userId: v.id("users"),
     progress: v.optional(v.number()),
@@ -396,8 +426,9 @@ export const updateGoalProgress = mutation({
     milestoneCompleted: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const goal = await ctx.db.get(args.goalId);
-    if (!goal || goal.userId !== args.userId) {
+    if (!goal || goal.userId !== userId) {
       throw new Error("Goal not found");
     }
 
@@ -410,14 +441,14 @@ export const updateGoalProgress = mutation({
         updates.completedAt = Date.now();
         
         // Award credits for completing a goal
-        const user = await ctx.db.get(args.userId);
+        const user = await ctx.db.get(userId);
         if (user) {
-          await ctx.db.patch(args.userId, {
+          await ctx.db.patch(userId, {
             credits: user.credits + 25,
             monthlyCreditsEarned: (user.monthlyCreditsEarned || 0) + 25,
           });
           await ctx.db.insert("transactions", {
-            userId: args.userId,
+            userId,
             amount: 25,
             type: "goal_completed",
             relatedId: args.goalId,
@@ -452,8 +483,12 @@ export const updateGoalProgress = mutation({
 // ============================================
 
 export const getDailyAffirmation = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Get all affirmations
     const affirmations = await ctx.db
       .query("dailyAffirmations")
@@ -472,7 +507,7 @@ export const getDailyAffirmation = query({
     // Get user's history to avoid repeats
     const history = await ctx.db
       .query("userAffirmationHistory")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     const recentIds = new Set(

@@ -31,6 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { Id } from "@/convex/_generated/dataModel";
 import { REVENUE_SHARES } from "@/convex/premiumConfig";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface CirclePremiumManagerProps {
   circleId: Id<"circles">;
@@ -54,10 +55,14 @@ export function CirclePremiumManager({ circleId, userId, isAdmin }: CirclePremiu
   const [isCreating, setIsCreating] = useState(false);
   const [tierForm, setTierForm] = useState<TierFormData>({ name: "", price: "", benefits: [] });
   const [newBenefit, setNewBenefit] = useState("");
+  const { authToken } = useAuthSession();
 
   // In a real implementation, these would be actual queries
   // For now, we'll use placeholder data structure
-  const circleTiers = useQuery(api.rooms.getCircleRooms, { circleId }); // Placeholder
+  const circleTiers = useQuery(
+    api.rooms.getCircleRooms,
+    authToken ? { authToken, circleId, userId } : "skip",
+  ); // Placeholder
   
   const memberCount = 127; // Placeholder
   const paidMemberCount = 45; // Placeholder

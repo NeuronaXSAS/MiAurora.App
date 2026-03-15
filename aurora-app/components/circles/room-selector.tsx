@@ -39,6 +39,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { Id } from "@/convex/_generated/dataModel";
 import { ROOM_LIMITS } from "@/convex/premiumConfig";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 type RoomType = "chat" | "audio" | "video" | "forum" | "broadcast";
 type RoomVisibility = "public" | "members" | "tier";
@@ -108,17 +109,19 @@ export function RoomSelector({ circleId, userId, isAdmin, onRoomSelect }: RoomSe
   const [roomType, setRoomType] = useState<RoomType>("chat");
   const [visibility, setVisibility] = useState<RoomVisibility>("members");
   const [requiredTier, setRequiredTier] = useState("");
+  const { authToken } = useAuthSession();
 
-  const rooms = useQuery(api.rooms.getCircleRooms, { circleId });
+  const rooms = useQuery(api.rooms.getCircleRooms, authToken ? { authToken, circleId, userId } : "skip");
   const createRoom = useMutation(api.rooms.createRoom);
   const joinRoom = useMutation(api.rooms.joinRoom);
 
   const handleCreateRoom = async () => {
-    if (!name) return;
+    if (!name || !authToken) return;
     
     setIsCreating(true);
     try {
       await createRoom({
+        authToken,
         circleId,
         name,
         description: description || undefined,
@@ -143,9 +146,11 @@ export function RoomSelector({ circleId, userId, isAdmin, onRoomSelect }: RoomSe
   };
 
   const handleJoinRoom = async (roomId: Id<"rooms">) => {
+    if (!authToken) return;
     setIsJoining(roomId);
     try {
       const result = await joinRoom({
+        authToken,
         roomId,
         userId,
       });

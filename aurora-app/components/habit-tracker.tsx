@@ -26,6 +26,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface HabitTrackerProps {
   userId: Id<"users">;
@@ -119,19 +120,21 @@ export function HabitTracker({ userId, compact = false }: HabitTrackerProps) {
   const [newHabitType, setNewHabitType] = useState<"build" | "break">("build");
   const [togglingHabit, setTogglingHabit] = useState<string | null>(null);
   const [celebration, setCelebration] = useState<{ streak: number; credits: number } | null>(null);
+  const { authToken } = useAuthSession();
 
   // Queries
-  const todayStatus = useQuery(api.habits.getTodayStatus, { userId });
-  const habitStats = useQuery(api.habits.getHabitStats, { userId });
+  const todayStatus = useQuery(api.habits.getTodayStatus, authToken ? { authToken, userId } : "skip");
+  const habitStats = useQuery(api.habits.getHabitStats, authToken ? { authToken, userId } : "skip");
 
   // Mutations
   const createHabit = useMutation(api.habits.createHabit);
   const toggleCompletion = useMutation(api.habits.toggleCompletion);
 
   const handleToggle = useCallback(async (habitId: Id<"habits">) => {
+    if (!authToken) return;
     setTogglingHabit(habitId);
     try {
-      const result = await toggleCompletion({ habitId, userId });
+      const result = await toggleCompletion({ authToken, habitId, userId });
       if (result.completed && result.milestone) {
         setCelebration({ streak: result.milestone, credits: result.creditsEarned });
         setTimeout(() => setCelebration(null), 3000);
@@ -141,13 +144,14 @@ export function HabitTracker({ userId, compact = false }: HabitTrackerProps) {
     } finally {
       setTogglingHabit(null);
     }
-  }, [toggleCompletion, userId]);
+  }, [authToken, toggleCompletion, userId]);
 
   const handleCreateHabit = async () => {
-    if (!newHabitName.trim()) return;
+    if (!newHabitName.trim() || !authToken) return;
     
     try {
       await createHabit({
+        authToken,
         userId,
         name: newHabitName.trim(),
         emoji: newHabitEmoji,

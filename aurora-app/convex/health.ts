@@ -1,15 +1,18 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 // Hydration Tracking
 
 export const logWater = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     glasses: v.number(),
     clientDate: v.optional(v.string()), // Client's local date YYYY-MM-DD
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Use client date if provided, otherwise fallback to server UTC
     const today = args.clientDate || new Date().toISOString().split('T')[0];
     
@@ -17,7 +20,7 @@ export const logWater = mutation({
     const existing = await ctx.db
       .query("hydrationLogs")
       .withIndex("by_user_and_date", (q) => 
-        q.eq("userId", args.userId).eq("date", today)
+        q.eq("userId", userId).eq("date", today)
       )
       .first();
 
@@ -34,7 +37,7 @@ export const logWater = mutation({
     } else {
       // Create new log
       return await ctx.db.insert("hydrationLogs", {
-        userId: args.userId,
+        userId,
         date: today,
         glasses: args.glasses,
         goal,
@@ -46,15 +49,17 @@ export const logWater = mutation({
 
 export const getTodayHydration = query({
   args: { 
+    authToken: v.string(),
     userId: v.id("users"),
     clientDate: v.optional(v.string()), // Client's local date YYYY-MM-DD
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Use client date if provided, otherwise fallback to server UTC
     const today = args.clientDate || new Date().toISOString().split('T')[0];
     
     // Verify user exists first
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) {
       return { glasses: 0, goal: 8, completed: false, date: today };
     }
@@ -62,7 +67,7 @@ export const getTodayHydration = query({
     const log = await ctx.db
       .query("hydrationLogs")
       .withIndex("by_user_and_date", (q) => 
-        q.eq("userId", args.userId).eq("date", today)
+        q.eq("userId", userId).eq("date", today)
       )
       .first();
 
@@ -72,12 +77,14 @@ export const getTodayHydration = query({
 
 export const getHydrationHistory = query({
   args: { 
+    authToken: v.string(),
     userId: v.id("users"),
     days: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Verify user exists
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) {
       return [];
     }
@@ -85,7 +92,7 @@ export const getHydrationHistory = query({
     const days = args.days || 7;
     const logs = await ctx.db
       .query("hydrationLogs")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .take(days);
 
@@ -97,6 +104,7 @@ export const getHydrationHistory = query({
 
 export const logMood = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     mood: v.number(), // 1-5
     journal: v.optional(v.string()),
@@ -104,6 +112,7 @@ export const logMood = mutation({
     clientDate: v.optional(v.string()), // Client's local date YYYY-MM-DD
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Use client date if provided, otherwise fallback to server UTC
     const today = args.clientDate || new Date().toISOString().split('T')[0];
     
@@ -111,7 +120,7 @@ export const logMood = mutation({
     const existing = await ctx.db
       .query("emotionalCheckins")
       .withIndex("by_user_and_date", (q) => 
-        q.eq("userId", args.userId).eq("date", today)
+        q.eq("userId", userId).eq("date", today)
       )
       .first();
 
@@ -126,7 +135,7 @@ export const logMood = mutation({
     } else {
       // Create new check-in
       return await ctx.db.insert("emotionalCheckins", {
-        userId: args.userId,
+        userId,
         date: today,
         mood: args.mood,
         journal: args.journal,
@@ -138,12 +147,14 @@ export const logMood = mutation({
 
 export const getTodayMood = query({
   args: { 
+    authToken: v.string(),
     userId: v.id("users"),
     clientDate: v.optional(v.string()), // Client's local date YYYY-MM-DD
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Verify user exists
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) {
       return null;
     }
@@ -154,7 +165,7 @@ export const getTodayMood = query({
     return await ctx.db
       .query("emotionalCheckins")
       .withIndex("by_user_and_date", (q) => 
-        q.eq("userId", args.userId).eq("date", today)
+        q.eq("userId", userId).eq("date", today)
       )
       .first();
   },
@@ -162,12 +173,14 @@ export const getTodayMood = query({
 
 export const getMoodHistory = query({
   args: { 
+    authToken: v.string(),
     userId: v.id("users"),
     days: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Verify user exists
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) {
       return [];
     }
@@ -175,7 +188,7 @@ export const getMoodHistory = query({
     const days = args.days || 7;
     const logs = await ctx.db
       .query("emotionalCheckins")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .take(days);
 
@@ -187,6 +200,7 @@ export const getMoodHistory = query({
 
 export const logMeditation = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     duration: v.number(),
     type: v.union(
@@ -196,10 +210,11 @@ export const logMeditation = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Award 5 credits for completing meditation
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (user) {
-      await ctx.db.patch(args.userId, {
+      await ctx.db.patch(userId, {
         credits: user.credits + 5,
         monthlyCreditsEarned: (user.monthlyCreditsEarned || 0) + 5,
       });
@@ -207,7 +222,7 @@ export const logMeditation = mutation({
 
     // Log meditation session
     return await ctx.db.insert("meditationSessions", {
-      userId: args.userId,
+      userId,
       duration: args.duration,
       type: args.type,
       completed: true,
@@ -217,10 +232,14 @@ export const logMeditation = mutation({
 });
 
 export const getMeditationStats = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Verify user exists
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) {
       return {
         totalSessions: 0,
@@ -232,7 +251,7 @@ export const getMeditationStats = query({
     
     const sessions = await ctx.db
       .query("meditationSessions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     const totalSessions = sessions.length;

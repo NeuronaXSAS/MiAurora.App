@@ -18,15 +18,26 @@ import {
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface HealthStatsDashboardProps {
   userId: Id<"users">;
 }
 
 export function HealthStatsDashboard({ userId }: HealthStatsDashboardProps) {
-  const hydrationHistory = useQuery(api.health.getHydrationHistory, { userId, days: 30 });
-  const moodHistory = useQuery(api.health.getMoodHistory, { userId, days: 30 });
-  const meditationStats = useQuery(api.health.getMeditationStats, { userId });
+  const { authToken } = useAuthSession();
+  const hydrationHistory = useQuery(
+    api.health.getHydrationHistory,
+    authToken ? { authToken, userId, days: 30 } : "skip",
+  );
+  const moodHistory = useQuery(
+    api.health.getMoodHistory,
+    authToken ? { authToken, userId, days: 30 } : "skip",
+  );
+  const meditationStats = useQuery(
+    api.health.getMeditationStats,
+    authToken ? { authToken, userId } : "skip",
+  );
 
   // Calculate statistics
   const hydrationStats = calculateHydrationStats(hydrationHistory || []);

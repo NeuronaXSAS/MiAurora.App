@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface DailyAffirmationProps {
   userId: Id<"users">;
@@ -24,7 +25,11 @@ const FALLBACK_AFFIRMATIONS = [
 ];
 
 export const DailyAffirmation = memo(function DailyAffirmation({ userId }: DailyAffirmationProps) {
-  const affirmation = useQuery(api.habits.getDailyAffirmation, { userId });
+  const { authToken } = useAuthSession();
+  const affirmation = useQuery(
+    api.habits.getDailyAffirmation,
+    authToken ? { authToken, userId } : "skip",
+  );
 
   // Use fallback while loading or if no affirmation
   const displayText = affirmation?.text || 

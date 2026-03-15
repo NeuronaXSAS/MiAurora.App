@@ -46,6 +46,7 @@ import {
   isBefore,
   subDays,
 } from "date-fns";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface HabitDashboardProps {
   userId: Id<"users">;
@@ -657,21 +658,28 @@ export function HabitDashboard({ userId }: HabitDashboardProps) {
   } | null>(null);
   const [activeTab, setActiveTab] = useState("today");
   const [selectedWeekDate] = useState(new Date());
+  const { authToken } = useAuthSession();
 
   // Queries
-  const todayStatus = useQuery(api.habits.getTodayStatus, { userId });
-  const habitStats = useQuery(api.habits.getHabitStats, { userId });
+  const todayStatus = useQuery(api.habits.getTodayStatus, authToken ? { authToken, userId } : "skip");
+  const habitStats = useQuery(api.habits.getHabitStats, authToken ? { authToken, userId } : "skip");
 
   // Get week range for completions
   const weekStart = startOfWeek(selectedWeekDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(selectedWeekDate, { weekStartsOn: 1 });
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  const completions = useQuery(api.habits.getCompletions, {
-    userId,
-    startDate: format(subDays(new Date(), 7), "yyyy-MM-dd"),
-    endDate: format(new Date(), "yyyy-MM-dd"),
-  });
+  const completions = useQuery(
+    api.habits.getCompletions,
+    authToken
+      ? {
+          authToken,
+          userId,
+          startDate: format(subDays(new Date(), 7), "yyyy-MM-dd"),
+          endDate: format(new Date(), "yyyy-MM-dd"),
+        }
+      : "skip",
+  );
 
   // Build completion map
   const completionMap = useMemo(() => {
@@ -716,9 +724,10 @@ export function HabitDashboard({ userId }: HabitDashboardProps) {
 
   const handleToggle = useCallback(
     async (habitId: Id<"habits">) => {
+      if (!authToken) return;
       setTogglingHabit(habitId);
       try {
-        const result = await toggleCompletion({ habitId, userId });
+        const result = await toggleCompletion({ authToken, habitId, userId });
         if (result.completed && result.milestone) {
           setCelebration({
             streak: result.milestone,
@@ -732,14 +741,15 @@ export function HabitDashboard({ userId }: HabitDashboardProps) {
         setTogglingHabit(null);
       }
     },
-    [toggleCompletion, userId],
+    [authToken, toggleCompletion, userId],
   );
 
   const handleCreateHabit = async () => {
-    if (!newHabitName.trim()) return;
+    if (!newHabitName.trim() || !authToken) return;
 
     try {
       await createHabit({
+        authToken,
         userId,
         name: newHabitName.trim(),
         emoji: newHabitEmoji,

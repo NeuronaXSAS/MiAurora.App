@@ -1,9 +1,11 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 // Create a new circle (support group)
 export const createCircle = mutation({
   args: {
+    authToken: v.string(),
     creatorId: v.id("users"),
     name: v.string(),
     description: v.string(),
@@ -25,7 +27,8 @@ export const createCircle = mutation({
     tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const { creatorId, ...circleData } = args;
+    const { userId: creatorId } = await requireAuthenticatedUser(args.authToken, args.creatorId);
+    const { authToken, creatorId: _creatorId, ...circleData } = args;
 
     const circleId = await ctx.db.insert("circles", {
       ...circleData,
@@ -58,10 +61,12 @@ export const createCircle = mutation({
 // Join a circle
 export const joinCircle = mutation({
   args: {
+    authToken: v.string(),
     circleId: v.id("circles"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const circle = await ctx.db.get(args.circleId);
     if (!circle) throw new Error("Circle not found");
 
@@ -69,7 +74,7 @@ export const joinCircle = mutation({
     const existing = await ctx.db
       .query("circleMembers")
       .withIndex("by_circle_and_user", (q) => 
-        q.eq("circleId", args.circleId).eq("userId", args.userId)
+        q.eq("circleId", args.circleId).eq("userId", userId)
       )
       .first();
 
@@ -82,7 +87,7 @@ export const joinCircle = mutation({
 
     await ctx.db.insert("circleMembers", {
       circleId: args.circleId,
-      userId: args.userId,
+      userId,
       role: "member",
       joinedAt: Date.now(),
     });
@@ -98,14 +103,16 @@ export const joinCircle = mutation({
 // Leave a circle
 export const leaveCircle = mutation({
   args: {
+    authToken: v.string(),
     circleId: v.id("circles"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const membership = await ctx.db
       .query("circleMembers")
       .withIndex("by_circle_and_user", (q) => 
-        q.eq("circleId", args.circleId).eq("userId", args.userId)
+        q.eq("circleId", args.circleId).eq("userId", userId)
       )
       .first();
 
@@ -188,11 +195,15 @@ export const getCircles = query({
 
 // Get user's circles
 export const getMyCircles = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const memberships = await ctx.db
       .query("circleMembers")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     const circles = await Promise.all(
@@ -249,17 +260,19 @@ export const getCircle = query({
 // Post to circle
 export const createCirclePost = mutation({
   args: {
+    authToken: v.string(),
     circleId: v.id("circles"),
     userId: v.id("users"),
     content: v.string(),
     isAnonymous: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Verify membership
     const membership = await ctx.db
       .query("circleMembers")
       .withIndex("by_circle_and_user", (q) => 
-        q.eq("circleId", args.circleId).eq("userId", args.userId)
+        q.eq("circleId", args.circleId).eq("userId", userId)
       )
       .first();
 
@@ -267,7 +280,7 @@ export const createCirclePost = mutation({
 
     const postId = await ctx.db.insert("circlePosts", {
       circleId: args.circleId,
-      authorId: args.userId,
+      authorId: userId,
       content: args.content,
       isAnonymous: args.isAnonymous || false,
       likes: 0,
@@ -293,10 +306,31 @@ export const createCirclePost = mutation({
 // Get circle posts
 export const getCirclePosts = query({
   args: {
+    authToken: v.string(),
+    userId: v.id("users"),
     circleId: v.id("circles"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const circle = await ctx.db.get(args.circleId);
+    if (!circle) {
+      return [];
+    }
+
+    if (circle.isPrivate) {
+      const membership = await ctx.db
+        .query("circleMembers")
+        .withIndex("by_circle_and_user", (q) =>
+          q.eq("circleId", args.circleId).eq("userId", userId),
+        )
+        .first();
+
+      if (!membership) {
+        throw new Error("Unauthorized");
+      }
+    }
+
     const posts = await ctx.db
       .query("circlePosts")
       .withIndex("by_circle", (q) => q.eq("circleId", args.circleId))
@@ -328,14 +362,16 @@ export const getCirclePosts = query({
 // Check membership
 export const checkMembership = query({
   args: {
+    authToken: v.string(),
     circleId: v.id("circles"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const membership = await ctx.db
       .query("circleMembers")
       .withIndex("by_circle_and_user", (q) => 
-        q.eq("circleId", args.circleId).eq("userId", args.userId)
+        q.eq("circleId", args.circleId).eq("userId", userId)
       )
       .first();
 
@@ -369,17 +405,19 @@ export const getCircleCategories = query({
 // Get circle details with user's role
 export const getCircleDetails = query({
   args: {
+    authToken: v.string(),
     circleId: v.id("circles"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const circle = await ctx.db.get(args.circleId);
     if (!circle) return null;
 
     const membership = await ctx.db
       .query("circleMembers")
       .withIndex("by_circle_and_user", (q) => 
-        q.eq("circleId", args.circleId).eq("userId", args.userId)
+        q.eq("circleId", args.circleId).eq("userId", userId)
       )
       .first();
 
@@ -400,8 +438,23 @@ export const getCircleDetails = query({
 
 // Get circle members
 export const getCircleMembers = query({
-  args: { circleId: v.id("circles") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+    circleId: v.id("circles"),
+  },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+    const membership = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle_and_user", (q) =>
+        q.eq("circleId", args.circleId).eq("userId", args.userId),
+      )
+      .first();
+    if (!membership) {
+      throw new Error("Unauthorized");
+    }
+
     const members = await ctx.db
       .query("circleMembers")
       .withIndex("by_circle", (q) => q.eq("circleId", args.circleId))
@@ -432,11 +485,25 @@ export const getCircleMembers = query({
 // Search users to invite to circle
 export const searchUsersToInvite = query({
   args: {
+    authToken: v.string(),
+    userId: v.id("users"),
     circleId: v.id("circles"),
     searchTerm: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
     if (args.searchTerm.length < 2) return [];
+
+    const membership = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle_and_user", (q) =>
+        q.eq("circleId", args.circleId).eq("userId", args.userId),
+      )
+      .first();
+
+    if (!membership || membership.role !== "admin") {
+      throw new Error("Unauthorized");
+    }
 
     // Get current members
     const currentMembers = await ctx.db
@@ -472,17 +539,19 @@ export const searchUsersToInvite = query({
 // Get suggested members to connect with
 export const getSuggestedMembers = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     try {
       const limit = args.limit || 10;
       
       // Get user's circles
       const userMemberships = await ctx.db
         .query("circleMembers")
-        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .withIndex("by_user", (q) => q.eq("userId", userId))
         .collect();
       
       const userCircleIds = userMemberships.map(m => m.circleId);
@@ -498,7 +567,7 @@ export const getSuggestedMembers = query({
         
         for (const member of circleMembers) {
           const memberIdStr = String(member.userId);
-          if (memberIdStr !== String(args.userId)) {
+          if (memberIdStr !== String(userId)) {
             if (potentialMembers[memberIdStr]) {
               potentialMembers[memberIdStr].sharedCircles++;
             } else {
@@ -534,7 +603,7 @@ export const getSuggestedMembers = query({
       if (sorted.length < limit) {
         const allUsers = await ctx.db.query("users").take(50);
         const existingIds = new Set(sorted.map(u => String(u._id)));
-        existingIds.add(String(args.userId));
+        existingIds.add(String(userId));
         
         for (const user of allUsers) {
           if (!existingIds.has(String(user._id)) && sorted.length < limit) {
@@ -565,10 +634,12 @@ export const getSuggestedMembers = query({
 // Search members
 export const searchMembers = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     searchTerm: v.string(),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     if (args.searchTerm.length < 2) return [];
     
     const searchLower = args.searchTerm.toLowerCase();
@@ -576,7 +647,7 @@ export const searchMembers = query({
     
     const results = allUsers
       .filter(user => 
-        user._id !== args.userId &&
+        user._id !== userId &&
         (user.name.toLowerCase().includes(searchLower) ||
          user.industry?.toLowerCase().includes(searchLower) ||
          user.location?.toLowerCase().includes(searchLower) ||
@@ -603,16 +674,18 @@ export const searchMembers = query({
 // Invite user to circle
 export const inviteToCircle = mutation({
   args: {
+    authToken: v.string(),
     circleId: v.id("circles"),
     inviterId: v.id("users"),
     inviteeId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId: inviterId } = await requireAuthenticatedUser(args.authToken, args.inviterId);
     // Verify inviter is admin
     const inviterMembership = await ctx.db
       .query("circleMembers")
       .withIndex("by_circle_and_user", (q) => 
-        q.eq("circleId", args.circleId).eq("userId", args.inviterId)
+        q.eq("circleId", args.circleId).eq("userId", inviterId)
       )
       .first();
 
@@ -653,7 +726,7 @@ export const inviteToCircle = mutation({
       title: "Circle Invitation",
       message: `${inviter?.name || "Someone"} added you to "${circle.name}"`,
       isRead: false,
-      fromUserId: args.inviterId,
+      fromUserId: inviterId,
       relatedId: args.circleId,
     });
 

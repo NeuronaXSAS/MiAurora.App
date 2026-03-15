@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Play, Pause, RotateCcw } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface MeditationSectionProps {
   userId: Id<"users">;
@@ -17,8 +18,9 @@ export function MeditationSection({ userId }: MeditationSectionProps) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [selectedDuration, setSelectedDuration] = useState(5);
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
+  const { authToken } = useAuthSession();
 
-  const stats = useQuery(api.health.getMeditationStats, { userId });
+  const stats = useQuery(api.health.getMeditationStats, authToken ? { authToken, userId } : "skip");
   const logMeditation = useMutation(api.health.logMeditation);
 
   const durations = [5, 10, 15];
@@ -58,6 +60,7 @@ export function MeditationSection({ userId }: MeditationSectionProps) {
   };
 
   const completeMeditation = async () => {
+    if (!authToken) return;
     if (intervalId) {
       clearInterval(intervalId);
       setIntervalId(null);
@@ -66,6 +69,7 @@ export function MeditationSection({ userId }: MeditationSectionProps) {
 
     // Log meditation and award credits
     await logMeditation({
+      authToken,
       userId,
       duration: selectedDuration,
       type: "breathing",

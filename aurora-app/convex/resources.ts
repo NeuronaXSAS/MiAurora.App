@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 // Get resources by category and location
 export const getResources = query({
@@ -88,6 +89,7 @@ export const searchResources = query({
 // Submit a new resource (community contribution)
 export const submitResource = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     name: v.string(),
     category: v.union(
@@ -113,7 +115,9 @@ export const submitResource = mutation({
     languages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const { userId, ...resourceData } = args;
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const { authToken, ...rest } = args;
+    const { userId: _ignoredUserId, ...resourceData } = rest;
 
     // Award credits for contribution
     const user = await ctx.db.get(userId);
@@ -145,18 +149,20 @@ export const submitResource = mutation({
 // Verify a resource (community verification)
 export const verifyResource = mutation({
   args: {
+    authToken: v.string(),
     resourceId: v.id("safetyResources"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const resource = await ctx.db.get(args.resourceId);
     if (!resource) throw new Error("Resource not found");
 
     // Check if user already verified
     const existing = await ctx.db
-      .query("resourceVerifications")
-      .withIndex("by_resource_and_user", (q) => 
-        q.eq("resourceId", args.resourceId).eq("userId", args.userId)
+        .query("resourceVerifications")
+        .withIndex("by_resource_and_user", (q) => 
+        q.eq("resourceId", args.resourceId).eq("userId", userId)
       )
       .first();
 
@@ -164,7 +170,7 @@ export const verifyResource = mutation({
 
     await ctx.db.insert("resourceVerifications", {
       resourceId: args.resourceId,
-      userId: args.userId,
+      userId,
     });
 
     const newCount = (resource.verificationCount || 0) + 1;
@@ -175,9 +181,9 @@ export const verifyResource = mutation({
     });
 
     // Award credits
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (user) {
-      await ctx.db.patch(args.userId, {
+      await ctx.db.patch(userId, {
         credits: (user.credits || 0) + 5,
       });
     }
@@ -187,15 +193,17 @@ export const verifyResource = mutation({
 // Report a resource issue
 export const reportResource = mutation({
   args: {
+    authToken: v.string(),
     resourceId: v.id("safetyResources"),
     userId: v.id("users"),
     reason: v.string(),
     details: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     return await ctx.db.insert("resourceReports", {
       resourceId: args.resourceId,
-      userId: args.userId,
+      userId,
       reason: args.reason,
       details: args.details,
       status: "pending",

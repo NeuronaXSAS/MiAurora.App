@@ -51,6 +51,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { generateAvatarUrl } from "@/hooks/use-avatar";
 import { formatDistanceToNow } from "date-fns";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface CirclesHubProps {
   userId: Id<"users">;
@@ -90,6 +91,7 @@ export function CirclesHub({ userId }: CirclesHubProps) {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteSearch, setInviteSearch] = useState("");
   const [newMessage, setNewMessage] = useState("");
+  const { authToken } = useAuthSession();
   const [newCircle, setNewCircle] = useState({
     name: "",
     description: "",
@@ -99,7 +101,8 @@ export function CirclesHub({ userId }: CirclesHubProps) {
 
   // Safe queries with null coalescing for error handling
   const categories = useQuery(api.circles.getCircleCategories, {}) ?? [];
-  const myCircles = useQuery(api.circles.getMyCircles, { userId }) ?? [];
+  const myCircles =
+    useQuery(api.circles.getMyCircles, authToken ? { authToken, userId } : "skip") ?? [];
   const discoverCircles = useQuery(api.circles.getCircles, {
     category: selectedCategory || undefined,
     search: searchQuery || undefined,
@@ -109,19 +112,21 @@ export function CirclesHub({ userId }: CirclesHubProps) {
   // Circle detail queries
   const circleDetails = useQuery(
     api.circles.getCircleDetails,
-    selectedCircle ? { circleId: selectedCircle, userId } : "skip"
+    selectedCircle && authToken ? { authToken, circleId: selectedCircle, userId } : "skip"
   );
   const circleMembers = useQuery(
     api.circles.getCircleMembers,
-    selectedCircle ? { circleId: selectedCircle } : "skip"
+    selectedCircle && authToken ? { authToken, circleId: selectedCircle, userId } : "skip"
   ) ?? [];
   const circlePosts = useQuery(
     api.circles.getCirclePosts,
-    selectedCircle ? { circleId: selectedCircle, limit: 20 } : "skip"
+    selectedCircle && authToken ? { authToken, circleId: selectedCircle, limit: 20, userId } : "skip"
   ) ?? [];
   const inviteSearchResults = useQuery(
     api.circles.searchUsersToInvite,
-    inviteSearch.length >= 2 && selectedCircle ? { circleId: selectedCircle, searchTerm: inviteSearch } : "skip"
+    inviteSearch.length >= 2 && selectedCircle && authToken
+      ? { authToken, circleId: selectedCircle, searchTerm: inviteSearch, userId }
+      : "skip"
   ) ?? [];
 
   const createCircle = useMutation(api.circles.createCircle);
@@ -131,9 +136,10 @@ export function CirclesHub({ userId }: CirclesHubProps) {
   const createPost = useMutation(api.circles.createCirclePost);
 
   const handleCreateCircle = async () => {
-    if (!newCircle.name || !newCircle.description) return;
+    if (!newCircle.name || !newCircle.description || !authToken) return;
     
     const result = await createCircle({
+      authToken,
       creatorId: userId,
       ...newCircle,
     });
@@ -153,25 +159,26 @@ export function CirclesHub({ userId }: CirclesHubProps) {
   };
 
   const handleJoinCircle = async (circleId: Id<"circles">) => {
+    if (!authToken) return;
     try {
-      await joinCircle({ circleId, userId });
+      await joinCircle({ authToken, circleId, userId });
     } catch (error: any) {
       alert(error.message);
     }
   };
 
   const handleLeaveCircle = async () => {
-    if (!selectedCircle) return;
+    if (!selectedCircle || !authToken) return;
     if (confirm("Are you sure you want to leave this circle?")) {
-      await leaveCircle({ circleId: selectedCircle, userId });
+      await leaveCircle({ authToken, circleId: selectedCircle, userId });
       setSelectedCircle(null);
     }
   };
 
   const handleInvite = async (inviteeId: Id<"users">) => {
-    if (!selectedCircle) return;
+    if (!selectedCircle || !authToken) return;
     try {
-      await inviteToCircle({ circleId: selectedCircle, inviterId: userId, inviteeId });
+      await inviteToCircle({ authToken, circleId: selectedCircle, inviterId: userId, inviteeId });
       setInviteSearch("");
     } catch (error: any) {
       alert(error.message);
@@ -179,8 +186,8 @@ export function CirclesHub({ userId }: CirclesHubProps) {
   };
 
   const handlePostMessage = async () => {
-    if (!selectedCircle || !newMessage.trim()) return;
-    await createPost({ circleId: selectedCircle, userId, content: newMessage });
+    if (!selectedCircle || !newMessage.trim() || !authToken) return;
+    await createPost({ authToken, circleId: selectedCircle, userId, content: newMessage });
     setNewMessage("");
   };
 
@@ -697,19 +704,26 @@ export function CirclesHub({ userId }: CirclesHubProps) {
       </div>
 
       {/* Discover Members Section */}
-      <DiscoverMembers userId={userId} />
+      <DiscoverMembers authToken={authToken} userId={userId} />
     </div>
   );
 }
 
 // New component to discover other women
-function DiscoverMembers({ userId }: { userId: Id<"users"> }) {
+function DiscoverMembers({
+  authToken,
+  userId,
+}: {
+  authToken: string | null;
+  userId: Id<"users">;
+}) {
   const [searchTerm, setSearchTerm] = useState("");
   
-  const suggestedMembers = useQuery(api.circles.getSuggestedMembers, { userId, limit: 6 }) ?? [];
+  const suggestedMembers =
+    useQuery(api.circles.getSuggestedMembers, authToken ? { authToken, userId, limit: 6 } : "skip") ?? [];
   const searchResults = useQuery(
     api.circles.searchMembers,
-    searchTerm.length >= 2 ? { userId, searchTerm } : "skip"
+    searchTerm.length >= 2 && authToken ? { authToken, userId, searchTerm } : "skip"
   ) ?? [];
 
   const displayMembers = searchTerm.length >= 2 ? searchResults : suggestedMembers;

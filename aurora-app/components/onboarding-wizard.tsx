@@ -233,6 +233,7 @@ export function OnboardingWizard({
       if (birthYear && _userId) {
         try {
           await updateLifeSettings({
+            authToken,
             userId: _userId,
             birthYear,
             lifeExpectancy: 80,

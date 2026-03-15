@@ -50,6 +50,7 @@ import {
   addYears,
   parse,
 } from "date-fns";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface LifeCanvasProps {
   userId: Id<"users">;
@@ -95,20 +96,20 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
   // Settings form
   const [birthYearInput, setBirthYearInput] = useState<number | null>(null);
   const [lifeExpectancyInput, setLifeExpectancyInput] = useState<number>(80);
+  const { authToken } = useAuthSession();
 
   // Queries
-  const lifeData = useQuery(api.lifeCanvas.getLifeCanvasData, { userId });
-  const lifeStats = useQuery(api.lifeCanvas.getLifeStats, { userId });
+  const lifeData = useQuery(api.lifeCanvas.getLifeCanvasData, authToken ? { authToken, userId } : "skip");
+  const lifeStats = useQuery(api.lifeCanvas.getLifeStats, authToken ? { authToken, userId } : "skip");
 
   const yearStart = `${viewYear}-01-01`;
   const yearEnd = `${viewYear}-12-31`;
 
   // Use aggregated intensities for the calendar grid
-  const dailyIntensities = useQuery(api.lifeCanvas.getDailyIntensities, {
-    userId,
-    startDate: yearStart,
-    endDate: yearEnd,
-  });
+  const dailyIntensities = useQuery(
+    api.lifeCanvas.getDailyIntensities,
+    authToken ? { authToken, userId, startDate: yearStart, endDate: yearEnd } : "skip",
+  );
 
   // Mutations
   const createEntry = useMutation(api.lifeCanvas.createLifeEntry);
@@ -224,11 +225,12 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
   };
 
   const handleSaveEntry = async () => {
-    if (!selectedDate) return;
+    if (!selectedDate || !authToken) return;
 
     try {
       // Always create a new entry (multiple entries per day supported)
       await createEntry({
+        authToken,
         userId,
         date: selectedDate,
         journalText: journalText || undefined,
@@ -258,8 +260,10 @@ export function LifeCanvas({ userId }: LifeCanvasProps) {
   };
 
   const handleSaveSettings = async () => {
+    if (!authToken) return;
     try {
       await updateSettings({
+        authToken,
         userId,
         birthYear: birthYearInput || undefined,
         lifeExpectancy: lifeExpectancyInput,

@@ -7,6 +7,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { REVENUE_SHARES } from "./premiumConfig";
+import { requireAuthenticatedUser } from "./auth";
 
 // ============================================
 // EVENT QUERIES
@@ -64,11 +65,13 @@ export const getCircleEvents = query({
  */
 export const getUserEventCalendar = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     startDate: v.optional(v.number()),
     endDate: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const now = Date.now();
     const startDate = args.startDate || now;
     const endDate = args.endDate || now + (30 * 24 * 60 * 60 * 1000); // 30 days
@@ -76,7 +79,7 @@ export const getUserEventCalendar = query({
     // Get user's Circle memberships
     const memberships = await ctx.db
       .query("circleMembers")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     
     const circleIds = memberships.map(m => m.circleId);
@@ -96,7 +99,7 @@ export const getUserEventCalendar = query({
     // Also get events user is hosting
     const hostedEvents = await ctx.db
       .query("events")
-      .withIndex("by_host", (q) => q.eq("hostId", args.userId))
+      .withIndex("by_host", (q) => q.eq("hostId", userId))
       .collect();
     
     allEvents.push(...hostedEvents);
@@ -119,7 +122,7 @@ export const getUserEventCalendar = query({
         const rsvp = await ctx.db
           .query("eventRsvps")
           .withIndex("by_event_user", (q) => 
-            q.eq("eventId", event._id).eq("userId", args.userId)
+            q.eq("eventId", event._id).eq("userId", userId)
           )
           .first();
         
@@ -202,6 +205,7 @@ export const getEvent = query({
  */
 export const createEvent = mutation({
   args: {
+    authToken: v.string(),
     circleId: v.optional(v.id("circles")),
     hostId: v.id("users"),
     title: v.string(),
@@ -224,22 +228,36 @@ export const createEvent = mutation({
     coverImage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId: hostId } = await requireAuthenticatedUser(args.authToken, args.hostId);
     // Validate host exists
-    const host = await ctx.db.get(args.hostId);
+    const host = await ctx.db.get(hostId);
     if (!host) {
       throw new Error("Host not found");
     }
     
     // Validate Circle if provided
     if (args.circleId) {
-      const circle = await ctx.db.get(args.circleId);
+      const circleId = args.circleId;
+      const circle = await ctx.db.get(circleId);
       if (!circle) {
         throw new Error("Circle not found");
+      }
+
+      const membership = await ctx.db
+        .query("circleMembers")
+        .withIndex("by_circle_and_user", (q) =>
+          q.eq("circleId", circleId).eq("userId", hostId),
+        )
+        .first();
+
+      if (!membership || membership.role !== "admin") {
+        throw new Error("Only circle admins can create circle events");
       }
     }
     
     const eventId = await ctx.db.insert("events", {
       ...args,
+      hostId,
       status: "upcoming",
       attendeeCount: 0,
     });
@@ -253,26 +271,28 @@ export const createEvent = mutation({
  */
 export const rsvpToEvent = mutation({
   args: {
+    authToken: v.string(),
     eventId: v.id("events"),
     userId: v.id("users"),
     status: v.union(v.literal("going"), v.literal("maybe")),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const event = await ctx.db.get(args.eventId);
     if (!event) {
       throw new Error("Event not found");
     }
     
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) {
       throw new Error("User not found");
     }
     
     // Check for existing RSVP
     const existingRsvp = await ctx.db
-      .query("eventRsvps")
-      .withIndex("by_event_user", (q) => 
-        q.eq("eventId", args.eventId).eq("userId", args.userId)
+        .query("eventRsvps")
+        .withIndex("by_event_user", (q) => 
+        q.eq("eventId", args.eventId).eq("userId", userId)
       )
       .first();
     
@@ -295,7 +315,7 @@ export const rsvpToEvent = mutation({
           // Add to waitlist
           const rsvpId = await ctx.db.insert("eventRsvps", {
             eventId: args.eventId,
-            userId: args.userId,
+            userId,
             status: "waitlist",
             rsvpedAt: Date.now(),
           });
@@ -317,7 +337,7 @@ export const rsvpToEvent = mutation({
           throw new Error("Insufficient credits");
         }
         
-        await ctx.db.patch(args.userId, {
+        await ctx.db.patch(userId, {
           credits: user.credits - event.price,
         });
         
@@ -336,7 +356,7 @@ export const rsvpToEvent = mutation({
         
         // Log transactions
         await ctx.db.insert("transactions", {
-          userId: args.userId,
+          userId,
           amount: -event.price,
           type: "event_ticket",
           relatedId: args.eventId,
@@ -354,7 +374,7 @@ export const rsvpToEvent = mutation({
     // Create RSVP
     const rsvpId = await ctx.db.insert("eventRsvps", {
       eventId: args.eventId,
-      userId: args.userId,
+      userId,
       status: args.status,
       paidAmount,
       paymentType: event.priceType,
@@ -378,14 +398,16 @@ export const rsvpToEvent = mutation({
  */
 export const cancelRsvp = mutation({
   args: {
+    authToken: v.string(),
     eventId: v.id("events"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const rsvp = await ctx.db
       .query("eventRsvps")
       .withIndex("by_event_user", (q) => 
-        q.eq("eventId", args.eventId).eq("userId", args.userId)
+        q.eq("eventId", args.eventId).eq("userId", userId)
       )
       .first();
     
@@ -439,12 +461,14 @@ export const cancelRsvp = mutation({
  */
 export const submitEventReview = mutation({
   args: {
+    authToken: v.string(),
     eventId: v.id("events"),
     userId: v.id("users"),
     rating: v.number(),
     review: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     if (args.rating < 1 || args.rating > 5) {
       throw new Error("Rating must be between 1 and 5");
     }
@@ -456,9 +480,9 @@ export const submitEventReview = mutation({
     
     // Check user attended
     const rsvp = await ctx.db
-      .query("eventRsvps")
-      .withIndex("by_event_user", (q) => 
-        q.eq("eventId", args.eventId).eq("userId", args.userId)
+        .query("eventRsvps")
+        .withIndex("by_event_user", (q) => 
+        q.eq("eventId", args.eventId).eq("userId", userId)
       )
       .first();
     
@@ -470,7 +494,7 @@ export const submitEventReview = mutation({
     const existingReview = await ctx.db
       .query("eventReviews")
       .withIndex("by_event", (q) => q.eq("eventId", args.eventId))
-      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .filter((q) => q.eq(q.field("userId"), userId))
       .first();
     
     if (existingReview) {
@@ -479,7 +503,7 @@ export const submitEventReview = mutation({
     
     await ctx.db.insert("eventReviews", {
       eventId: args.eventId,
-      userId: args.userId,
+      userId,
       rating: args.rating,
       review: args.review,
       isPublic: true,
@@ -506,6 +530,7 @@ export const submitEventReview = mutation({
  */
 export const updateEventStatus = mutation({
   args: {
+    authToken: v.string(),
     eventId: v.id("events"),
     hostId: v.id("users"),
     status: v.union(
@@ -516,12 +541,13 @@ export const updateEventStatus = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const { userId: hostId } = await requireAuthenticatedUser(args.authToken, args.hostId);
     const event = await ctx.db.get(args.eventId);
     if (!event) {
       throw new Error("Event not found");
     }
     
-    if (event.hostId !== args.hostId) {
+    if (event.hostId !== hostId) {
       throw new Error("Only the host can update event status");
     }
     

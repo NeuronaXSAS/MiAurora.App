@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Shield, 
   Clock, 
   CheckCircle, 
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow, format, addMinutes, addHours } from "date-fns";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface SafetyCheckinProps {
   userId: Id<"users">;
@@ -38,11 +39,14 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
   const [note, setNote] = useState("");
   const [isCheckinIn, setIsCheckinIn] = useState(false);
   const [lastCheckinTime, setLastCheckinTime] = useState<number | null>(null);
+  const { authToken } = useAuthSession();
 
   // Safe queries with null coalescing for error handling
-  const pendingCheckins = useQuery(api.safetyCheckins.getPendingCheckins, { userId }) ?? [];
-  const checkinHistory = useQuery(api.safetyCheckins.getCheckinHistory, { userId, limit: 5 }) ?? [];
-  const myGuardians = useQuery(api.guardians.getMyGuardians, { userId }) ?? [];
+  const pendingCheckins =
+    useQuery(api.safetyCheckins.getPendingCheckins, authToken ? { authToken, userId } : "skip") ?? [];
+  const checkinHistory =
+    useQuery(api.safetyCheckins.getCheckinHistory, authToken ? { authToken, userId, limit: 5 } : "skip") ?? [];
+  const myGuardians = useQuery(api.guardians.getMyGuardians, authToken ? { authToken, userId } : "skip") ?? [];
   
   const scheduleCheckin = useMutation(api.safetyCheckins.scheduleCheckin);
   const confirmCheckin = useMutation(api.safetyCheckins.confirmCheckin);
@@ -52,6 +56,7 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
   const hasGuardians = myGuardians.length > 0;
 
   const handleQuickCheckin = async () => {
+    if (!authToken) return;
     setIsCheckinIn(true);
     
     // Get location if available
@@ -67,14 +72,16 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
       }
     }
 
-    await quickCheckin({ userId, location });
+    await quickCheckin({ authToken, userId, location });
     setLastCheckinTime(Date.now());
     setIsCheckinIn(false);
   };
 
   const handleSchedule = async (minutes: number) => {
+    if (!authToken) return;
     const scheduledTime = Date.now() + minutes * 60 * 1000;
     await scheduleCheckin({
+      authToken,
       userId,
       scheduledTime,
       note: note || undefined,
@@ -85,6 +92,7 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
   };
 
   const handleConfirm = async (checkinId: Id<"safetyCheckins">) => {
+    if (!authToken) return;
     let location: { lat: number; lng: number } | undefined;
     if ("geolocation" in navigator) {
       try {
@@ -96,11 +104,12 @@ export function SafetyCheckin({ userId }: SafetyCheckinProps) {
         // Continue without location
       }
     }
-    await confirmCheckin({ checkinId, userId, location });
+    await confirmCheckin({ authToken, checkinId, userId, location });
   };
 
   const handleCancel = async (checkinId: Id<"safetyCheckins">) => {
-    await cancelCheckin({ checkinId, userId });
+    if (!authToken) return;
+    await cancelCheckin({ authToken, checkinId, userId });
   };
 
   return (

@@ -17,15 +17,16 @@ import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export function NotificationsDropdown() {
   const router = useRouter();
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("notifications");
   const [streak, setStreak] = useState(0);
   const [dailyRewardClaimed, setDailyRewardClaimed] = useState(false);
+  const { authToken, userId } = useAuthSession();
 
   useEffect(() => {
     setIsMounted(true);
@@ -54,29 +55,14 @@ export function NotificationsDropdown() {
     }
   }, [userId]);
 
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
-
   const notifications = useQuery(
     api.notifications.getUserNotifications,
-    userId ? { userId, limit: 10 } : "skip"
+    userId && authToken ? { authToken, userId, limit: 10 } : "skip"
   );
 
   const unreadCount = useQuery(
     api.notifications.getUnreadCount,
-    userId ? { userId } : "skip"
+    userId && authToken ? { authToken, userId } : "skip"
   );
 
   const markAsRead = useMutation(api.notifications.markAsRead);
@@ -84,8 +70,8 @@ export function NotificationsDropdown() {
   const deleteNotification = useMutation(api.notifications.deleteNotification);
 
   const handleNotificationClick = async (notification: any) => {
-    if (!notification.isRead) {
-      await markAsRead({ notificationId: notification._id });
+    if (!notification.isRead && userId && authToken) {
+      await markAsRead({ authToken, userId, notificationId: notification._id });
     }
     
     // Navigate to the appropriate section based on notification type
@@ -169,14 +155,15 @@ export function NotificationsDropdown() {
   };
 
   const handleMarkAllAsRead = async () => {
-    if (userId) {
-      await markAllAsRead({ userId });
+    if (userId && authToken) {
+      await markAllAsRead({ authToken, userId });
     }
   };
 
   const handleDelete = async (e: React.MouseEvent, notificationId: Id<"notifications">) => {
     e.stopPropagation();
-    await deleteNotification({ notificationId });
+    if (!userId || !authToken) return;
+    await deleteNotification({ authToken, userId, notificationId });
   };
 
   const getIcon = (type: string) => {

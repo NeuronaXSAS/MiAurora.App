@@ -1,24 +1,27 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 // Schedule a safety check-in
 export const scheduleCheckin = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     scheduledTime: v.number(), // Timestamp when check-in is expected
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Get user's emergency contacts
     const contacts = await ctx.db
       .query("emergencyContacts")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     const contactIds = contacts.map(c => c._id);
 
     return await ctx.db.insert("safetyCheckins", {
-      userId: args.userId,
+      userId,
       scheduledTime: args.scheduledTime,
       status: "pending",
       note: args.note,
@@ -30,6 +33,7 @@ export const scheduleCheckin = mutation({
 // Confirm a check-in (user is safe)
 export const confirmCheckin = mutation({
   args: {
+    authToken: v.string(),
     checkinId: v.id("safetyCheckins"),
     userId: v.id("users"),
     location: v.optional(v.object({
@@ -38,8 +42,9 @@ export const confirmCheckin = mutation({
     })),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const checkin = await ctx.db.get(args.checkinId);
-    if (!checkin || checkin.userId !== args.userId) {
+    if (!checkin || checkin.userId !== userId) {
       throw new Error("Check-in not found");
     }
 
@@ -50,9 +55,9 @@ export const confirmCheckin = mutation({
     });
 
     // Award credits for checking in
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (user) {
-      await ctx.db.patch(args.userId, {
+      await ctx.db.patch(userId, {
         credits: (user.credits || 0) + 2,
       });
     }
@@ -63,18 +68,22 @@ export const confirmCheckin = mutation({
 
 // Get pending check-ins for a user
 export const getPendingCheckins = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     try {
       // Verify user exists
-      const user = await ctx.db.get(args.userId);
+      const user = await ctx.db.get(userId);
       if (!user) {
         return [];
       }
 
       const checkins = await ctx.db
         .query("safetyCheckins")
-        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .withIndex("by_user", (q) => q.eq("userId", userId))
         .filter((q) => q.eq(q.field("status"), "pending"))
         .order("asc")
         .collect();
@@ -89,11 +98,16 @@ export const getPendingCheckins = query({
 
 // Get check-in history
 export const getCheckinHistory = query({
-  args: { userId: v.id("users"), limit: v.optional(v.number()) },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+    limit: v.optional(v.number()),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     return await ctx.db
       .query("safetyCheckins")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .take(args.limit || 20);
   },
@@ -102,12 +116,14 @@ export const getCheckinHistory = query({
 // Cancel a scheduled check-in
 export const cancelCheckin = mutation({
   args: {
+    authToken: v.string(),
     checkinId: v.id("safetyCheckins"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const checkin = await ctx.db.get(args.checkinId);
-    if (!checkin || checkin.userId !== args.userId) {
+    if (!checkin || checkin.userId !== userId) {
       throw new Error("Check-in not found");
     }
 
@@ -186,6 +202,7 @@ export const markMissedCheckin = mutation({
 // Quick check-in (instant "I'm OK" without scheduling)
 export const quickCheckin = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     location: v.optional(v.object({
       lat: v.number(),
@@ -194,8 +211,9 @@ export const quickCheckin = mutation({
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const checkinId = await ctx.db.insert("safetyCheckins", {
-      userId: args.userId,
+      userId,
       scheduledTime: Date.now(),
       status: "confirmed",
       confirmedAt: Date.now(),
@@ -204,9 +222,9 @@ export const quickCheckin = mutation({
     });
 
     // Award credits
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (user) {
-      await ctx.db.patch(args.userId, {
+      await ctx.db.patch(userId, {
         credits: (user.credits || 0) + 1,
       });
     }

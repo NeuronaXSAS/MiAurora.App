@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface AuroraGuardianManagerProps {
   userId: Id<"users">;
@@ -44,14 +45,18 @@ export function AuroraGuardianManager({ userId }: AuroraGuardianManagerProps) {
   const [requestMessage, setRequestMessage] = useState("");
   const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
   const [sendingTo, setSendingTo] = useState<string | null>(null);
+  const { authToken } = useAuthSession();
 
   // Queries
-  const myGuardians = useQuery(api.guardians.getMyGuardians, { userId }) ?? [];
-  const pendingRequests = useQuery(api.guardians.getPendingRequests, { userId }) ?? [];
-  const sentPendingRequests = useQuery(api.guardians.getSentPendingRequests, { userId }) ?? [];
+  const myGuardians =
+    useQuery(api.guardians.getMyGuardians, authToken ? { authToken, userId } : "skip") ?? [];
+  const pendingRequests =
+    useQuery(api.guardians.getPendingRequests, authToken ? { authToken, userId } : "skip") ?? [];
+  const sentPendingRequests =
+    useQuery(api.guardians.getSentPendingRequests, authToken ? { authToken, userId } : "skip") ?? [];
   const searchResults = useQuery(
     api.guardians.searchUsers,
-    searchTerm.length >= 2 ? { userId, searchTerm } : "skip"
+    searchTerm.length >= 2 && authToken ? { authToken, userId, searchTerm } : "skip"
   ) ?? [];
 
   // Mutations
@@ -66,9 +71,11 @@ export function AuroraGuardianManager({ userId }: AuroraGuardianManagerProps) {
   };
 
   const handleSendRequest = async (guardianId: Id<"users">) => {
+    if (!authToken) return;
     setSendingTo(guardianId);
     try {
       await sendRequest({
+        authToken,
         userId,
         guardianId,
         message: requestMessage || "I'd like you to be my Aurora Guardian 💜",
@@ -87,12 +94,14 @@ export function AuroraGuardianManager({ userId }: AuroraGuardianManagerProps) {
   };
 
   const handleRespond = async (requestId: Id<"auroraGuardians">, accept: boolean) => {
-    await respondToRequest({ requestId, accept });
+    if (!authToken) return;
+    await respondToRequest({ authToken, userId, requestId, accept });
   };
 
   const handleRemove = async (guardianId: Id<"users">) => {
+    if (!authToken) return;
     if (confirm("Are you sure you want to remove this guardian?")) {
-      await removeGuardian({ userId, guardianId });
+      await removeGuardian({ authToken, userId, guardianId });
     }
   };
 
@@ -306,8 +315,10 @@ export function AuroraGuardianManager({ userId }: AuroraGuardianManagerProps) {
                   guardian={guardian}
                   onRemove={() => guardian?.user._id && handleRemove(guardian.user._id)}
                   onUpdatePermissions={async (perms) => {
-                    if (guardian?.connectionId) {
+                    if (guardian?.connectionId && authToken) {
                       await updatePermissions({
+                        authToken,
+                        userId,
                         connectionId: guardian.connectionId,
                         ...perms,
                       });

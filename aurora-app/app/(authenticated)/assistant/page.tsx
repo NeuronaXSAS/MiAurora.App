@@ -14,37 +14,22 @@ import { Id } from "@/convex/_generated/dataModel";
 import { AIInteractionsDashboard } from "@/components/ai-interactions-dashboard";
 import { AIAnswers } from "@/components/ai-answers";
 import { generateAvatarUrl, AvatarConfig } from "@/hooks/use-avatar";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export default function AssistantPage() {
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("chat");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { authToken, userId } = useAuthSession();
 
   const chat = useAction(api.ai.chat);
-
-  // Get user ID
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
 
   // Fetch chat history
   const messages = useQuery(
     api.ai.getHistory,
-    userId ? { userId, limit: 50 } : "skip"
+    userId && authToken ? { authToken, userId, limit: 50 } : "skip"
   );
 
   // Fetch user data
@@ -67,7 +52,7 @@ export default function AssistantPage() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!message.trim() || !userId || isLoading) return;
+    if (!message.trim() || !userId || !authToken || isLoading) return;
 
     const userMessage = message;
     setMessage("");
@@ -75,6 +60,7 @@ export default function AssistantPage() {
 
     try {
       await chat({
+        authToken,
         userId,
         message: userMessage,
       });
@@ -172,7 +158,7 @@ export default function AssistantPage() {
           </div>
         ) : activeTab === "stats" && userId ? (
           <div className="max-w-4xl mx-auto">
-            <AIInteractionsDashboard userId={userId} />
+            <AIInteractionsDashboard authToken={authToken} userId={userId} />
           </div>
         ) : activeTab === "voice" ? (
           <div className="max-w-4xl mx-auto">

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * AI Analytics - Track user interactions with Aurora Companion
@@ -10,6 +11,7 @@ import { mutation, query } from "./_generated/server";
  */
 export const logInteraction = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     type: v.union(
       v.literal("text_chat"),
@@ -22,8 +24,9 @@ export const logInteraction = mutation({
     topics: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     await ctx.db.insert("aiInteractions", {
-      userId: args.userId,
+      userId,
       type: args.type,
       messageCount: args.messageCount,
       duration: args.duration,
@@ -40,12 +43,14 @@ export const logInteraction = mutation({
  */
 export const getInteractionStats = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const interactions = await ctx.db
       .query("aiInteractions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     const textChats = interactions.filter((i) => i.type === "text_chat").length;
@@ -107,14 +112,16 @@ export const getInteractionStats = query({
  */
 export const getWeeklySummary = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
     const interactions = await ctx.db
       .query("aiInteractions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     const recentInteractions = interactions.filter(

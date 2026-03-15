@@ -1,17 +1,20 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * Start sharing location with Aurora Guardians
  */
 export const startLocationShare = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     destination: v.optional(v.string()),
     estimatedArrival: v.optional(v.number()),
     guardianIds: v.optional(v.array(v.id("users"))),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Get guardians to share with
     let sharedWith: typeof args.guardianIds = args.guardianIds;
     
@@ -20,7 +23,7 @@ export const startLocationShare = mutation({
       const guardianConnections = await ctx.db
         .query("auroraGuardians")
         .withIndex("by_user_status", (q) => 
-          q.eq("userId", args.userId).eq("status", "accepted")
+          q.eq("userId", userId).eq("status", "accepted")
         )
         .filter((q) => q.eq(q.field("canSeeLocation"), true))
         .collect();
@@ -34,7 +37,7 @@ export const startLocationShare = mutation({
 
     // Create location share session
     const sessionId = await ctx.db.insert("locationShares", {
-      userId: args.userId,
+      userId,
       sharedWith,
       destination: args.destination,
       estimatedArrival: args.estimatedArrival,
@@ -43,11 +46,11 @@ export const startLocationShare = mutation({
     });
 
     // Notify guardians
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     for (const guardianId of sharedWith) {
       await ctx.db.insert("guardianNotifications", {
         guardianId,
-        fromUserId: args.userId,
+        fromUserId: userId,
         type: "location_share",
         message: `${user?.name || "Someone"} started sharing their location with you${args.destination ? ` - heading to ${args.destination}` : ""}`,
         isRead: false,
@@ -61,7 +64,7 @@ export const startLocationShare = mutation({
         title: "📍 Location Sharing Started",
         message: `${user?.name || "Someone"} is sharing their location with you`,
         isRead: false,
-        fromUserId: args.userId,
+        fromUserId: userId,
         relatedId: sessionId,
       });
     }
@@ -75,6 +78,7 @@ export const startLocationShare = mutation({
  */
 export const updateLocation = mutation({
   args: {
+    authToken: v.string(),
     sessionId: v.id("locationShares"),
     location: v.object({
       lat: v.number(),
@@ -87,6 +91,7 @@ export const updateLocation = mutation({
     if (!session || session.status !== "active") {
       throw new Error("Session not found or inactive");
     }
+    await requireAuthenticatedUser(args.authToken, session.userId);
 
     const now = Date.now();
     const newLocation = {
@@ -113,6 +118,7 @@ export const updateLocation = mutation({
  */
 export const endLocationShare = mutation({
   args: {
+    authToken: v.string(),
     sessionId: v.id("locationShares"),
     status: v.optional(v.union(
       v.literal("arrived"),
@@ -123,6 +129,7 @@ export const endLocationShare = mutation({
   handler: async (ctx, args) => {
     const session = await ctx.db.get(args.sessionId);
     if (!session) throw new Error("Session not found");
+    await requireAuthenticatedUser(args.authToken, session.userId);
 
     const finalStatus = args.status || "arrived";
     
@@ -177,12 +184,16 @@ export const endLocationShare = mutation({
  * Get active location share session for a user
  */
 export const getActiveSession = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     return await ctx.db
       .query("locationShares")
       .withIndex("by_user_status", (q) => 
-        q.eq("userId", args.userId).eq("status", "active")
+        q.eq("userId", userId).eq("status", "active")
       )
       .first();
   },
@@ -192,8 +203,12 @@ export const getActiveSession = query({
  * Get location shares where user is a guardian (watching others)
  */
 export const getWatchingSessions = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const activeSessions = await ctx.db
       .query("locationShares")
       .withIndex("by_status", (q) => q.eq("status", "active"))
@@ -201,7 +216,7 @@ export const getWatchingSessions = query({
 
     // Filter to sessions where this user is a guardian
     const watchingSessions = activeSessions.filter(s => 
-      s.sharedWith.includes(args.userId)
+      s.sharedWith.includes(userId)
     );
 
     // Get user info for each session

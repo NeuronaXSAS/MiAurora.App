@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * Create a notification
@@ -44,11 +45,13 @@ export const createNotification = mutation({
  */
 export const getUserNotifications = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     limit: v.optional(v.number()),
     unreadOnly: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const limit = args.limit || 50;
     
     let notifications;
@@ -56,14 +59,14 @@ export const getUserNotifications = query({
       notifications = await ctx.db
         .query("notifications")
         .withIndex("by_user_and_read", (q) => 
-          q.eq("userId", args.userId).eq("isRead", false)
+          q.eq("userId", userId).eq("isRead", false)
         )
         .order("desc")
         .take(limit);
     } else {
       notifications = await ctx.db
         .query("notifications")
-        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .withIndex("by_user", (q) => q.eq("userId", userId))
         .order("desc")
         .take(limit);
     }
@@ -96,13 +99,15 @@ export const getUserNotifications = query({
  */
 export const getUnreadCount = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const unreadNotifications = await ctx.db
       .query("notifications")
       .withIndex("by_user_and_read", (q) => 
-        q.eq("userId", args.userId).eq("isRead", false)
+        q.eq("userId", userId).eq("isRead", false)
       )
       .collect();
 
@@ -115,9 +120,17 @@ export const getUnreadCount = query({
  */
 export const markAsRead = mutation({
   args: {
+    authToken: v.string(),
+    userId: v.id("users"),
     notificationId: v.id("notifications"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+    const notification = await ctx.db.get(args.notificationId);
+    if (!notification || notification.userId !== args.userId) {
+      throw new Error("Unauthorized");
+    }
+
     await ctx.db.patch(args.notificationId, {
       isRead: true,
     });
@@ -129,13 +142,15 @@ export const markAsRead = mutation({
  */
 export const markAllAsRead = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const unreadNotifications = await ctx.db
       .query("notifications")
       .withIndex("by_user_and_read", (q) => 
-        q.eq("userId", args.userId).eq("isRead", false)
+        q.eq("userId", userId).eq("isRead", false)
       )
       .collect();
 
@@ -154,9 +169,16 @@ export const markAllAsRead = mutation({
  */
 export const deleteNotification = mutation({
   args: {
+    authToken: v.string(),
+    userId: v.id("users"),
     notificationId: v.id("notifications"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+    const notification = await ctx.db.get(args.notificationId);
+    if (!notification || notification.userId !== args.userId) {
+      throw new Error("Unauthorized");
+    }
     await ctx.db.delete(args.notificationId);
   },
 });

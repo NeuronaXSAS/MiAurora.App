@@ -1,13 +1,18 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * Get user's life canvas data - birth year, life expectancy, and entries
  */
 export const getLifeCanvasData = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) return null;
 
     return {
@@ -23,6 +28,7 @@ export const getLifeCanvasData = query({
  */
 export const updateLifeSettings = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     birthYear: v.optional(v.number()),
     lifeExpectancy: v.optional(v.number()),
@@ -35,7 +41,8 @@ export const updateLifeSettings = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
 
     const updates: Record<string, unknown> = {};
@@ -44,7 +51,7 @@ export const updateLifeSettings = mutation({
       updates.lifeExpectancy = args.lifeExpectancy;
     if (args.gender !== undefined) updates.gender = args.gender;
 
-    await ctx.db.patch(args.userId, updates);
+    await ctx.db.patch(userId, updates);
     return { success: true };
   },
 });
@@ -55,14 +62,16 @@ export const updateLifeSettings = mutation({
  */
 export const getLifeEntries = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     startDate: v.string(), // YYYY-MM-DD
     endDate: v.string(), // YYYY-MM-DD
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const entries = await ctx.db
       .query("lifeEntries")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     // Filter by date range
@@ -78,14 +87,16 @@ export const getLifeEntries = query({
  */
 export const getDailyIntensities = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     startDate: v.string(), // YYYY-MM-DD
     endDate: v.string(), // YYYY-MM-DD
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const entries = await ctx.db
       .query("lifeEntries")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     // Filter by date range and aggregate by date
@@ -122,14 +133,16 @@ export const getDailyIntensities = query({
  */
 export const getLifeEntriesForDate = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     date: v.string(), // YYYY-MM-DD
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const entries = await ctx.db
       .query("lifeEntries")
       .withIndex("by_user_and_date", (q) =>
-        q.eq("userId", args.userId).eq("date", args.date),
+        q.eq("userId", userId).eq("date", args.date),
       )
       .collect();
 
@@ -143,10 +156,17 @@ export const getLifeEntriesForDate = query({
  */
 export const getLifeEntryById = query({
   args: {
+    authToken: v.string(),
+    userId: v.id("users"),
     entryId: v.id("lifeEntries"),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.entryId);
+    await requireAuthenticatedUser(args.authToken, args.userId);
+    const entry = await ctx.db.get(args.entryId);
+    if (!entry || entry.userId !== args.userId) {
+      throw new Error("Entry not found or unauthorized");
+    }
+    return entry;
   },
 });
 
@@ -156,6 +176,7 @@ export const getLifeEntryById = query({
  */
 export const createLifeEntry = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     date: v.string(), // YYYY-MM-DD
     journalText: v.optional(v.string()),
@@ -182,7 +203,8 @@ export const createLifeEntry = mutation({
     tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
 
     // Calculate intensity score based on entry completeness
@@ -208,7 +230,7 @@ export const createLifeEntry = mutation({
 
     // Always create a new entry (multiple entries per day supported)
     const entryId = await ctx.db.insert("lifeEntries", {
-      userId: args.userId,
+      userId,
       date: args.date,
       createdAt: Date.now(),
       journalText: args.journalText,
@@ -227,14 +249,14 @@ export const createLifeEntry = mutation({
 
     // Award credits for each entry (5 credits)
     const JOURNAL_ENTRY_CREDITS = 5;
-    await ctx.db.patch(args.userId, {
+    await ctx.db.patch(userId, {
       credits: user.credits + JOURNAL_ENTRY_CREDITS,
       monthlyCreditsEarned:
         (user.monthlyCreditsEarned || 0) + JOURNAL_ENTRY_CREDITS,
     });
 
     await ctx.db.insert("transactions", {
-      userId: args.userId,
+      userId,
       amount: JOURNAL_ENTRY_CREDITS,
       type: "life_entry",
       relatedId: entryId,
@@ -249,6 +271,8 @@ export const createLifeEntry = mutation({
  */
 export const updateLifeEntry = mutation({
   args: {
+    authToken: v.string(),
+    userId: v.id("users"),
     entryId: v.id("lifeEntries"),
     journalText: v.optional(v.string()),
     mood: v.optional(v.number()),
@@ -274,8 +298,11 @@ export const updateLifeEntry = mutation({
     tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
     const entry = await ctx.db.get(args.entryId);
-    if (!entry) throw new Error("Entry not found");
+    if (!entry || entry.userId !== args.userId) {
+      throw new Error("Entry not found or unauthorized");
+    }
 
     // Recalculate intensity score
     let intensityScore = 0;
@@ -319,11 +346,16 @@ export const updateLifeEntry = mutation({
  */
 export const deleteLifeEntry = mutation({
   args: {
+    authToken: v.string(),
+    userId: v.id("users"),
     entryId: v.id("lifeEntries"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
     const entry = await ctx.db.get(args.entryId);
-    if (!entry) throw new Error("Entry not found");
+    if (!entry || entry.userId !== args.userId) {
+      throw new Error("Entry not found or unauthorized");
+    }
 
     await ctx.db.delete(args.entryId);
     return { success: true };
@@ -334,14 +366,18 @@ export const deleteLifeEntry = mutation({
  * Get life statistics for the user
  */
 export const getLifeStats = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) return null;
 
     const entries = await ctx.db
       .query("lifeEntries")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     // Calculate stats

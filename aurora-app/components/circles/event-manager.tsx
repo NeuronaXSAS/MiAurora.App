@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface EventManagerProps {
   circleId: Id<"circles">;
@@ -62,13 +63,14 @@ export function EventManager({ circleId, userId, isAdmin }: EventManagerProps) {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [locationName, setLocationName] = useState("");
+  const { authToken } = useAuthSession();
 
   const events = useQuery(api.events.getCircleEvents, { circleId, limit: 20 });
   const createEvent = useMutation(api.events.createEvent);
   const rsvpToEvent = useMutation(api.events.rsvpToEvent);
 
   const handleCreateEvent = async () => {
-    if (!title || !description || !startDate || !startTime || !endTime) return;
+    if (!title || !description || !startDate || !startTime || !endTime || !authToken) return;
     
     setIsCreating(true);
     try {
@@ -76,6 +78,7 @@ export function EventManager({ circleId, userId, isAdmin }: EventManagerProps) {
       const endDateTime = new Date(`${startDate}T${endTime}`).getTime();
       
       await createEvent({
+        authToken,
         circleId,
         hostId: userId,
         title,
@@ -111,8 +114,10 @@ export function EventManager({ circleId, userId, isAdmin }: EventManagerProps) {
   };
 
   const handleRsvp = async (eventId: Id<"events">) => {
+    if (!authToken) return;
     try {
       await rsvpToEvent({
+        authToken,
         eventId,
         userId,
         status: "going",

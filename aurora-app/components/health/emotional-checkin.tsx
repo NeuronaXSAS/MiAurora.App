@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Heart, Smile } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface EmotionalCheckinProps {
   userId: Id<"users">;
@@ -25,6 +26,7 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const [journal, setJournal] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const { authToken } = useAuthSession();
 
   // Get client's local date for timezone-aware queries
   const getLocalDate = () => {
@@ -34,8 +36,10 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
   const clientDate = getLocalDate();
 
   // Safe queries with null coalescing for error handling - using client date for timezone accuracy
-  const todayMood = useQuery(api.health.getTodayMood, { userId, clientDate }) ?? null;
-  const moodHistory = useQuery(api.health.getMoodHistory, { userId, days: 7 }) ?? [];
+  const todayMood =
+    useQuery(api.health.getTodayMood, authToken ? { authToken, userId, clientDate } : "skip") ?? null;
+  const moodHistory =
+    useQuery(api.health.getMoodHistory, authToken ? { authToken, userId, days: 7 } : "skip") ?? [];
   const logMood = useMutation(api.health.logMood);
 
   // Load today's mood if it exists
@@ -47,11 +51,12 @@ export function EmotionalCheckin({ userId }: EmotionalCheckinProps) {
   }, [todayMood]);
 
   const handleSave = async () => {
-    if (selectedMood === null) return;
+    if (selectedMood === null || !authToken) return;
 
     setIsSaving(true);
     try {
       await logMood({
+        authToken,
         userId,
         mood: selectedMood,
         journal: journal || undefined,

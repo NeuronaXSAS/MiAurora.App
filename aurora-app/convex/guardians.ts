@@ -1,15 +1,18 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * Search for users to add as Aurora Guardians
  */
 export const searchUsers = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     searchTerm: v.string(),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     if (args.searchTerm.length < 2) return [];
 
     // Get all users and filter by name/email
@@ -18,7 +21,7 @@ export const searchUsers = query({
     const searchLower = args.searchTerm.toLowerCase();
     const results = allUsers
       .filter(user => 
-        user._id !== args.userId &&
+        user._id !== userId &&
         (user.name.toLowerCase().includes(searchLower) ||
          user.email.toLowerCase().includes(searchLower))
       )
@@ -40,15 +43,17 @@ export const searchUsers = query({
  */
 export const sendGuardianRequest = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     guardianId: v.id("users"),
     message: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Check if request already exists
     const existing = await ctx.db
       .query("auroraGuardians")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("guardianId"), args.guardianId))
       .first();
 
@@ -63,7 +68,7 @@ export const sendGuardianRequest = mutation({
 
     // Create the request
     await ctx.db.insert("auroraGuardians", {
-      userId: args.userId,
+      userId,
       guardianId: args.guardianId,
       status: "pending",
       requestedAt: Date.now(),
@@ -74,14 +79,14 @@ export const sendGuardianRequest = mutation({
     });
 
     // Create notification for the guardian
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     await ctx.db.insert("notifications", {
       userId: args.guardianId,
       type: "accompaniment_request",
       title: "New Guardian Request",
       message: `${user?.name || "Someone"} wants you to be their Aurora Guardian`,
       isRead: false,
-      fromUserId: args.userId,
+      fromUserId: userId,
     });
 
     return { success: true };
@@ -93,12 +98,18 @@ export const sendGuardianRequest = mutation({
  */
 export const respondToRequest = mutation({
   args: {
+    authToken: v.string(),
+    userId: v.id("users"),
     requestId: v.id("auroraGuardians"),
     accept: v.boolean(),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const request = await ctx.db.get(args.requestId);
     if (!request) throw new Error("Request not found");
+    if (request.guardianId !== userId) {
+      throw new Error("Unauthorized");
+    }
 
     if (args.accept) {
       // Accept the request
@@ -152,12 +163,16 @@ export const respondToRequest = mutation({
  * Get user's Aurora Guardians (accepted connections)
  */
 export const getMyGuardians = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const connections = await ctx.db
       .query("auroraGuardians")
       .withIndex("by_user_status", (q) => 
-        q.eq("userId", args.userId).eq("status", "accepted")
+        q.eq("userId", userId).eq("status", "accepted")
       )
       .collect();
 
@@ -191,12 +206,16 @@ export const getMyGuardians = query({
  * Get pending guardian requests (received)
  */
 export const getPendingRequests = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const requests = await ctx.db
       .query("auroraGuardians")
       .withIndex("by_guardian_status", (q) => 
-        q.eq("guardianId", args.userId).eq("status", "pending")
+        q.eq("guardianId", userId).eq("status", "pending")
       )
       .collect();
 
@@ -226,13 +245,17 @@ export const getPendingRequests = query({
  * Get sent pending guardian requests (to show "pending" status on UI)
  */
 export const getSentPendingRequests = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     try {
       const requests = await ctx.db
         .query("auroraGuardians")
         .withIndex("by_user_status", (q) => 
-          q.eq("userId", args.userId).eq("status", "pending")
+          q.eq("userId", userId).eq("status", "pending")
         )
         .collect();
 
@@ -253,21 +276,23 @@ export const getSentPendingRequests = query({
  */
 export const removeGuardian = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     guardianId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Remove both directions
     const conn1 = await ctx.db
       .query("auroraGuardians")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("guardianId"), args.guardianId))
       .first();
 
     const conn2 = await ctx.db
       .query("auroraGuardians")
       .withIndex("by_user", (q) => q.eq("userId", args.guardianId))
-      .filter((q) => q.eq(q.field("guardianId"), args.userId))
+      .filter((q) => q.eq(q.field("guardianId"), userId))
       .first();
 
     if (conn1) await ctx.db.delete(conn1._id);
@@ -282,12 +307,20 @@ export const removeGuardian = mutation({
  */
 export const updatePermissions = mutation({
   args: {
+    authToken: v.string(),
+    userId: v.id("users"),
     connectionId: v.id("auroraGuardians"),
     canSeeLocation: v.optional(v.boolean()),
     canReceiveAlerts: v.optional(v.boolean()),
     canReceiveCheckins: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+    const connection = await ctx.db.get(args.connectionId);
+    if (!connection || connection.userId !== args.userId) {
+      throw new Error("Unauthorized");
+    }
+
     const { connectionId, ...permissions } = args;
     const updates: Record<string, boolean> = {};
     
@@ -311,6 +344,7 @@ export const updatePermissions = mutation({
  */
 export const notifyGuardiansCheckinMissed = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     checkinId: v.id("safetyCheckins"),
     location: v.optional(v.object({
@@ -319,14 +353,15 @@ export const notifyGuardiansCheckinMissed = mutation({
     })),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) return { notified: 0 };
 
     // Get all guardians who can receive check-in notifications
     const guardianConnections = await ctx.db
       .query("auroraGuardians")
       .withIndex("by_user_status", (q) => 
-        q.eq("userId", args.userId).eq("status", "accepted")
+        q.eq("userId", userId).eq("status", "accepted")
       )
       .filter((q) => q.eq(q.field("canReceiveCheckins"), true))
       .collect();
@@ -336,7 +371,7 @@ export const notifyGuardiansCheckinMissed = mutation({
       // Create guardian notification
       await ctx.db.insert("guardianNotifications", {
         guardianId: conn.guardianId,
-        fromUserId: args.userId,
+        fromUserId: userId,
         type: "checkin_missed",
         message: `${user.name} missed their scheduled check-in. Please check on them.`,
         location: args.location,
@@ -352,7 +387,7 @@ export const notifyGuardiansCheckinMissed = mutation({
         title: "⚠️ Missed Check-in Alert",
         message: `${user.name} missed their scheduled check-in`,
         isRead: false,
-        fromUserId: args.userId,
+        fromUserId: userId,
         relatedId: args.checkinId,
       });
 
@@ -368,6 +403,7 @@ export const notifyGuardiansCheckinMissed = mutation({
  */
 export const notifyGuardiansEmergency = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     alertId: v.id("emergencyAlerts"),
     location: v.object({
@@ -377,14 +413,15 @@ export const notifyGuardiansEmergency = mutation({
     }),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) return { notified: 0 };
 
     // Get all guardians who can receive alerts
     const guardianConnections = await ctx.db
       .query("auroraGuardians")
       .withIndex("by_user_status", (q) => 
-        q.eq("userId", args.userId).eq("status", "accepted")
+        q.eq("userId", userId).eq("status", "accepted")
       )
       .filter((q) => q.eq(q.field("canReceiveAlerts"), true))
       .collect();
@@ -393,7 +430,7 @@ export const notifyGuardiansEmergency = mutation({
     for (const conn of guardianConnections) {
       await ctx.db.insert("guardianNotifications", {
         guardianId: conn.guardianId,
-        fromUserId: args.userId,
+        fromUserId: userId,
         type: "emergency_alert",
         message: `🚨 EMERGENCY: ${user.name} activated their panic button!`,
         location: args.location,
@@ -408,7 +445,7 @@ export const notifyGuardiansEmergency = mutation({
         title: "🚨 EMERGENCY ALERT",
         message: `${user.name} needs help! Panic button activated.`,
         isRead: false,
-        fromUserId: args.userId,
+        fromUserId: userId,
         relatedId: args.alertId,
       });
 
@@ -424,13 +461,15 @@ export const notifyGuardiansEmergency = mutation({
  */
 export const getGuardianNotifications = query({
   args: { 
+    authToken: v.string(),
     userId: v.id("users"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const notifications = await ctx.db
       .query("guardianNotifications")
-      .withIndex("by_guardian", (q) => q.eq("guardianId", args.userId))
+      .withIndex("by_guardian", (q) => q.eq("guardianId", userId))
       .order("desc")
       .take(args.limit || 20);
 
@@ -457,10 +496,17 @@ export const getGuardianNotifications = query({
  */
 export const markNotificationActioned = mutation({
   args: {
+    authToken: v.string(),
+    userId: v.id("users"),
     notificationId: v.id("guardianNotifications"),
     actionTaken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+    const notification = await ctx.db.get(args.notificationId);
+    if (!notification || notification.guardianId !== args.userId) {
+      throw new Error("Unauthorized");
+    }
     await ctx.db.patch(args.notificationId, {
       isRead: true,
       isActioned: true,
@@ -475,35 +521,37 @@ export const markNotificationActioned = mutation({
  */
 export const getSuggestedGuardians = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const limit = args.limit || 5;
-    const currentUser = await ctx.db.get(args.userId);
+    const currentUser = await ctx.db.get(userId);
     if (!currentUser) return [];
 
     // Get existing guardian connections (to exclude)
     const existingConnections = await ctx.db
       .query("auroraGuardians")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     
     const excludeIds = new Set([
-      args.userId,
+      userId,
       ...existingConnections.map(c => c.guardianId),
     ]);
 
     // Get user's matches (sister connections) as potential guardians
     const matchesFrom = await ctx.db
       .query("sisterConnections")
-      .withIndex("by_from_user", (q) => q.eq("fromUserId", args.userId))
+      .withIndex("by_from_user", (q) => q.eq("fromUserId", userId))
       .filter((q) => q.eq(q.field("status"), "matched"))
       .collect();
 
     const matchesTo = await ctx.db
       .query("sisterConnections")
-      .withIndex("by_to_user", (q) => q.eq("toUserId", args.userId))
+      .withIndex("by_to_user", (q) => q.eq("toUserId", userId))
       .filter((q) => q.eq(q.field("status"), "matched"))
       .collect();
 

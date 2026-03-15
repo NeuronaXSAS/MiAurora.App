@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 const INCIDENT_LABELS: Record<string, string> = {
   harassment: "Sexual Harassment",
@@ -42,33 +43,22 @@ const INCIDENT_COLORS: Record<string, string> = {
 };
 
 export default function ReportPage() {
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [activeTab, setActiveTab] = useState("submit");
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const router = useRouter();
   const deleteReport = useMutation(api.workplaceReports.deleteReport);
+  const { authToken, error, isLoading, userId } = useAuthSession();
 
   useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        } else {
-          router.push("/");
-        }
-      } catch (error) {
-        router.push("/");
-      }
-    };
-    getUserId();
-  }, [router]);
+    if (!isLoading && (!userId || !authToken) && error) {
+      router.push("/");
+    }
+  }, [authToken, error, isLoading, router, userId]);
 
   const myReports = useQuery(
     api.workplaceReports.getMyReports,
-    userId ? { userId } : "skip"
+    userId && authToken ? { authToken, userId } : "skip"
   );
 
   const publicReports = useQuery(api.workplaceReports.getPublicReports, {
@@ -77,11 +67,11 @@ export default function ReportPage() {
   });
 
   const handleDeleteReport = async (reportId: Id<"workplaceReports">) => {
-    if (!userId) return;
+    if (!userId || !authToken) return;
     if (confirm("Are you sure you want to delete this report? This action cannot be undone.")) {
       setDeletingId(reportId);
       try {
-        await deleteReport({ reportId, userId });
+        await deleteReport({ authToken, reportId, userId });
       } catch (error) {
         alert("Failed to delete report");
       } finally {

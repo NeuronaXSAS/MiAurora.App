@@ -1,12 +1,14 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * Create an accompaniment session
  */
 export const createSession = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     routeId: v.optional(v.id("routes")),
     destination: v.string(),
@@ -14,8 +16,9 @@ export const createSession = mutation({
     companions: v.array(v.id("users")), // Users who will track
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const sessionId = await ctx.db.insert("accompanimentSessions", {
-      userId: args.userId,
+      userId,
       routeId: args.routeId,
       destination: args.destination,
       estimatedArrival: args.estimatedArrival,
@@ -26,7 +29,7 @@ export const createSession = mutation({
     });
 
     // Notify companions
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (user) {
       for (const companionId of args.companions) {
         await ctx.db.insert("notifications", {
@@ -36,7 +39,7 @@ export const createSession = mutation({
           message: `${user.name} wants you to track their journey to ${args.destination}`,
           isRead: false,
           actionUrl: `/accompaniment/${sessionId}`,
-          fromUserId: args.userId,
+          fromUserId: userId,
           relatedId: sessionId,
         });
       }
@@ -51,6 +54,7 @@ export const createSession = mutation({
  */
 export const updateLocation = mutation({
   args: {
+    authToken: v.string(),
     sessionId: v.id("accompanimentSessions"),
     location: v.object({
       latitude: v.number(),
@@ -59,6 +63,12 @@ export const updateLocation = mutation({
     }),
   },
   handler: async (ctx, args) => {
+    const session = await ctx.db.get(args.sessionId);
+    if (!session) {
+      throw new Error("Session not found");
+    }
+    await requireAuthenticatedUser(args.authToken, session.userId);
+
     await ctx.db.patch(args.sessionId, {
       currentLocation: args.location,
       lastUpdate: Date.now(),
@@ -71,6 +81,7 @@ export const updateLocation = mutation({
  */
 export const endSession = mutation({
   args: {
+    authToken: v.string(),
     sessionId: v.id("accompanimentSessions"),
     status: v.union(
       v.literal("completed"),
@@ -81,6 +92,7 @@ export const endSession = mutation({
   handler: async (ctx, args) => {
     const session = await ctx.db.get(args.sessionId);
     if (!session) return;
+    await requireAuthenticatedUser(args.authToken, session.userId);
 
     await ctx.db.patch(args.sessionId, {
       status: args.status,
@@ -117,18 +129,22 @@ export const endSession = mutation({
  * Get active session for user
  */
 export const getActiveSession = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     try {
       // Verify user exists first
-      const user = await ctx.db.get(args.userId);
+      const user = await ctx.db.get(userId);
       if (!user) {
         return null;
       }
 
       const session = await ctx.db
         .query("accompanimentSessions")
-        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .withIndex("by_user", (q) => q.eq("userId", userId))
         .filter((q) => q.eq(q.field("status"), "active"))
         .first();
 
@@ -168,15 +184,19 @@ export const getActiveSession = query({
  * Get sessions where user is a companion
  */
 export const getCompanionSessions = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const allSessions = await ctx.db
       .query("accompanimentSessions")
       .filter((q) => q.eq(q.field("status"), "active"))
       .collect();
 
     const companionSessions = allSessions.filter((session) =>
-      session.companions.includes(args.userId)
+      session.companions.includes(userId)
     );
 
     // Get user details for each session
@@ -204,12 +224,14 @@ export const getCompanionSessions = query({
  */
 export const sendCheckIn = mutation({
   args: {
+    authToken: v.string(),
     sessionId: v.id("accompanimentSessions"),
     message: v.string(),
   },
   handler: async (ctx, args) => {
     const session = await ctx.db.get(args.sessionId);
     if (!session) return;
+    await requireAuthenticatedUser(args.authToken, session.userId);
 
     const user = await ctx.db.get(session.userId);
     if (!user) return;

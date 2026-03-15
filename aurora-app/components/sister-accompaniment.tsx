@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface SisterAccompanimentProps {
   userId: Id<"users">;
@@ -32,14 +33,16 @@ export function SisterAccompaniment({ userId }: SisterAccompanimentProps) {
   const [destination, setDestination] = useState("");
   const [isTracking, setIsTracking] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
+  const { authToken } = useAuthSession();
 
   // Queries
-  const activeSession = useQuery(api.locationSharing.getActiveSession, {
-    userId,
-  });
+  const activeSession = useQuery(
+    api.locationSharing.getActiveSession,
+    authToken ? { authToken, userId } : "skip",
+  );
   const watchingSessions =
-    useQuery(api.locationSharing.getWatchingSessions, { userId }) ?? [];
-  const myGuardians = useQuery(api.guardians.getMyGuardians, { userId }) ?? [];
+    useQuery(api.locationSharing.getWatchingSessions, authToken ? { authToken, userId } : "skip") ?? [];
+  const myGuardians = useQuery(api.guardians.getMyGuardians, authToken ? { authToken, userId } : "skip") ?? [];
 
   // Mutations
   const startShare = useMutation(api.locationSharing.startLocationShare);
@@ -48,6 +51,7 @@ export function SisterAccompaniment({ userId }: SisterAccompanimentProps) {
 
   // Location tracking
   const startTracking = useCallback(async () => {
+    if (!authToken) return;
     if (!("geolocation" in navigator)) {
       alert("Geolocation is not supported by your browser");
       return;
@@ -56,6 +60,7 @@ export function SisterAccompaniment({ userId }: SisterAccompanimentProps) {
     try {
       // Start the session
       const result = await startShare({
+        authToken,
         userId,
         destination: destination || undefined,
       });
@@ -67,6 +72,7 @@ export function SisterAccompaniment({ userId }: SisterAccompanimentProps) {
         async (position) => {
           if (result.sessionId) {
             await updateLocation({
+              authToken,
               sessionId: result.sessionId,
               location: {
                 lat: position.coords.latitude,
@@ -93,7 +99,7 @@ export function SisterAccompaniment({ userId }: SisterAccompanimentProps) {
         "Failed to start location sharing. Make sure you have Aurora Guardians.",
       );
     }
-  }, [userId, destination, startShare, updateLocation]);
+  }, [authToken, userId, destination, startShare, updateLocation]);
 
   const stopTracking = useCallback(
     async (status: "arrived" | "cancelled" = "arrived") => {
@@ -102,8 +108,9 @@ export function SisterAccompaniment({ userId }: SisterAccompanimentProps) {
         setWatchId(null);
       }
 
-      if (activeSession) {
+      if (activeSession && authToken) {
         await endShare({
+          authToken,
           sessionId: activeSession._id,
           status,
         });
@@ -112,7 +119,7 @@ export function SisterAccompaniment({ userId }: SisterAccompanimentProps) {
       setIsTracking(false);
       setDestination("");
     },
-    [watchId, activeSession, endShare],
+    [authToken, watchId, activeSession, endShare],
   );
 
   // Cleanup on unmount

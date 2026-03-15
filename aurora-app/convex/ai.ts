@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
+import { verifyConvexAuthToken } from "../lib/auth-proof";
 
 /**
  * Chat with AI assistant using Google Gemini 2.0 Flash-Lite
@@ -8,11 +9,17 @@ import { api } from "./_generated/api";
  */
 export const chat = action({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     message: v.string(),
   },
   handler: async (ctx, args): Promise<{ response: string }> => {
     try {
+      const proof = await verifyConvexAuthToken(args.authToken);
+      if (!proof || proof.userId !== String(args.userId)) {
+        throw new Error("Unauthorized");
+      }
+
       // Check if API key is configured
       const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
       
@@ -22,6 +29,7 @@ export const chat = action({
 
         // Save the fallback message
         await ctx.runMutation(api.ai.saveMessage, {
+          authToken: args.authToken,
           userId: args.userId,
           userMessage: args.message,
           aiResponse: fallbackResponse,
@@ -96,6 +104,7 @@ Aurora:`;
         // Return fallback instead of throwing
         const fallbackResponse = getFallbackResponse(args.message);
         await ctx.runMutation(api.ai.saveMessage, {
+          authToken: args.authToken,
           userId: args.userId,
           userMessage: args.message,
           aiResponse: fallbackResponse,
@@ -115,6 +124,7 @@ Aurora:`;
 
       // Save messages to database
       await ctx.runMutation(api.ai.saveMessage, {
+        authToken: args.authToken,
         userId: args.userId,
         userMessage: args.message,
         aiResponse,
@@ -127,6 +137,7 @@ Aurora:`;
       const fallbackResponse = getFallbackResponse(args.message);
       try {
         await ctx.runMutation(api.ai.saveMessage, {
+          authToken: args.authToken,
           userId: args.userId,
           userMessage: args.message,
           aiResponse: fallbackResponse,
@@ -200,11 +211,17 @@ function getFallbackResponse(message: string): string {
  */
 export const saveMessage = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     userMessage: v.string(),
     aiResponse: v.string(),
   },
   handler: async (ctx, args) => {
+    const proof = await verifyConvexAuthToken(args.authToken);
+    if (!proof || proof.userId !== String(args.userId)) {
+      throw new Error("Unauthorized");
+    }
+
     // Save user message
     await ctx.db.insert("messages", {
       userId: args.userId,
@@ -228,10 +245,16 @@ export const saveMessage = mutation({
  */
 export const getHistory = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const proof = await verifyConvexAuthToken(args.authToken);
+    if (!proof || proof.userId !== String(args.userId)) {
+      throw new Error("Unauthorized");
+    }
+
     const messages = await ctx.db
       .query("messages")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))

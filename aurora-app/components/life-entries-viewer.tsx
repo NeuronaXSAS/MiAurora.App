@@ -26,6 +26,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { format, subMonths, addMonths, startOfMonth, endOfMonth } from "date-fns";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface LifeEntriesViewerProps {
   userId: Id<"users">;
@@ -47,19 +48,19 @@ const DIMENSION_EMOJIS: Record<string, string> = {
 export function LifeEntriesViewer({ userId, open, onOpenChange }: LifeEntriesViewerProps) {
   const [viewMonth, setViewMonth] = useState(new Date());
   const [selectedEntryId, setSelectedEntryId] = useState<Id<"lifeEntries"> | null>(null);
+  const { authToken } = useAuthSession();
 
   const monthStart = format(startOfMonth(viewMonth), "yyyy-MM-dd");
   const monthEnd = format(endOfMonth(viewMonth), "yyyy-MM-dd");
 
-  const entries = useQuery(api.lifeCanvas.getLifeEntries, {
-    userId,
-    startDate: monthStart,
-    endDate: monthEnd,
-  });
+  const entries = useQuery(
+    api.lifeCanvas.getLifeEntries,
+    authToken ? { authToken, userId, startDate: monthStart, endDate: monthEnd } : "skip",
+  );
 
   const entryDetail = useQuery(
     api.lifeCanvas.getLifeEntryById,
-    selectedEntryId ? { entryId: selectedEntryId } : "skip"
+    selectedEntryId && authToken ? { authToken, userId, entryId: selectedEntryId } : "skip"
   );
 
   const deleteEntry = useMutation(api.lifeCanvas.deleteLifeEntry);
@@ -84,8 +85,9 @@ export function LifeEntriesViewer({ userId, open, onOpenChange }: LifeEntriesVie
   }, [entries]);
 
   const handleDeleteEntry = async (entryId: Id<"lifeEntries">) => {
+    if (!authToken) return;
     if (confirm("Are you sure you want to delete this entry?")) {
-      await deleteEntry({ entryId });
+      await deleteEntry({ authToken, userId, entryId });
       setSelectedEntryId(null);
     }
   };

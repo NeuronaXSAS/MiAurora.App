@@ -1,9 +1,11 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 // Log a period day
 export const logPeriod = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     date: v.string(), // YYYY-MM-DD
     flow: v.union(v.literal("light"), v.literal("medium"), v.literal("heavy"), v.literal("spotting")),
@@ -11,11 +13,12 @@ export const logPeriod = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Check if entry exists for this date
     const existing = await ctx.db
       .query("cycleLogs")
       .withIndex("by_user_and_date", (q) => 
-        q.eq("userId", args.userId).eq("date", args.date)
+        q.eq("userId", userId).eq("date", args.date)
       )
       .first();
 
@@ -29,7 +32,7 @@ export const logPeriod = mutation({
     }
 
     return await ctx.db.insert("cycleLogs", {
-      userId: args.userId,
+      userId,
       date: args.date,
       type: "period",
       flow: args.flow,
@@ -42,6 +45,7 @@ export const logPeriod = mutation({
 // Log symptoms (non-period day)
 export const logSymptoms = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     date: v.string(),
     symptoms: v.array(v.string()),
@@ -50,10 +54,11 @@ export const logSymptoms = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const existing = await ctx.db
       .query("cycleLogs")
       .withIndex("by_user_and_date", (q) => 
-        q.eq("userId", args.userId).eq("date", args.date)
+        q.eq("userId", userId).eq("date", args.date)
       )
       .first();
 
@@ -68,7 +73,7 @@ export const logSymptoms = mutation({
     }
 
     return await ctx.db.insert("cycleLogs", {
-      userId: args.userId,
+      userId,
       date: args.date,
       type: "symptom",
       symptoms: args.symptoms,
@@ -82,15 +87,17 @@ export const logSymptoms = mutation({
 // Get cycle history
 export const getCycleHistory = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     try {
       let logs = await ctx.db
         .query("cycleLogs")
-        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .withIndex("by_user", (q) => q.eq("userId", userId))
         .order("desc")
         .take(90); // Last 90 days
 
@@ -112,8 +119,12 @@ export const getCycleHistory = query({
 
 // Get cycle predictions
 export const getCyclePredictions = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     try {
       // Get period logs from last 6 months
       const sixMonthsAgo = new Date();
@@ -122,7 +133,7 @@ export const getCyclePredictions = query({
 
       const periodLogs = await ctx.db
         .query("cycleLogs")
-        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .withIndex("by_user", (q) => q.eq("userId", userId))
         .filter((q) => q.eq(q.field("type"), "period"))
         .order("asc")
         .collect();
@@ -198,12 +209,14 @@ export const getCyclePredictions = query({
 // Delete a log entry
 export const deleteLog = mutation({
   args: {
+    authToken: v.string(),
     logId: v.id("cycleLogs"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const log = await ctx.db.get(args.logId);
-    if (!log || log.userId !== args.userId) {
+    if (!log || log.userId !== userId) {
       throw new Error("Log not found or unauthorized");
     }
     await ctx.db.delete(args.logId);

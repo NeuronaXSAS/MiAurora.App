@@ -24,43 +24,32 @@ import {
   Flame
 } from "lucide-react";
 import { SmartAd, useIsPremium } from "@/components/ads/smart-ad";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export default function HealthPage() {
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const router = useRouter();
   const isPremium = useIsPremium();
+  const { authToken, error, isLoading, userId } = useAuthSession();
 
   useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        } else {
-          router.push("/");
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-        router.push("/");
-      }
-    };
-    getUserId();
-  }, [router]);
+    if (!isLoading && (!userId || !authToken) && error) {
+      router.push("/");
+    }
+  }, [authToken, error, isLoading, router, userId]);
 
   // Fetch wellness data for overview
   const hydrationHistory = useQuery(
     api.health.getHydrationHistory,
-    userId ? { userId, days: 30 } : "skip"
+    userId && authToken ? { authToken, userId, days: 30 } : "skip"
   );
   const moodHistory = useQuery(
     api.health.getMoodHistory,
-    userId ? { userId, days: 30 } : "skip"
+    userId && authToken ? { authToken, userId, days: 30 } : "skip"
   );
   const meditationStats = useQuery(
     api.health.getMeditationStats,
-    userId ? { userId } : "skip"
+    userId && authToken ? { authToken, userId } : "skip"
   );
 
   // Calculate wellness score and streaks

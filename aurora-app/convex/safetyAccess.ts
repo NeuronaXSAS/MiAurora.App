@@ -8,6 +8,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { SAFETY_FEATURES } from "./premiumConfig";
+import { requireAuthenticatedUser } from "./auth";
 
 // ============================================
 // SAFETY ACCESS QUERIES
@@ -39,11 +40,13 @@ export const getSafetyFeatures = query({
  */
 export const validateAccess = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     feature: v.string(),
     requiredTier: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // CRITICAL: Safety features are ALWAYS accessible
     if (SAFETY_FEATURES.includes(args.feature)) {
       return {
@@ -56,7 +59,7 @@ export const validateAccess = query({
     // For non-safety features, check subscription
     const subscription = await ctx.db
       .query("userSubscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .first();
 
     const userTier = subscription?.status === "active" ? subscription.tier : "free";
@@ -91,11 +94,15 @@ export const validateAccess = query({
  * Shows what features they can access based on their tier
  */
 export const getUserAccessSummary = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const subscription = await ctx.db
       .query("userSubscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .first();
 
     const userTier = subscription?.status === "active" ? subscription.tier : "free";
@@ -202,11 +209,15 @@ export const auditSafetyAccess = query({
  * Safety features have no rate limits
  */
 export const getRateLimits = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const subscription = await ctx.db
       .query("userSubscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .first();
 
     const userTier = subscription?.status === "active" ? subscription.tier : "free";

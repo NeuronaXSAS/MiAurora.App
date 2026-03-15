@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Droplet, Plus, Minus, Sparkles, TrendingUp, Bell, BellOff } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { format, subDays } from "date-fns";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface HydrationTrackerProps {
   userId: Id<"users">;
@@ -16,6 +17,7 @@ interface HydrationTrackerProps {
 export function HydrationTracker({ userId }: HydrationTrackerProps) {
   const [showCelebration, setShowCelebration] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const { authToken } = useAuthSession();
   
   // Get client's local date for timezone-aware queries
   const getLocalDate = () => {
@@ -27,14 +29,14 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
   // Safe query with null coalescing for error handling - using client date for timezone accuracy
   const todayHydrationRaw = useQuery(
     api.health.getTodayHydration,
-    userId ? { userId, clientDate } : "skip"
+    userId && authToken ? { authToken, userId, clientDate } : "skip"
   );
   const todayHydration = todayHydrationRaw ?? { glasses: 0, goal: 8, completed: false };
   
   // Get hydration history for the last 7 days
   const hydrationHistory = useQuery(
     api.health.getHydrationHistory,
-    userId ? { userId, days: 7 } : "skip"
+    userId && authToken ? { authToken, userId, days: 7 } : "skip"
   ) ?? [];
   
   const logWater = useMutation(api.health.logWater);
@@ -45,8 +47,9 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
   const percentage = Math.min((glasses / goal) * 100, 100);
 
   const handleAddGlass = async () => {
+    if (!authToken) return;
     const newGlasses = glasses + 1;
-    await logWater({ userId, glasses: newGlasses, clientDate });
+    await logWater({ authToken, userId, glasses: newGlasses, clientDate });
     
     // Show celebration if goal reached
     if (newGlasses === goal) {
@@ -56,8 +59,9 @@ export function HydrationTracker({ userId }: HydrationTrackerProps) {
   };
 
   const handleRemoveGlass = async () => {
+    if (!authToken) return;
     if (glasses > 0) {
-      await logWater({ userId, glasses: glasses - 1, clientDate });
+      await logWater({ authToken, userId, glasses: glasses - 1, clientDate });
     }
   };
 

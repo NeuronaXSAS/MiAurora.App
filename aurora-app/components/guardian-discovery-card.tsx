@@ -21,6 +21,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { generateAvatarUrl } from "@/hooks/use-avatar";
 import Link from "next/link";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface GuardianDiscoveryCardProps {
   currentUserId: Id<"users">;
@@ -33,22 +34,28 @@ export function GuardianDiscoveryCard({
 }: GuardianDiscoveryCardProps) {
   const [dismissed, setDismissed] = useState(false);
   const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
+  const { authToken } = useAuthSession();
 
   // Get suggested guardians (mutual connections, nearby users, etc.)
-  const suggestedGuardians = useQuery(api.guardians.getSuggestedGuardians, {
-    userId: currentUserId,
-    limit: 3,
-  });
+  const suggestedGuardians = useQuery(
+    api.guardians.getSuggestedGuardians,
+    authToken ? { authToken, userId: currentUserId, limit: 3 } : "skip",
+  );
 
   // Get current guardian count
-  const myGuardians = useQuery(api.guardians.getMyGuardians, { userId: currentUserId });
+  const myGuardians = useQuery(
+    api.guardians.getMyGuardians,
+    authToken ? { authToken, userId: currentUserId } : "skip",
+  );
   const guardianCount = myGuardians?.length || 0;
 
   const sendRequest = useMutation(api.guardians.sendGuardianRequest);
 
   const handleSendRequest = useCallback(async (guardianId: Id<"users">) => {
+    if (!authToken) return;
     try {
       await sendRequest({
+        authToken,
         userId: currentUserId,
         guardianId,
         message: "Let's be safety buddies! 💜",
@@ -57,7 +64,7 @@ export function GuardianDiscoveryCard({
     } catch (error) {
       console.error("Failed to send request:", error);
     }
-  }, [currentUserId, sendRequest]);
+  }, [authToken, currentUserId, sendRequest]);
 
   if (dismissed || !suggestedGuardians || suggestedGuardians.length === 0) {
     return null;
@@ -270,7 +277,11 @@ export function GuardianDiscoveryCard({
 
 // Mini version for sidebar or quick access
 export function GuardianQuickAdd({ currentUserId }: { currentUserId: Id<"users"> }) {
-  const myGuardians = useQuery(api.guardians.getMyGuardians, { userId: currentUserId });
+  const { authToken } = useAuthSession();
+  const myGuardians = useQuery(
+    api.guardians.getMyGuardians,
+    authToken ? { authToken, userId: currentUserId } : "skip",
+  );
   const guardianCount = myGuardians?.length || 0;
 
   return (

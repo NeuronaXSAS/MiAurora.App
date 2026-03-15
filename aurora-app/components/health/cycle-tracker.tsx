@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { 
+import {
   Calendar, 
   Droplets, 
   Heart, 
@@ -18,6 +18,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface CycleTrackerProps {
   userId: Id<"users">;
@@ -51,11 +52,18 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
   const [mood, setMood] = useState<number>(3);
   const [energy, setEnergy] = useState<number>(3);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const { authToken } = useAuthSession();
 
   // Safe queries with null coalescing for error handling
-  const cycleHistoryRaw = useQuery(api.cycleTracker.getCycleHistory, { userId });
+  const cycleHistoryRaw = useQuery(
+    api.cycleTracker.getCycleHistory,
+    authToken ? { authToken, userId } : "skip",
+  );
   const cycleHistory = cycleHistoryRaw ?? [];
-  const predictionsRaw = useQuery(api.cycleTracker.getCyclePredictions, { userId });
+  const predictionsRaw = useQuery(
+    api.cycleTracker.getCyclePredictions,
+    authToken ? { authToken, userId } : "skip",
+  );
   const predictions = predictionsRaw ?? {
     hasEnoughData: false,
     averageCycleLength: 28,
@@ -68,9 +76,10 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
   const logSymptoms = useMutation(api.cycleTracker.logSymptoms);
 
   const handleLogPeriod = async () => {
-    if (!selectedFlow) return;
+    if (!selectedFlow || !authToken) return;
     
     await logPeriod({
+      authToken,
       userId,
       date: selectedDate,
       flow: selectedFlow as "light" | "medium" | "heavy" | "spotting",
@@ -85,7 +94,9 @@ export function CycleTracker({ userId }: CycleTrackerProps) {
   };
 
   const handleLogSymptoms = async () => {
+    if (!authToken) return;
     await logSymptoms({
+      authToken,
       userId,
       date: selectedDate,
       symptoms: selectedSymptoms,

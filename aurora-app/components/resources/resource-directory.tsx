@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Phone, 
   Globe, 
   MapPin, 
@@ -28,6 +28,7 @@ import {
   Languages
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface ResourceDirectoryProps {
   userId?: Id<"users">;
@@ -62,6 +63,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 export function ResourceDirectory({ userId, country, city }: ResourceDirectoryProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const { authToken } = useAuthSession();
 
   // Safe queries with null coalescing for error handling
   const categories = useQuery(api.resources.getCategories, { country }) ?? [];
@@ -79,9 +81,9 @@ export function ResourceDirectory({ userId, country, city }: ResourceDirectoryPr
   const displayResources = searchQuery.length >= 2 ? searchResults : resources;
 
   const handleVerify = async (resourceId: Id<"safetyResources">) => {
-    if (!userId) return;
+    if (!userId || !authToken) return;
     try {
-      await verifyResource({ resourceId, userId });
+      await verifyResource({ authToken, resourceId, userId });
     } catch (error: any) {
       alert(error.message);
     }

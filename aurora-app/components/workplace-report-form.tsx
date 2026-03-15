@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
+import {
   Shield, 
   AlertTriangle, 
   Lock, 
@@ -30,6 +30,7 @@ import {
   Share2
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface WorkplaceReportFormProps {
   userId: Id<"users">;
@@ -67,6 +68,7 @@ export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormPr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const { authToken } = useAuthSession();
 
   const submitReport = useMutation(api.workplaceReports.submitReport);
 
@@ -79,7 +81,7 @@ export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormPr
   };
 
   const handleSubmit = async () => {
-    if (!companyName || !incidentType || !description) {
+    if (!companyName || !incidentType || !description || !authToken) {
       alert("Please fill in all required fields");
       return;
     }
@@ -87,6 +89,7 @@ export function WorkplaceReportForm({ userId, onSuccess }: WorkplaceReportFormPr
     setIsSubmitting(true);
     try {
       await submitReport({
+        authToken,
         reporterId: userId,
         companyName,
         incidentType: incidentType as any,

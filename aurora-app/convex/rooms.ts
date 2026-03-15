@@ -7,6 +7,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { ROOM_LIMITS } from "./premiumConfig";
+import { requireAuthenticatedUser } from "./auth";
 
 // ============================================
 // ROOM QUERIES
@@ -16,8 +17,23 @@ import { ROOM_LIMITS } from "./premiumConfig";
  * Get rooms for a Circle
  */
 export const getCircleRooms = query({
-  args: { circleId: v.id("circles") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+    circleId: v.id("circles"),
+  },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+    const membership = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle_and_user", (q) =>
+        q.eq("circleId", args.circleId).eq("userId", args.userId),
+      )
+      .first();
+    if (!membership) {
+      throw new Error("Unauthorized");
+    }
+
     const rooms = await ctx.db
       .query("rooms")
       .withIndex("by_circle", (q) => q.eq("circleId", args.circleId))
@@ -51,10 +67,25 @@ export const getCircleRooms = query({
  * Get room details
  */
 export const getRoom = query({
-  args: { roomId: v.id("rooms") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+    roomId: v.id("rooms"),
+  },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
     const room = await ctx.db.get(args.roomId);
     if (!room) return null;
+
+    const membership = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle_and_user", (q) =>
+        q.eq("circleId", room.circleId).eq("userId", args.userId),
+      )
+      .first();
+    if (!membership && room.visibility !== "public") {
+      throw new Error("Unauthorized");
+    }
     
     const circle = await ctx.db.get(room.circleId);
     const creator = await ctx.db.get(room.createdBy);
@@ -99,10 +130,12 @@ export const getRoom = query({
  */
 export const canAccessRoom = query({
   args: {
+    authToken: v.string(),
     roomId: v.id("rooms"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
     const room = await ctx.db.get(args.roomId);
     if (!room) {
       return { allowed: false, reason: "Room not found" };
@@ -175,6 +208,7 @@ export const canAccessRoom = query({
  */
 export const createRoom = mutation({
   args: {
+    authToken: v.string(),
     circleId: v.id("circles"),
     name: v.string(),
     description: v.optional(v.string()),
@@ -194,11 +228,12 @@ export const createRoom = mutation({
     createdBy: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId: createdBy } = await requireAuthenticatedUser(args.authToken, args.createdBy);
     // Verify user is Circle admin
     const membership = await ctx.db
       .query("circleMembers")
       .withIndex("by_circle_and_user", (q) => 
-        q.eq("circleId", args.circleId).eq("userId", args.createdBy)
+        q.eq("circleId", args.circleId).eq("userId", createdBy)
       )
       .first();
     
@@ -238,7 +273,7 @@ export const createRoom = mutation({
       visibility: args.visibility,
       requiredTier: args.requiredTier,
       maxParticipants,
-      createdBy: args.createdBy,
+      createdBy,
       isActive: true,
       agoraChannel,
       features,
@@ -253,11 +288,13 @@ export const createRoom = mutation({
  */
 export const joinRoom = mutation({
   args: {
+    authToken: v.string(),
     roomId: v.id("rooms"),
     userId: v.id("users"),
     role: v.optional(v.union(v.literal("host"), v.literal("speaker"), v.literal("listener"))),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const room = await ctx.db.get(args.roomId);
     if (!room || !room.isActive) {
       throw new Error("Room not found or inactive");
@@ -269,7 +306,7 @@ export const joinRoom = mutation({
       .withIndex("by_room_active", (q) => 
         q.eq("roomId", args.roomId).eq("isActive", true)
       )
-      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .filter((q) => q.eq(q.field("userId"), userId))
       .first();
     
     if (existing) {
@@ -310,7 +347,7 @@ export const joinRoom = mutation({
     
     await ctx.db.insert("roomParticipants", {
       roomId: args.roomId,
-      userId: args.userId,
+      userId,
       role,
       joinedAt: Date.now(),
       isActive: true,
@@ -325,16 +362,18 @@ export const joinRoom = mutation({
  */
 export const leaveRoom = mutation({
   args: {
+    authToken: v.string(),
     roomId: v.id("rooms"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const participant = await ctx.db
       .query("roomParticipants")
       .withIndex("by_room_active", (q) => 
         q.eq("roomId", args.roomId).eq("isActive", true)
       )
-      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .filter((q) => q.eq(q.field("userId"), userId))
       .first();
     
     if (participant) {
@@ -353,12 +392,14 @@ export const leaveRoom = mutation({
  */
 export const sendRoomMessage = mutation({
   args: {
+    authToken: v.string(),
     roomId: v.id("rooms"),
     authorId: v.id("users"),
     content: v.string(),
     parentId: v.optional(v.id("roomMessages")),
   },
   handler: async (ctx, args) => {
+    const { userId: authorId } = await requireAuthenticatedUser(args.authToken, args.authorId);
     const room = await ctx.db.get(args.roomId);
     if (!room || !room.isActive) {
       throw new Error("Room not found or inactive");
@@ -368,9 +409,20 @@ export const sendRoomMessage = mutation({
       throw new Error("Messages only allowed in chat and forum rooms");
     }
     
+    const participant = await ctx.db
+      .query("roomParticipants")
+      .withIndex("by_room_active", (q) =>
+        q.eq("roomId", args.roomId).eq("isActive", true),
+      )
+      .filter((q) => q.eq(q.field("userId"), authorId))
+      .first();
+    if (!participant) {
+      throw new Error("Must join room before posting");
+    }
+
     const messageId = await ctx.db.insert("roomMessages", {
       roomId: args.roomId,
-      authorId: args.authorId,
+      authorId,
       content: args.content,
       parentId: args.parentId,
     });
@@ -384,10 +436,27 @@ export const sendRoomMessage = mutation({
  */
 export const getRoomMessages = query({
   args: {
+    authToken: v.string(),
+    userId: v.id("users"),
     roomId: v.id("rooms"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
+    const room = await ctx.db.get(args.roomId);
+    if (!room) {
+      return [];
+    }
+    const membership = await ctx.db
+      .query("circleMembers")
+      .withIndex("by_circle_and_user", (q) =>
+        q.eq("circleId", room.circleId).eq("userId", args.userId),
+      )
+      .first();
+    if (!membership && room.visibility !== "public") {
+      throw new Error("Unauthorized");
+    }
+
     const limit = args.limit || 50;
     
     const messages = await ctx.db
@@ -422,10 +491,12 @@ export const getRoomMessages = query({
  */
 export const togglePinMessage = mutation({
   args: {
+    authToken: v.string(),
     messageId: v.id("roomMessages"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
     const message = await ctx.db.get(args.messageId);
     if (!message) {
       throw new Error("Message not found");
@@ -461,10 +532,12 @@ export const togglePinMessage = mutation({
  */
 export const deleteRoom = mutation({
   args: {
+    authToken: v.string(),
     roomId: v.id("rooms"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(args.authToken, args.userId);
     const room = await ctx.db.get(args.roomId);
     if (!room) {
       throw new Error("Room not found");

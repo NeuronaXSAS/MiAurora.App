@@ -26,6 +26,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import Link from "next/link";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface WellnessHubProps {
   userId: Id<"users">;
@@ -34,24 +35,36 @@ interface WellnessHubProps {
 
 export function WellnessHub({ userId, compact = false }: WellnessHubProps) {
   const [showMoodPicker, setShowMoodPicker] = useState(false);
+  const { authToken } = useAuthSession();
   
   const today = new Date().toISOString().split('T')[0];
   
-  const hydration = useQuery(api.health.getTodayHydration, { userId, clientDate: today });
-  const mood = useQuery(api.health.getTodayMood, { userId, clientDate: today });
-  const meditationStats = useQuery(api.health.getMeditationStats, { userId });
+  const hydration = useQuery(
+    api.health.getTodayHydration,
+    authToken ? { authToken, userId, clientDate: today } : "skip",
+  );
+  const mood = useQuery(
+    api.health.getTodayMood,
+    authToken ? { authToken, userId, clientDate: today } : "skip",
+  );
+  const meditationStats = useQuery(
+    api.health.getMeditationStats,
+    authToken ? { authToken, userId } : "skip",
+  );
   
   const logWater = useMutation(api.health.logWater);
   const logMood = useMutation(api.health.logMood);
 
   const handleWaterChange = async (delta: number) => {
+    if (!authToken) return;
     const current = hydration?.glasses || 0;
     const newValue = Math.max(0, Math.min(12, current + delta));
-    await logWater({ userId, glasses: newValue, clientDate: today });
+    await logWater({ authToken, userId, glasses: newValue, clientDate: today });
   };
 
   const handleMoodSelect = async (moodValue: number) => {
-    await logMood({ userId, mood: moodValue, clientDate: today });
+    if (!authToken) return;
+    await logMood({ authToken, userId, mood: moodValue, clientDate: today });
     setShowMoodPicker(false);
   };
 

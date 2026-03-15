@@ -1,9 +1,11 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 // Submit a workplace report
 export const submitReport = mutation({
   args: {
+    authToken: v.string(),
     reporterId: v.id("users"),
     companyName: v.string(),
     incidentType: v.union(
@@ -27,7 +29,15 @@ export const submitReport = mutation({
     supportNeeded: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const { reporterId, shareToFeed, showOnMap, location, ...reportData } = args;
+    const { userId: reporterId } = await requireAuthenticatedUser(args.authToken, args.reporterId);
+    const {
+      authToken,
+      reporterId: _reporterId,
+      shareToFeed,
+      showOnMap,
+      location,
+      ...reportData
+    } = args;
 
     const reportId = await ctx.db.insert("workplaceReports", {
       reporterId,
@@ -98,11 +108,15 @@ export const submitReport = mutation({
 
 // Get user's own reports
 export const getMyReports = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     return await ctx.db
       .query("workplaceReports")
-      .withIndex("by_reporter", (q) => q.eq("reporterId", args.userId))
+      .withIndex("by_reporter", (q) => q.eq("reporterId", userId))
       .order("desc")
       .collect();
   },
@@ -155,14 +169,16 @@ export const getPublicReports = query({
 // Verify a report (community verification)
 export const verifyReport = mutation({
   args: {
+    authToken: v.string(),
     reportId: v.id("workplaceReports"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const report = await ctx.db.get(args.reportId);
     if (!report) throw new Error("Report not found");
     if (!report.isPublic) throw new Error("Cannot verify private reports");
-    if (report.reporterId === args.userId) throw new Error("Cannot verify own report");
+    if (report.reporterId === userId) throw new Error("Cannot verify own report");
 
     // Update verification count
     const newCount = (report.verificationCount || 0) + 1;
@@ -172,9 +188,9 @@ export const verifyReport = mutation({
     });
 
     // Award credits to verifier
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (user) {
-      await ctx.db.patch(args.userId, {
+      await ctx.db.patch(userId, {
         credits: (user.credits || 0) + 5,
       });
     }
@@ -223,12 +239,14 @@ export const getCompanySafetySummary = query({
 // Delete own report
 export const deleteReport = mutation({
   args: {
+    authToken: v.string(),
     reportId: v.id("workplaceReports"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const report = await ctx.db.get(args.reportId);
-    if (!report || report.reporterId !== args.userId) {
+    if (!report || report.reporterId !== userId) {
       throw new Error("Report not found or unauthorized");
     }
     await ctx.db.delete(args.reportId);

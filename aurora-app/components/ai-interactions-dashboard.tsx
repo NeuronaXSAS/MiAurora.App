@@ -20,11 +20,15 @@ import { Id } from "@/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 
 interface AIInteractionsDashboardProps {
+  authToken: string | null;
   userId: Id<"users">;
 }
 
-export function AIInteractionsDashboard({ userId }: AIInteractionsDashboardProps) {
-  const chatHistory = useQuery(api.ai.getHistory, { userId, limit: 100 });
+export function AIInteractionsDashboard({ authToken, userId }: AIInteractionsDashboardProps) {
+  const chatHistory = useQuery(
+    api.ai.getHistory,
+    authToken ? { authToken, userId, limit: 100 } : "skip",
+  );
   // AI interactions stats calculated from chat history
   const aiInteractions = { voiceSessions: 0, sharedChats: 0 };
 
