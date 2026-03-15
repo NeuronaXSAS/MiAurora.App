@@ -189,15 +189,10 @@ export function AISearchSuggestions({ onSuggestionClick, className = '', locale 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userLocale, setUserLocale] = useState('en');
 
-  // Detect user's locale
+  // Aurora is intentionally English-only in production for now.
   useEffect(() => {
-    if (locale) {
-      setUserLocale(locale);
-    } else if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('aurora-locale');
-      const browser = navigator.language.split('-')[0];
-      setUserLocale(stored || browser || 'en');
-    }
+    void locale;
+    setUserLocale('en');
   }, [locale]);
 
   // Rotate suggestions every few seconds

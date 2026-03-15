@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 /**
  * Aurora App - Massive Seed Data Generator
  * 
@@ -8,6 +9,7 @@
 import { mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { blockDeprecatedSeedPath } from "./seedGuard";
 
 // ============================================
 // GLOBAL DATA SETS
@@ -332,6 +334,7 @@ function fillTemplate(template: string, city: typeof CITIES[0], company?: string
 export const cleanAllData = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seed:cleanAllData");
     console.log("Starting complete data cleanup...");
     
     // Delete in order to respect foreign key relationships
@@ -378,6 +381,7 @@ export const cleanAllData = mutation({
 export const seedUsers = mutation({
   args: { count: v.number() },
   handler: async (ctx, { count }) => {
+    blockDeprecatedSeedPath("seed:seedUsers");
     console.log(`Creating ${count} users...`);
     const userIds: Id<"users">[] = [];
     
@@ -433,6 +437,7 @@ export const seedUsers = mutation({
 export const seedPosts = mutation({
   args: { count: v.number() },
   handler: async (ctx, { count }) => {
+    blockDeprecatedSeedPath("seed:seedPosts");
     console.log(`Creating ${count} posts...`);
     
     const users = await ctx.db.query("users").collect();
@@ -492,6 +497,7 @@ export const seedPosts = mutation({
 export const seedPolls = mutation({
   args: { count: v.number() },
   handler: async (ctx, { count }) => {
+    blockDeprecatedSeedPath("seed:seedPolls");
     console.log(`Creating ${count} polls...`);
     
     const users = await ctx.db.query("users").collect();
@@ -545,6 +551,7 @@ export const seedPolls = mutation({
 export const seedRoutes = mutation({
   args: { count: v.number() },
   handler: async (ctx, { count }) => {
+    blockDeprecatedSeedPath("seed:seedRoutes");
     console.log(`Creating ${count} routes...`);
     
     const users = await ctx.db.query("users").collect();
@@ -651,6 +658,7 @@ export const seedRoutes = mutation({
 export const seedOpportunities = mutation({
   args: { count: v.number() },
   handler: async (ctx, { count }) => {
+    blockDeprecatedSeedPath("seed:seedOpportunities");
     console.log(`Creating ${count} opportunities...`);
     
     const users = await ctx.db.query("users").collect();
@@ -700,6 +708,7 @@ export const seedOpportunities = mutation({
 export const seedCircles = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seed:seedCircles");
     console.log("Creating circles...");
     
     const users = await ctx.db.query("users").collect();
@@ -776,6 +785,7 @@ export const seedCircles = mutation({
 export const seedSafetyResources = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seed:seedSafetyResources");
     console.log("Creating safety resources...");
     
     const resourceIds: Id<"safetyResources">[] = [];
@@ -842,6 +852,7 @@ export const seedSafetyResources = mutation({
 export const seedWorkplaceReports = mutation({
   args: { count: v.number() },
   handler: async (ctx, { count }) => {
+    blockDeprecatedSeedPath("seed:seedWorkplaceReports");
     console.log(`Creating ${count} workplace reports...`);
     
     const users = await ctx.db.query("users").collect();
@@ -897,6 +908,7 @@ export const seedWorkplaceReports = mutation({
 export const seedComments = mutation({
   args: { count: v.number() },
   handler: async (ctx, { count }) => {
+    blockDeprecatedSeedPath("seed:seedComments");
     console.log(`Creating ${count} comments...`);
     
     const users = await ctx.db.query("users").collect();
@@ -935,6 +947,7 @@ export const seedComments = mutation({
 export const seedVotesAndVerifications = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seed:seedVotesAndVerifications");
     console.log("Creating votes and verifications...");
     
     const users = await ctx.db.query("users").collect();
@@ -993,6 +1006,7 @@ export const seedVotesAndVerifications = mutation({
 export const seedB2BData = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seed:seedB2BData");
     console.log("Creating B2B intelligence data...");
     
     // Corporate Safety Index
@@ -1086,6 +1100,7 @@ export const seedB2BData = mutation({
 export const seedGuardians = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seed:seedGuardians");
     console.log("Creating guardian connections...");
     
     const users = await ctx.db.query("users").collect();
@@ -1126,6 +1141,7 @@ export const seedGuardians = mutation({
 export const seedEmergencyContacts = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seed:seedEmergencyContacts");
     console.log("Creating emergency contacts...");
     
     const users = await ctx.db.query("users").collect();
@@ -1160,6 +1176,7 @@ export const seedEmergencyContacts = mutation({
 export const runFullSeed = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seed:runFullSeed");
     console.log("=".repeat(50));
     console.log("AURORA APP - FULL SEED STARTING");
     console.log("=".repeat(50));
@@ -1208,6 +1225,7 @@ export const runFullSeed = mutation({
 export const quickSeed = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seed:quickSeed");
     console.log("Running quick seed...");
     
     // Create 20 users
@@ -1283,6 +1301,7 @@ export const quickSeed = mutation({
 export const countAllData = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seed:countAllData");
     const users = await ctx.db.query("users").collect();
     const posts = await ctx.db.query("posts").collect();
     const routes = await ctx.db.query("routes").collect();
@@ -1338,6 +1357,7 @@ export const countAllData = mutation({
 export const updateAvatarsToFeminine = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seed:updateAvatarsToFeminine");
     console.log("Updating avatars to feminine styles...");
     
     const users = await ctx.db.query("users").collect();
@@ -1375,6 +1395,7 @@ export const updateAvatarsToFeminine = mutation({
 export const seedComprehensiveSafetyResources = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seed:seedComprehensiveSafetyResources");
     console.log("Creating comprehensive safety resources from global database...");
     
     const resourceIds: Id<"safetyResources">[] = [];
@@ -1514,6 +1535,7 @@ export const seedComprehensiveSafetyResources = mutation({
 export const seedMoreStandardPosts = mutation({
   args: { count: v.number() },
   handler: async (ctx, { count }) => {
+    blockDeprecatedSeedPath("seed:seedMoreStandardPosts");
     console.log(`Creating ${count} additional standard posts...`);
     
     const users = await ctx.db.query("users").collect();
@@ -1571,6 +1593,7 @@ export const seedMoreStandardPosts = mutation({
 export const seedMoreOpportunities = mutation({
   args: { count: v.number() },
   handler: async (ctx, { count }) => {
+    blockDeprecatedSeedPath("seed:seedMoreOpportunities");
     console.log(`Creating ${count} additional opportunities...`);
     
     const users = await ctx.db.query("users").collect();

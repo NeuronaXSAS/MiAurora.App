@@ -8,8 +8,7 @@ export const metadata = {
 };
 
 export default function TermsPage() {
-  // Read the terms content from the legal directory
-  const termsPath = join(process.cwd(), "legal", "T&C.md");
+  const termsPath = join(process.cwd(), "legal", "TERMS_EN.md");
   const termsContent = readFileSync(termsPath, "utf8");
 
   return (

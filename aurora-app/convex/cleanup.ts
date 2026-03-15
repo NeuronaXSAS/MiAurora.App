@@ -27,6 +27,218 @@ function isValidMediaUrl(url: string | undefined | null): boolean {
   return true;
 }
 
+const CANONICAL_ENVIRONMENTS = ["local", "staging", "production"] as const;
+
+const SYSTEM_REFERENCE_TABLES = [
+  "subscriptionTiers",
+  "creditPackages",
+  "giftCatalog",
+  "creatorTiers",
+  "platformStats",
+  "dailyChallenges",
+  "dailyAffirmations",
+  "seededContent",
+  "dailyContentSchedule",
+];
+
+const GENERATED_OR_SYSTEM_TABLES = [
+  "generatedDebates",
+  "generatedDebateVotes",
+  "generatedTips",
+  "tipVerifications",
+  "generatedPrompts",
+  "generatedChallenges",
+  "debateSuggestions",
+  "communityTranslations",
+  "seededContent",
+  "dailyContentSchedule",
+];
+
+const RESET_DELETE_ORDER = [
+  "votes",
+  "verifications",
+  "pollVotes",
+  "comments",
+  "reelCommentLikes",
+  "reelComments",
+  "reelLikes",
+  "opportunityCommentLikes",
+  "opportunityComments",
+  "opportunityLikes",
+  "debateVotes",
+  "debateComments",
+  "dailyNewsVotes",
+  "dailyNewsComments",
+  "generatedDebateVotes",
+  "tipVerifications",
+  "circleAiMessages",
+  "circlePosts",
+  "circleMembers",
+  "roomMessages",
+  "roomParticipants",
+  "savedPosts",
+  "notifications",
+  "transactions",
+  "messages",
+  "directMessages",
+  "analytics_events",
+  "searchVotes",
+  "searchVoteAggregates",
+  "searchVoteRateLimits",
+  "searchApiUsage",
+  "unlocks",
+  "resourceVerifications",
+  "resourceReports",
+  "guardianNotifications",
+  "auroraGuardians",
+  "locationShares",
+  "emergencyResponses",
+  "emergencyAlerts",
+  "emergencyContacts",
+  "reels",
+  "livestreamLikes",
+  "livestreamViewers",
+  "livestreams",
+  "routes",
+  "opportunities",
+  "posts",
+  "circles",
+  "rooms",
+  "communityJudgeCaseVotes",
+  "communityJudgeCaseComments",
+  "communityJudgeCases",
+  "dailyDebates",
+  "dailyNewsStories",
+  "assistantWellnessProfiles",
+  "aiInteractions",
+  "hydrationLogs",
+  "emotionalCheckins",
+  "meditationSessions",
+  "accompanimentSessions",
+  "cycleLogs",
+  "safetyCheckins",
+  "workplaceReports",
+  "habits",
+  "habitCompletions",
+  "personalGoals",
+  "lifeEntries",
+  "userAffirmationHistory",
+  "financialChats",
+  "financialProfiles",
+  "financialGoals",
+  "events",
+  "eventRsvps",
+  "eventReviews",
+  "giftTransactions",
+  "creditPurchases",
+  "userSubscriptions",
+  "subscriptions",
+  "referrals",
+  "engagementRewards",
+  "creatorSubscribers",
+  "sisterConnections",
+  "sisterSkips",
+  "anonymousDebaters",
+  "searchCache",
+  "userReports",
+  "moderationQueue",
+  "uploadedFiles",
+  "loginStreaks",
+  "users",
+];
+
+const AUDIT_TABLES = Array.from(
+  new Set([
+    ...RESET_DELETE_ORDER,
+    ...SYSTEM_REFERENCE_TABLES,
+    "opportunityComments",
+    "opportunityLikes",
+    "opportunityCommentLikes",
+    "corporateSafetyIndex",
+    "urbanSafetyIndex",
+    "safetyResources",
+    "dailyChallenges",
+    "dailyAffirmations",
+    "payouts",
+    "tips",
+  ]),
+);
+
+function getEnvValue(...names: string[]) {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+function inferEnvironmentStage(): (typeof CANONICAL_ENVIRONMENTS)[number] {
+  const explicit =
+    getEnvValue("AURORA_ENV", "APP_ENV", "VERCEL_ENV", "NODE_ENV") || "local";
+  const normalized = explicit.toLowerCase();
+
+  if (normalized.includes("prod")) return "production";
+  if (normalized.includes("stag") || normalized.includes("preview")) {
+    return "staging";
+  }
+  return "local";
+}
+
+function classifyTable(tableName: string) {
+  if (SYSTEM_REFERENCE_TABLES.includes(tableName)) return "system_reference";
+  if (GENERATED_OR_SYSTEM_TABLES.includes(tableName)) {
+    return "generated_or_seeded";
+  }
+  if (
+    tableName.includes("analytics") ||
+    tableName.includes("rate") ||
+    tableName.includes("cache")
+  ) {
+    return "analytics_or_operational";
+  }
+  return "user_generated";
+}
+
+function countDuplicateRows(values: string[]) {
+  const counts = new Map<string, number>();
+  for (const value of values) {
+    counts.set(value, (counts.get(value) || 0) + 1);
+  }
+  let duplicates = 0;
+  for (const count of counts.values()) {
+    if (count > 1) {
+      duplicates += count;
+    }
+  }
+  return duplicates;
+}
+
+async function safeCollectTable(
+  ctx: {
+    db: {
+      query: (
+        tableName: string,
+      ) => {
+        collect: () => Promise<Array<{ _id: string }>>;
+      };
+    };
+  },
+  tableName: string,
+) {
+  try {
+    const records = await ctx.db.query(tableName).collect();
+    return { ok: true as const, records };
+  } catch (error) {
+    return {
+      ok: false as const,
+      records: [] as Array<{ _id: string }>,
+      error: String(error),
+    };
+  }
+}
+
 // ============================================
 // DIAGNOSTIC QUERIES
 // ============================================
@@ -1231,6 +1443,408 @@ export const optimizeMapMarkers = query({
       redundantCount: removedPosts.length,
       reductionPercent: Math.round((removedPosts.length / posts.length) * 100),
       // Don't return all IDs, just stats
+    };
+  },
+});
+
+// ============================================
+// PRODUCTION RESET & READINESS
+// ============================================
+
+export const getEnvironmentDiagnostics = query({
+  args: {},
+  handler: async () => {
+    const stage = inferEnvironmentStage();
+    const convexUrl = getEnvValue("NEXT_PUBLIC_CONVEX_URL");
+    const workosRedirectUri = getEnvValue("NEXT_PUBLIC_WORKOS_REDIRECT_URI");
+    const diagnostics = {
+      canonicalEnvironmentModel: CANONICAL_ENVIRONMENTS,
+      detectedStage: stage,
+      destructiveResetProtection: {
+        allowProductionReset: getEnvValue("ALLOW_PRODUCTION_RESET") === "true",
+        confirmationPhrase: "RESET AURORA TO VIRGIN STATE",
+      },
+      deployment: {
+        convexUrl,
+        convexDeployment: getEnvValue("CONVEX_DEPLOYMENT"),
+        nodeEnv: getEnvValue("NODE_ENV"),
+        appEnv: getEnvValue("AURORA_ENV", "APP_ENV", "VERCEL_ENV"),
+        workosRedirectUri,
+      },
+      services: {
+        convex: { configured: Boolean(convexUrl), envVar: "NEXT_PUBLIC_CONVEX_URL" },
+        googleAI: { configured: Boolean(getEnvValue("GOOGLE_AI_API_KEY")), envVar: "GOOGLE_AI_API_KEY" },
+        awsAccessKey: { configured: Boolean(getEnvValue("AWS_ACCESS_KEY_ID")), envVar: "AWS_ACCESS_KEY_ID" },
+        awsSecret: { configured: Boolean(getEnvValue("AWS_SECRET_ACCESS_KEY")), envVar: "AWS_SECRET_ACCESS_KEY" },
+        awsRegion: { configured: Boolean(getEnvValue("AWS_REGION")), envVar: "AWS_REGION" },
+        brave: { configured: Boolean(getEnvValue("BRAVE_SEARCH_API_KEY")), envVar: "BRAVE_SEARCH_API_KEY" },
+        workosApi: { configured: Boolean(getEnvValue("WORKOS_API_KEY")), envVar: "WORKOS_API_KEY" },
+        workosClient: { configured: Boolean(getEnvValue("WORKOS_CLIENT_ID")), envVar: "WORKOS_CLIENT_ID" },
+        workosWebhook: { configured: Boolean(getEnvValue("WORKOS_WEBHOOK_SECRET")), envVar: "WORKOS_WEBHOOK_SECRET" },
+        cloudinaryCloud: { configured: Boolean(getEnvValue("NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME")), envVar: "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME" },
+        cloudinaryKey: { configured: Boolean(getEnvValue("NEXT_PUBLIC_CLOUDINARY_API_KEY")), envVar: "NEXT_PUBLIC_CLOUDINARY_API_KEY" },
+        cloudinarySecret: { configured: Boolean(getEnvValue("CLOUDINARY_API_SECRET")), envVar: "CLOUDINARY_API_SECRET" },
+        agora: { configured: Boolean(getEnvValue("NEXT_PUBLIC_AGORA_APP_ID", "AGORA_APP_ID")), envVar: "NEXT_PUBLIC_AGORA_APP_ID" },
+        mapboxToken: { configured: Boolean(getEnvValue("NEXT_PUBLIC_MAPBOX_TOKEN")), envVar: "NEXT_PUBLIC_MAPBOX_TOKEN" },
+        mapboxStyle: { configured: Boolean(getEnvValue("NEXT_PUBLIC_MAPBOX_STYLE")), envVar: "NEXT_PUBLIC_MAPBOX_STYLE" },
+        posthogKey: { configured: Boolean(getEnvValue("NEXT_PUBLIC_POSTHOG_KEY")), envVar: "NEXT_PUBLIC_POSTHOG_KEY" },
+        posthogHost: { configured: Boolean(getEnvValue("NEXT_PUBLIC_POSTHOG_HOST")), envVar: "NEXT_PUBLIC_POSTHOG_HOST" },
+        twilioSid: { configured: Boolean(getEnvValue("TWILIO_ACCOUNT_SID")), envVar: "TWILIO_ACCOUNT_SID" },
+        twilioToken: { configured: Boolean(getEnvValue("TWILIO_AUTH_TOKEN")), envVar: "TWILIO_AUTH_TOKEN" },
+        twilioPhone: { configured: Boolean(getEnvValue("TWILIO_PHONE_NUMBER")), envVar: "TWILIO_PHONE_NUMBER" },
+        adsenseClient: { configured: Boolean(getEnvValue("NEXT_PUBLIC_ADSENSE_CLIENT_ID")), envVar: "NEXT_PUBLIC_ADSENSE_CLIENT_ID" },
+        adsensePublisher: { configured: Boolean(getEnvValue("NEXT_PUBLIC_ADSENSE_PUBLISHER_ID")), envVar: "NEXT_PUBLIC_ADSENSE_PUBLISHER_ID" },
+        adminApiKey: { configured: Boolean(getEnvValue("ADMIN_API_KEY")), envVar: "ADMIN_API_KEY" },
+      },
+      warnings: [
+        !convexUrl ? "NEXT_PUBLIC_CONVEX_URL is missing." : null,
+        !workosRedirectUri ? "NEXT_PUBLIC_WORKOS_REDIRECT_URI is missing." : null,
+        stage === "production" && getEnvValue("ALLOW_PRODUCTION_RESET") === "true"
+          ? "Production reset override is enabled. Disable it after controlled resets."
+          : null,
+      ].filter(Boolean),
+    };
+
+    return diagnostics;
+  },
+});
+
+export const getProductionResetAudit = query({
+  args: {},
+  handler: async (ctx) => {
+    const tableInventory = await Promise.all(
+      AUDIT_TABLES.map(async (tableName) => {
+        const result = await safeCollectTable(ctx, tableName);
+        return {
+          tableName,
+          count: result.records.length,
+          classification: classifyTable(tableName),
+          available: result.ok,
+          error: result.ok ? undefined : result.error,
+        };
+      }),
+    );
+
+    const usersResult = await safeCollectTable(ctx, "users");
+    const postsResult = await safeCollectTable(ctx, "posts");
+    const reelsResult = await safeCollectTable(ctx, "reels");
+    const routesResult = await safeCollectTable(ctx, "routes");
+    const commentsResult = await safeCollectTable(ctx, "comments");
+    const reelCommentsResult = await safeCollectTable(ctx, "reelComments");
+
+    const allUsers = usersResult.records as Array<{
+      _id: string;
+      email?: string;
+      name?: string;
+      workosId?: string;
+    }>;
+    const allPosts = postsResult.records as Array<{
+      _id: string;
+      authorId: string;
+      reelId?: string;
+      location?: { coordinates?: number[] };
+    }>;
+    const allReels = reelsResult.records as Array<{
+      _id: string;
+      authorId: string;
+      videoUrl?: string;
+      provider?: string;
+    }>;
+    const allRoutes = routesResult.records as Array<{
+      _id: string;
+      creatorId: string;
+    }>;
+    const allComments = commentsResult.records as Array<{
+      _id: string;
+      authorId: string;
+      postId: string;
+    }>;
+    const allReelComments = reelCommentsResult.records as Array<{
+      _id: string;
+      authorId: string;
+      reelId: string;
+    }>;
+
+    const userIds = new Set(allUsers.map((user) => user._id));
+    const postIds = new Set(allPosts.map((post) => post._id));
+    const reelIds = new Set(allReels.map((reel) => reel._id));
+    const seedPatterns = ["seed", "test", "demo", "example", "mock"];
+
+    const seededUsers = allUsers.filter((user) =>
+      seedPatterns.some(
+        (pattern) =>
+          user.email?.toLowerCase().includes(pattern) ||
+          user.name?.toLowerCase().includes(pattern),
+      ),
+    );
+
+    const countsByClassification = tableInventory.reduce(
+      (acc, item) => {
+        acc[item.classification] = (acc[item.classification] || 0) + item.count;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    const recordsToPreserve = tableInventory
+      .filter((item) => item.classification === "system_reference")
+      .reduce((sum, item) => sum + item.count, 0);
+    const recordsToDelete = tableInventory
+      .filter((item) => item.classification !== "system_reference")
+      .reduce((sum, item) => sum + item.count, 0);
+
+    return {
+      environment: {
+        stage: inferEnvironmentStage(),
+        convexDeployment: getEnvValue("CONVEX_DEPLOYMENT"),
+      },
+      inventory: tableInventory.sort((a, b) => b.count - a.count),
+      classificationTotals: countsByClassification,
+      resetImpact: {
+        preserveTables: SYSTEM_REFERENCE_TABLES,
+        deleteTables: RESET_DELETE_ORDER,
+        recordsToPreserve,
+        recordsToDelete,
+      },
+      generatedContent: {
+        seededUsers: seededUsers.length,
+        generatedTables: tableInventory
+          .filter((item) => item.classification === "generated_or_seeded")
+          .map((item) => ({ tableName: item.tableName, count: item.count })),
+      },
+      authMismatch: {
+        duplicateEmailRows: countDuplicateRows(
+          allUsers.map((user) => user.email || "").filter(Boolean),
+        ),
+        duplicateWorkosRows: countDuplicateRows(
+          allUsers.map((user) => user.workosId || "").filter(Boolean),
+        ),
+        usersMissingWorkosId: allUsers.filter((user) => !user.workosId).length,
+      },
+      orphanStats: {
+        postsMissingAuthor: allPosts.filter((post) => !userIds.has(post.authorId)).length,
+        reelsMissingAuthor: allReels.filter((reel) => !userIds.has(reel.authorId)).length,
+        routesMissingCreator: allRoutes.filter((route) => !userIds.has(route.creatorId)).length,
+        commentsMissingAuthorOrPost: allComments.filter(
+          (comment) =>
+            !userIds.has(comment.authorId) || !postIds.has(comment.postId),
+        ).length,
+        reelCommentsMissingAuthorOrReel: allReelComments.filter(
+          (comment) =>
+            !userIds.has(comment.authorId) || !reelIds.has(comment.reelId),
+        ).length,
+      },
+      dataQuality: {
+        brokenReels: allReels.filter((reel) => !isValidMediaUrl(reel.videoUrl)).length,
+        postsWithoutLocation: allPosts.filter(
+          (post) => !post.location?.coordinates,
+        ).length,
+        reelsByProvider: {
+          cloudinary: allReels.filter((reel) => reel.provider === "cloudinary").length,
+          aws: allReels.filter((reel) => reel.provider === "aws").length,
+          custom: allReels.filter((reel) => reel.provider === "custom").length,
+        },
+      },
+    };
+  },
+});
+
+export const getFeatureReadinessAudit = query({
+  args: {},
+  handler: async (ctx) => {
+    const posts = await safeCollectTable(ctx, "posts");
+    const reels = await safeCollectTable(ctx, "reels");
+    const routes = await safeCollectTable(ctx, "routes");
+    const opportunities = await safeCollectTable(ctx, "opportunities");
+    const circles = await safeCollectTable(ctx, "circles");
+    const dailyDebates = await safeCollectTable(ctx, "dailyDebates");
+
+    return {
+      auth: {
+        status:
+          getEnvValue("WORKOS_API_KEY") && getEnvValue("WORKOS_CLIENT_ID")
+            ? "working"
+            : "broken",
+        note: "WorkOS credentials and redirect URI are required for sign in.",
+      },
+      feed: {
+        status: posts.records.length >= 0 ? "working_with_risk" : "broken",
+        note: "Feed is operational, but empty-state and content hygiene must be validated after reset.",
+      },
+      reels: {
+        status: getEnvValue("NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME")
+          ? "working"
+          : "placeholder_or_fallback",
+        note: `Cloudinary-backed uploads ${getEnvValue("NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME") ? "appear configured." : "are not fully configured."}`,
+      },
+      routes: {
+        status: getEnvValue("NEXT_PUBLIC_MAPBOX_TOKEN")
+          ? "working"
+          : "placeholder_or_fallback",
+        note: "Mapbox is required for route creation, discovery, and navigation.",
+      },
+      opportunities: {
+        status: opportunities.records.length >= 0 ? "working" : "broken",
+        note: "Core opportunity tables exist. Stripe unlock and purchase flows still require environment validation.",
+      },
+      circlesAndMessaging: {
+        status: circles.records.length >= 0 ? "working_with_risk" : "broken",
+        note: "Messaging tables exist, but post-reset smoke testing is still required.",
+      },
+      aiAssistant: {
+        status: getEnvValue("GOOGLE_AI_API_KEY")
+          ? "working"
+          : "placeholder_or_fallback",
+        note: "Aurora AI relies on Google AI. Without it, users fall back to static responses.",
+      },
+      wellbeing: {
+        status: "working_with_risk",
+        note: "Wellbeing tables exist; empty-state and retention behavior should be validated after reset.",
+      },
+      emergency: {
+        status: getEnvValue("TWILIO_ACCOUNT_SID")
+          ? "working_with_risk"
+          : "placeholder_or_fallback",
+        note: "Offline safety can still work, but Twilio is required for live SMS escalation.",
+      },
+      payments: {
+        status: getEnvValue("STRIPE_SECRET_KEY")
+          ? "working_with_risk"
+          : "placeholder_or_fallback",
+        note: "Stripe secret and product price IDs are required for premium and credits.",
+      },
+      dailyDebates: {
+        status: getEnvValue("GOOGLE_AI_API_KEY")
+          ? "working_with_risk"
+          : "placeholder_or_fallback",
+        note: `Current daily debates in database: ${dailyDebates.records.length}. A single scheduled pipeline should own generation.`,
+      },
+      currentDataFootprint: {
+        posts: posts.records.length,
+        reels: reels.records.length,
+        routes: routes.records.length,
+        opportunities: opportunities.records.length,
+      },
+    };
+  },
+});
+
+export const executeProductionReset = mutation({
+  args: {
+    dryRun: v.optional(v.boolean()),
+    confirmationPhrase: v.optional(v.string()),
+    allowProductionReset: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const dryRun = args.dryRun ?? true;
+    const stage = inferEnvironmentStage();
+    const productionOverrideEnabled =
+      getEnvValue("ALLOW_PRODUCTION_RESET") === "true";
+
+    if (
+      stage === "production" &&
+      !productionOverrideEnabled &&
+      !args.allowProductionReset
+    ) {
+      throw new Error(
+        "Production reset is blocked. Set ALLOW_PRODUCTION_RESET=true for a controlled reset.",
+      );
+    }
+
+    if (
+      !dryRun &&
+      args.confirmationPhrase !== "RESET AURORA TO VIRGIN STATE"
+    ) {
+      throw new Error("Confirmation phrase mismatch.");
+    }
+
+    const preview = await Promise.all(
+      RESET_DELETE_ORDER.map(async (tableName) => {
+        const result = await safeCollectTable(ctx, tableName);
+        return {
+          tableName,
+          count: result.records.length,
+          available: result.ok,
+        };
+      }),
+    );
+
+    if (dryRun) {
+      return {
+        dryRun: true,
+        detectedStage: stage,
+        protectedTables: SYSTEM_REFERENCE_TABLES,
+        plannedDeletes: preview,
+        totalRecordsToDelete: preview.reduce((sum, item) => sum + item.count, 0),
+      };
+    }
+
+    const deletedByTable: Record<string, number> = {};
+    let totalDeleted = 0;
+
+    for (const tableName of RESET_DELETE_ORDER) {
+      const result = await safeCollectTable(ctx, tableName);
+      if (!result.ok) {
+        continue;
+      }
+
+      deletedByTable[tableName] = result.records.length;
+      for (const record of result.records) {
+        await ctx.db.delete(record._id);
+        totalDeleted += 1;
+      }
+    }
+
+    return {
+      dryRun: false,
+      detectedStage: stage,
+      protectedTables: SYSTEM_REFERENCE_TABLES,
+      totalDeleted,
+      deletedByTable,
+    };
+  },
+});
+
+export const verifyProductionResetState = query({
+  args: {},
+  handler: async (ctx) => {
+    const keyUserGeneratedTables = [
+      "users",
+      "posts",
+      "reels",
+      "routes",
+      "comments",
+      "reelComments",
+      "opportunities",
+      "directMessages",
+      "dailyDebates",
+      "debateVotes",
+      "debateComments",
+      "anonymousDebaters",
+    ];
+
+    const counts = await Promise.all(
+      keyUserGeneratedTables.map(async (tableName) => {
+        const result = await safeCollectTable(ctx, tableName);
+        return {
+          tableName,
+          count: result.records.length,
+        };
+      }),
+    );
+
+    const lingering = counts.filter((item) => item.count > 0);
+
+    return {
+      pass: lingering.length === 0,
+      keyUserGeneratedCounts: counts,
+      remainingUserGeneratedTables: lingering,
+      preservedReferenceTables: await Promise.all(
+        SYSTEM_REFERENCE_TABLES.map(async (tableName) => {
+          const result = await safeCollectTable(ctx, tableName);
+          return { tableName, count: result.records.length };
+        }),
+      ),
     };
   },
 });

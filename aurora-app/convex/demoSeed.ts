@@ -1,5 +1,6 @@
 import { mutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { assertNonProductionSeeding } from "./seedGuard";
 
 type LifeDimension =
   | "professional"
@@ -18,7 +19,7 @@ type DemoUser = {
   interests: string[];
   trustScore: number;
   credits: number;
-  languagePreference: "en" | "es";
+  languagePreference: "en";
 };
 
 type DemoPost = {
@@ -98,7 +99,7 @@ const USERS: DemoUser[] = [
     interests: ["Safe Commuting", "Nightlife Safety", "Travel Safety"],
     trustScore: 720,
     credits: 210,
-    languagePreference: "es",
+    languagePreference: "en",
   },
   {
     email: "demo.nora@aurora.app",
@@ -122,7 +123,7 @@ const USERS: DemoUser[] = [
     interests: ["Safe Commuting", "Wellness"],
     trustScore: 610,
     credits: 145,
-    languagePreference: "es",
+    languagePreference: "en",
   },
   {
     email: "demo.maya@aurora.app",
@@ -146,7 +147,7 @@ const USERS: DemoUser[] = [
     interests: ["Nightlife Safety", "Travel Safety"],
     trustScore: 705,
     credits: 190,
-    languagePreference: "es",
+    languagePreference: "en",
   },
 ];
 
@@ -442,6 +443,7 @@ function buildRouteCoordinates(route: DemoRoute) {
 export const seedInvestorDemo = mutation({
   args: {},
   handler: async (ctx) => {
+    assertNonProductionSeeding("demoSeed:seedInvestorDemo");
     const userIds = new Map<string, Id<"users">>();
     const postIds = new Map<string, Id<"posts">>();
     const reelIds = new Map<string, Id<"reels">>();

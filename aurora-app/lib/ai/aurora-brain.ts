@@ -2,7 +2,7 @@ import { AuroraChatTurn, generateStructuredResponse, Type } from "@/lib/ai/googl
 
 export interface AssistantWellnessOutput {
   reply: string;
-  language: "en" | "es";
+  language: "en";
   sentiment: "positive" | "neutral" | "negative" | "crisis";
   emotionalState: string;
   wellbeingScore: number;
@@ -16,7 +16,7 @@ export interface AssistantWellnessOutput {
 
 export interface FinanceCoachOutput {
   reply: string;
-  language: "en" | "es";
+  language: "en";
   summary: string;
   nextActions: string[];
   extractedData: {
@@ -39,7 +39,7 @@ export interface CircleComboReply {
 }
 
 export interface CircleComboOutput {
-  language: "en" | "es";
+  language: "en";
   auroraReply: string;
   comboReplies: CircleComboReply[];
   circleSummary: string;
@@ -93,7 +93,7 @@ const assistantSchema = {
   ],
   properties: {
     reply: { type: Type.STRING },
-    language: { type: Type.STRING, enum: ["en", "es"] },
+    language: { type: Type.STRING, enum: ["en"] },
     sentiment: {
       type: Type.STRING,
       enum: ["positive", "neutral", "negative", "crisis"],
@@ -117,7 +117,7 @@ const financeSchema = {
   required: ["reply", "language", "summary", "nextActions", "extractedData", "riskLevel"],
   properties: {
     reply: { type: Type.STRING },
-    language: { type: Type.STRING, enum: ["en", "es"] },
+    language: { type: Type.STRING, enum: ["en"] },
     summary: { type: Type.STRING },
     nextActions: {
       type: Type.ARRAY,
@@ -146,7 +146,7 @@ const circleSchema = {
   type: Type.OBJECT,
   required: ["language", "auroraReply", "comboReplies", "circleSummary"],
   properties: {
-    language: { type: Type.STRING, enum: ["en", "es"] },
+    language: { type: Type.STRING, enum: ["en"] },
     auroraReply: { type: Type.STRING },
     circleSummary: { type: Type.STRING },
     comboReplies: {
@@ -172,7 +172,7 @@ Primary mission:
 - Be useful, grounded, and emotionally intelligent.
 - Give practical counsel for relationship, work, safety, and everyday life stress.
 - Protect the user if there are signs of abuse, coercion, stalking, or self-harm.
-- Match the user's language. If she writes in Spanish, reply in Spanish. Otherwise reply in English.
+- Reply in English only.
 
 Rules:
 - No markdown, no bullets unless the user explicitly asks for a list.
@@ -201,7 +201,7 @@ function buildFinancePrompt(context: FinanceContext): string {
   return `You are Aurora's financial wellness coach for women worldwide.
 
 Your job:
-- Give plain-English or plain-Spanish financial guidance with no markdown.
+- Give plain-English financial guidance with no markdown.
 - Be practical, modern, and realistic for users with stress, debt, unstable income, caregiving burdens, or wage-gap constraints.
 - Extract financial facts only when the user clearly states or strongly implies them.
 - Focus on budgeting, emergency funds, debt reduction, salary growth, and safe first investing steps.
@@ -210,7 +210,7 @@ Rules:
 - Keep the main reply focused and personal.
 - Avoid boilerplate disclaimers except when there is high risk or the user asks for regulated advice.
 - No markdown tables, no generic textbook dump.
-- If the user speaks Spanish, reply in Spanish.
+- Reply in English only.
 - Suggest only 2 or 3 next actions, each concrete.
 
 Known profile:
@@ -255,7 +255,7 @@ ${companionRoster
   .join("\n")}
 
 Rules:
-- Match the user's language. Spanish in, Spanish out.
+- Reply in English only.
 - No markdown.
 - Each reply should be under 80 words.
 - Aurora must center safety, emotional dignity, and practical support.

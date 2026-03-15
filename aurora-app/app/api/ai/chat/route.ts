@@ -29,45 +29,6 @@ function normalizeHistory(history: ChatRouteTurn[] = []) {
 
 function getFallbackResponse(message: string) {
   const lower = message.toLowerCase();
-  const isSpanish =
-    /(hola|ayuda|trabajo|dinero|pareja|ansiedad|estres|siento|quiero|necesito)/i.test(
-      lower,
-    );
-
-  if (isSpanish) {
-    if (/(peligro|miedo|violencia|seguir|acoso|lastimarme)/i.test(lower)) {
-      return {
-        reply:
-          "Si sientes peligro inmediato, usa el boton SOS de Aurora o llama a emergencias en tu zona. Si puedes, aljate de la persona o lugar de riesgo y escribe a un contacto de confianza ahora mismo.",
-        language: "es" as const,
-        sentiment: "crisis" as const,
-        emotionalState: "alarmed",
-        wellbeingScore: 20,
-        clarityScore: 35,
-        supportScore: 95,
-        resilienceScore: 40,
-        topics: ["safety"],
-        needsFollowUp: true,
-        crisisDetected: true,
-      };
-    }
-
-    return {
-      reply:
-        "Quiero ayudarte de verdad con esto. Cuentame un poco mas de lo que esta pasando y de lo que necesitas resolver primero.",
-      language: "es" as const,
-      sentiment: "neutral" as const,
-      emotionalState: "unclear",
-      wellbeingScore: 55,
-      clarityScore: 50,
-      supportScore: 75,
-      resilienceScore: 55,
-      topics: ["support"],
-      needsFollowUp: true,
-      crisisDetected: false,
-    };
-  }
-
   if (/(danger|unsafe|stalking|abuse|hurt myself|self harm|suicide)/i.test(lower)) {
     return {
       reply:
@@ -167,8 +128,8 @@ export async function POST(request: NextRequest) {
         normalizeHistory(conversationHistory),
         {
           userName: user.name,
-          industry: user.industry,
-          languagePreference: user.languagePreference,
+        industry: user.industry,
+          languagePreference: "en",
         },
       );
     } catch (error) {

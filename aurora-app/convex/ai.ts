@@ -49,7 +49,7 @@ ${user?.industry ? `Industry: ${user.industry}` : ""}
 
 CRITICAL RULES:
 1. ALWAYS respond directly to what the user said - never give generic responses
-2. If user speaks Spanish, respond in Spanish. If English, respond in English.
+2. Reply in English only.
 3. Be specific and helpful - reference what they actually said
 4. SHORT responses (2-3 sentences) unless they need detailed help
 5. Ask follow-up questions to understand better
@@ -161,57 +161,61 @@ Aurora:`;
 // Fallback responses when API is unavailable
 function getFallbackResponse(message: string): string {
   const lowerMessage = message.toLowerCase();
-  
-  // Spanish detection
-  const spanishWords = ['hola', 'como', 'estás', 'qué', 'bien', 'mal', 'ayuda', 'necesito', 'tengo', 'siento', 'trabajo', 'ciudad', 'ruido', 'densa', 'funcionando'];
-  const isSpanish = spanishWords.some(word => lowerMessage.includes(word));
-  
-  if (isSpanish) {
-    if (lowerMessage.includes('ciudad') || lowerMessage.includes('ruido') || lowerMessage.includes('densa')) {
-      return "Entiendo, vivir en una ciudad ruidosa puede ser agotador. ¿Qué es lo que más te afecta? Cuéntame más 💜";
-    }
-    if (lowerMessage.includes('triste') || lowerMessage.includes('mal') || lowerMessage.includes('deprimida')) {
-      return "Lamento que te sientas así. ¿Qué está pasando? Cuéntame más 💜";
-    }
-    if (lowerMessage.includes('trabajo') || lowerMessage.includes('jefe')) {
-      return "Los temas de trabajo pueden ser estresantes. ¿Qué está pasando específicamente?";
-    }
-    if (lowerMessage.includes('hola') || lowerMessage.includes('hey')) {
-      return "¡Hola! 💜 ¿Cómo te puedo ayudar hoy?";
-    }
-    if (lowerMessage.includes('funcionando') || lowerMessage.includes('funciona')) {
-      return "¡Sí, estoy funcionando! 😊 Soy Aurora. ¿En qué te puedo ayudar?";
-    }
-    return "Cuéntame más sobre eso. ¿Qué está pasando específicamente? 💜";
+
+  if (
+    lowerMessage.includes("city") ||
+    lowerMessage.includes("noise") ||
+    lowerMessage.includes("traffic")
+  ) {
+    return "City life can be overwhelming. What is bothering you most right now?";
   }
-  
-  // English responses
-  if (lowerMessage.includes('city') || lowerMessage.includes('noise') || lowerMessage.includes('traffic')) {
-    return "City life can be overwhelming. What's bothering you most? Tell me more 💜";
+  if (
+    lowerMessage.includes("sad") ||
+    lowerMessage.includes("depressed") ||
+    lowerMessage.includes("down")
+  ) {
+    return "I am sorry you are feeling this way. What is going on?";
   }
-  if (lowerMessage.includes('sad') || lowerMessage.includes('depressed') || lowerMessage.includes('down')) {
-    return "I'm sorry you're feeling this way. What's going on? Tell me more 💜";
+  if (
+    lowerMessage.includes("anxious") ||
+    lowerMessage.includes("worried") ||
+    lowerMessage.includes("stress")
+  ) {
+    return "What is causing the most stress right now? We can work through it.";
   }
-  if (lowerMessage.includes('anxious') || lowerMessage.includes('worried') || lowerMessage.includes('stress')) {
-    return "What specifically is causing you stress? Let's talk through it 🌸";
-  }
-  if (lowerMessage.includes('work') || lowerMessage.includes('job') || lowerMessage.includes('boss')) {
+  if (
+    lowerMessage.includes("work") ||
+    lowerMessage.includes("job") ||
+    lowerMessage.includes("boss")
+  ) {
     return "Work issues can be stressful. What's happening specifically?";
   }
-  if (lowerMessage.includes('happy') || lowerMessage.includes('good') || lowerMessage.includes('great')) {
-    return "That's great! What's making you feel good today? ✨";
+  if (
+    lowerMessage.includes("happy") ||
+    lowerMessage.includes("good") ||
+    lowerMessage.includes("great")
+  ) {
+    return "That is good to hear. What is helping you feel better today?";
   }
-  if (lowerMessage.includes('help') || lowerMessage.includes('emergency') || lowerMessage.includes('danger')) {
-    return "If you're in danger, use the SOS button or call emergency services. What's happening? 🛡️";
+  if (
+    lowerMessage.includes("help") ||
+    lowerMessage.includes("emergency") ||
+    lowerMessage.includes("danger")
+  ) {
+    return "If you are in danger, use the SOS button or call emergency services now. What is happening?";
   }
-  if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey') || lowerMessage.includes('hola')) {
-    return "Hey! 💜 How can I help you today?";
+  if (
+    lowerMessage.includes("hello") ||
+    lowerMessage.includes("hi") ||
+    lowerMessage.includes("hey")
+  ) {
+    return "Hi. How can I help you today?";
   }
-  if (lowerMessage.includes('working') || lowerMessage.includes('function')) {
-    return "Yes, I'm working! 😊 I'm Aurora. What can I help you with?";
+  if (lowerMessage.includes("working") || lowerMessage.includes("function")) {
+    return "Yes, I am here. What can I help you with?";
   }
-  
-  return "Tell me more about that. What's specifically on your mind? 💜";
+
+  return "Tell me more about that. What is most on your mind right now?";
 }
 
 /**

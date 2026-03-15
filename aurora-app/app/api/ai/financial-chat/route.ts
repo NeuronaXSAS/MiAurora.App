@@ -23,28 +23,18 @@ function cleanExtractedData(
 }
 
 function getFinanceFallback(message: string) {
-  const isSpanish =
-    /(hola|dinero|deuda|ahorro|ingreso|gasto|presupuesto)/i.test(message);
+  void message;
 
   return {
-    reply: isSpanish
-      ? "Puedo ayudarte a ordenar esto mejor si me dices tres cosas: cuanto entra al mes, cuanto sale al mes y cual es la prioridad mas urgente ahora mismo."
-      : "I can make this much more useful if you tell me three things: what comes in each month, what goes out each month, and what feels most urgent right now.",
-    language: isSpanish ? ("es" as const) : ("en" as const),
-    summary: isSpanish
-      ? "Necesitas una foto mas clara de tu situacion financiera."
-      : "You need a clearer picture of your current money situation.",
-    nextActions: isSpanish
-      ? [
-          "Anota ingreso neto mensual.",
-          "Anota gastos fijos mensuales.",
-          "Define una prioridad para los proximos 30 dias.",
-        ]
-      : [
-          "Write down your monthly take-home income.",
-          "List your fixed monthly expenses.",
-          "Pick one money priority for the next 30 days.",
-        ],
+    reply:
+      "I can make this much more useful if you tell me three things: what comes in each month, what goes out each month, and what feels most urgent right now.",
+    language: "en" as const,
+    summary: "You need a clearer picture of your current money situation.",
+    nextActions: [
+      "Write down your monthly take-home income.",
+      "List your fixed monthly expenses.",
+      "Pick one money priority for the next 30 days.",
+    ],
     extractedData: {},
     riskLevel: "medium" as const,
   };

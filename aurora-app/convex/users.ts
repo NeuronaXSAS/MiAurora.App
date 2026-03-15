@@ -24,6 +24,31 @@ export const getOrCreateUser = mutation({
       return existingUser;
     }
 
+    const existingByEmail = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+
+    if (existingByEmail) {
+      await ctx.db.patch(existingByEmail._id, {
+        workosId: args.workosId,
+        name: args.name,
+        profileImage: args.profileImage,
+        languagePreference: "en",
+        privacySettings: existingByEmail.privacySettings || {
+          dataSharing: false,
+          analyticsTracking: true,
+          personalizedAds: false,
+          locationSharing: false,
+          profileVisibility: "public",
+          messagePrivacy: "everyone",
+          activityStatus: true,
+        },
+      });
+
+      return await ctx.db.get(existingByEmail._id);
+    }
+
     // Create new user with generous welcome bonus (50 credits)
     // This ensures users can immediately experience premium features
     const WELCOME_BONUS = 50;
@@ -38,6 +63,16 @@ export const getOrCreateUser = mutation({
       onboardingCompleted: false,
       monthlyCreditsEarned: 0,
       lastCreditReset: Date.now(),
+      languagePreference: "en",
+      privacySettings: {
+        dataSharing: false,
+        analyticsTracking: true,
+        personalizedAds: false,
+        locationSharing: false,
+        profileVisibility: "public",
+        messagePrivacy: "everyone",
+        activityStatus: true,
+      },
     });
 
     // Log welcome bonus transaction
@@ -172,6 +207,7 @@ export const completeOnboarding = mutation({
       ageRange: args.ageRange,
       countryCode: args.countryCode,
       identityTags: args.identityTags,
+      languagePreference: "en",
     });
 
     // Award onboarding completion bonus (first time only)
@@ -405,7 +441,7 @@ export const updateDemographics = mutation({
       countryCode: args.countryCode,
       region: args.region,
       timezone: args.timezone,
-      languagePreference: args.languagePreference,
+      languagePreference: "en",
       identityTags: args.identityTags,
       communityAffiliations: args.communityAffiliations,
     });

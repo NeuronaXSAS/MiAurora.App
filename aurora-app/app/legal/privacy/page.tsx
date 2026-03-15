@@ -20,14 +20,14 @@ Aurora ("we," "our," or "us") is committed to protecting your privacy. This Priv
 We collect information you provide directly to us, such as:
 
 - **Account Information**: Name, email address, profile picture
-- **Profile Data**: Location preferences, safety interests, bio information
+- **Profile Data**: Optional profile details such as bio, preferences, and interests
 - **Communication Data**: Messages, posts, comments, and other content you create
 - **Verification Data**: Information used to verify your identity and build trust scores
 
 ### Location Information
 
-- **Precise Location**: GPS coordinates when you use route tracking or safety features
-- **Approximate Location**: City/region for safety recommendations and community features
+- **Precise Location**: GPS coordinates only when you activate route, navigation, or emergency-related features
+- **Approximate Location**: City or region when needed for safety recommendations and localized features
 - **Route Data**: Paths you've traveled and marked as safe or unsafe
 
 ### Usage Information
@@ -58,6 +58,12 @@ We collect information you provide directly to us, such as:
 - Monitor for suspicious or harmful activity
 - Respond to emergency situations and safety reports
 - Improve our safety algorithms and recommendations
+
+### Data Minimization
+
+- Limit collection to information needed for safety, community, and product functionality
+- Reduce or disable optional data uses when privacy settings require it
+- Avoid selling personal data to third parties
 
 ### Personalization and Improvement
 
@@ -97,6 +103,12 @@ We collect information you provide directly to us, such as:
 ### Business Transfers
 
 In connection with any merger, acquisition, or sale of assets, your information may be transferred as part of that transaction.
+
+### What We Do Not Do By Default
+
+- We do not sell your personal data as a core business model.
+- We do not require precise location unless a location-dependent feature is being used.
+- We do not rely on personalized advertising for Aurora's core safety experience.
 
 ## Data Security
 
@@ -142,7 +154,7 @@ In connection with any merger, acquisition, or sale of assets, your information 
 - **Essential Cookies**: Required for basic functionality
 - **Analytics Cookies**: Help us understand usage patterns
 - **Preference Cookies**: Remember your settings and preferences
-- **Marketing Cookies**: Deliver relevant advertisements
+- **Limited Third-Party Cookies**: Used only where enabled integrations require them
 
 ### Your Choices
 

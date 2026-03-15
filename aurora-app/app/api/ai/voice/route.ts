@@ -10,13 +10,13 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 const VOICE_CONTEXT_PROMPTS: Record<string, string> = {
   women_support:
-    "You are Aurora, a warm voice companion for women. Reply in 1 or 2 short spoken sentences. Match the user's language, stay calm, and center emotional safety.",
+    "You are Aurora, a warm voice companion for women. Reply in English in 1 or 2 short spoken sentences. Stay calm and center emotional safety.",
   mental_health:
-    "You are Aurora, a warm voice companion for women. Reply in 1 or 2 short spoken sentences. Prioritize regulation, grounding, and emotional reassurance. Match the user's language.",
+    "You are Aurora, a warm voice companion for women. Reply in English in 1 or 2 short spoken sentences. Prioritize regulation, grounding, and emotional reassurance.",
   career:
-    "You are Aurora, a warm voice companion for women. Reply in 1 or 2 short spoken sentences. Focus on career clarity, confidence, and practical next steps. Match the user's language.",
+    "You are Aurora, a warm voice companion for women. Reply in English in 1 or 2 short spoken sentences. Focus on career clarity, confidence, and practical next steps.",
   language_learning:
-    "You are Aurora, a patient voice companion. Reply in the same language as the user, keep it easy to speak aloud, and gently support practice.",
+    "You are Aurora, a patient voice companion. Reply in English, keep it easy to speak aloud, and gently support practice.",
 };
 
 function getVoiceFallbackResponse(text: string): string {
@@ -141,7 +141,7 @@ export async function PUT(request: NextRequest) {
         message:
           "Transcribe this audio accurately. Return only the spoken words, with no commentary.",
         systemInstruction:
-          "You are Aurora's transcription helper. Preserve the original language. Do not summarize. Do not add formatting.",
+          "You are Aurora's transcription helper. Transcribe the audio exactly as spoken. Do not summarize. Do not add formatting.",
         extraUserParts: [createBase64Part(base64Audio, mimeType)],
         temperature: 0.1,
         maxOutputTokens: 500,

@@ -18,26 +18,20 @@ type CircleMessage = {
 
 function fallbackCircleReply(category: string, message: string) {
   const companions = getCircleCompanions(category).slice(0, 3);
-  const isSpanish =
-    /(hola|ayuda|pareja|trabajo|dinero|estres|ansiedad|seguridad)/i.test(
-      message,
-    );
+  void message;
 
   return {
-    language: isSpanish ? ("es" as const) : ("en" as const),
-    circleSummary: isSpanish
-      ? "El circulo necesita bajar el ruido y enfocarse en un siguiente paso claro."
-      : "This circle needs to reduce noise and focus on one clear next step.",
-    auroraReply: isSpanish
-      ? "Estoy contigo. Cuanto mas concreta seas con lo que acaba de pasar, mejor podemos darte apoyo util y cuidadoso."
-      : "I'm with you. The more concrete you are about what just happened, the more useful and caring this circle can be.",
+    language: "en" as const,
+    circleSummary:
+      "This circle needs to reduce noise and focus on one clear next step.",
+    auroraReply:
+      "I'm with you. The more concrete you are about what just happened, the more useful and caring this circle can be.",
     comboReplies: companions.map((companion) => ({
       personaId: companion.personaId,
       name: companion.name,
       role: companion.role,
-      reply: isSpanish
-        ? "Quiero ayudarte a ver esto con mas claridad y sin juzgarte."
-        : "I want to help you look at this more clearly, without judging you.",
+      reply:
+        "I want to help you look at this more clearly, without judging you.",
     })),
   };
 }

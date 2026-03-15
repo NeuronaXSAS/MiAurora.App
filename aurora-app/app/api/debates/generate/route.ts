@@ -1,141 +1,113 @@
-/**
- * AI Debate Generation API - Weekly Batch Generation
- * 
- * COST-OPTIMIZED STRATEGY:
- * - Generates 7 days of debates in ONE API call (42 debates total)
- * - Uses Google AI Studio free tier (Gemini)
- * - Integrates with resource-guard for quota protection
- * - Falls back to predefined topics if AI fails or quota exceeded
- * 
- * USAGE:
- * - Admin-triggered only (no automatic calls)
- * - Call once per week to generate next 7 days
- * - Single prompt = ~500 tokens input, ~2000 tokens output
- * 
- * ESTIMATED COST: $0/month (free tier) or ~$0.01/week if paid
- */
-
 import { NextRequest, NextResponse } from "next/server";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
 import { canUseGemini, recordGeminiUsage } from "@/lib/resource-guard";
 
-// AI Generation is DISABLED by default - enable when ready
-const AI_DEBATES_ENABLED = false;
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
-// Categories for debates
-const CATEGORIES = ["safety", "career", "health", "rights", "tech", "world"] as const;
+const CATEGORIES = [
+  "safety",
+  "career",
+  "health",
+  "rights",
+  "tech",
+  "world",
+] as const;
+
+type DebateCategory = (typeof CATEGORIES)[number];
 
 interface GeneratedDebate {
-  category: typeof CATEGORIES[number];
+  category: DebateCategory;
   title: string;
   summary: string;
-  day: number; // 0-6 (days from start date)
+  day: number;
 }
 
-interface WeeklyDebatesResponse {
-  success: boolean;
-  debates?: GeneratedDebate[];
-  source: "ai" | "fallback";
-  message: string;
-  daysGenerated?: number;
-}
-
-export async function POST(request: NextRequest): Promise<NextResponse<WeeklyDebatesResponse>> {
-  try {
-    // Check if AI generation is enabled
-    if (!AI_DEBATES_ENABLED) {
-      return NextResponse.json({
-        success: false,
-        source: "fallback",
-        message: "AI debate generation is disabled. Using predefined topics.",
-      });
-    }
-
-    // Check resource quota before making AI call
-    const canUse = canUseGemini();
-    if (!canUse.allowed) {
-      return NextResponse.json({
-        success: false,
-        source: "fallback",
-        message: `AI quota exceeded: ${canUse.reason}. Using predefined topics.`,
-      });
-    }
-
-    // Get API key
-    const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({
-        success: false,
-        source: "fallback",
-        message: "Google AI API key not configured. Using predefined topics.",
-      });
-    }
-
-    // Parse request body for optional parameters
-    const body = await request.json().catch(() => ({}));
-    const startDate = body.startDate || new Date().toISOString().split("T")[0];
-
-    // Generate debates using Gemini
-    const debates = await generateDebatesWithAI(apiKey, startDate);
-    
-    if (debates && debates.length > 0) {
-      // Record successful API usage
-      recordGeminiUsage();
-      
-      return NextResponse.json({
-        success: true,
-        debates,
-        source: "ai",
-        message: `Generated ${debates.length} debates for 7 days starting ${startDate}`,
-        daysGenerated: 7,
-      });
-    }
-
-    return NextResponse.json({
-      success: false,
-      source: "fallback",
-      message: "AI generation returned no results. Using predefined topics.",
-    });
-
-  } catch (error) {
-    console.error("AI debate generation error:", error);
-    return NextResponse.json({
-      success: false,
-      source: "fallback",
-      message: `AI generation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-    });
+function isAdminRequest(request: NextRequest) {
+  const adminKey = process.env.ADMIN_API_KEY;
+  const authHeader = request.headers.get("authorization");
+  if (!adminKey) {
+    return false;
   }
+  return authHeader === `Bearer ${adminKey}`;
 }
 
-/**
- * Generate debates using Google AI (Gemini)
- * Single prompt generates all 42 debates (6 categories × 7 days)
- */
-async function generateDebatesWithAI(apiKey: string, startDate: string): Promise<GeneratedDebate[]> {
-  const prompt = `You are creating debate topics for Aurora App, a women-focused safety and community platform.
+function buildFallbackDebates(): GeneratedDebate[] {
+  return [
+    {
+      day: 0,
+      category: "safety",
+      title: "Should public places be required to offer visible emergency help points?",
+      summary:
+        "Debating whether safety infrastructure should be as standard as fire exits in public venues.",
+    },
+    {
+      day: 0,
+      category: "career",
+      title: "Should every job posting include a salary range?",
+      summary:
+        "Discussing whether pay transparency is necessary for fairer hiring and negotiation.",
+    },
+    {
+      day: 0,
+      category: "health",
+      title: "Should menstrual and hormonal health be treated as a workplace wellbeing issue?",
+      summary:
+        "Examining whether employers should support women's health as a normal part of work policy.",
+    },
+    {
+      day: 0,
+      category: "rights",
+      title: "Should online harassment penalties be stronger when targeted abuse is coordinated?",
+      summary:
+        "Exploring whether existing laws are enough when digital harm is repeated or organized.",
+    },
+    {
+      day: 0,
+      category: "tech",
+      title: "Should AI products be required to publish bias testing results?",
+      summary:
+        "Discussing whether transparency should be mandatory before AI systems reach the public.",
+    },
+    {
+      day: 0,
+      category: "world",
+      title: "Should cities measure safety policy success using women's lived experience, not only crime reports?",
+      summary:
+        "Debating whether public safety should be judged by how safe women actually feel and move.",
+    },
+  ];
+}
+
+async function generateDebatesWithAI(
+  apiKey: string,
+  startDate: string,
+): Promise<GeneratedDebate[]> {
+  const prompt = `You are creating debate topics for Aurora App, a safety-first wellbeing and community platform for women.
 
 Generate 7 days of debate topics (42 total: 6 categories × 7 days).
 
 Categories:
-1. safety - Women's personal safety, security, protection
-2. career - Workplace, professional development, gender equality at work
-3. health - Women's health, mental health, wellness
-4. rights - Women's rights, legal issues, equality
-5. tech - Technology, AI, digital safety, women in tech
-6. world - Global issues affecting women, international news
+1. safety - women's personal safety, dignity, and risk prevention
+2. career - workplace fairness, growth, boundaries, and pay
+3. health - physical, hormonal, mental, and emotional wellbeing
+4. rights - legal rights, equality, autonomy, and protection
+5. tech - AI, privacy, digital safety, and product ethics
+6. world - global issues affecting women and girls
 
 Requirements:
-- Each topic should be a thought-provoking question that women can vote Agree/Disagree/Neutral
-- Topics should be relevant to current events and women's experiences
-- Keep titles under 80 characters
-- Summaries should be 1 sentence explaining the debate
-- Make topics diverse - don't repeat similar themes
+- English only
+- Each title must be a clear question under 90 characters
+- Each summary must be one short sentence
+- Avoid rage-bait, dehumanizing framing, and shallow clickbait
+- Prioritize useful, respectful, thought-provoking debates
+- Keep one debate per category per day
 
 Starting date: ${startDate}
 
-Respond ONLY with valid JSON array, no markdown:
+Respond ONLY with valid JSON array:
 [
-  {"day": 0, "category": "safety", "title": "Question here?", "summary": "Brief explanation."},
-  ...
+  {"day": 0, "category": "safety", "title": "Question here?", "summary": "Brief explanation."}
 ]`;
 
   const response = await fetch(
@@ -146,12 +118,12 @@ Respond ONLY with valid JSON array, no markdown:
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.8,
+          temperature: 0.7,
           maxOutputTokens: 4000,
           topP: 0.9,
         },
       }),
-    }
+    },
   );
 
   if (!response.ok) {
@@ -160,41 +132,133 @@ Respond ONLY with valid JSON array, no markdown:
 
   const data = await response.json();
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  
   if (!text) {
     throw new Error("No response from Gemini");
   }
 
-  // Parse JSON from response (handle potential markdown wrapping)
   const jsonMatch = text.match(/\[[\s\S]*\]/);
   if (!jsonMatch) {
     throw new Error("Could not parse JSON from response");
   }
 
-  const debates: GeneratedDebate[] = JSON.parse(jsonMatch[0]);
-  
-  // Validate structure
-  const validDebates = debates.filter(d => 
-    typeof d.day === "number" &&
-    CATEGORIES.includes(d.category as any) &&
-    typeof d.title === "string" &&
-    typeof d.summary === "string"
+  const debates = JSON.parse(jsonMatch[0]) as GeneratedDebate[];
+  return debates.filter(
+    (debate) =>
+      typeof debate.day === "number" &&
+      CATEGORIES.includes(debate.category) &&
+      typeof debate.title === "string" &&
+      typeof debate.summary === "string",
   );
-
-  return validDebates;
 }
 
-// GET endpoint to check AI generation status
-export async function GET(): Promise<NextResponse> {
-  const canUse = canUseGemini();
-  
-  return NextResponse.json({
-    aiEnabled: AI_DEBATES_ENABLED,
-    quotaAvailable: canUse.allowed,
-    quotaRemaining: canUse.remaining,
-    quotaMessage: canUse.reason || "Quota available",
-    instructions: AI_DEBATES_ENABLED 
-      ? "POST to this endpoint to generate 7 days of AI debates"
-      : "AI generation is disabled. Set AI_DEBATES_ENABLED=true to enable.",
-  });
+export async function POST(request: NextRequest) {
+  try {
+    if (!isAdminRequest(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const startDate = body.startDate || new Date().toISOString().split("T")[0];
+    const persist = body.persist !== false;
+
+    const canUse = canUseGemini();
+    const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
+
+    let generated: GeneratedDebate[] = [];
+    let source: "gemini" | "fallback" = "fallback";
+
+    if (apiKey && canUse.allowed) {
+      try {
+        generated = await generateDebatesWithAI(apiKey, startDate);
+        if (generated.length > 0) {
+          recordGeminiUsage();
+          source = "gemini";
+        }
+      } catch (error) {
+        console.error("Debate generation fallback triggered:", error);
+      }
+    }
+
+    if (generated.length === 0) {
+      generated = buildFallbackDebates();
+      source = "fallback";
+    }
+
+    const todaysDebates = generated
+      .filter((debate) => debate.day === 0)
+      .map((debate, index) => ({
+        slot: index + 1,
+        category: debate.category,
+        title: debate.title.trim(),
+        summary: debate.summary.trim(),
+        sourceUrl:
+          source === "gemini"
+            ? "https://ai.google.dev/"
+            : "https://miaurora.app",
+        sourceName:
+          source === "gemini"
+            ? "Aurora Gemini Debate Pipeline"
+            : "Aurora Editorial Fallback",
+      }));
+
+    let stored = null;
+    if (persist) {
+      stored = await convex.mutation(api.dailyDebates.replaceDebatesForDate, {
+        date: startDate,
+        debates: todaysDebates,
+        deactivateExisting: true,
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      source,
+      persisted: persist,
+      stored,
+      count: todaysDebates.length,
+      quotaAvailable: canUse.allowed,
+      quotaMessage: canUse.reason || "Quota available",
+      debates: todaysDebates,
+    });
+  } catch (error) {
+    console.error("Daily debate pipeline error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    if (!isAdminRequest(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const url = new URL(request.url);
+    const date = url.searchParams.get("date") || undefined;
+    const canUse = canUseGemini();
+    const pipeline = await convex.query(api.dailyDebates.getDebatePipelineStatus, {
+      date,
+    });
+
+    return NextResponse.json({
+      pipeline,
+      provider: process.env.GOOGLE_AI_API_KEY ? "gemini" : "fallback",
+      quotaAvailable: canUse.allowed,
+      quotaRemaining: canUse.remaining,
+      quotaMessage: canUse.reason || "Quota available",
+      adminApiKeyConfigured: Boolean(process.env.ADMIN_API_KEY),
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
+  }
 }

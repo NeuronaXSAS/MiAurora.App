@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Task 14.1 & 14.2: Seed Data Scripts
  * 
@@ -10,6 +11,7 @@
 import { v } from "convex/values";
 import { mutation, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { blockDeprecatedSeedPath } from "./seedGuard";
 
 // ============================================
 // MULTILINGUAL POSTS SEED DATA
@@ -294,6 +296,7 @@ const SEED_ROUTES = [
 export const seedPosts = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seedData:seedPosts");
     // Get a sample user to be the author (or create a seed user)
     let seedUser = await ctx.db
       .query("users")
@@ -358,6 +361,7 @@ export const seedPosts = mutation({
 export const seedRoutes = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seedData:seedRoutes");
     // Get seed user
     let seedUser = await ctx.db
       .query("users")
@@ -652,6 +656,7 @@ const SEED_SAFETY_MAP_POSTS = [
 export const seedSafetyMapPosts = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seedData:seedSafetyMapPosts");
     // Get or create seed user
     let seedUser = await ctx.db
       .query("users")
@@ -715,6 +720,7 @@ export const seedSafetyMapPosts = mutation({
 export const seedAll = mutation({
   args: {},
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seedData:seedAll");
     // This will be called from the individual functions
     return { message: "Use seedPosts and seedRoutes separately" };
   },

@@ -936,10 +936,6 @@ function generateAuroraInsight(
   );
   const domains = [...new Set(webResults.map((r) => r.domain))];
 
-  const isSpanish =
-    /[áéíóúñ¿¡]/.test(query) ||
-    /\b(estoy|tengo|quiero|como|para|que|por|con|una|los|las)\b/i.test(query);
-
   const mentalHealthKeywords = [
     "depressed",
     "depression",
@@ -947,44 +943,29 @@ function generateAuroraInsight(
     "anxiety",
     "lonely",
     "hopeless",
-    "deprimida",
-    "triste",
-    "ansiedad",
   ];
   const isMentalHealthQuery = mentalHealthKeywords.some((kw) => q.includes(kw));
 
   if (isMentalHealthQuery) {
-    return isSpanish
-      ? `💜 Gracias por compartir cómo te sientes. No estás sola. He encontrado ${webResults.length} recursos, pero lo más importante: si estás pasando por un momento difícil, considera hablar con alguien de confianza.`
-      : `💜 Thank you for sharing how you're feeling. You're not alone. I found ${webResults.length} resources, but most importantly: if you're going through a difficult time, please consider reaching out to someone you trust.`;
+    return `Thank you for sharing how you're feeling. You're not alone. I found ${webResults.length} resources, but most importantly: if you're going through a difficult time, please consider reaching out to someone you trust.`;
   }
 
-  const greetings = isSpanish
-    ? ["¡Hola! 👋", "Veamos...", "¡Listo!"]
-    : ["Hey! 👋", "Let's see...", "Got it!"];
+  const greetings = ["Hi.", "Let's see.", "Got it."];
   const greeting = greetings[Math.floor(Math.random() * greetings.length)];
 
   if (hasHighAI) {
-    return isSpanish
-      ? `${greeting} Aviso: algunos resultados parecen generados por IA. No es malo, ¡pero vale la pena saberlo!`
-      : `${greeting} Heads up: some results look AI-generated. Not necessarily bad, but worth knowing!`;
+    return `${greeting} Heads up: some results look AI-generated. That does not make them wrong, but it is worth knowing.`;
   }
 
   if (avgCredibility < 40) {
-    return isSpanish
-      ? `${greeting} Estas fuentes son un poco dudosas. Te recomiendo investigar más.`
-      : `${greeting} These sources are a bit sketchy. I'd dig deeper before taking anything as fact.`;
+    return `${greeting} These sources are a bit sketchy. I would dig deeper before treating them as reliable.`;
   }
 
   if (womenFocusedCount > 0) {
-    return isSpanish
-      ? `${greeting} ¡Encontré ${womenFocusedCount} recursos enfocados en mujeres de ${domains.length} fuentes!`
-      : `${greeting} Found ${womenFocusedCount} women-focused resources from ${domains.length} sources!`;
+    return `${greeting} Found ${womenFocusedCount} women-focused resources from ${domains.length} sources.`;
   }
 
-  return isSpanish
-    ? `${greeting} Encontré ${webResults.length} resultados. Pregúntate: ¿quién se beneficia de que yo crea esto? 💪`
-    : `${greeting} Found ${webResults.length} results. Ask yourself: who benefits from me believing this? Critical thinking is your superpower. 💪`;
+  return `${greeting} Found ${webResults.length} results. Ask yourself who benefits from you believing this. Critical thinking is your advantage.`;
 }
 
 export default LandingSearch;

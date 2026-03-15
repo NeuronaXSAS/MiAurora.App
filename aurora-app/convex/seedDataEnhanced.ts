@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { mutation } from "./_generated/server";
+import { blockDeprecatedSeedPath } from "./seedGuard";
 
 /**
  * Enhanced seed data for production-ready demo
@@ -135,6 +137,7 @@ function daysAgo(days: number): number {
 
 export const seedComprehensiveData = mutation({
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seedDataEnhanced:seedComprehensiveData");
     console.log("🌱 Starting comprehensive seed data generation...");
 
     // 1. Create 100 diverse users
@@ -437,6 +440,7 @@ export const seedComprehensiveData = mutation({
  */
 export const clearAllData = mutation({
   handler: async (ctx) => {
+    blockDeprecatedSeedPath("seedDataEnhanced:clearAllData");
     console.log("🗑️  Clearing all data...");
     
     const tables = [

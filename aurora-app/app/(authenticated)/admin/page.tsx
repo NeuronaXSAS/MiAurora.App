@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -155,6 +156,12 @@ export default function AdminDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Link href="/admin/system">
+              <Button variant="outline" size="sm">
+                <Settings className="w-4 h-4 mr-1" />
+                System
+              </Button>
+            </Link>
             <Badge className="bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] px-3 py-1">
               <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
               Live Sync
