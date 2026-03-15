@@ -22,6 +22,22 @@ interface DiagnosticsPayload {
   warnings?: string[];
 }
 
+type FeatureReadinessEntry = {
+  status: string;
+  note: string;
+};
+
+function isFeatureReadinessEntry(
+  value: unknown,
+): value is FeatureReadinessEntry {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "status" in value &&
+    "note" in value
+  );
+}
+
 export default function AdminSystemPage() {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
@@ -183,7 +199,7 @@ export default function AdminSystemPage() {
           <CardContent className="space-y-3">
             {readiness &&
               Object.entries(readiness)
-                .filter(([key]) => key !== "currentDataFootprint")
+                .filter(([, value]) => isFeatureReadinessEntry(value))
                 .map(([feature, info]) => (
                   <div
                     key={feature}
