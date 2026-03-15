@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -170,32 +170,18 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useRouter, useParams } from "next/navigation";
 import { formatDistance, formatDuration, formatPace } from "@/lib/gps-tracker";
 import { formatDistanceToNow } from "date-fns";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export default function RouteDetailPage() {
   const params = useParams();
   const routeId = params.routeId as Id<"routes">;
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
+  const { authToken, isLoading: isAuthLoading, userId } = useAuthSession();
 
   const route = useQuery(
     api.routes.getRoute,
-    routeId ? { routeId } : "skip"
+    routeId && userId && authToken ? { authToken, routeId, userId } : "skip"
   );
 
   const deleteRoute = useMutation(api.routes.deleteRoute);
@@ -203,10 +189,10 @@ export default function RouteDetailPage() {
   const shareToFeed = useMutation(api.routes.shareRouteToFeed);
 
   const handleDelete = async () => {
-    if (!userId) return;
+    if (!userId || !authToken) return;
     
     try {
-      await deleteRoute({ routeId, userId });
+      await deleteRoute({ authToken, routeId, userId });
       router.push("/routes");
     } catch (error) {
       console.error("Error deleting route:", error);
@@ -215,10 +201,10 @@ export default function RouteDetailPage() {
   };
 
   const handlePrivacyChange = async (sharingLevel: "private" | "anonymous" | "public") => {
-    if (!userId) return;
+    if (!userId || !authToken) return;
     
     try {
-      await updatePrivacy({ routeId, userId, sharingLevel });
+      await updatePrivacy({ authToken, routeId, userId, sharingLevel });
     } catch (error) {
       console.error("Error updating privacy:", error);
       alert("Failed to update privacy settings");
@@ -226,10 +212,10 @@ export default function RouteDetailPage() {
   };
 
   const handleShareToFeed = async () => {
-    if (!userId) return;
+    if (!userId || !authToken) return;
     
     try {
-      await shareToFeed({ routeId, userId });
+      await shareToFeed({ authToken, routeId, userId });
       alert("Route shared to feed successfully!");
     } catch (error: any) {
       alert(error.message || "Failed to share route");
@@ -268,13 +254,21 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
     URL.revokeObjectURL(url);
   };
 
-  if (!route) {
+  if (isAuthLoading || route === undefined) {
     return (
       <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[var(--color-aurora-purple)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-[var(--muted-foreground)]">Loading route...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (route === null) {
+    return (
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+        <p className="text-[var(--muted-foreground)]">Route not available.</p>
       </div>
     );
   }

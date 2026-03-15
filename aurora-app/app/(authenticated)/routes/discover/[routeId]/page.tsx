@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -86,6 +86,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useRouter, useParams } from "next/navigation";
 import { formatDistance, formatDuration, formatPace } from "@/lib/gps-tracker";
 import { formatDistanceToNow } from "date-fns";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 const AVAILABLE_TAGS = [
   "safe",
@@ -103,46 +104,31 @@ const AVAILABLE_TAGS = [
 export default function CommunityRouteDetailPage() {
   const params = useParams();
   const routeId = params.routeId as Id<"routes">;
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [userRating, setUserRating] = useState(0);
   const [userTags, setUserTags] = useState<string[]>([]);
   const [feedback, setFeedback] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
+  const { authToken, isLoading: isAuthLoading, userId } = useAuthSession();
 
   const route = useQuery(
     api.routes.getRoute,
-    routeId ? { routeId } : "skip"
+    routeId ? { authToken: authToken || undefined, routeId, userId: userId || undefined } : "skip"
   );
 
   const completeRoute = useMutation(api.routes.completeCommunityRoute);
   const deleteRoute = useMutation(api.routes.deleteRoute);
 
   const handleDelete = async () => {
-    if (!userId) return;
+    if (!userId || !authToken) return;
 
     if (!confirm("Are you sure you want to delete this route? All GPS data, ratings, and reviews will be permanently removed.")) {
       return;
     }
 
     try {
-      await deleteRoute({ routeId, userId });
+      await deleteRoute({ authToken, routeId, userId });
       router.push("/routes");
     } catch (error) {
       console.error("Error deleting route:", error);
@@ -157,7 +143,7 @@ export default function CommunityRouteDetailPage() {
   };
 
   const handleSubmitCompletion = async () => {
-    if (!userId || userRating === 0) {
+    if (!userId || !authToken || userRating === 0) {
       alert("Please provide a rating");
       return;
     }
@@ -165,6 +151,7 @@ export default function CommunityRouteDetailPage() {
     setSubmitting(true);
     try {
       await completeRoute({
+        authToken,
         routeId,
         userId,
         userRating,
@@ -180,13 +167,21 @@ export default function CommunityRouteDetailPage() {
     }
   };
 
-  if (!route) {
+  if (isAuthLoading || route === undefined) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Loading route...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (route === null) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Route not available.</p>
       </div>
     );
   }

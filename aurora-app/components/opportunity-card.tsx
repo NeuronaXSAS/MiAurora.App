@@ -16,6 +16,7 @@ import { Briefcase, GraduationCap, FileText, Calendar, DollarSign, Lock, CheckCi
 import { Id } from "@/convex/_generated/dataModel";
 
 interface OpportunityCardProps {
+  authToken?: string;
   opportunity: {
     _id: string;
     creatorId?: string;
@@ -59,6 +60,7 @@ const categoryColors = {
 };
 
 export function OpportunityCard({
+  authToken,
   opportunity,
   isUnlocked,
   userCredits,
@@ -75,7 +77,7 @@ export function OpportunityCard({
   const deleteOpportunity = useMutation(api.opportunities.deleteOpportunity);
 
   const handleDelete = async () => {
-    if (!currentUserId || !isCreator) return;
+    if (!currentUserId || !authToken || !isCreator) return;
 
     if (!confirm("Are you sure? Users who unlocked this opportunity will keep access, but you'll stop earning credits from new unlocks.")) {
       return;
@@ -83,6 +85,7 @@ export function OpportunityCard({
 
     try {
       await deleteOpportunity({
+        authToken,
         opportunityId: opportunity._id as Id<"opportunities">,
         userId: currentUserId,
       });

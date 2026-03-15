@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Play, Square, MapPin, Clock, TrendingUp, Zap, AlertTriangle } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export default function TrackMobilePage() {
   const [isTracking, setIsTracking] = useState(false);
@@ -24,22 +25,11 @@ export default function TrackMobilePage() {
   const startRoute = useMutation(api.routes.startRoute);
   const saveCoordinates = useMutation(api.routes.saveCoordinates);
   const completeRoute = useMutation(api.routes.completeRoute);
+  const { authToken, userId: sessionUserId } = useAuthSession();
 
-  // Get user ID
   useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
+    setUserId(sessionUserId);
+  }, [sessionUserId]);
 
   // Subscribe to GPS updates
   useEffect(() => {
@@ -54,9 +44,11 @@ export default function TrackMobilePage() {
     // Flush coordinates to Convex every 5 seconds
     if (currentRouteId) {
       flushInterval = setInterval(async () => {
-        if (coordinateBuffer.length > 0 && currentRouteId) {
+        if (coordinateBuffer.length > 0 && currentRouteId && authToken && userId) {
           try {
             await saveCoordinates({
+              authToken,
+              userId,
               routeId: currentRouteId,
               coordinates: coordinateBuffer.map(c => ({
                 lat: c.lat,
@@ -82,10 +74,10 @@ export default function TrackMobilePage() {
       unsubscribeStats();
       if (flushInterval) clearInterval(flushInterval);
     };
-  }, [currentRouteId, saveCoordinates]);
+  }, [authToken, currentRouteId, saveCoordinates, userId]);
 
   const handleStart = async () => {
-    if (!userId) {
+    if (!userId || !authToken) {
       alert("Please log in to track routes");
       return;
     }
@@ -100,6 +92,7 @@ export default function TrackMobilePage() {
 
       // Create route in Convex
       const result = await startRoute({
+        authToken,
         userId: userId,
         routeType: "walking",
       });
@@ -146,7 +139,7 @@ export default function TrackMobilePage() {
   };
 
   const handleStop = async () => {
-    if (!currentRouteId || !userId) return;
+    if (!currentRouteId || !userId || !authToken) return;
 
     try {
       // Stop GPS tracking
@@ -158,6 +151,7 @@ export default function TrackMobilePage() {
 
       // Complete route in Convex
       await completeRoute({
+        authToken,
         routeId: currentRouteId,
         userId: userId,
         distance: finalState.distance,

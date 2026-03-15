@@ -19,6 +19,7 @@ import { NavigationEngine, NavigationState } from "@/lib/navigation-engine";
 import { formatDistance, formatDuration } from "@/lib/gps-tracker";
 import Map, { Marker, Source, Layer } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export default function NavigateRoutePage() {
   const params = useParams();
@@ -28,10 +29,11 @@ export default function NavigateRoutePage() {
   const [showSafetyDialog, setShowSafetyDialog] = useState(false);
   const engineRef = useRef<NavigationEngine | null>(null);
   const router = useRouter();
+  const { authToken, isLoading: isAuthLoading, userId } = useAuthSession();
 
   const route = useQuery(
     api.routes.getRoute,
-    routeId ? { routeId } : "skip"
+    routeId ? { authToken: authToken || undefined, routeId, userId: userId || undefined } : "skip"
   );
 
   useEffect(() => {
@@ -79,13 +81,21 @@ export default function NavigateRoutePage() {
     alert("Finding nearest safe spaces...");
   };
 
-  if (!route) {
+  if (isAuthLoading || route === undefined) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center text-white">
           <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p>Loading route...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (route === null) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <p className="text-white">Route not available.</p>
       </div>
     );
   }

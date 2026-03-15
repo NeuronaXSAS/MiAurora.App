@@ -25,6 +25,7 @@ import { Info } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 
 interface OpportunityEditDialogProps {
+  authToken: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId: Id<"users">;
@@ -45,6 +46,7 @@ interface OpportunityEditDialogProps {
 }
 
 export function OpportunityEditDialog({
+  authToken,
   open,
   onOpenChange,
   userId,
@@ -118,6 +120,7 @@ export function OpportunityEditDialog({
 
       // Update opportunity
       const result = await updateOpportunity({
+        authToken,
         opportunityId: opportunity._id,
         userId,
         title,

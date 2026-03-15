@@ -1,12 +1,14 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * Start a new route tracking session
  */
 export const startRoute = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     routeType: v.union(
       v.literal("walking"),
@@ -16,9 +18,11 @@ export const startRoute = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+
     // Create initial route with minimal data
     const routeId = await ctx.db.insert("routes", {
-      creatorId: args.userId,
+      creatorId: userId,
       title: `${args.routeType.charAt(0).toUpperCase() + args.routeType.slice(1)} Route`,
       routeType: args.routeType,
       coordinates: [],
@@ -47,6 +51,8 @@ export const startRoute = mutation({
  */
 export const saveCoordinates = mutation({
   args: {
+    authToken: v.string(),
+    userId: v.id("users"),
     routeId: v.id("routes"),
     coordinates: v.array(v.object({
       lat: v.number(),
@@ -56,10 +62,15 @@ export const saveCoordinates = mutation({
     })),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const route = await ctx.db.get(args.routeId);
     
     if (!route) {
       throw new Error("Route not found");
+    }
+
+    if (route.creatorId !== userId) {
+      throw new Error("Unauthorized");
     }
 
     // Append new coordinates
@@ -107,6 +118,7 @@ function blurRouteEndpoints(coordinates: Array<{ lat: number; lng: number; times
  */
 export const completeRoute = mutation({
   args: {
+    authToken: v.string(),
     routeId: v.id("routes"),
     userId: v.id("users"),
     title: v.optional(v.string()),
@@ -134,13 +146,14 @@ export const completeRoute = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const route = await ctx.db.get(args.routeId);
     
     if (!route) {
       throw new Error("Route not found");
     }
 
-    if (route.creatorId !== args.userId) {
+    if (route.creatorId !== userId) {
       throw new Error("Unauthorized");
     }
 
@@ -192,15 +205,15 @@ export const completeRoute = mutation({
 
     // Award credits if shared publicly
     if (args.sharingLevel !== "private") {
-      const user = await ctx.db.get(args.userId);
+      const user = await ctx.db.get(userId);
       if (user) {
-        await ctx.db.patch(args.userId, {
+        await ctx.db.patch(userId, {
           credits: user.credits + 15,
         });
 
         // Log transaction
         await ctx.db.insert("transactions", {
-          userId: args.userId,
+          userId,
           amount: 15,
           type: "route_shared",
           relatedId: args.routeId,
@@ -208,12 +221,12 @@ export const completeRoute = mutation({
 
         // Award bonus for detailed journal
         if (args.journalEntry && args.journalEntry.length > 200) {
-          await ctx.db.patch(args.userId, {
+          await ctx.db.patch(userId, {
             credits: user.credits + 20, // 15 + 5 bonus
           });
 
           await ctx.db.insert("transactions", {
-            userId: args.userId,
+            userId,
             amount: 5,
             type: "route_bonus",
             relatedId: args.routeId,
@@ -226,7 +239,7 @@ export const completeRoute = mutation({
       const durationMins = Math.floor(args.duration / 60);
       
       await ctx.db.insert("posts", {
-        authorId: args.userId,
+        authorId: userId,
         title: `Shared a route: ${args.title || route.title}`,
         description: args.journalEntry || `Check out my ${route.routeType} route! ${distanceKm}km in ${durationMins} minutes.`,
         lifeDimension: "daily",
@@ -254,13 +267,15 @@ export const completeRoute = mutation({
  */
 export const getUserRoutes = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const routes = await ctx.db
       .query("routes")
-      .withIndex("by_creator", (q) => q.eq("creatorId", args.userId))
+      .withIndex("by_creator", (q) => q.eq("creatorId", userId))
       .order("desc")
       .take(args.limit ?? 50);
 
@@ -330,12 +345,29 @@ export const getPublicRoutes = query({
  * Get route by ID
  */
 export const getRoute = query({
-  args: { routeId: v.id("routes") },
+  args: {
+    authToken: v.optional(v.string()),
+    routeId: v.id("routes"),
+    userId: v.optional(v.id("users")),
+  },
   handler: async (ctx, args) => {
     const route = await ctx.db.get(args.routeId);
     
     if (!route) {
       return null;
+    }
+
+    if (route.isPrivate) {
+      if (!args.authToken || !args.userId) {
+        throw new Error("Unauthorized");
+      }
+
+      const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+      if (route.creatorId !== userId) {
+        throw new Error("Unauthorized");
+      }
+    } else if (args.authToken && args.userId) {
+      await requireAuthenticatedUser(args.authToken, args.userId);
     }
 
     // Fetch creator info
@@ -373,6 +405,7 @@ export const getRoute = query({
  */
 export const completeCommunityRoute = mutation({
   args: {
+    authToken: v.string(),
     routeId: v.id("routes"),
     userId: v.id("users"),
     userRating: v.number(),
@@ -380,17 +413,22 @@ export const completeCommunityRoute = mutation({
     feedback: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const route = await ctx.db.get(args.routeId);
     
     if (!route) {
       throw new Error("Route not found");
     }
 
+    if (route.isPrivate) {
+      throw new Error("This route is not available for community completion");
+    }
+
     // Check if user already completed this route
     const existing = await ctx.db
       .query("routeCompletions")
       .withIndex("by_route_and_user", (q) => 
-        q.eq("routeId", args.routeId).eq("userId", args.userId)
+        q.eq("routeId", args.routeId).eq("userId", userId)
       )
       .first();
 
@@ -401,7 +439,7 @@ export const completeCommunityRoute = mutation({
     // Create completion record
     await ctx.db.insert("routeCompletions", {
       routeId: args.routeId,
-      userId: args.userId,
+      userId,
       completedAt: Date.now(),
       userRating: args.userRating,
       userTags: args.userTags,
@@ -454,17 +492,19 @@ export const completeCommunityRoute = mutation({
  */
 export const deleteRoute = mutation({
   args: {
+    authToken: v.string(),
     routeId: v.id("routes"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const route = await ctx.db.get(args.routeId);
     
     if (!route) {
       throw new Error("Route not found");
     }
 
-    if (route.creatorId !== args.userId) {
+    if (route.creatorId !== userId) {
       throw new Error("Unauthorized");
     }
 
@@ -509,17 +549,19 @@ export const deleteRoute = mutation({
  */
 export const shareRouteToFeed = mutation({
   args: {
+    authToken: v.string(),
     routeId: v.id("routes"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const route = await ctx.db.get(args.routeId);
     
     if (!route) {
       throw new Error("Route not found");
     }
 
-    if (route.creatorId !== args.userId) {
+    if (route.creatorId !== userId) {
       throw new Error("Unauthorized");
     }
 
@@ -533,7 +575,7 @@ export const shareRouteToFeed = mutation({
     
     // Create a post for the route
     const postId = await ctx.db.insert("posts", {
-      authorId: args.userId,
+      authorId: userId,
       title: `Shared a route: ${route.title}`,
       description: route.journalEntry || `Check out my ${route.routeType} route! ${distanceKm}km in ${durationMins} minutes.`,
       lifeDimension: "daily",
@@ -560,6 +602,7 @@ export const shareRouteToFeed = mutation({
  */
 export const updateRoutePrivacy = mutation({
   args: {
+    authToken: v.string(),
     routeId: v.id("routes"),
     userId: v.id("users"),
     sharingLevel: v.union(
@@ -575,13 +618,14 @@ export const updateRoutePrivacy = mutation({
     }))),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const route = await ctx.db.get(args.routeId);
     
     if (!route) {
       throw new Error("Route not found");
     }
 
-    if (route.creatorId !== args.userId) {
+    if (route.creatorId !== userId) {
       throw new Error("Unauthorized");
     }
 
@@ -638,12 +682,14 @@ export const updateRoutePrivacy = mutation({
  */
 export const flagRoute = mutation({
   args: {
+    authToken: v.string(),
     routeId: v.id("routes"),
     userId: v.id("users"),
     reason: v.string(),
     details: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const route = await ctx.db.get(args.routeId);
     
     if (!route) {
@@ -654,7 +700,7 @@ export const flagRoute = mutation({
     const existing = await ctx.db
       .query("routeFlags")
       .withIndex("by_route_and_user", (q) => 
-        q.eq("routeId", args.routeId).eq("userId", args.userId)
+        q.eq("routeId", args.routeId).eq("userId", userId)
       )
       .first();
 
@@ -665,7 +711,7 @@ export const flagRoute = mutation({
     // Create flag record
     await ctx.db.insert("routeFlags", {
       routeId: args.routeId,
-      userId: args.userId,
+      userId,
       reason: args.reason,
       details: args.details,
       status: "pending",

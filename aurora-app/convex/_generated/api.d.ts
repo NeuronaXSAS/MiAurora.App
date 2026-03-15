@@ -18,6 +18,7 @@ import type * as aiAnalytics from "../aiAnalytics.js";
 import type * as aiSharing from "../aiSharing.js";
 import type * as analytics from "../analytics.js";
 import type * as anonymousDebaters from "../anonymousDebaters.js";
+import type * as auth from "../auth.js";
 import type * as badges from "../badges.js";
 import type * as circles from "../circles.js";
 import type * as cleanup from "../cleanup.js";
@@ -92,6 +93,7 @@ declare const fullApi: ApiFromModules<{
   aiSharing: typeof aiSharing;
   analytics: typeof analytics;
   anonymousDebaters: typeof anonymousDebaters;
+  auth: typeof auth;
   badges: typeof badges;
   circles: typeof circles;
   cleanup: typeof cleanup;

@@ -61,12 +61,14 @@ type ContentFilter =
 
 // Memoized feed item component for better performance
 const FeedItem = memo(function FeedItem({
+  authToken,
   item,
   userId,
   onVerify,
   onDelete,
   isLowEnd,
 }: {
+  authToken: string | null;
   item: any;
   userId: Id<"users"> | null;
   onVerify: (id: Id<"posts">) => void;
@@ -164,6 +166,7 @@ const FeedItem = memo(function FeedItem({
   if (item.type === "opportunity") {
     return (
       <OpportunityFeedCard
+        authToken={authToken || undefined}
         opportunity={item as any}
         currentUserId={userId || undefined}
       />
@@ -626,6 +629,7 @@ export function MobileFeed() {
               )}
 
               <FeedItem
+                authToken={authToken}
                 item={item}
                 userId={userId}
                 onVerify={handleVerify}

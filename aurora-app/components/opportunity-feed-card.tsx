@@ -18,6 +18,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Id } from "@/convex/_generated/dataModel";
 
 interface OpportunityFeedCardProps {
+  authToken?: string;
   opportunity: {
     _id: string;
     _creationTime: number;
@@ -49,7 +50,7 @@ const categoryColors = {
   funding: "bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)]",
 };
 
-export function OpportunityFeedCard({ opportunity, currentUserId, onDelete }: OpportunityFeedCardProps) {
+export function OpportunityFeedCard({ authToken, opportunity, currentUserId, onDelete }: OpportunityFeedCardProps) {
   const [isLiking, setIsLiking] = useState(false);
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [commentText, setCommentText] = useState("");
@@ -67,23 +68,27 @@ export function OpportunityFeedCard({ opportunity, currentUserId, onDelete }: Op
   // Get like status and comments
   const likeStatus = useQuery(
     api.opportunities.getOpportunityLikeStatus,
-    currentUserId ? { opportunityId: opportunity._id as Id<"opportunities">, userId: currentUserId } : "skip"
+    currentUserId && authToken
+      ? { authToken, opportunityId: opportunity._id as Id<"opportunities">, userId: currentUserId }
+      : { opportunityId: opportunity._id as Id<"opportunities"> }
   );
   const comments = useQuery(api.opportunities.getOpportunityComments, {
     opportunityId: opportunity._id as Id<"opportunities">,
   });
 
   const handleLike = async () => {
-    if (!currentUserId || isLiking) return;
+    if (!currentUserId || !authToken || isLiking) return;
     setIsLiking(true);
     try {
       if (likeStatus?.hasLiked) {
         await unlikeOpportunity({
+          authToken,
           userId: currentUserId,
           opportunityId: opportunity._id as Id<"opportunities">,
         });
       } else {
         await likeOpportunity({
+          authToken,
           userId: currentUserId,
           opportunityId: opportunity._id as Id<"opportunities">,
         });
@@ -96,10 +101,11 @@ export function OpportunityFeedCard({ opportunity, currentUserId, onDelete }: Op
   };
 
   const handleComment = async () => {
-    if (!currentUserId || !commentText.trim() || isCommenting) return;
+    if (!currentUserId || !authToken || !commentText.trim() || isCommenting) return;
     setIsCommenting(true);
     try {
       await commentOnOpportunity({
+        authToken,
         userId: currentUserId,
         opportunityId: opportunity._id as Id<"opportunities">,
         content: commentText.trim(),
@@ -114,7 +120,7 @@ export function OpportunityFeedCard({ opportunity, currentUserId, onDelete }: Op
   };
 
   const handleDelete = async () => {
-    if (!currentUserId || !isCreator) return;
+    if (!currentUserId || !authToken || !isCreator) return;
 
     if (!confirm("Are you sure? Users who unlocked this opportunity will keep access, but you'll stop earning credits from new unlocks.")) {
       return;
@@ -122,6 +128,7 @@ export function OpportunityFeedCard({ opportunity, currentUserId, onDelete }: Op
 
     try {
       await deleteOpportunity({
+        authToken,
         opportunityId: opportunity._id as Id<"opportunities">,
         userId: currentUserId,
       });

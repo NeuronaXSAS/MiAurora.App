@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,9 @@ import { useRouter } from "next/navigation";
 import { GPSTracker, TrackingState, formatDistance, formatDuration, formatPace } from "@/lib/gps-tracker";
 import Map, { Marker, Source, Layer } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export default function TrackRoutePage() {
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [routeId, setRouteId] = useState<Id<"routes"> | null>(null);
   const [trackingState, setTrackingState] = useState<TrackingState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -26,28 +26,14 @@ export default function TrackRoutePage() {
 
   const startRoute = useMutation(api.routes.startRoute);
   const saveCoordinates = useMutation(api.routes.saveCoordinates);
-
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
+  const { authToken, userId } = useAuthSession();
 
   const handleStart = async () => {
-    if (!userId) return;
+    if (!userId || !authToken) return;
 
     try {
       // Create route in database
-      const result = await startRoute({ userId, routeType });
+      const result = await startRoute({ authToken, userId, routeType });
       setRouteId(result.routeId);
       setShowTypeSelector(false);
 
@@ -64,6 +50,8 @@ export default function TrackRoutePage() {
           // Save coordinates periodically
           if (state.coordinates.length % 10 === 0 && result.routeId) {
             saveCoordinates({
+              authToken,
+              userId,
               routeId: result.routeId,
               coordinates: state.coordinates.slice(-10),
             }).catch(console.error);
@@ -90,7 +78,7 @@ export default function TrackRoutePage() {
   };
 
   const handleStop = async () => {
-    if (!trackerRef.current || !routeId) return;
+    if (!trackerRef.current || !routeId || !userId || !authToken) return;
 
     const finalState = trackerRef.current.stop();
     setAnnouncement("Route tracking stopped");
@@ -99,6 +87,8 @@ export default function TrackRoutePage() {
     if (finalState.coordinates.length > 0) {
       try {
         await saveCoordinates({
+          authToken,
+          userId,
           routeId,
           coordinates: finalState.coordinates,
         });

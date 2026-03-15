@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { VoiceRecorder } from "@/components/voice-recorder";
 import { useMutation as useConvexMutation } from "convex/react";
 import Map, { Source, Layer } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 const AVAILABLE_TAGS = [
   "safe",
@@ -32,7 +33,6 @@ const AVAILABLE_TAGS = [
 export default function CompleteRoutePage() {
   const params = useParams();
   const routeId = params.routeId as Id<"routes">;
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const router = useRouter();
 
   const [title, setTitle] = useState("");
@@ -44,25 +44,11 @@ export default function CompleteRoutePage() {
   const [error, setError] = useState<string | null>(null);
   const [voiceNoteBlob, setVoiceNoteBlob] = useState<Blob | null>(null);
   const [uploadingVoice, setUploadingVoice] = useState(false);
-
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
+  const { authToken, isLoading: isAuthLoading, userId } = useAuthSession();
 
   const route = useQuery(
     api.routes.getRoute,
-    routeId ? { routeId } : "skip"
+    routeId && userId && authToken ? { authToken, routeId, userId } : "skip"
   );
 
   const completeRoute = useMutation(api.routes.completeRoute);
@@ -83,7 +69,7 @@ export default function CompleteRoutePage() {
   };
 
   const handleSubmit = async () => {
-    if (!userId || !route) return;
+    if (!userId || !authToken || !route) return;
 
     if (rating === 0) {
       setError("Por favor selecciona una calificación");
@@ -159,6 +145,7 @@ export default function CompleteRoutePage() {
       const endLocationName = await reverseGeocode(endCoord.lat, endCoord.lng);
 
       await completeRoute({
+        authToken,
         routeId,
         userId,
         title: title || `${route.routeType.charAt(0).toUpperCase() + route.routeType.slice(1)} Route`,
@@ -203,10 +190,18 @@ export default function CompleteRoutePage() {
     }
   };
 
-  if (!route) {
+  if (isAuthLoading || route === undefined) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-gray-600">Loading route...</p>
+      </div>
+    );
+  }
+
+  if (route === null) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Route not available.</p>
       </div>
     );
   }

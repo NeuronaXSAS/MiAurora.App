@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -28,9 +28,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SmartAd, useIsPremium } from "@/components/ads/smart-ad";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export default function RoutesPage() {
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [filterType, setFilterType] = useState<"all" | "walking" | "running" | "cycling" | "commuting">("all");
   const [filterTag, setFilterTag] = useState<string | null>(null);
@@ -39,25 +39,11 @@ export default function RoutesPage() {
   const router = useRouter();
   const deleteRoute = useMutation(api.routes.deleteRoute);
   const isPremium = useIsPremium();
-
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
+  const { authToken, isLoading: isAuthLoading, userId } = useAuthSession();
 
   const routes = useQuery(
     api.routes.getUserRoutes,
-    userId ? { userId, limit: 20 } : "skip"
+    userId && authToken ? { authToken, userId, limit: 20 } : "skip"
   );
 
   // Filter routes
@@ -264,7 +250,7 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
               )}
             </div>
             
-            {!routes && (
+            {(isAuthLoading || !routes) && (
               <div className="text-center py-12">
                 <div className="w-16 h-16 border-4 border-[var(--color-aurora-purple)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                 <p className="text-[var(--muted-foreground)]">Loading your routes...</p>
@@ -428,10 +414,10 @@ ${route.coordinates.map((coord: any) => `      <trkpt lat="${coord.lat}" lon="${
               className="bg-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/90 text-white"
               disabled={isDeleting}
               onClick={async () => {
-                if (!deleteRouteId || !userId) return;
+                if (!deleteRouteId || !userId || !authToken) return;
                 setIsDeleting(true);
                 try {
-                  await deleteRoute({ routeId: deleteRouteId, userId });
+                  await deleteRoute({ authToken, routeId: deleteRouteId, userId });
                   setDeleteRouteId(null);
                 } catch (error) {
                   console.error("Error deleting route:", error);

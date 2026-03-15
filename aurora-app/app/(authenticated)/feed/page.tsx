@@ -125,8 +125,6 @@ export default function FeedPage() {
 
   const verifyPost = useMutation(api.posts.verify);
   const deletePost = useMutation(api.posts.deletePost);
-  const deleteRoute = useMutation(api.routes.deleteRoute);
-  const deleteOpportunity = useMutation(api.opportunities.deleteOpportunity);
 
   const handleVerify = async (postId: Id<"posts">) => {
     if (!userId || !authToken) return;
@@ -142,28 +140,6 @@ export default function FeedPage() {
     if (!confirm("Are you sure you want to delete this post?")) return;
     try {
       await deletePost({ authToken, postId, userId });
-    } catch (error) {
-      console.error("Delete error:", error);
-    }
-  };
-
-  const handleRouteDelete = async (routeId: Id<"routes">) => {
-    if (!userId) return;
-    if (!confirm("Are you sure you want to delete this route?")) return;
-    try {
-      await deleteRoute({ routeId, userId });
-    } catch (error) {
-      console.error("Delete error:", error);
-    }
-  };
-
-  const handleOpportunityDelete = async (
-    opportunityId: Id<"opportunities">,
-  ) => {
-    if (!userId) return;
-    if (!confirm("Are you sure you want to delete this opportunity?")) return;
-    try {
-      await deleteOpportunity({ opportunityId, userId });
     } catch (error) {
       console.error("Delete error:", error);
     }
@@ -642,6 +618,7 @@ export default function FeedPage() {
                     )}
                     {isRoutePost && item.route && (
                       <RouteFeedCard
+                        authToken={authToken || undefined}
                         route={{
                           ...item.route,
                           _creationTime: item._creationTime,
@@ -666,22 +643,16 @@ export default function FeedPage() {
                     )}
                     {item.type === "route" && (
                       <RouteFeedCard
+                        authToken={authToken || undefined}
                         route={item as any}
                         currentUserId={userId || undefined}
-                        onDelete={() =>
-                          handleRouteDelete(item._id as Id<"routes">)
-                        }
                       />
                     )}
                     {item.type === "opportunity" && (
                       <OpportunityFeedCard
+                        authToken={authToken || undefined}
                         opportunity={item as any}
                         currentUserId={userId || undefined}
-                        onDelete={() =>
-                          handleOpportunityDelete(
-                            item._id as Id<"opportunities">,
-                          )
-                        }
                       />
                     )}
                   </motion.div>

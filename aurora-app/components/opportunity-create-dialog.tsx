@@ -25,12 +25,14 @@ import { Briefcase, Sparkles, Info } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 
 interface OpportunityCreateDialogProps {
+  authToken: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId: Id<"users">;
 }
 
 export function OpportunityCreateDialog({
+  authToken,
   open,
   onOpenChange,
   userId,
@@ -86,6 +88,7 @@ export function OpportunityCreateDialog({
 
       // Create opportunity
       const result = await createOpportunity({
+        authToken,
         creatorId: userId,
         title,
         description,

@@ -141,6 +141,7 @@ function MiniRouteMap({ coordinates }: { coordinates: Array<{ lat: number; lng: 
 }
 
 interface RouteFeedCardProps {
+  authToken?: string;
   route: {
     _id: string;
     _creationTime: number;
@@ -164,7 +165,7 @@ interface RouteFeedCardProps {
   onDelete?: () => void;
 }
 
-export function RouteFeedCard({ route, currentUserId, onDelete }: RouteFeedCardProps) {
+export function RouteFeedCard({ authToken, route, currentUserId, onDelete }: RouteFeedCardProps) {
   const distanceKm = (route.distance / 1000).toFixed(1);
   const durationMin = Math.round(route.duration / 60);
   const isCreator = currentUserId === route.creatorId;
@@ -172,7 +173,7 @@ export function RouteFeedCard({ route, currentUserId, onDelete }: RouteFeedCardP
   const deleteRoute = useMutation(api.routes.deleteRoute);
 
   const handleDelete = async () => {
-    if (!currentUserId || !isCreator) return;
+    if (!currentUserId || !authToken || !isCreator) return;
 
     if (!confirm("Are you sure you want to delete this route? All GPS data, ratings, and reviews will be permanently removed.")) {
       return;
@@ -180,6 +181,7 @@ export function RouteFeedCard({ route, currentUserId, onDelete }: RouteFeedCardP
 
     try {
       await deleteRoute({
+        authToken,
         routeId: route._id as Id<"routes">,
         userId: currentUserId,
       });

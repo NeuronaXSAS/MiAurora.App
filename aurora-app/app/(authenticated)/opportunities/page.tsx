@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { OpportunityCard } from "@/components/opportunity-card";
@@ -18,27 +18,12 @@ import { Button } from "@/components/ui/button";
 import { Briefcase, Loader2, Sparkles, Plus, Settings } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import Link from "next/link";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export default function OpportunitiesPage() {
   const [category, setCategory] = useState<string | undefined>(undefined);
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-
-  // Get user ID
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
+  const { authToken, userId } = useAuthSession();
 
   // Fetch opportunities
   const opportunities = useQuery(api.opportunities.list, {
@@ -54,16 +39,17 @@ export default function OpportunitiesPage() {
   // Fetch user's unlocked opportunities
   const unlockedOpportunities = useQuery(
     api.opportunities.getUserUnlocks,
-    userId ? { userId } : "skip"
+    userId && authToken ? { authToken, userId } : "skip"
   );
 
   const unlockOpportunity = useMutation(api.opportunities.unlock);
 
   const handleUnlock = async (opportunityId: Id<"opportunities">) => {
-    if (!userId) return;
+    if (!userId || !authToken) return;
     
     try {
       await unlockOpportunity({
+        authToken,
         userId,
         opportunityId,
       });
@@ -187,6 +173,7 @@ export default function OpportunitiesPage() {
                     </div>
                   )}
                   <OpportunityCard
+                    authToken={authToken || undefined}
                     opportunity={opportunity}
                     isUnlocked={isUnlocked(opportunity._id)}
                     userCredits={user?.credits || 0}
@@ -221,8 +208,9 @@ export default function OpportunitiesPage() {
       </div>
 
       {/* Create Opportunity Dialog */}
-      {userId && (
+      {userId && authToken && (
         <OpportunityCreateDialog
+          authToken={authToken}
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
           userId={userId}

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * List available opportunities with optional category filter
@@ -47,11 +48,13 @@ export const get = query({
  */
 export const unlock = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     opportunityId: v.id("opportunities"),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     const opportunity = await ctx.db.get(args.opportunityId);
 
     if (!user) {
@@ -70,7 +73,7 @@ export const unlock = mutation({
     const existingUnlock = await ctx.db
       .query("unlocks")
       .withIndex("by_user_and_opportunity", (q) =>
-        q.eq("userId", args.userId).eq("opportunityId", args.opportunityId)
+        q.eq("userId", userId).eq("opportunityId", args.opportunityId)
       )
       .first();
 
@@ -84,19 +87,19 @@ export const unlock = mutation({
     }
 
     // Deduct credits
-    await ctx.db.patch(args.userId, {
+    await ctx.db.patch(userId, {
       credits: user.credits - opportunity.creditCost,
     });
 
     // Create unlock record
     await ctx.db.insert("unlocks", {
-      userId: args.userId,
+      userId,
       opportunityId: args.opportunityId,
     });
 
     // Log transaction
     await ctx.db.insert("transactions", {
-      userId: args.userId,
+      userId,
       amount: -opportunity.creditCost,
       type: "opportunity_unlock",
       relatedId: args.opportunityId,
@@ -111,14 +114,16 @@ export const unlock = mutation({
  */
 export const hasUnlocked = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     opportunityId: v.id("opportunities"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const unlock = await ctx.db
       .query("unlocks")
       .withIndex("by_user_and_opportunity", (q) =>
-        q.eq("userId", args.userId).eq("opportunityId", args.opportunityId)
+        q.eq("userId", userId).eq("opportunityId", args.opportunityId)
       )
       .first();
 
@@ -130,11 +135,15 @@ export const hasUnlocked = query({
  * Get user's unlocked opportunities
  */
 export const getUserUnlocks = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const unlocks = await ctx.db
       .query("unlocks")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     // Get full opportunity details
@@ -183,10 +192,23 @@ export const createAdmin = mutation({
  */
 export const updateStatus = mutation({
   args: {
+    authToken: v.string(),
+    userId: v.id("users"),
     opportunityId: v.id("opportunities"),
     isActive: v.boolean(),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const opportunity = await ctx.db.get(args.opportunityId);
+
+    if (!opportunity) {
+      throw new Error("Opportunity not found");
+    }
+
+    if (opportunity.creatorId !== userId) {
+      throw new Error("Unauthorized: You can only update your own opportunities");
+    }
+
     await ctx.db.patch(args.opportunityId, {
       isActive: args.isActive,
     });
@@ -201,6 +223,7 @@ export const updateStatus = mutation({
  */
 export const create = mutation({
   args: {
+    authToken: v.string(),
     creatorId: v.id("users"),
     title: v.string(),
     description: v.string(),
@@ -221,13 +244,14 @@ export const create = mutation({
     requirements: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.creatorId);
     // Validate credit cost
     if (args.creditCost < 5 || args.creditCost > 100) {
       throw new Error("Credit cost must be between 5 and 100");
     }
 
     const opportunityId = await ctx.db.insert("opportunities", {
-      creatorId: args.creatorId,
+      creatorId: userId,
       title: args.title,
       description: args.description,
       category: args.category,
@@ -251,6 +275,7 @@ export const create = mutation({
  */
 export const update = mutation({
   args: {
+    authToken: v.string(),
     opportunityId: v.id("opportunities"),
     userId: v.id("users"),
     title: v.optional(v.string()),
@@ -273,13 +298,14 @@ export const update = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const opportunity = await ctx.db.get(args.opportunityId);
     
     if (!opportunity) {
       throw new Error("Opportunity not found");
     }
 
-    if (opportunity.creatorId !== args.userId) {
+    if (opportunity.creatorId !== userId) {
       throw new Error("Unauthorized: You can only edit your own opportunities");
     }
 
@@ -313,17 +339,19 @@ export const update = mutation({
  */
 export const deleteOpportunity = mutation({
   args: {
+    authToken: v.string(),
     opportunityId: v.id("opportunities"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const opportunity = await ctx.db.get(args.opportunityId);
     
     if (!opportunity) {
       throw new Error("Opportunity not found");
     }
 
-    if (opportunity.creatorId !== args.userId) {
+    if (opportunity.creatorId !== userId) {
       throw new Error("Unauthorized: You can only delete your own opportunities");
     }
 
@@ -347,11 +375,15 @@ export const deleteOpportunity = mutation({
  * Get opportunities created by a user
  */
 export const getByCreator = query({
-  args: { creatorId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    creatorId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.creatorId);
     const opportunities = await ctx.db
       .query("opportunities")
-      .withIndex("by_creator", (q) => q.eq("creatorId", args.creatorId))
+      .withIndex("by_creator", (q) => q.eq("creatorId", userId))
       .collect();
 
     return opportunities;
@@ -371,13 +403,15 @@ const LIKE_CREDIT_COST = 1;
  */
 export const commentOnOpportunity = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     opportunityId: v.id("opportunities"),
     content: v.string(),
     parentId: v.optional(v.id("opportunityComments")),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
 
     const opportunity = await ctx.db.get(args.opportunityId);
@@ -399,14 +433,14 @@ export const commentOnOpportunity = mutation({
     }
 
     // Deduct credits
-    await ctx.db.patch(args.userId, {
+    await ctx.db.patch(userId, {
       credits: user.credits - COMMENT_CREDIT_COST,
     });
 
     // Create comment
     const commentId = await ctx.db.insert("opportunityComments", {
       opportunityId: args.opportunityId,
-      authorId: args.userId,
+      authorId: userId,
       content: args.content.trim(),
       parentId: args.parentId,
       likes: 0,
@@ -415,7 +449,7 @@ export const commentOnOpportunity = mutation({
 
     // Log transaction
     await ctx.db.insert("transactions", {
-      userId: args.userId,
+      userId,
       amount: -COMMENT_CREDIT_COST,
       type: "opportunity_comment",
       relatedId: args.opportunityId,
@@ -430,11 +464,13 @@ export const commentOnOpportunity = mutation({
  */
 export const likeOpportunity = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     opportunityId: v.id("opportunities"),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
 
     const opportunity = await ctx.db.get(args.opportunityId);
@@ -446,7 +482,7 @@ export const likeOpportunity = mutation({
     const existingLike = await ctx.db
       .query("opportunityLikes")
       .withIndex("by_user_and_opportunity", (q) =>
-        q.eq("userId", args.userId).eq("opportunityId", args.opportunityId)
+        q.eq("userId", userId).eq("opportunityId", args.opportunityId)
       )
       .first();
 
@@ -460,19 +496,19 @@ export const likeOpportunity = mutation({
     }
 
     // Deduct credits
-    await ctx.db.patch(args.userId, {
+    await ctx.db.patch(userId, {
       credits: user.credits - LIKE_CREDIT_COST,
     });
 
     // Create like
     await ctx.db.insert("opportunityLikes", {
       opportunityId: args.opportunityId,
-      userId: args.userId,
+      userId,
     });
 
     // Log transaction
     await ctx.db.insert("transactions", {
-      userId: args.userId,
+      userId,
       amount: -LIKE_CREDIT_COST,
       type: "opportunity_like",
       relatedId: args.opportunityId,
@@ -487,18 +523,20 @@ export const likeOpportunity = mutation({
  */
 export const unlikeOpportunity = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     opportunityId: v.id("opportunities"),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
 
     // Find existing like
     const existingLike = await ctx.db
       .query("opportunityLikes")
       .withIndex("by_user_and_opportunity", (q) =>
-        q.eq("userId", args.userId).eq("opportunityId", args.opportunityId)
+        q.eq("userId", userId).eq("opportunityId", args.opportunityId)
       )
       .first();
 
@@ -510,13 +548,13 @@ export const unlikeOpportunity = mutation({
     await ctx.db.delete(existingLike._id);
 
     // Refund credit
-    await ctx.db.patch(args.userId, {
+    await ctx.db.patch(userId, {
       credits: user.credits + LIKE_CREDIT_COST,
     });
 
     // Log refund transaction
     await ctx.db.insert("transactions", {
-      userId: args.userId,
+      userId,
       amount: LIKE_CREDIT_COST,
       type: "opportunity_unlike_refund",
       relatedId: args.opportunityId,
@@ -565,6 +603,7 @@ export const getOpportunityComments = query({
  */
 export const getOpportunityLikeStatus = query({
   args: {
+    authToken: v.optional(v.string()),
     opportunityId: v.id("opportunities"),
     userId: v.optional(v.id("users")),
   },
@@ -576,6 +615,10 @@ export const getOpportunityLikeStatus = query({
 
     let hasLiked = false;
     if (args.userId) {
+      if (!args.authToken) {
+        throw new Error("Unauthorized");
+      }
+      await requireAuthenticatedUser(args.authToken, args.userId);
       hasLiked = likes.some((like) => like.userId === args.userId);
     }
 
@@ -591,10 +634,12 @@ export const getOpportunityLikeStatus = query({
  */
 export const likeOpportunityComment = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     commentId: v.id("opportunityComments"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const comment = await ctx.db.get(args.commentId);
     if (!comment || comment.isDeleted) {
       throw new Error("Comment not found");
@@ -604,7 +649,7 @@ export const likeOpportunityComment = mutation({
     const existingLike = await ctx.db
       .query("opportunityCommentLikes")
       .withIndex("by_user_and_comment", (q) =>
-        q.eq("userId", args.userId).eq("commentId", args.commentId)
+        q.eq("userId", userId).eq("commentId", args.commentId)
       )
       .first();
 
@@ -617,7 +662,7 @@ export const likeOpportunityComment = mutation({
       // Like - add like
       await ctx.db.insert("opportunityCommentLikes", {
         commentId: args.commentId,
-        userId: args.userId,
+        userId,
       });
       await ctx.db.patch(args.commentId, { likes: comment.likes + 1 });
       return { success: true, liked: true, newLikeCount: comment.likes + 1 };
@@ -630,14 +675,16 @@ export const likeOpportunityComment = mutation({
  */
 export const deleteOpportunityComment = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     commentId: v.id("opportunityComments"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const comment = await ctx.db.get(args.commentId);
     if (!comment) throw new Error("Comment not found");
 
-    if (comment.authorId !== args.userId) {
+    if (comment.authorId !== userId) {
       throw new Error("Unauthorized: You can only delete your own comments");
     }
 

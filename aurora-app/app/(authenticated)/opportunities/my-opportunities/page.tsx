@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -10,38 +10,23 @@ import { OpportunityEditDialog } from "@/components/opportunity-edit-dialog";
 import { Briefcase, Edit, Trash2, Eye, EyeOff } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import Link from "next/link";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export default function MyOpportunitiesPage() {
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [editingOpportunity, setEditingOpportunity] = useState<any | null>(null);
-
-  // Get user ID
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
+  const { authToken, userId } = useAuthSession();
 
   // Fetch user's opportunities
   const opportunities = useQuery(
     api.opportunities.getByCreator,
-    userId ? { creatorId: userId } : "skip"
+    userId && authToken ? { authToken, creatorId: userId } : "skip"
   );
 
   const deleteOpportunity = useMutation(api.opportunities.deleteOpportunity);
   const updateStatus = useMutation(api.opportunities.updateStatus);
 
   const handleDelete = async (opportunityId: Id<"opportunities">) => {
-    if (!userId) return;
+    if (!userId || !authToken) return;
     
     if (!confirm("Are you sure you want to delete this opportunity?")) {
       return;
@@ -49,6 +34,7 @@ export default function MyOpportunitiesPage() {
 
     try {
       await deleteOpportunity({
+        authToken,
         opportunityId,
         userId,
       });
@@ -59,10 +45,14 @@ export default function MyOpportunitiesPage() {
   };
 
   const handleToggleStatus = async (opportunityId: Id<"opportunities">, currentStatus: boolean) => {
+    if (!userId || !authToken) return;
+
     try {
       await updateStatus({
+        authToken,
         opportunityId,
         isActive: !currentStatus,
+        userId,
       });
     } catch (error) {
       console.error("Status update error:", error);
@@ -198,8 +188,9 @@ export default function MyOpportunitiesPage() {
       </div>
 
       {/* Edit Dialog */}
-      {userId && editingOpportunity && (
+      {userId && authToken && editingOpportunity && (
         <OpportunityEditDialog
+          authToken={authToken}
           open={!!editingOpportunity}
           onOpenChange={(open) => !open && setEditingOpportunity(null)}
           userId={userId}
