@@ -26,9 +26,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Id } from "@/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
+import { useVideoUpload } from "@/hooks/useVideoUpload";
 
 interface ReelCreatorProps {
   userId: Id<"users">;
@@ -62,12 +61,12 @@ export function ReelCreator({ userId, onClose }: ReelCreatorProps) {
   const [hashtagInput, setHashtagInput] = useState("");
   const [category, setCategory] = useState<string | null>(null);
   const [location, setLocation] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [locationWarning, setLocationWarning] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { upload, progress, isUploading, error, reset } = useVideoUpload();
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -120,35 +119,85 @@ export function ReelCreator({ userId, onClose }: ReelCreatorProps) {
     setHashtags(hashtags.filter(t => t !== tag));
   };
 
+  const geocodeLocation = useCallback(async (locationName: string) => {
+    const trimmedLocation = locationName.trim();
+    if (!trimmedLocation) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(trimmedLocation)}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&limit=1`
+      );
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data = await response.json();
+      const feature = data.features?.[0];
+      if (!feature?.center || feature.center.length !== 2) {
+        return null;
+      }
+
+      return {
+        name: feature.place_name || trimmedLocation,
+        coordinates: [feature.center[0], feature.center[1]] as [number, number],
+      };
+    } catch (geocodingError) {
+      console.error("Location geocoding failed:", geocodingError);
+      return null;
+    }
+  }, []);
+
   const handlePublish = async () => {
     if (!videoFile || !category) return;
-    
-    setIsUploading(true);
-    setUploadProgress(0);
-    
-    try {
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90));
-      }, 200);
 
-      // TODO: Implement actual upload to Cloudinary/storage
-      // For now, simulate the upload
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-      
-      // Show success and redirect
-      setTimeout(() => {
-        router.push('/feed');
-      }, 1000);
-      
+    try {
+      setLocationWarning(null);
+
+      const locationData = location.trim()
+        ? await geocodeLocation(location)
+        : null;
+
+      if (location.trim() && !locationData) {
+        setLocationWarning(
+          "We could not pin that location, so the reel will be published without a map tag.",
+        );
+      }
+
+      const categoryHashtag = category.replace(/[^a-zA-Z0-9]+/g, "");
+      const lifeDimension =
+        category === "advice"
+          ? "professional"
+          : category === "review" || category === "story"
+            ? "social"
+            : "daily";
+
+      const uploadResult = await upload(
+        videoFile,
+        {
+          caption: caption.trim() || undefined,
+          hashtags: Array.from(
+            new Set([
+              ...hashtags,
+              categoryHashtag,
+            ].filter(Boolean)),
+          ),
+          location: locationData || undefined,
+          isAnonymous,
+          lifeDimension,
+        },
+        userId,
+      );
+
+      if (uploadResult.success) {
+        reset();
+        router.push("/reels");
+      }
     } catch (error) {
       console.error('Upload failed:', error);
-      alert('Upload failed. Please try again.');
-    } finally {
-      setIsUploading(false);
+      setLocationWarning("We could not publish that reel. Please try again.");
     }
   };
 
@@ -170,7 +219,7 @@ export function ReelCreator({ userId, onClose }: ReelCreatorProps) {
         {step === "edit" && (
           <Button 
             onClick={() => setStep("publish")}
-            disabled={!caption.trim()}
+            disabled={!videoFile}
             className="bg-[var(--color-aurora-purple)] min-h-[40px]"
           >
             Next <Sparkles className="w-4 h-4 ml-1" />
@@ -438,7 +487,7 @@ export function ReelCreator({ userId, onClose }: ReelCreatorProps) {
                   <Sparkles className="w-8 h-8 text-white" />
                 </div>
                 <h2 className="text-xl font-bold text-[var(--foreground)]">Ready to share?</h2>
-                <p className="text-sm text-[var(--muted-foreground)]">Your reel will help other women stay safe</p>
+                <p className="text-sm text-[var(--muted-foreground)]">Your reel will appear in Reels and in the main feed.</p>
               </div>
 
               {/* Preview Card */}
@@ -485,13 +534,21 @@ export function ReelCreator({ userId, onClose }: ReelCreatorProps) {
               )}
 
               {/* Upload Progress */}
-              {isUploading && (
+              {isUploading && progress && (
                 <div className="space-y-2">
-                  <Progress value={uploadProgress} className="h-2" />
+                  <Progress value={progress.percentage} className="h-2" />
                   <p className="text-sm text-center text-[var(--muted-foreground)]">
-                    {uploadProgress < 100 ? "Uploading..." : "Processing..."}
+                    {progress.percentage < 100 ? "Uploading..." : "Publishing..."}
                   </p>
                 </div>
+              )}
+
+              {(error || locationWarning) && (
+                <Card className="border-[var(--color-aurora-salmon)]/40 bg-[var(--color-aurora-salmon)]/10">
+                  <CardContent className="p-4 text-sm text-[var(--color-aurora-salmon)]">
+                    {error || locationWarning}
+                  </CardContent>
+                </Card>
               )}
 
               {/* Actions */}

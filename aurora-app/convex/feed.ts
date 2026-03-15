@@ -1,6 +1,32 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 
+const SUPPORTIVE_CONTENT_PATTERNS = [
+  /safe/i,
+  /support/i,
+  /help/i,
+  /wellness/i,
+  /community/i,
+  /mentor/i,
+  /healing/i,
+  /segur/i,
+  /apoyo/i,
+  /bienestar/i,
+  /acompan/i,
+  /cuidado/i,
+];
+
+const SAFETY_SIGNAL_PATTERNS = [
+  /warning/i,
+  /unsafe/i,
+  /avoid/i,
+  /alert/i,
+  /harassment/i,
+  /acoso/i,
+  /riesgo/i,
+  /peligro/i,
+];
+
 // Helper function to validate media URLs
 function isValidMediaUrl(url: string | undefined | null): boolean {
   if (!url) return false;
@@ -71,10 +97,31 @@ export const getUnifiedFeed = query({
     }
 
     // Fetch MORE posts to ensure variety (get different types)
-    const allPosts = await ctx.db
+    const rawPosts = await ctx.db
       .query("posts")
       .order("desc")
       .take(limit * 4); // Get more to filter by type and preferences
+
+    const allPosts = rawPosts.filter((post) => {
+      if (post.moderationStatus === "flagged" || post.moderationStatus === "pending") {
+        return false;
+      }
+
+      if (post.postType === "reel" && !post.reelId) {
+        return false;
+      }
+
+      return true;
+    });
+
+    const postReelIds = new Set(
+      allPosts
+        .map((post) => post.reelId)
+        .filter(
+          (reelId): reelId is NonNullable<typeof allPosts[number]["reelId"]> =>
+            Boolean(reelId),
+        ),
+    );
 
     // Also fetch reels directly to ensure they appear in feed
     // Filter out broken/placeholder reels to prevent black boxes in immersive view
@@ -91,15 +138,13 @@ export const getUnifiedFeed = query({
     // 3. Have some engagement OR meaningful caption
     const allReels = rawReels
       .filter((reel) => {
+        if (postReelIds.has(reel._id)) return false;
+
         // Must have valid video URL - this is the PRIMARY filter
         if (!isValidMediaUrl(reel.videoUrl)) return false;
 
-        // Must be approved (or at least not rejected/flagged)
-        if (
-          reel.moderationStatus === "rejected" ||
-          reel.moderationStatus === "flagged"
-        )
-          return false;
+        // Must be approved so the Reels page and the feed stay aligned.
+        if (reel.moderationStatus !== "approved") return false;
 
         // Must have some content indicator (engagement or caption)
         const hasEngagement =
@@ -122,6 +167,7 @@ export const getUnifiedFeed = query({
         (Date.now() - post._creationTime) / (1000 * 60 * 60),
       );
       const ageDays = ageHours / 24;
+      const contentText = `${post.title} ${post.description}`.toLowerCase();
 
       // === FRESHNESS SCORE (Primary factor) ===
       // New posts get massive initial boost that decays over time
@@ -145,6 +191,7 @@ export const getUnifiedFeed = query({
       // === ENGAGEMENT VELOCITY (Secondary factor) ===
       // Rewards posts that are gaining traction quickly
       const upvotes = post.upvotes || 0;
+      const downvotes = post.downvotes || 0;
       const comments = post.commentCount || 0;
       const verifications = post.verificationCount || 0;
 
@@ -202,6 +249,26 @@ export const getUnifiedFeed = query({
       if (post.media && post.media.length > 0) qualityScore += 15;
       if (post.description && post.description.length > 100) qualityScore += 10; // Thoughtful content
 
+      // === WELLBEING & CIVILITY ===
+      // Prioritize supportive and safety-useful content over divisive content.
+      let wellbeingScore = 0;
+      if (SUPPORTIVE_CONTENT_PATTERNS.some((pattern) => pattern.test(contentText))) {
+        wellbeingScore += 22;
+      }
+      if (SAFETY_SIGNAL_PATTERNS.some((pattern) => pattern.test(contentText))) {
+        wellbeingScore += 12;
+      }
+      if ((post.rating || 0) >= 4) {
+        wellbeingScore += 10;
+      }
+
+      const totalVotesWithDownvotes = upvotes + downvotes;
+      const downvoteRatio =
+        totalVotesWithDownvotes > 0 ? downvotes / totalVotesWithDownvotes : 0;
+      let civilityPenalty = 0;
+      if (downvoteRatio >= 0.45) civilityPenalty = 85;
+      else if (downvoteRatio >= 0.3) civilityPenalty = 35;
+
       // === NEW USER BOOST ===
       // Give new users' first posts extra visibility to encourage participation
       // (This would need author creation time, approximating with low engagement + fresh)
@@ -219,6 +286,8 @@ export const getUnifiedFeed = query({
         personalizationScore * 1.0 + // Personalization is important
         diversityScore * 0.8 + // Encourage variety
         qualityScore * 0.6 + // Quality signals
+        wellbeingScore * 1.1 - // Reward helpful and calming content
+        civilityPenalty + // Reduce toxic or poorly received content
         newUserBoost; // Help newcomers
 
       return Math.round(finalScore);
@@ -257,6 +326,8 @@ export const getUnifiedFeed = query({
               endLocation: route.endLocation,
               completionCount: route.completionCount,
             };
+          } else {
+            return null;
           }
         }
 
@@ -264,7 +335,11 @@ export const getUnifiedFeed = query({
         let reelData = null;
         if (post.reelId) {
           const reel = await ctx.db.get(post.reelId);
-          if (reel) {
+          if (
+            reel &&
+            reel.moderationStatus === "approved" &&
+            isValidMediaUrl(reel.videoUrl)
+          ) {
             // Get reel author info
             const reelAuthor = await ctx.db.get(reel.authorId);
             reelData = {
@@ -287,9 +362,11 @@ export const getUnifiedFeed = query({
                     _id: reelAuthor._id,
                     name: reelAuthor.name,
                     profileImage: reelAuthor.profileImage,
-                  }
-                : null,
+                }
+              : null,
             };
+          } else {
+            return null;
           }
         }
 
@@ -300,6 +377,7 @@ export const getUnifiedFeed = query({
           reel: reelData,
           type: "post" as const,
           timestamp: post._creationTime,
+          score: scorePost(post),
         };
       }),
     );
@@ -319,6 +397,10 @@ export const getUnifiedFeed = query({
           creator,
           type: "route" as const,
           timestamp: route._creationTime,
+          score:
+            route.completionCount * 4 +
+            route.verificationCount * 5 +
+            route.rating * 10,
         };
       }),
     );
@@ -382,6 +464,8 @@ export const getUnifiedFeed = query({
               }
             : null,
           channelName: stream.channelName,
+          score:
+            (stream.viewerCount || 0) * 10 + (stream.isEmergency ? 250 : 0),
         };
       }),
     );
@@ -405,6 +489,11 @@ export const getUnifiedFeed = query({
         (debate.agreeCount || 0) +
         (debate.disagreeCount || 0) +
         (debate.neutralCount || 0),
+      score:
+        ((debate.agreeCount || 0) +
+          (debate.disagreeCount || 0) +
+          (debate.neutralCount || 0)) *
+        8,
     }));
 
     // Fetch recent active opportunities with creator data
@@ -453,6 +542,7 @@ export const getUnifiedFeed = query({
           creator,
           type: "opportunity" as const,
           timestamp: opp._creationTime,
+          score: scoreOpportunity(opp),
         };
       }),
     );
@@ -502,13 +592,20 @@ export const getUnifiedFeed = query({
           verificationCount: 0,
           upvotes: reel.likes,
           commentCount: reel.comments,
+          score:
+            reel.likes * 4 +
+            reel.comments * 5 +
+            reel.shares * 6 +
+            reel.views * 0.05,
         };
       }),
     );
 
     // Combine all items - include reels, livestreams, and debates
     const allItems = [
-      ...postsWithAuthors,
+      ...postsWithAuthors.filter(
+        (item): item is NonNullable<typeof item> => item !== null,
+      ),
       ...reelsWithAuthors,
       ...routesWithCreators,
       ...opportunitiesWithCreators,
@@ -566,8 +663,8 @@ export const getUnifiedFeed = query({
     const sortBucket = (bucket: typeof allItems) => {
       return bucket.sort((a, b) => {
         // Posts have scores, others use timestamp
-        const scoreA = (a as Record<string, unknown>).score ?? b.timestamp;
-        const scoreB = (b as Record<string, unknown>).score ?? a.timestamp;
+        const scoreA = (a as Record<string, unknown>).score ?? a.timestamp;
+        const scoreB = (b as Record<string, unknown>).score ?? b.timestamp;
         return (scoreB as number) - (scoreA as number);
       });
     };

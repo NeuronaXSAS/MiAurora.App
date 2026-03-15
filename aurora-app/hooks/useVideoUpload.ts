@@ -33,6 +33,12 @@ interface UploadMetadata {
   };
   isAnonymous?: boolean;
   safetyTags?: string[];
+  lifeDimension?:
+    | "professional"
+    | "social"
+    | "daily"
+    | "travel"
+    | "financial";
 }
 
 // Cloudinary configuration from environment variables

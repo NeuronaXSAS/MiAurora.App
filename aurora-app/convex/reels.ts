@@ -9,6 +9,10 @@ import { v } from 'convex/values';
 import { mutation, query, action } from './_generated/server';
 import { api } from './_generated/api';
 
+const REEL_MODERATION_BYPASS = true;
+const REEL_BYPASS_REASON =
+  'Auto-approved while Aurora reel moderation is running in bypass mode.';
+
 /**
  * Generate secure upload credentials for client-side video uploads
  * 
@@ -96,7 +100,9 @@ export const createReel = mutation({
       throw new Error('El video debe durar máximo 3 minutos');
     }
 
-    // Create reel with pending moderation status
+    const moderationStatus = REEL_MODERATION_BYPASS ? 'approved' : 'pending';
+
+    // Create reel and either approve instantly or send to moderation.
     const reelId = await ctx.db.insert('reels', {
       authorId: args.authorId,
       provider: args.provider,
@@ -109,7 +115,10 @@ export const createReel = mutation({
       hashtags: args.hashtags,
       location: args.location,
       isAnonymous: args.isAnonymous || false,
-      moderationStatus: 'pending', // Will be reviewed by AI
+      moderationStatus,
+      moderationScore: REEL_MODERATION_BYPASS ? 0 : undefined,
+      moderationReason: REEL_MODERATION_BYPASS ? REEL_BYPASS_REASON : undefined,
+      moderationCategories: REEL_MODERATION_BYPASS ? [] : undefined,
       // Initialize engagement metrics
       views: 0,
       likes: 0,
@@ -128,7 +137,7 @@ export const createReel = mutation({
     // Auto-publish to feed for discoverability
     await ctx.db.insert('posts', {
       authorId: args.authorId,
-      title: args.caption || 'Shared a new reel',
+      title: (args.caption || 'Shared a new reel').slice(0, 120),
       description: args.caption || 'Check out this reel!',
       lifeDimension: 'daily',
       location: args.location,
@@ -141,15 +150,48 @@ export const createReel = mutation({
       commentCount: 0,
       postType: 'reel',
       rating: 5,
+      moderationStatus: moderationStatus === 'approved' ? 'approved' : 'pending',
     });
 
-    // Note: Credits are awarded AFTER moderation approval
-    // See moderateReel action below
+    if (REEL_MODERATION_BYPASS) {
+      const user = await ctx.db.get(args.authorId);
+      const existingReward = await ctx.db
+        .query('transactions')
+        .withIndex('by_user', (q) => q.eq('userId', args.authorId))
+        .filter((q) =>
+          q.and(
+            q.eq(q.field('type'), 'reel_created'),
+            q.eq(q.field('relatedId'), reelId),
+          ),
+        )
+        .first();
+
+      if (user && !existingReward) {
+        await ctx.db.patch(args.authorId, {
+          credits: user.credits + 20,
+        });
+
+        await ctx.db.insert('transactions', {
+          userId: args.authorId,
+          amount: 20,
+          type: 'reel_created',
+          relatedId: reelId,
+        });
+      }
+    } else {
+      await ctx.scheduler.runAfter(0, api.reels.moderateReel, {
+        reelId,
+        thumbnailUrl: args.thumbnailUrl,
+        caption: args.caption || '',
+      });
+    }
 
     return {
       success: true,
       reelId,
-      message: 'Reel submitted for review. Credits will be awarded once approved.',
+      message: REEL_MODERATION_BYPASS
+        ? 'Reel published to Reels and Feed.'
+        : 'Reel submitted for review. Credits will be awarded once approved.',
     };
   },
 });
@@ -165,6 +207,26 @@ export const moderateReel = action({
     caption: v.string(),
   },
   handler: async (ctx, args) => {
+    if (REEL_MODERATION_BYPASS) {
+      await ctx.runMutation(api.reels.updateReelModeration, {
+        reelId: args.reelId,
+        moderationScore: 0,
+        moderationReason: REEL_BYPASS_REASON,
+        moderationCategories: [],
+        moderationStatus: 'approved',
+      });
+
+      const reel = await ctx.runQuery(api.reels.getReel, { reelId: args.reelId });
+      if (reel) {
+        await ctx.runMutation(api.reels.awardReelCredits, {
+          authorId: reel.authorId,
+          reelId: args.reelId,
+        });
+      }
+
+      return { success: true, flagged: false, bypassed: true };
+    }
+
     // TODO: Re-enable moderation when system is fully integrated
     return { success: true, flagged: false };
     /*
@@ -291,7 +353,18 @@ export const awardReelCredits = mutation({
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.authorId);
-    if (user) {
+    const existingReward = await ctx.db
+      .query('transactions')
+      .withIndex('by_user', (q) => q.eq('userId', args.authorId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('type'), 'reel_created'),
+          q.eq(q.field('relatedId'), args.reelId),
+        ),
+      )
+      .first();
+
+    if (user && !existingReward) {
       await ctx.db.patch(args.authorId, {
         credits: user.credits + 20,
       });
@@ -566,6 +639,15 @@ export const deleteReel = mutation({
     }
 
     // Delete from database
+    const linkedPosts = await ctx.db
+      .query('posts')
+      .filter((q) => q.eq(q.field('reelId'), args.reelId))
+      .collect();
+
+    for (const linkedPost of linkedPosts) {
+      await ctx.db.delete(linkedPost._id);
+    }
+
     await ctx.db.delete(args.reelId);
 
     // TODO: Delete from video provider (Cloudinary)
