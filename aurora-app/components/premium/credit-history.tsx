@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import type { Id } from "@/convex/_generated/dataModel";
 
 interface CreditHistoryProps {
+  authToken: string;
   userId: Id<"users">;
   limit?: number;
 }
@@ -58,9 +59,9 @@ const TRANSACTION_LABELS: Record<string, string> = {
   engagement_livestream_completed: "Livestream Completed",
 };
 
-export function CreditHistory({ userId, limit = 20 }: CreditHistoryProps) {
-  const transactions = useQuery(api.credits.getCreditHistory, { userId, limit });
-  const balance = useQuery(api.credits.getCreditBalance, { userId });
+export function CreditHistory({ authToken, userId, limit = 20 }: CreditHistoryProps) {
+  const transactions = useQuery(api.credits.getCreditHistory, { authToken, userId, limit });
+  const balance = useQuery(api.credits.getCreditBalance, { authToken, userId });
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);

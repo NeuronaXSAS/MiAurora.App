@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * Aurora App - Direct Messages
@@ -18,12 +19,48 @@ import { Id } from "./_generated/dataModel";
 // Reaction emoji options
 const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍", "🙏", "💜"];
 
+async function areMatchedUsers(ctx: any, userId: Id<"users">, otherUserId: Id<"users">) {
+  const connection1 = await ctx.db
+    .query("sisterConnections")
+    .withIndex("by_from_to", (q: any) =>
+      q.eq("fromUserId", userId).eq("toUserId", otherUserId)
+    )
+    .first();
+
+  const connection2 = await ctx.db
+    .query("sisterConnections")
+    .withIndex("by_from_to", (q: any) =>
+      q.eq("fromUserId", otherUserId).eq("toUserId", userId)
+    )
+    .first();
+
+  return connection1?.status === "matched" || connection2?.status === "matched";
+}
+
+async function requireMessageParticipant(
+  ctx: any,
+  messageId: Id<"directMessages">,
+  userId: Id<"users">,
+) {
+  const message = await ctx.db.get(messageId);
+  if (!message) {
+    throw new Error("Message not found");
+  }
+
+  if (message.senderId !== userId && message.receiverId !== userId) {
+    throw new Error("Unauthorized");
+  }
+
+  return message;
+}
+
 /**
  * Send a direct message
  * IMPORTANT: Only matched users can send messages to each other
  */
 export const send = mutation({
   args: {
+    authToken: v.string(),
     senderId: v.id("users"),
     receiverId: v.id("users"),
     content: v.string(),
@@ -37,22 +74,8 @@ export const send = mutation({
     replyToId: v.optional(v.id("directMessages")), // Reply to a specific message
   },
   handler: async (ctx, args) => {
-    // Check if users are matched before allowing message
-    const connection1 = await ctx.db
-      .query("sisterConnections")
-      .withIndex("by_from_to", (q) => 
-        q.eq("fromUserId", args.senderId).eq("toUserId", args.receiverId)
-      )
-      .first();
-
-    const connection2 = await ctx.db
-      .query("sisterConnections")
-      .withIndex("by_from_to", (q) => 
-        q.eq("fromUserId", args.receiverId).eq("toUserId", args.senderId)
-      )
-      .first();
-
-    const isMatched = connection1?.status === "matched" || connection2?.status === "matched";
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.senderId);
+    const isMatched = await areMatchedUsers(ctx, userId, args.receiverId);
     
     if (!isMatched) {
       throw new Error("You can only message users you've matched with. Like each other in Sister Spotlight to connect!");
@@ -72,6 +95,9 @@ export const send = mutation({
     if (args.replyToId) {
       const replyMsg = await ctx.db.get(args.replyToId);
       if (replyMsg) {
+        if (replyMsg.senderId !== userId && replyMsg.receiverId !== userId) {
+          throw new Error("Unauthorized");
+        }
         replyPreview = {
           messageId: args.replyToId,
           content: replyMsg.content.slice(0, 100),
@@ -82,7 +108,7 @@ export const send = mutation({
 
     // Create message
     const messageId = await ctx.db.insert("directMessages", {
-      senderId: args.senderId,
+      senderId: userId,
       receiverId: args.receiverId,
       content: args.content,
       isRead: false,
@@ -94,7 +120,7 @@ export const send = mutation({
     });
 
     // Create notification for receiver
-    const sender = await ctx.db.get(args.senderId);
+    const sender = await ctx.db.get(userId);
     if (sender) {
       await ctx.db.insert("notifications", {
         userId: args.receiverId,
@@ -102,8 +128,8 @@ export const send = mutation({
         title: "New message",
         message: `${sender.name} sent you a message`,
         isRead: false,
-        actionUrl: `/messages/${args.senderId}`,
-        fromUserId: args.senderId,
+        actionUrl: `/messages/${userId}`,
+        fromUserId: userId,
         relatedId: messageId,
       });
     }
@@ -117,11 +143,13 @@ export const send = mutation({
  */
 export const editMessage = mutation({
   args: {
+    authToken: v.string(),
     messageId: v.id("directMessages"),
     userId: v.id("users"),
     newContent: v.string(),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const message = await ctx.db.get(args.messageId);
     
     if (!message) {
@@ -129,7 +157,7 @@ export const editMessage = mutation({
     }
 
     // Only sender can edit
-    if (message.senderId !== args.userId) {
+    if (message.senderId !== userId) {
       throw new Error("You can only edit your own messages");
     }
 
@@ -170,11 +198,13 @@ export const editMessage = mutation({
  */
 export const getConversation = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     otherUserId: v.id("users"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const limit = args.limit ?? 100;
 
     // Get all messages between the two users
@@ -182,13 +212,13 @@ export const getConversation = query({
       .query("directMessages")
       .filter((q) =>
         q.or(
-          q.and(
-            q.eq(q.field("senderId"), args.userId),
+            q.and(
+            q.eq(q.field("senderId"), userId),
             q.eq(q.field("receiverId"), args.otherUserId)
           ),
           q.and(
             q.eq(q.field("senderId"), args.otherUserId),
-            q.eq(q.field("receiverId"), args.userId)
+            q.eq(q.field("receiverId"), userId)
           )
         )
       )
@@ -198,7 +228,7 @@ export const getConversation = query({
     // Filter out messages hidden by this user
     const visibleMessages = messages.filter(msg => {
       const hiddenBy = msg.hiddenBy || [];
-      return !hiddenBy.includes(args.userId);
+      return !hiddenBy.includes(userId);
     });
 
     // Enrich with sender info and reaction details
@@ -251,18 +281,20 @@ export const getConversation = query({
  */
 export const getConversations = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Get all messages where user is sender or receiver
     const sentMessages = await ctx.db
       .query("directMessages")
-      .withIndex("by_sender", (q) => q.eq("senderId", args.userId))
+      .withIndex("by_sender", (q) => q.eq("senderId", userId))
       .collect();
 
     const receivedMessages = await ctx.db
       .query("directMessages")
-      .withIndex("by_receiver", (q) => q.eq("receiverId", args.userId))
+      .withIndex("by_receiver", (q) => q.eq("receiverId", userId))
       .collect();
 
     // Combine and group by conversation partner
@@ -270,7 +302,7 @@ export const getConversations = query({
     const conversationMap = new Map<string, any>();
 
     for (const msg of allMessages) {
-      const partnerId = msg.senderId === args.userId ? msg.receiverId : msg.senderId;
+      const partnerId = msg.senderId === userId ? msg.receiverId : msg.senderId;
       
       if (!conversationMap.has(partnerId) || 
           msg._creationTime > conversationMap.get(partnerId)._creationTime) {
@@ -301,7 +333,7 @@ export const getConversations = query({
           lastMessage: {
             content: lastMessage.content,
             timestamp: lastMessage._creationTime,
-            isFromMe: lastMessage.senderId === args.userId,
+            isFromMe: lastMessage.senderId === userId,
           },
           unreadCount,
         };
@@ -320,18 +352,20 @@ export const getConversations = query({
  */
 export const markAsRead = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     otherUserId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Get all unread messages from otherUserId to userId
     const unreadMessages = await ctx.db
       .query("directMessages")
       .filter((q) =>
-        q.and(
-          q.eq(q.field("senderId"), args.otherUserId),
-          q.eq(q.field("receiverId"), args.userId),
-          q.eq(q.field("isRead"), false)
+          q.and(
+            q.eq(q.field("senderId"), args.otherUserId),
+            q.eq(q.field("receiverId"), userId),
+            q.eq(q.field("isRead"), false)
         )
       )
       .collect();
@@ -351,20 +385,18 @@ export const markAsRead = mutation({
  */
 export const deleteMessage = mutation({
   args: {
+    authToken: v.string(),
     messageId: v.id("directMessages"),
     userId: v.id("users"),
     deleteType: v.union(v.literal("for_me"), v.literal("for_everyone")),
   },
   handler: async (ctx, args) => {
-    const message = await ctx.db.get(args.messageId);
-    
-    if (!message) {
-      throw new Error("Message not found");
-    }
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const message = await requireMessageParticipant(ctx, args.messageId, userId);
 
     if (args.deleteType === "for_everyone") {
       // Only sender can delete for everyone
-      if (message.senderId !== args.userId) {
+      if (message.senderId !== userId) {
         throw new Error("You can only delete your own messages for everyone");
       }
 
@@ -378,9 +410,9 @@ export const deleteMessage = mutation({
     } else {
       // Delete for me - add to hidden list
       const hiddenBy = message.hiddenBy || [];
-      if (!hiddenBy.includes(args.userId)) {
+      if (!hiddenBy.includes(userId)) {
         await ctx.db.patch(args.messageId, {
-          hiddenBy: [...hiddenBy, args.userId],
+          hiddenBy: [...hiddenBy, userId],
         });
       }
     }
@@ -394,16 +426,14 @@ export const deleteMessage = mutation({
  */
 export const addReaction = mutation({
   args: {
+    authToken: v.string(),
     messageId: v.id("directMessages"),
     userId: v.id("users"),
     emoji: v.string(),
   },
   handler: async (ctx, args) => {
-    const message = await ctx.db.get(args.messageId);
-    
-    if (!message) {
-      throw new Error("Message not found");
-    }
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const message = await requireMessageParticipant(ctx, args.messageId, userId);
 
     // Validate emoji
     if (!REACTION_EMOJIS.includes(args.emoji)) {
@@ -415,7 +445,7 @@ export const addReaction = mutation({
     
     // Check if user already reacted with this emoji
     const existingIndex = reactions.findIndex(
-      (r: { userId: string; emoji: string }) => r.userId === args.userId && r.emoji === args.emoji
+      (r: { userId: string; emoji: string }) => r.userId === userId && r.emoji === args.emoji
     );
 
     if (existingIndex >= 0) {
@@ -424,14 +454,14 @@ export const addReaction = mutation({
     } else {
       // Remove any existing reaction from this user first
       const userReactionIndex = reactions.findIndex(
-        (r: { userId: string }) => r.userId === args.userId
+        (r: { userId: string }) => r.userId === userId
       );
       if (userReactionIndex >= 0) {
         reactions.splice(userReactionIndex, 1);
       }
       // Add new reaction
       reactions.push({
-        userId: args.userId,
+        userId,
         emoji: args.emoji,
         timestamp: Date.now(),
       });
@@ -448,18 +478,16 @@ export const addReaction = mutation({
  */
 export const removeReaction = mutation({
   args: {
+    authToken: v.string(),
     messageId: v.id("directMessages"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const message = await ctx.db.get(args.messageId);
-    
-    if (!message) {
-      throw new Error("Message not found");
-    }
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const message = await requireMessageParticipant(ctx, args.messageId, userId);
 
     const reactions = (message.reactions || []).filter(
-      (r: { userId: string }) => r.userId !== args.userId
+      (r: { userId: string }) => r.userId !== userId
     );
 
     await ctx.db.patch(args.messageId, { reactions });
@@ -473,20 +501,22 @@ export const removeReaction = mutation({
  */
 export const forwardMessage = mutation({
   args: {
+    authToken: v.string(),
     messageId: v.id("directMessages"),
     senderId: v.id("users"),
     receiverId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const originalMessage = await ctx.db.get(args.messageId);
-    
-    if (!originalMessage) {
-      throw new Error("Message not found");
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.senderId);
+    const originalMessage = await requireMessageParticipant(ctx, args.messageId, userId);
+    const isMatched = await areMatchedUsers(ctx, userId, args.receiverId);
+    if (!isMatched) {
+      throw new Error("You can only forward messages to matched users");
     }
 
     // Create forwarded message
     const newMessageId = await ctx.db.insert("directMessages", {
-      senderId: args.senderId,
+      senderId: userId,
       receiverId: args.receiverId,
       content: originalMessage.content,
       isRead: false,
@@ -499,7 +529,7 @@ export const forwardMessage = mutation({
     });
 
     // Create notification
-    const sender = await ctx.db.get(args.senderId);
+    const sender = await ctx.db.get(userId);
     if (sender) {
       await ctx.db.insert("notifications", {
         userId: args.receiverId,
@@ -507,8 +537,8 @@ export const forwardMessage = mutation({
         title: "Forwarded message",
         message: `${sender.name} forwarded you a message`,
         isRead: false,
-        actionUrl: `/messages/${args.senderId}`,
-        fromUserId: args.senderId,
+        actionUrl: `/messages/${userId}`,
+        fromUserId: userId,
         relatedId: newMessageId,
       });
     }
@@ -522,12 +552,15 @@ export const forwardMessage = mutation({
  */
 export const getMessageContent = query({
   args: {
+    authToken: v.string(),
     messageId: v.id("directMessages"),
+    userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const message = await ctx.db.get(args.messageId);
-    
-    if (!message || message.isDeleted) {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const message = await requireMessageParticipant(ctx, args.messageId, userId);
+
+    if (message.isDeleted) {
       return null;
     }
 
@@ -540,11 +573,13 @@ export const getMessageContent = query({
  */
 export const searchUsers = query({
   args: {
+    authToken: v.string(),
     query: v.string(),
     currentUserId: v.id("users"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.currentUserId);
     const limit = args.limit ?? 10;
     
     if (args.query.length < 2) {
@@ -556,7 +591,7 @@ export const searchUsers = query({
     // Filter by name match and exclude current user
     const matchedUsers = allUsers
       .filter((user) => 
-        user._id !== args.currentUserId &&
+        user._id !== userId &&
         user.name.toLowerCase().includes(args.query.toLowerCase())
       )
       .slice(0, limit);

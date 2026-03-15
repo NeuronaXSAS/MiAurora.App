@@ -15,16 +15,16 @@ import {
   Loader2 
 } from "lucide-react";
 import { motion } from "framer-motion";
-import type { Id } from "@/convex/_generated/dataModel";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 function PremiumSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const error: string | null = null;
   
-  const sessionId = searchParams.get("session_id");
   const type = searchParams.get("type"); // 'subscription' or 'credits'
+  const { authToken, userId } = useAuthSession();
   
   const awardDailyLogin = useMutation(api.credits.awardDailyLogin);
 
@@ -34,16 +34,15 @@ function PremiumSuccessContent() {
       setIsProcessing(false);
       
       // Award daily login bonus as a welcome gesture
-      const userId = localStorage.getItem("aurora_user_id");
-      if (userId) {
-        awardDailyLogin({ userId: userId as Id<"users"> }).catch(() => {
+      if (userId && authToken) {
+        awardDailyLogin({ authToken, userId }).catch(() => {
           // Silently fail - not critical
         });
       }
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [awardDailyLogin]);
+  }, [authToken, awardDailyLogin, userId]);
 
   if (isProcessing) {
     return (

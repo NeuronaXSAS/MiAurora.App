@@ -31,6 +31,7 @@ import { formatDistanceToNow } from "date-fns";
 import { generateAvatarUrl, AvatarConfig } from "@/hooks/use-avatar";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 // Reaction emoji options
 const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍", "🙏", "💜"];
@@ -38,7 +39,6 @@ const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍", "🙏
 export default function ConversationPage() {
   const params = useParams();
   const otherUserId = params.userId as Id<"users">;
-  const [currentUserId, setCurrentUserId] = useState<Id<"users"> | null>(null);
   const [messageText, setMessageText] = useState("");
   const [sending, setSending] = useState(false);
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
@@ -49,25 +49,24 @@ export default function ConversationPage() {
   const [showReactions, setShowReactions] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const {
+    authToken,
+    error,
+    isLoading,
+    userId: currentUserId,
+  } = useAuthSession();
 
   useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setCurrentUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
+    if (!isLoading && (!currentUserId || !authToken) && error) {
+      router.push("/");
+    }
+  }, [authToken, currentUserId, error, isLoading, router]);
 
   const messages = useQuery(
     api.directMessages.getConversation,
-    currentUserId ? { userId: currentUserId, otherUserId } : "skip"
+    currentUserId && authToken
+      ? { authToken, userId: currentUserId, otherUserId }
+      : "skip"
   );
 
   const otherUser = useQuery(
@@ -78,8 +77,8 @@ export default function ConversationPage() {
   // Check if users are matched (can chat)
   const connectionStatus = useQuery(
     api.connections.getConnectionStatus,
-    currentUserId && otherUserId 
-      ? { userId: currentUserId, otherUserId: otherUserId } 
+    currentUserId && otherUserId && authToken
+      ? { authToken, userId: currentUserId, otherUserId: otherUserId }
       : "skip"
   );
 
@@ -93,10 +92,10 @@ export default function ConversationPage() {
 
   // Mark messages as read when viewing
   useEffect(() => {
-    if (currentUserId && otherUserId) {
-      markAsRead({ userId: currentUserId, otherUserId });
+    if (currentUserId && otherUserId && authToken) {
+      markAsRead({ authToken, userId: currentUserId, otherUserId });
     }
-  }, [currentUserId, otherUserId, messages, markAsRead]);
+  }, [authToken, currentUserId, otherUserId, messages, markAsRead]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -104,11 +103,12 @@ export default function ConversationPage() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!currentUserId || !messageText.trim()) return;
+    if (!currentUserId || !authToken || !messageText.trim()) return;
 
     setSending(true);
     try {
       await sendMessage({
+        authToken,
         senderId: currentUserId,
         receiverId: otherUserId,
         content: messageText.trim(),
@@ -125,10 +125,11 @@ export default function ConversationPage() {
   };
 
   const handleEdit = async () => {
-    if (!currentUserId || !editingMessage || !editText.trim()) return;
+    if (!currentUserId || !authToken || !editingMessage || !editText.trim()) return;
 
     try {
       await editMessage({
+        authToken,
         messageId: editingMessage as Id<"directMessages">,
         userId: currentUserId,
         newContent: editText.trim(),
@@ -141,10 +142,11 @@ export default function ConversationPage() {
   };
 
   const handleDelete = async (deleteType: "for_me" | "for_everyone") => {
-    if (!currentUserId || !deleteMessageId) return;
+    if (!currentUserId || !authToken || !deleteMessageId) return;
 
     try {
       await deleteMessage({
+        authToken,
         messageId: deleteMessageId as Id<"directMessages">,
         userId: currentUserId,
         deleteType,
@@ -157,10 +159,11 @@ export default function ConversationPage() {
   };
 
   const handleReaction = async (messageId: string, emoji: string) => {
-    if (!currentUserId) return;
+    if (!currentUserId || !authToken) return;
 
     try {
       await addReaction({
+        authToken,
         messageId: messageId as Id<"directMessages">,
         userId: currentUserId,
         emoji,
@@ -444,8 +447,13 @@ export default function ConversationPage() {
             {connectionStatus.status === "liked_you" && currentUserId && (
               <Button
                 onClick={async () => {
+                  if (!authToken) return;
                   try {
-                    await likeUser({ userId: currentUserId, likedUserId: otherUserId });
+                    await likeUser({
+                      authToken,
+                      userId: currentUserId,
+                      likedUserId: otherUserId,
+                    });
                   } catch (error) {
                     console.error("Error liking user:", error);
                   }

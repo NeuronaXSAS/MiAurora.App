@@ -376,7 +376,7 @@ export default function FeedPage() {
       <div className="max-w-[1200px] mx-auto px-4 py-4">
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
           {/* Main Feed Column - Full width focus */}
-          <div className="space-y-3 min-w-0">
+          <div className="space-y-4 min-w-0">
             {/* Loading State - Fast visual feedback */}
             {feedItems === undefined && <FeedLoadingSkeleton />}
 
@@ -589,7 +589,10 @@ export default function FeedPage() {
                     {/* Sister Spotlight - Fun people discovery */}
                     {showSisterSpotlight && userId && (
                       <div className="mb-3">
-                        <SisterSpotlightCard currentUserId={userId} />
+                        <SisterSpotlightCard
+                          authToken={authToken || undefined}
+                          currentUserId={userId}
+                        />
                       </div>
                     )}
                     {showAd && <FeedAd />}

@@ -51,10 +51,11 @@ function getAvatarUrl(user: {
 }
 
 interface SisterSpotlightCardProps {
+  authToken?: string;
   currentUserId: Id<"users">;
 }
 
-export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps) {
+export function SisterSpotlightCard({ authToken, currentUserId }: SisterSpotlightCardProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatch, setShowMatch] = useState(false);
   const [matchedUser, setMatchedUser] = useState<any>(null);
@@ -96,8 +97,11 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
   };
 
   const handleConnect = async () => {
+    if (!authToken) return;
+
     try {
       const result = await likeUser({
+        authToken,
         userId: currentUserId,
         likedUserId: currentUser._id,
       });
@@ -122,8 +126,11 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
   };
 
   const handleSkip = async () => {
+    if (!authToken) return;
+
     try {
       await skipUser({
+        authToken,
         userId: currentUserId,
         skippedUserId: currentUser._id,
       });
@@ -383,7 +390,13 @@ export function SisterSpotlightCard({ currentUserId }: SisterSpotlightCardProps)
 /**
  * Compact version for mobile feed - horizontal scroll
  */
-export function SisterSpotlightCompact({ currentUserId }: { currentUserId: Id<"users"> }) {
+export function SisterSpotlightCompact({
+  authToken,
+  currentUserId,
+}: {
+  authToken?: string;
+  currentUserId: Id<"users">;
+}) {
   const [likedUsers, setLikedUsers] = useState<Set<string>>(new Set());
   const [showMatchToast, setShowMatchToast] = useState<string | null>(null);
 
@@ -397,10 +410,11 @@ export function SisterSpotlightCompact({ currentUserId }: { currentUserId: Id<"u
   if (!suggestedUsers || suggestedUsers.length === 0) return null;
 
   const handleQuickLike = async (userId: Id<"users">, userName: string) => {
-    if (likedUsers.has(userId)) return;
+    if (!authToken || likedUsers.has(userId)) return;
 
     try {
       const result = await likeUser({
+        authToken,
         userId: currentUserId,
         likedUserId: userId,
       });
@@ -515,7 +529,13 @@ export function SisterSpotlightCompact({ currentUserId }: { currentUserId: Id<"u
  * Feed-integrated Sister Spotlight - Shows as a feed card
  * More engaging version that fits naturally in the feed
  */
-export function SisterSpotlightFeedCard({ currentUserId }: { currentUserId: Id<"users"> }) {
+export function SisterSpotlightFeedCard({
+  authToken,
+  currentUserId,
+}: {
+  authToken?: string;
+  currentUserId: Id<"users">;
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [likedUsers, setLikedUsers] = useState<Set<string>>(new Set());
   const [showMatch, setShowMatch] = useState(false);
@@ -535,6 +555,8 @@ export function SisterSpotlightFeedCard({ currentUserId }: { currentUserId: Id<"
   if (!currentUser) return null;
 
   const handleLike = async () => {
+    if (!authToken) return;
+
     if (likedUsers.has(currentUser._id)) {
       goToNext();
       return;
@@ -542,6 +564,7 @@ export function SisterSpotlightFeedCard({ currentUserId }: { currentUserId: Id<"
 
     try {
       const result = await likeUser({
+        authToken,
         userId: currentUserId,
         likedUserId: currentUser._id,
       });
@@ -566,8 +589,11 @@ export function SisterSpotlightFeedCard({ currentUserId }: { currentUserId: Id<"
   };
 
   const handleSkip = async () => {
+    if (!authToken) return;
+
     try {
       await skipUser({
+        authToken,
         userId: currentUserId,
         skippedUserId: currentUser._id,
       });

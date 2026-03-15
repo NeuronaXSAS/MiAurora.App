@@ -9,10 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Search, Plus, Heart, Sparkles, Users } from "lucide-react";
-import { Id } from "@/convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 // Generate DiceBear Lorelei avatar URL
 function getAvatarUrl(user: { 
@@ -35,48 +35,39 @@ function getAvatarUrl(user: {
 }
 
 export default function MessagesPage() {
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const router = useRouter();
+  const { authToken, error, isLoading, userId } = useAuthSession();
 
   useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
+    if (!isLoading && (!userId || !authToken) && error) {
+      router.push("/");
+    }
+  }, [authToken, error, isLoading, router, userId]);
 
   const conversations = useQuery(
     api.directMessages.getConversations,
-    userId ? { userId } : "skip"
+    userId && authToken ? { authToken, userId } : "skip"
   );
 
   const searchResults = useQuery(
     api.directMessages.searchUsers,
-    userId && searchQuery.length >= 2
-      ? { query: searchQuery, currentUserId: userId }
+    userId && authToken && searchQuery.length >= 2
+      ? { authToken, query: searchQuery, currentUserId: userId }
       : "skip"
   );
 
   // Get matches for the user
   const matches = useQuery(
     api.connections.getMatches,
-    userId ? { userId } : "skip"
+    userId && authToken ? { authToken, userId } : "skip"
   );
 
   // Get pending likes (people who liked you)
   const pendingLikes = useQuery(
     api.connections.getPendingLikes,
-    userId ? { userId } : "skip"
+    userId && authToken ? { authToken, userId } : "skip"
   );
 
   return (

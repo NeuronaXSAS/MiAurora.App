@@ -7,6 +7,7 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * Like a user (swipe right)
@@ -14,15 +15,21 @@ import { mutation, query } from "./_generated/server";
  */
 export const likeUser = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     likedUserId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    if (userId === args.likedUserId) {
+      throw new Error("You cannot like yourself");
+    }
+
     // Check if already liked
     const existingLike = await ctx.db
       .query("sisterConnections")
       .withIndex("by_from_to", (q) => 
-        q.eq("fromUserId", args.userId).eq("toUserId", args.likedUserId)
+        q.eq("fromUserId", userId).eq("toUserId", args.likedUserId)
       )
       .first();
 
@@ -34,7 +41,7 @@ export const likeUser = mutation({
     const reverseConnection = await ctx.db
       .query("sisterConnections")
       .withIndex("by_from_to", (q) => 
-        q.eq("fromUserId", args.likedUserId).eq("toUserId", args.userId)
+        q.eq("fromUserId", args.likedUserId).eq("toUserId", userId)
       )
       .first();
 
@@ -43,7 +50,7 @@ export const likeUser = mutation({
 
     // Create our like
     await ctx.db.insert("sisterConnections", {
-      fromUserId: args.userId,
+      fromUserId: userId,
       toUserId: args.likedUserId,
       status: isMatch ? "matched" : "pending",
       createdAt: now,
@@ -52,7 +59,7 @@ export const likeUser = mutation({
 
     // If NOT a match yet, notify the liked user that someone liked them
     if (!isMatch) {
-      const currentUser = await ctx.db.get(args.userId);
+      const currentUser = await ctx.db.get(userId);
       await ctx.db.insert("notifications", {
         userId: args.likedUserId,
         type: "message",
@@ -60,7 +67,7 @@ export const likeUser = mutation({
         message: `${currentUser?.name || "A sister"} wants to connect with you. Swipe right to match!`,
         isRead: false,
         actionUrl: `/circles?tab=likes`,
-        fromUserId: args.userId,
+        fromUserId: userId,
       });
     }
 
@@ -72,12 +79,12 @@ export const likeUser = mutation({
       });
 
       // Get both users for notifications
-      const currentUser = await ctx.db.get(args.userId);
+      const currentUser = await ctx.db.get(userId);
       const likedUser = await ctx.db.get(args.likedUserId);
 
       // Notify both users about the match!
       await ctx.db.insert("notifications", {
-        userId: args.userId,
+        userId,
         type: "message",
         title: "It's a Match! 💜",
         message: `You and ${likedUser?.name || "a sister"} liked each other! Start chatting now.`,
@@ -92,14 +99,14 @@ export const likeUser = mutation({
         title: "It's a Match! 💜",
         message: `You and ${currentUser?.name || "a sister"} liked each other! Start chatting now.`,
         isRead: false,
-        actionUrl: `/messages/${args.userId}`,
-        fromUserId: args.userId,
+        actionUrl: `/messages/${userId}`,
+        fromUserId: userId,
       });
 
       // Award credits for making a connection
-      const user = await ctx.db.get(args.userId);
+      const user = await ctx.db.get(userId);
       if (user) {
-        await ctx.db.patch(args.userId, {
+        await ctx.db.patch(userId, {
           credits: (user.credits || 0) + 5,
         });
       }
@@ -125,15 +132,21 @@ export const likeUser = mutation({
  */
 export const skipUser = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     skippedUserId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    if (userId === args.skippedUserId) {
+      throw new Error("You cannot skip yourself");
+    }
+
     // Check if already skipped
     const existing = await ctx.db
       .query("sisterSkips")
       .withIndex("by_user_skipped", (q) => 
-        q.eq("userId", args.userId).eq("skippedUserId", args.skippedUserId)
+        q.eq("userId", userId).eq("skippedUserId", args.skippedUserId)
       )
       .first();
 
@@ -142,7 +155,7 @@ export const skipUser = mutation({
     }
 
     await ctx.db.insert("sisterSkips", {
-      userId: args.userId,
+      userId,
       skippedUserId: args.skippedUserId,
       createdAt: Date.now(),
     });
@@ -157,19 +170,21 @@ export const skipUser = mutation({
  */
 export const getMatches = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Get connections where this user is involved and status is matched
     const connectionsFrom = await ctx.db
       .query("sisterConnections")
-      .withIndex("by_from_user", (q) => q.eq("fromUserId", args.userId))
+      .withIndex("by_from_user", (q) => q.eq("fromUserId", userId))
       .filter((q) => q.eq(q.field("status"), "matched"))
       .collect();
 
     const connectionsTo = await ctx.db
       .query("sisterConnections")
-      .withIndex("by_to_user", (q) => q.eq("toUserId", args.userId))
+      .withIndex("by_to_user", (q) => q.eq("toUserId", userId))
       .filter((q) => q.eq(q.field("status"), "matched"))
       .collect();
 
@@ -206,12 +221,14 @@ export const getMatches = query({
  */
 export const getPendingLikes = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const pendingConnections = await ctx.db
       .query("sisterConnections")
-      .withIndex("by_to_user", (q) => q.eq("toUserId", args.userId))
+      .withIndex("by_to_user", (q) => q.eq("toUserId", userId))
       .filter((q) => q.eq(q.field("status"), "pending"))
       .collect();
 
@@ -232,22 +249,24 @@ export const getPendingLikes = query({
  */
 export const areUsersMatched = query({
   args: {
+    authToken: v.string(),
     userId1: v.id("users"),
     userId2: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId1);
     // Check both directions
     const connection1 = await ctx.db
       .query("sisterConnections")
       .withIndex("by_from_to", (q) => 
-        q.eq("fromUserId", args.userId1).eq("toUserId", args.userId2)
+        q.eq("fromUserId", userId).eq("toUserId", args.userId2)
       )
       .first();
 
     const connection2 = await ctx.db
       .query("sisterConnections")
       .withIndex("by_from_to", (q) => 
-        q.eq("fromUserId", args.userId2).eq("toUserId", args.userId1)
+        q.eq("fromUserId", args.userId2).eq("toUserId", userId)
       )
       .first();
 
@@ -265,15 +284,17 @@ export const areUsersMatched = query({
  */
 export const getConnectionStatus = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     otherUserId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Check if current user liked the other
     const myLike = await ctx.db
       .query("sisterConnections")
       .withIndex("by_from_to", (q) => 
-        q.eq("fromUserId", args.userId).eq("toUserId", args.otherUserId)
+        q.eq("fromUserId", userId).eq("toUserId", args.otherUserId)
       )
       .first();
 
@@ -281,7 +302,7 @@ export const getConnectionStatus = query({
     const theirLike = await ctx.db
       .query("sisterConnections")
       .withIndex("by_from_to", (q) => 
-        q.eq("fromUserId", args.otherUserId).eq("toUserId", args.userId)
+        q.eq("fromUserId", args.otherUserId).eq("toUserId", userId)
       )
       .first();
 
@@ -306,18 +327,20 @@ export const getConnectionStatus = query({
  */
 export const getMatchCount = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const connectionsFrom = await ctx.db
       .query("sisterConnections")
-      .withIndex("by_from_user", (q) => q.eq("fromUserId", args.userId))
+      .withIndex("by_from_user", (q) => q.eq("fromUserId", userId))
       .filter((q) => q.eq(q.field("status"), "matched"))
       .collect();
 
     const connectionsTo = await ctx.db
       .query("sisterConnections")
-      .withIndex("by_to_user", (q) => q.eq("toUserId", args.userId))
+      .withIndex("by_to_user", (q) => q.eq("toUserId", userId))
       .filter((q) => q.eq(q.field("status"), "matched"))
       .collect();
 
@@ -335,22 +358,24 @@ export const getMatchCount = query({
  */
 export const unmatch = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     otherUserId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Find and update both connections
     const connection1 = await ctx.db
       .query("sisterConnections")
       .withIndex("by_from_to", (q) => 
-        q.eq("fromUserId", args.userId).eq("toUserId", args.otherUserId)
+        q.eq("fromUserId", userId).eq("toUserId", args.otherUserId)
       )
       .first();
 
     const connection2 = await ctx.db
       .query("sisterConnections")
       .withIndex("by_from_to", (q) => 
-        q.eq("fromUserId", args.otherUserId).eq("toUserId", args.userId)
+        q.eq("fromUserId", args.otherUserId).eq("toUserId", userId)
       )
       .first();
 

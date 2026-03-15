@@ -7,6 +7,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { CREDIT_PACKAGES, ENGAGEMENT_REWARDS } from "./premiumConfig";
+import { requireAuthenticatedUser } from "./auth";
 
 // ============================================
 // CREDIT QUERIES
@@ -16,9 +17,13 @@ import { CREDIT_PACKAGES, ENGAGEMENT_REWARDS } from "./premiumConfig";
  * Get user's credit balance
  */
 export const getCreditBalance = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     return user?.credits || 0;
   },
 });
@@ -28,15 +33,17 @@ export const getCreditBalance = query({
  */
 export const getCreditHistory = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const limit = args.limit || 50;
     
     const transactions = await ctx.db
       .query("transactions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .take(limit);
     
@@ -134,17 +141,19 @@ export const purchaseCredits = mutation({
  */
 export const spendCredits = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     amount: v.number(),
     reason: v.string(),
     relatedId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     if (args.amount <= 0) {
       throw new Error("Amount must be positive");
     }
     
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) {
       throw new Error("User not found");
     }
@@ -154,13 +163,13 @@ export const spendCredits = mutation({
     }
     
     // Deduct credits
-    await ctx.db.patch(args.userId, {
+    await ctx.db.patch(userId, {
       credits: user.credits - args.amount,
     });
     
     // Log transaction
     await ctx.db.insert("transactions", {
-      userId: args.userId,
+      userId,
       amount: -args.amount,
       type: args.reason,
       relatedId: args.relatedId,
@@ -183,12 +192,14 @@ export const spendCredits = mutation({
  */
 export const awardEngagementCredits = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     action: v.string(),
     relatedId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) {
       throw new Error("User not found");
     }
@@ -205,7 +216,7 @@ export const awardEngagementCredits = mutation({
     const existingReward = await ctx.db
       .query("engagementRewards")
       .withIndex("by_user_action", (q) => 
-        q.eq("userId", args.userId).eq("action", args.action)
+        q.eq("userId", userId).eq("action", args.action)
       )
       .first();
     
@@ -244,7 +255,7 @@ export const awardEngagementCredits = mutation({
       });
     } else {
       await ctx.db.insert("engagementRewards", {
-        userId: args.userId,
+        userId,
         action: args.action,
         lastAwarded: now,
         countToday: 1,
@@ -252,13 +263,13 @@ export const awardEngagementCredits = mutation({
     }
     
     // Award credits
-    await ctx.db.patch(args.userId, {
+    await ctx.db.patch(userId, {
       credits: user.credits + reward.credits,
     });
     
     // Log transaction
     await ctx.db.insert("transactions", {
-      userId: args.userId,
+      userId,
       amount: reward.credits,
       type: `engagement_${args.action}`,
       relatedId: args.relatedId,
@@ -277,9 +288,13 @@ export const awardEngagementCredits = mutation({
  * Award daily login bonus
  */
 export const awardDailyLogin = mutation({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) {
       throw new Error("User not found");
     }
@@ -295,7 +310,7 @@ export const awardDailyLogin = mutation({
     const existingReward = await ctx.db
       .query("engagementRewards")
       .withIndex("by_user_action", (q) => 
-        q.eq("userId", args.userId).eq("action", "daily_login")
+        q.eq("userId", userId).eq("action", "daily_login")
       )
       .first();
     
@@ -319,7 +334,7 @@ export const awardDailyLogin = mutation({
       });
     } else {
       await ctx.db.insert("engagementRewards", {
-        userId: args.userId,
+        userId,
         action: "daily_login",
         lastAwarded: now,
         countToday: 1,
@@ -327,13 +342,13 @@ export const awardDailyLogin = mutation({
     }
     
     // Award credits
-    await ctx.db.patch(args.userId, {
+    await ctx.db.patch(userId, {
       credits: user.credits + reward.credits,
     });
     
     // Log transaction
     await ctx.db.insert("transactions", {
-      userId: args.userId,
+      userId,
       amount: reward.credits,
       type: "engagement_daily_login",
     });
@@ -354,9 +369,13 @@ export const awardDailyLogin = mutation({
  * Create a referral code for user
  */
 export const createReferralCode = mutation({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) {
       throw new Error("User not found");
     }
@@ -443,10 +462,12 @@ export const processReferral = mutation({
  */
 export const createPendingReferral = mutation({
   args: {
+    authToken: v.string(),
     referrerId: v.id("users"),
     referralCode: v.string(),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.referrerId);
     // Check if code already exists
     const existing = await ctx.db
       .query("referrals")
@@ -458,8 +479,8 @@ export const createPendingReferral = mutation({
     }
     
     await ctx.db.insert("referrals", {
-      referrerId: args.referrerId,
-      refereeId: args.referrerId, // Placeholder, will be updated
+      referrerId: userId,
+      refereeId: userId, // Placeholder, will be updated
       referralCode: args.referralCode,
       status: "pending",
       referrerCredited: false,
@@ -474,11 +495,15 @@ export const createPendingReferral = mutation({
  * Get user's referral stats
  */
 export const getReferralStats = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const referrals = await ctx.db
       .query("referrals")
-      .withIndex("by_referrer", (q) => q.eq("referrerId", args.userId))
+      .withIndex("by_referrer", (q) => q.eq("referrerId", userId))
       .collect();
     
     const completed = referrals.filter(r => r.status === "completed");
@@ -501,9 +526,13 @@ export const getReferralStats = query({
  * Get credit stats for dashboard
  */
 export const getCreditStats = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) {
       return {
         currentBalance: 0,
@@ -519,7 +548,7 @@ export const getCreditStats = query({
 
     const transactions = await ctx.db
       .query("transactions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     const totalEarned = transactions
@@ -565,16 +594,18 @@ export const getCreditStats = query({
  */
 export const getTransactionHistory = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     limit: v.optional(v.number()),
     type: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const limit = args.limit || 50;
 
     let transactions = await ctx.db
       .query("transactions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .take(limit * 2); // Get more to filter
 
@@ -597,11 +628,15 @@ export const getTransactionHistory = query({
  * Export transactions for CSV download
  */
 export const exportTransactions = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const transactions = await ctx.db
       .query("transactions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .collect();
 

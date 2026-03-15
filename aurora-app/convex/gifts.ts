@@ -7,6 +7,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { GIFT_CATALOG, REVENUE_SHARES, ROOM_LIMITS } from "./premiumConfig";
+import { requireAuthenticatedUser } from "./auth";
 
 // ============================================
 // GIFT QUERIES
@@ -89,11 +90,15 @@ export const getGiftLeaderboard = query({
  * Get creator's total gift earnings
  */
 export const getCreatorGiftEarnings = query({
-  args: { creatorId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    creatorId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.creatorId);
     const gifts = await ctx.db
       .query("giftTransactions")
-      .withIndex("by_recipient", (q) => q.eq("toUserId", args.creatorId))
+      .withIndex("by_recipient", (q) => q.eq("toUserId", userId))
       .collect();
     
     const totalCredits = gifts.reduce((sum, g) => sum + g.credits, 0);
@@ -153,6 +158,7 @@ export const getActiveSuperChats = query({
  */
 export const sendGift = mutation({
   args: {
+    authToken: v.string(),
     fromUserId: v.id("users"),
     toUserId: v.id("users"),
     giftId: v.string(),
@@ -160,6 +166,7 @@ export const sendGift = mutation({
     message: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.fromUserId);
     // Validate gift exists
     const gift = GIFT_CATALOG.find(g => g.giftId === args.giftId);
     if (!gift) {
@@ -167,7 +174,7 @@ export const sendGift = mutation({
     }
     
     // Check sender has enough credits
-    const sender = await ctx.db.get(args.fromUserId);
+    const sender = await ctx.db.get(userId);
     if (!sender || sender.credits < gift.credits) {
       throw new Error("Insufficient credits");
     }
@@ -177,7 +184,7 @@ export const sendGift = mutation({
     const platformFee = gift.credits - creatorEarnings;
     
     // Deduct from sender
-    await ctx.db.patch(args.fromUserId, {
+    await ctx.db.patch(userId, {
       credits: sender.credits - gift.credits,
     });
     
@@ -191,7 +198,7 @@ export const sendGift = mutation({
     
     // Record gift transaction
     const giftTxId = await ctx.db.insert("giftTransactions", {
-      fromUserId: args.fromUserId,
+      fromUserId: userId,
       toUserId: args.toUserId,
       giftId: args.giftId,
       credits: gift.credits,
@@ -203,7 +210,7 @@ export const sendGift = mutation({
     
     // Log transactions
     await ctx.db.insert("transactions", {
-      userId: args.fromUserId,
+      userId,
       amount: -gift.credits,
       type: "gift_sent",
       relatedId: giftTxId,
@@ -223,7 +230,7 @@ export const sendGift = mutation({
       title: "New gift received!",
       message: `${sender.name} sent you a ${gift.name}${args.message ? `: "${args.message}"` : ""}`,
       isRead: false,
-      fromUserId: args.fromUserId,
+      fromUserId: userId,
       relatedId: giftTxId,
     });
     
@@ -243,19 +250,21 @@ export const sendGift = mutation({
  */
 export const sendSuperChat = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     livestreamId: v.id("livestreams"),
     message: v.string(),
     credits: v.number(),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Validate minimum credits
     if (args.credits < ROOM_LIMITS.SUPER_CHAT_MIN_CREDITS) {
       throw new Error(`Super Chat requires at least ${ROOM_LIMITS.SUPER_CHAT_MIN_CREDITS} credits`);
     }
     
     // Check user has enough credits
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (!user || user.credits < args.credits) {
       throw new Error("Insufficient credits");
     }
@@ -270,7 +279,7 @@ export const sendSuperChat = mutation({
     const creatorEarnings = Math.floor(args.credits * REVENUE_SHARES.GIFT_CREATOR_SHARE);
     
     // Deduct from sender
-    await ctx.db.patch(args.userId, {
+    await ctx.db.patch(userId, {
       credits: user.credits - args.credits,
     });
     
@@ -287,7 +296,7 @@ export const sendSuperChat = mutation({
     
     // Create super chat
     const superChatId = await ctx.db.insert("superChats", {
-      userId: args.userId,
+      userId,
       livestreamId: args.livestreamId,
       message: args.message,
       credits: args.credits,
@@ -297,7 +306,7 @@ export const sendSuperChat = mutation({
     
     // Log transactions
     await ctx.db.insert("transactions", {
-      userId: args.userId,
+      userId,
       amount: -args.credits,
       type: "super_chat_sent",
       relatedId: superChatId,

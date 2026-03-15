@@ -29,16 +29,17 @@ import { api } from "@/convex/_generated/api";
 import Link from "next/link";
 
 interface AuroraWalletProps {
+  authToken: string;
   userId: Id<"users">;
   compact?: boolean;
 }
 
-export function AuroraWallet({ userId, compact = false }: AuroraWalletProps) {
+export function AuroraWallet({ authToken, userId, compact = false }: AuroraWalletProps) {
   const [showEarnOptions, setShowEarnOptions] = useState(false);
   
   const user = useQuery(api.users.getUser, { userId });
-  const creditStats = useQuery(api.credits.getCreditStats, { userId });
-  const recentTransactions = useQuery(api.credits.getTransactionHistory, { userId, limit: 5 });
+  const creditStats = useQuery(api.credits.getCreditStats, { authToken, userId });
+  const recentTransactions = useQuery(api.credits.getTransactionHistory, { authToken, userId, limit: 5 });
 
   const balance = user?.credits || 0;
   const monthlyEarned = creditStats?.monthlyEarned || 0;

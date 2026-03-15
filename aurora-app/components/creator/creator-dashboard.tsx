@@ -23,17 +23,18 @@ import {
 import type { Id } from "@/convex/_generated/dataModel";
 
 interface CreatorDashboardProps {
+  authToken: string;
   userId: Id<"users">;
 }
 
-export function CreatorDashboard({ userId }: CreatorDashboardProps) {
+export function CreatorDashboard({ authToken, userId }: CreatorDashboardProps) {
   const [activeTab, setActiveTab] = useState("overview");
 
   // Queries
   const user = useQuery(api.users.getUser, { userId });
-  const giftEarnings = useQuery(api.gifts.getCreatorGiftEarnings, { creatorId: userId });
-  const creditStats = useQuery(api.credits.getCreditStats, { userId });
-  const referralStats = useQuery(api.credits.getReferralStats, { userId });
+  const giftEarnings = useQuery(api.gifts.getCreatorGiftEarnings, { authToken, creatorId: userId });
+  const creditStats = useQuery(api.credits.getCreditStats, { authToken, userId });
+  const referralStats = useQuery(api.credits.getReferralStats, { authToken, userId });
 
   // Loading state
   if (!user || !creditStats) {

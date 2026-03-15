@@ -484,7 +484,7 @@ export function MobileFeed() {
       </div>
 
       {/* Feed Content - Edge-to-edge on mobile */}
-      <div className="py-2 space-y-2 px-2 sm:px-3">
+      <div className="py-3 space-y-4 px-2 sm:px-3">
         {/* Loading State */}
         {feedItems === undefined && (
           <div className="space-y-3">
@@ -509,7 +509,10 @@ export function MobileFeed() {
 
         {/* Sister Spotlight - Fun people discovery */}
         {userId && feedItems !== undefined && (
-          <SisterSpotlightCompact currentUserId={userId} />
+          <SisterSpotlightCompact
+            authToken={authToken || undefined}
+            currentUserId={userId}
+          />
         )}
 
 
@@ -611,7 +614,10 @@ export function MobileFeed() {
               {/* Sister Spotlight Feed Card - appears naturally in feed */}
               {showSisterSpotlightCard && (
                 <div className="mb-3">
-                  <SisterSpotlightFeedCard currentUserId={userId} />
+                  <SisterSpotlightFeedCard
+                    authToken={authToken || undefined}
+                    currentUserId={userId}
+                  />
                 </div>
               )}
 

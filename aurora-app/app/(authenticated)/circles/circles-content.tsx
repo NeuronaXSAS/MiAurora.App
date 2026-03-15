@@ -4,19 +4,19 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CirclesHub } from "@/components/circles/circles-hub";
 import { PendingLikes } from "@/components/circles/pending-likes";
-import { Id } from "@/convex/_generated/dataModel";
 import { Users, Heart } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Badge } from "@/components/ui/badge";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export function CirclesPageContent() {
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(tabParam === "likes" ? "likes" : "circles");
+  const { authToken, isLoading, userId } = useAuthSession();
 
   // Update tab when URL changes
   useEffect(() => {
@@ -26,27 +26,15 @@ export function CirclesPageContent() {
   }, [tabParam]);
 
   useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        } else {
-          router.push("/");
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-        router.push("/");
-      }
-    };
-    getUserId();
-  }, [router]);
+    if (!isLoading && (!userId || !authToken)) {
+      router.push("/");
+    }
+  }, [authToken, isLoading, router, userId]);
 
   // Get pending likes count for badge
   const pendingLikes = useQuery(
     api.connections.getPendingLikes,
-    userId ? { userId } : "skip"
+    userId && authToken ? { authToken, userId } : "skip"
   );
   const pendingCount = pendingLikes?.length || 0;
 
@@ -57,7 +45,7 @@ export function CirclesPageContent() {
     router.replace(url, { scroll: false });
   };
 
-  if (!userId) {
+  if (!userId || !authToken) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
         <div className="animate-spin w-8 h-8 border-4 border-[var(--color-aurora-purple)] border-t-transparent rounded-full" />
@@ -122,7 +110,7 @@ export function CirclesPageContent() {
           </TabsContent>
 
           <TabsContent value="likes" className="mt-0">
-            <PendingLikes userId={userId} />
+            <PendingLikes authToken={authToken} userId={userId} />
           </TabsContent>
         </Tabs>
       </div>

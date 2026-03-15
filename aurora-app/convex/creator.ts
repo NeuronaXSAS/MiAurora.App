@@ -6,41 +6,44 @@
 
 import { v } from "convex/values";
 import { query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 /**
  * Get creator analytics dashboard data
  */
 export const getCreatorStats = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Get user data
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
 
     // Get all reels
     const reels = await ctx.db
       .query("reels")
-      .withIndex("by_author", (q) => q.eq("authorId", args.userId))
+      .withIndex("by_author", (q) => q.eq("authorId", userId))
       .collect();
 
     // Get all livestreams
     const livestreams = await ctx.db
       .query("livestreams")
-      .withIndex("by_host", (q) => q.eq("hostId", args.userId))
+      .withIndex("by_host", (q) => q.eq("hostId", userId))
       .collect();
 
     // Get all posts
     const posts = await ctx.db
       .query("posts")
-      .withIndex("by_author", (q) => q.eq("authorId", args.userId))
+      .withIndex("by_author", (q) => q.eq("authorId", userId))
       .collect();
 
     // Get all routes
     const routes = await ctx.db
       .query("routes")
-      .withIndex("by_creator", (q) => q.eq("creatorId", args.userId))
+      .withIndex("by_creator", (q) => q.eq("creatorId", userId))
       .collect();
 
     // Calculate Reels metrics
@@ -87,7 +90,7 @@ export const getCreatorStats = query({
     // Get recent transactions
     const transactions = await ctx.db
       .query("transactions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .take(10);
 
@@ -122,17 +125,19 @@ export const getCreatorStats = query({
  */
 export const getTopContent = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     contentType: v.union(v.literal("reels"), v.literal("livestreams"), v.literal("posts")),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const limit = args.limit || 5;
 
     if (args.contentType === "reels") {
       const reels = await ctx.db
         .query("reels")
-        .withIndex("by_author", (q) => q.eq("authorId", args.userId))
+        .withIndex("by_author", (q) => q.eq("authorId", userId))
         .collect();
 
       // Sort by views
@@ -151,7 +156,7 @@ export const getTopContent = query({
     } else if (args.contentType === "livestreams") {
       const livestreams = await ctx.db
         .query("livestreams")
-        .withIndex("by_host", (q) => q.eq("hostId", args.userId))
+        .withIndex("by_host", (q) => q.eq("hostId", userId))
         .collect();
 
       // Sort by total views
@@ -169,7 +174,7 @@ export const getTopContent = query({
     } else {
       const posts = await ctx.db
         .query("posts")
-        .withIndex("by_author", (q) => q.eq("authorId", args.userId))
+        .withIndex("by_author", (q) => q.eq("authorId", userId))
         .collect();
 
       // Sort by upvotes
@@ -193,15 +198,17 @@ export const getTopContent = query({
  */
 export const getFollowerGrowth = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // TODO: Implement when followers table is added
     // For now, return mock data based on engagement
     
     const reels = await ctx.db
       .query("reels")
-      .withIndex("by_author", (q) => q.eq("authorId", args.userId))
+      .withIndex("by_author", (q) => q.eq("authorId", userId))
       .collect();
 
     const totalEngagement = reels.reduce((sum, r) => sum + r.likes + r.views, 0);

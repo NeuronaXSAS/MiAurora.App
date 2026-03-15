@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,39 +17,25 @@ import {
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 export default function CreditsPage() {
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [filterType, setFilterType] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-        }
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
+  const { authToken, userId } = useAuthSession();
 
   const stats = useQuery(
     api.credits.getCreditStats,
-    userId ? { userId } : "skip"
+    userId && authToken ? { authToken, userId } : "skip"
   );
 
   const transactions = useQuery(
     api.credits.getTransactionHistory,
-    userId ? { userId, limit: 100, type: filterType } : "skip"
+    userId && authToken ? { authToken, userId, limit: 100, type: filterType } : "skip"
   );
 
   const exportData = useQuery(
     api.credits.exportTransactions,
-    userId ? { userId } : "skip"
+    userId && authToken ? { authToken, userId } : "skip"
   );
 
   const handleExport = () => {

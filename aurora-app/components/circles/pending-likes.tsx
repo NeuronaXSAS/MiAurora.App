@@ -31,6 +31,7 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 
 interface PendingLikesProps {
+  authToken: string;
   userId: Id<"users">;
   onBack?: () => void;
 }
@@ -56,13 +57,13 @@ function getAvatarUrl(user: {
   return `https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(seed)}&backgroundColor=c9cef4`;
 }
 
-export function PendingLikes({ userId, onBack }: PendingLikesProps) {
+export function PendingLikes({ authToken, userId, onBack }: PendingLikesProps) {
   const [showMatch, setShowMatch] = useState(false);
   const [matchedUser, setMatchedUser] = useState<any>(null);
   const [respondedUsers, setRespondedUsers] = useState<Set<string>>(new Set());
 
   // Get users who liked you but you haven't responded
-  const pendingLikes = useQuery(api.connections.getPendingLikes, { userId });
+  const pendingLikes = useQuery(api.connections.getPendingLikes, { authToken, userId });
   
   const likeUser = useMutation(api.connections.likeUser);
   const skipUser = useMutation(api.connections.skipUser);
@@ -72,6 +73,7 @@ export function PendingLikes({ userId, onBack }: PendingLikesProps) {
 
     try {
       const result = await likeUser({
+        authToken,
         userId: userId,
         likedUserId: likedUser._id,
       });
@@ -96,6 +98,7 @@ export function PendingLikes({ userId, onBack }: PendingLikesProps) {
 
     try {
       await skipUser({
+        authToken,
         userId: userId,
         skippedUserId: skippedUser._id,
       });

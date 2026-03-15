@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 // Lazy load LivePlayer
 const LivePlayer = dynamic(
@@ -17,34 +18,34 @@ const LivePlayer = dynamic(
 );
 
 export default function LivePage() {
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [selectedLivestream, setSelectedLivestream] = useState<Id<"livestreams"> | null>(null);
   const router = useRouter();
+  const { authToken, error, isLoading: isAuthLoading, userId } = useAuthSession();
   
   const cleanupStale = useMutation(api.livestreams.cleanupStaleLivestreams);
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        const res = await fetch("/api/auth/me");
-        const data = await res.json();
-        if (data.userId) {
-          setUserId(data.userId as Id<"users">);
-          cleanupStale({}).catch(() => {});
-        } else {
-          router.push("/");
-        }
-      } catch {
-        router.push("/");
-      }
-    };
-    init();
-  }, [router, cleanupStale]);
+    if (!isAuthLoading && (!userId || !authToken) && error) {
+      router.push("/");
+      return;
+    }
+
+    if (userId) {
+      cleanupStale({}).catch(() => {});
+    }
+  }, [authToken, cleanupStale, error, isAuthLoading, router, userId]);
 
   const livestreams = useQuery(api.livestreams.getLivestreams, { limit: 20 });
 
-  if (selectedLivestream && userId) {
-    return <LivePlayer livestreamId={selectedLivestream} userId={userId} onClose={() => setSelectedLivestream(null)} />;
+  if (selectedLivestream && userId && authToken) {
+    return (
+      <LivePlayer
+        authToken={authToken}
+        livestreamId={selectedLivestream}
+        userId={userId}
+        onClose={() => setSelectedLivestream(null)}
+      />
+    );
   }
 
   const isLoading = livestreams === undefined;

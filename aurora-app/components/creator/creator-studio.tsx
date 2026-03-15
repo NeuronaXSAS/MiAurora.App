@@ -30,14 +30,15 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 interface CreatorStudioProps {
+  authToken: string;
   userId: Id<"users">;
 }
 
-export function CreatorStudio({ userId }: CreatorStudioProps) {
+export function CreatorStudio({ authToken, userId }: CreatorStudioProps) {
   const [activeTab, setActiveTab] = useState("overview");
   
   const user = useQuery(api.users.getUser, { userId });
-  const giftEarnings = useQuery(api.gifts.getCreatorGiftEarnings, { creatorId: userId });
+  const giftEarnings = useQuery(api.gifts.getCreatorGiftEarnings, { authToken, creatorId: userId });
 
   const quickActions = [
     {

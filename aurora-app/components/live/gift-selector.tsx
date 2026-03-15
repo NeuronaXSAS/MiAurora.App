@@ -27,6 +27,7 @@ const CATEGORY_COLORS: Record<GiftCategory, string> = {
 };
 
 interface GiftSelectorProps {
+  authToken: string;
   open: boolean;
   onClose: () => void;
   senderId: Id<"users">;
@@ -36,6 +37,7 @@ interface GiftSelectorProps {
 }
 
 export function GiftSelector({ 
+  authToken,
   open, 
   onClose, 
   senderId, 
@@ -66,6 +68,7 @@ export function GiftSelector({
     setIsSending(true);
     try {
       const result = await sendGiftMutation({
+        authToken,
         fromUserId: senderId,
         toUserId: recipientId,
         giftId: selectedGift.giftId,
@@ -96,6 +99,7 @@ export function GiftSelector({
     setIsSending(true);
     try {
       const result = await sendSuperChatMutation({
+        authToken,
         userId: senderId,
         livestreamId,
         message: message.trim(),

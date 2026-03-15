@@ -16,11 +16,12 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface LivePlayerProps {
   livestreamId: Id<"livestreams">;
+  authToken: string;
   userId: Id<"users">;
   onClose: () => void;
 }
 
-export function LivePlayer({ livestreamId, userId, onClose }: LivePlayerProps) {
+export function LivePlayer({ authToken, livestreamId, userId, onClose }: LivePlayerProps) {
   const [comment, setComment] = useState("");
   const [showGiftSelector, setShowGiftSelector] = useState(false);
   const [hasLiked, setHasLiked] = useState(false);
@@ -388,6 +389,7 @@ export function LivePlayer({ livestreamId, userId, onClose }: LivePlayerProps) {
       {/* Gift Selector */}
       {showGiftSelector && livestream.host && (
         <GiftSelector
+          authToken={authToken}
           open={showGiftSelector}
           onClose={() => setShowGiftSelector(false)}
           senderId={userId}
