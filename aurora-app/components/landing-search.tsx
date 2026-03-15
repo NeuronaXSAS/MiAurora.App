@@ -258,49 +258,81 @@ export function LandingSearch() {
               <DailyDebatesPanel userId={null} />
             </div>
 
-            {/* Feature Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* Discovery Cards - Guide users to explore */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {[
                 {
-                  icon: Bot,
-                  label: "AI Detection",
-                  desc: "Spot AI content",
-                  color: "var(--color-aurora-blue)",
+                  icon: Shield,
+                  label: "Safety Resources",
+                  desc: "Know your rights & stay safe",
+                  color: "var(--color-aurora-mint)",
+                  query: "women's safety resources near me",
                 },
                 {
                   icon: Scale,
-                  label: "Bias Analysis",
-                  desc: "Gender & political",
+                  label: "Am I Right?",
+                  desc: "Let AI judge your argument",
                   color: "var(--color-aurora-purple)",
-                },
-                {
-                  icon: Shield,
-                  label: "Credibility",
-                  desc: "Source trust",
-                  color: "var(--color-aurora-mint)",
+                  query: "",
+                  isJudge: true,
                 },
                 {
                   icon: Heart,
-                  label: "Women First",
-                  desc: "Your perspective",
+                  label: "Wellness",
+                  desc: "Self-care & mental health",
                   color: "var(--color-aurora-pink)",
+                  query: "women's mental health and wellness tips",
+                },
+                {
+                  icon: Bot,
+                  label: "Spot AI Content",
+                  desc: "Detect AI-generated media",
+                  color: "var(--color-aurora-blue)",
+                  query: "how to detect AI generated content",
+                },
+                {
+                  icon: Users,
+                  label: "Community",
+                  desc: "Join circles & discussions",
+                  color: "var(--color-aurora-lavender)",
+                  query: "",
+                  isCommunity: true,
+                },
+                {
+                  icon: Flame,
+                  label: "Trending Now",
+                  desc: "What women are searching",
+                  color: "var(--color-aurora-salmon)",
+                  query: "trending topics women's empowerment",
                 },
               ].map((item, i) => (
-                <div
+                <button
                   key={i}
-                  className="text-center p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]"
+                  onClick={() => {
+                    if ('isJudge' in item && item.isJudge) {
+                      // Scroll up to search box - user will switch to Judge mode
+                      const searchBox = document.querySelector('[data-slot="aurora-search"]');
+                      searchBox?.scrollIntoView({ behavior: 'smooth' });
+                    } else if ('isCommunity' in item && item.isCommunity) {
+                      const searchBox = document.querySelector('[data-slot="aurora-search"]');
+                      searchBox?.scrollIntoView({ behavior: 'smooth' });
+                    } else if (item.query) {
+                      handleSearch(item.query, 'web');
+                    }
+                  }}
+                  className="text-left p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] hover:shadow-md transition-all duration-200 group"
                 >
                   <item.icon
-                    className="w-6 h-6 mx-auto mb-2"
+                    className="w-5 h-5 mb-2 transition-transform duration-200 group-hover:scale-110"
                     style={{ color: item.color }}
                   />
-                  <p className="text-xs font-medium text-[var(--foreground)]">
+                  <p className="text-sm font-medium text-[var(--foreground)]">
                     {item.label}
                   </p>
-                  <p className="text-[10px] text-[var(--muted-foreground)]">
+                  <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
                     {item.desc}
                   </p>
-                </div>
+                </button>
               ))}
             </div>
           </motion.div>

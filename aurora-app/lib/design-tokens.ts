@@ -70,27 +70,37 @@ export const colors = {
 
 export const gradients = {
   // Primary gradients
-  auroraGlow: 'linear-gradient(135deg, #FF6B7A 0%, #8B5CF6 50%, #FF6B7A 100%)',
+  auroraGlow: 'linear-gradient(135deg, #FF6B7A 0%, #6C5CE7 50%, #FF6B7A 100%)',
   warmSunset: 'linear-gradient(135deg, #FFE8E8 0%, #FFC285 50%, #FF8A9B 100%)',
-  nightBloom: 'linear-gradient(135deg, #231E35 0%, #4A3F6B 50%, #6B5B95 100%)',
+  nightBloom: 'linear-gradient(135deg, #0F0B1A 0%, #1A1428 50%, #2A2142 100%)',
   softBlush: 'linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%)',
   
   // Button gradients
-  primaryButton: 'linear-gradient(135deg, #FF6B7A 0%, #E84D5F 100%)',
+  primaryButton: 'linear-gradient(135deg, #6C5CE7 0%, #7C6BFF 100%)',
   secondaryButton: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
   
   // Background gradients
-  pageBackground: 'linear-gradient(180deg, #150F22 0%, #231E35 50%, #352D4D 100%)',
-  cardBackground: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
+  pageBackground: 'linear-gradient(180deg, #0F0B1A 0%, #1A1428 50%, #241D36 100%)',
+  cardBackground: 'linear-gradient(135deg, rgba(160,140,200,0.06) 0%, rgba(160,140,200,0.02) 100%)',
+  
+  // Glass gradients
+  glassLight: 'linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 100%)',
+  glassDark: 'linear-gradient(135deg, rgba(26,20,40,0.7) 0%, rgba(26,20,40,0.4) 100%)',
 } as const;
 
 export const shadows = {
-  sm: '0 1px 2px rgba(139, 92, 246, 0.05)',
-  md: '0 4px 6px rgba(139, 92, 246, 0.1)',
-  lg: '0 10px 15px rgba(139, 92, 246, 0.15)',
-  xl: '0 20px 25px rgba(139, 92, 246, 0.2)',
-  glow: '0 0 20px rgba(255, 107, 122, 0.3)',
-  glowStrong: '0 0 40px rgba(255, 107, 122, 0.5)',
+  sm: '0 1px 2px rgba(45, 27, 78, 0.04)',
+  md: '0 4px 12px rgba(45, 27, 78, 0.06)',
+  lg: '0 8px 24px rgba(45, 27, 78, 0.08)',
+  xl: '0 16px 40px rgba(45, 27, 78, 0.12)',
+  glow: '0 0 20px rgba(108, 92, 231, 0.2)',
+  glowStrong: '0 0 40px rgba(108, 92, 231, 0.35)',
+  // Dark mode variants
+  darkSm: '0 1px 2px rgba(0, 0, 0, 0.3)',
+  darkMd: '0 4px 12px rgba(0, 0, 0, 0.25)',
+  darkLg: '0 8px 24px rgba(0, 0, 0, 0.3)',
+  darkXl: '0 16px 40px rgba(0, 0, 0, 0.4)',
+  darkGlow: '0 0 20px rgba(124, 107, 255, 0.2)',
 } as const;
 
 export const typography = {

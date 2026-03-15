@@ -21,7 +21,7 @@ interface LocaleContextType {
 const LocaleContext = createContext<LocaleContextType | undefined>(undefined);
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<SupportedLocale>('en');
+  const [locale, setLocaleState] = useState<SupportedLocale>('es');
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Initialize locale from localStorage or browser
@@ -63,10 +63,10 @@ export function useLocale() {
   if (context === undefined) {
     // Return default values if used outside provider
     return {
-      locale: 'en' as SupportedLocale,
+      locale: 'es' as SupportedLocale,
       setLocale: () => {},
-      t: (key: string) => tLanding(key, 'en'),
-      tApp: (key: string) => tApp(key, 'en'),
+      t: (key: string) => tLanding(key, 'es'),
+      tApp: (key: string) => tApp(key, 'es'),
       isRTL: false,
     };
   }

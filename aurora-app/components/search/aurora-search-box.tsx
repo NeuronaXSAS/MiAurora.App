@@ -644,7 +644,7 @@ const IntegratedJudgeResult: React.FC<IntegratedJudgeResultProps> = ({
 export const AuroraSearchBox = React.forwardRef<HTMLDivElement, AuroraSearchBoxProps>(
   ({ onSearch, isLoading = false, className }, ref) => {
     const [input, setInput] = useState("");
-    const [mode, setMode] = useState<SearchMode>("judge");
+    const [mode, setMode] = useState<SearchMode>("web");
     const [isRecording, setIsRecording] = useState(false);
     const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
     const [isFocused, setIsFocused] = useState(false);
@@ -669,21 +669,21 @@ export const AuroraSearchBox = React.forwardRef<HTMLDivElement, AuroraSearchBoxP
       judge: {
         icon: Scale,
         label: "Judge",
-        activeColor: "#5537a7",
+        activeColor: "#6C5CE7",
         placeholder: "Describe your argument or just upload screenshots...",
         description: "Your Pocket Judge - AI argument analysis"
       },
       web: {
         icon: Globe,
         label: "Web",
-        activeColor: "#2e2ad6",
+        activeColor: "#6C5CE7",
         placeholder: "Search the web with bias detection...",
         description: "Women-first search with truth analysis"
       },
       community: {
         icon: Users,
         label: "Community",
-        activeColor: "#f29de5",
+        activeColor: "#F29DE5",
         placeholder: "Search Aurora App community...",
         description: "Discover posts, circles & discussions"
       },
@@ -973,11 +973,11 @@ export const AuroraSearchBox = React.forwardRef<HTMLDivElement, AuroraSearchBoxP
                 "flex items-center gap-0.5 overflow-x-auto no-scrollbar transition-opacity flex-1 min-w-0",
                 isRecording && "opacity-0 pointer-events-none"
               )}>
-                <ModeButton mode="judge" currentMode={mode} icon={Scale} label="Judge" activeColor="#5537a7" onClick={() => handleModeChange("judge")} isNew />
+                <ModeButton mode="web" currentMode={mode} icon={Globe} label="Web" activeColor="#6C5CE7" onClick={() => handleModeChange("web")} />
                 <ModeDivider />
-                <ModeButton mode="web" currentMode={mode} icon={Globe} label="Web" activeColor="#2e2ad6" onClick={() => handleModeChange("web")} />
+                <ModeButton mode="community" currentMode={mode} icon={Users} label="Community" activeColor="#F29DE5" onClick={() => handleModeChange("community")} />
                 <ModeDivider />
-                <ModeButton mode="community" currentMode={mode} icon={Users} label="Community" activeColor="#f29de5" onClick={() => handleModeChange("community")} />
+                <ModeButton mode="judge" currentMode={mode} icon={Scale} label="Judge" activeColor="#6C5CE7" onClick={() => handleModeChange("judge")} isNew />
               </div>
 
               {/* Action buttons - unified single voice button for all modes */}

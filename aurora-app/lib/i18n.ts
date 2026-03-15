@@ -1,98 +1,27 @@
 // Internationalization support for Aurora App
 // Making the platform accessible to women worldwide
 // Zero-cost i18n - all translations are built-in JSON files
+// Supported: Spanish (default) and English
 
 // Import translation JSON files
 import enTranslations from './translations/en.json';
 import esTranslations from './translations/es.json';
-import frTranslations from './translations/fr.json';
-import ptTranslations from './translations/pt.json';
-import deTranslations from './translations/de.json';
-import arTranslations from './translations/ar.json';
 
-export type SupportedLocale = 
-  | 'en' | 'es' | 'fr' | 'de' | 'pt' | 'it' 
-  | 'zh' | 'ja' | 'ko' | 'ar' | 'hi' | 'ru'
-  | 'tr' | 'pl' | 'nl' | 'sv' | 'th' | 'vi';
+export type SupportedLocale = 'es' | 'en';
 
 // Full app translations loaded from JSON files
-// Priority languages: EN, ES, FR, PT, DE, AR (6 complete translations)
 export const appTranslations: Record<string, Record<string, string>> = {
-  en: enTranslations,
   es: esTranslations,
-  fr: frTranslations,
-  pt: ptTranslations,
-  de: deTranslations,
-  ar: arTranslations,
-  // Other languages will fall back to English
+  en: enTranslations,
 };
 
 export const SUPPORTED_LOCALES: Record<SupportedLocale, { name: string; nativeName: string; rtl?: boolean }> = {
-  en: { name: 'English', nativeName: 'English' },
   es: { name: 'Spanish', nativeName: 'Español' },
-  fr: { name: 'French', nativeName: 'Français' },
-  de: { name: 'German', nativeName: 'Deutsch' },
-  pt: { name: 'Portuguese', nativeName: 'Português' },
-  it: { name: 'Italian', nativeName: 'Italiano' },
-  zh: { name: 'Chinese', nativeName: '中文' },
-  ja: { name: 'Japanese', nativeName: '日本語' },
-  ko: { name: 'Korean', nativeName: '한국어' },
-  ar: { name: 'Arabic', nativeName: 'العربية', rtl: true },
-  hi: { name: 'Hindi', nativeName: 'हिन्दी' },
-  ru: { name: 'Russian', nativeName: 'Русский' },
-  tr: { name: 'Turkish', nativeName: 'Türkçe' },
-  pl: { name: 'Polish', nativeName: 'Polski' },
-  nl: { name: 'Dutch', nativeName: 'Nederlands' },
-  sv: { name: 'Swedish', nativeName: 'Svenska' },
-  th: { name: 'Thai', nativeName: 'ไทย' },
-  vi: { name: 'Vietnamese', nativeName: 'Tiếng Việt' },
+  en: { name: 'English', nativeName: 'English' },
 };
 
 // Landing page translations
 export const landingTranslations: Record<SupportedLocale, Record<string, string>> = {
-  en: {
-    'landing.hero.badge': 'AI-Powered • Non-Toxic Algorithm',
-    'landing.hero.title1': 'The',
-    'landing.hero.title2': 'Future',
-    'landing.hero.title3': 'of Social Networking',
-    'landing.hero.subtitle': 'The first non-toxic algorithm that cares for your wellbeing.',
-    'landing.hero.subtitle2': 'Built by women. Powered by ethical AI. Zero manipulation.',
-    'landing.hero.joinInstantly': 'Join instantly with your existing account',
-    'landing.hero.noPassword': 'No password needed — just one click',
-    'landing.hero.continueGoogle': 'Continue with Google',
-    'landing.hero.continueMicrosoft': 'Continue with Microsoft',
-    'landing.hero.moreOptions': 'More sign in options',
-    'landing.hero.neverPost': '🔒 We never post without your permission',
-    'landing.hero.freeFeatures': 'Free Safety Features',
-    'landing.hero.noPasswordNeeded': 'No Password Needed',
-    'landing.hero.joinSeconds': 'Join in 10 Seconds',
-    'landing.search.badge': 'Explore Before You Join',
-    'landing.search.title': 'Discover What Women Are Sharing',
-    'landing.search.subtitle': 'Search our community for safety tips, career opportunities, support circles, and more.',
-    'landing.search.engineTitle': "The World's First Women-First Search Engine",
-    'landing.search.engineSubtitle': 'Search smarter with AI content detection, gender bias analysis & source credibility scores',
-    'landing.search.placeholder': 'Search anything... safety tips, career advice, places, news',
-    'landing.search.aiSummary': 'AI Summary',
-    'landing.search.womenFirst': 'Women-First Perspective',
-    'landing.search.webResults': 'Web Results',
-    'landing.search.community': 'Aurora App Community',
-    'landing.search.verifiedWomen': 'Verified by Women',
-    'landing.search.joinFree': 'Join Aurora App Free',
-    'landing.search.noTracking': '🔒 No ads • No data selling • 100% privacy-first',
-    'landing.features.aiDetection': 'AI Detection',
-    'landing.features.aiDetectionDesc': 'Spot AI-generated content instantly',
-    'landing.features.biasAnalysis': 'Bias Analysis',
-    'landing.features.biasAnalysisDesc': 'Gender & political bias scores',
-    'landing.features.credibility': 'Credibility',
-    'landing.features.credibilityDesc': 'Source trust verification',
-    'landing.features.noTracking': 'No Tracking',
-    'landing.features.noTrackingDesc': '100% private searches',
-    'landing.footer': 'Designed by women, for women. Search with confidence.',
-    'landing.why.title': 'Why Women Choose',
-    'landing.why.subtitle': 'We built the opposite of toxic social media.',
-    'landing.why.otherPlatforms': 'Other Platforms',
-    'landing.cta.joinFree': 'Join Aurora App Free',
-  },
   es: {
     'landing.hero.badge': 'Impulsado por IA • Algoritmo No Tóxico',
     'landing.hero.title1': 'El',
@@ -136,200 +65,87 @@ export const landingTranslations: Record<SupportedLocale, Record<string, string>
     'landing.why.otherPlatforms': 'Otras Plataformas',
     'landing.cta.joinFree': 'Únete a Aurora App Gratis',
   },
-  pt: {
-    'landing.hero.badge': 'Alimentado por IA • Algoritmo Não Tóxico',
-    'landing.hero.title1': 'O',
-    'landing.hero.title2': 'Futuro',
-    'landing.hero.title3': 'das Redes Sociais',
-    'landing.hero.subtitle': 'O primeiro algoritmo não tóxico que cuida do seu bem-estar.',
-    'landing.hero.subtitle2': 'Criado por mulheres. Alimentado por IA ética. Zero manipulação.',
-    'landing.hero.joinInstantly': 'Entre instantaneamente com sua conta existente',
-    'landing.hero.noPassword': 'Sem senha — apenas um clique',
-    'landing.hero.continueGoogle': 'Continuar com Google',
-    'landing.hero.continueMicrosoft': 'Continuar com Microsoft',
-    'landing.hero.moreOptions': 'Mais opções de login',
-    'landing.hero.neverPost': '🔒 Nunca postamos sem sua permissão',
-    'landing.hero.freeFeatures': 'Recursos de Segurança Grátis',
-    'landing.hero.noPasswordNeeded': 'Sem Senha',
-    'landing.hero.joinSeconds': 'Entre em 10 Segundos',
-    'landing.search.badge': 'Explore Antes de Entrar',
-    'landing.search.title': 'Descubra o que as Mulheres Compartilham',
-    'landing.search.subtitle': 'Pesquise dicas de segurança, oportunidades de carreira, círculos de apoio e mais.',
-    'landing.search.engineTitle': 'O Primeiro Motor de Busca para Mulheres',
-    'landing.search.engineSubtitle': 'Pesquise de forma inteligente com detecção de IA, análise de viés e pontuação de credibilidade',
-    'landing.search.placeholder': 'Pesquise qualquer coisa... segurança, carreira, lugares, notícias',
-    'landing.search.aiSummary': 'Resumo de IA',
-    'landing.search.womenFirst': 'Perspectiva para Mulheres',
-    'landing.search.webResults': 'Resultados da Web',
-    'landing.search.community': 'Comunidade Aurora App',
-    'landing.search.verifiedWomen': 'Verificado por Mulheres',
-    'landing.search.joinFree': 'Entre no Aurora App Grátis',
-    'landing.search.noTracking': '🔒 Sem anúncios • Sem venda de dados • 100% privacidade',
-    'landing.features.aiDetection': 'Detecção de IA',
-    'landing.features.aiDetectionDesc': 'Detecte conteúdo gerado por IA',
-    'landing.features.biasAnalysis': 'Análise de Viés',
-    'landing.features.biasAnalysisDesc': 'Pontuação de viés de gênero',
-    'landing.features.credibility': 'Credibilidade',
-    'landing.features.credibilityDesc': 'Verificação de fontes',
-    'landing.features.noTracking': 'Sem Rastreamento',
-    'landing.features.noTrackingDesc': 'Pesquisas 100% privadas',
-    'landing.footer': 'Projetado por mulheres, para mulheres. Pesquise com confiança.',
-    'landing.why.title': 'Por que as Mulheres Escolhem',
-    'landing.why.subtitle': 'Construímos o oposto das redes sociais tóxicas.',
-    'landing.why.otherPlatforms': 'Outras Plataformas',
-    'landing.cta.joinFree': 'Entre no Aurora App Grátis',
+  en: {
+    'landing.hero.badge': 'AI-Powered • Non-Toxic Algorithm',
+    'landing.hero.title1': 'The',
+    'landing.hero.title2': 'Future',
+    'landing.hero.title3': 'of Social Networking',
+    'landing.hero.subtitle': 'The first non-toxic algorithm that cares for your wellbeing.',
+    'landing.hero.subtitle2': 'Built by women. Powered by ethical AI. Zero manipulation.',
+    'landing.hero.joinInstantly': 'Join instantly with your existing account',
+    'landing.hero.noPassword': 'No password needed — just one click',
+    'landing.hero.continueGoogle': 'Continue with Google',
+    'landing.hero.continueMicrosoft': 'Continue with Microsoft',
+    'landing.hero.moreOptions': 'More sign in options',
+    'landing.hero.neverPost': '🔒 We never post without your permission',
+    'landing.hero.freeFeatures': 'Free Safety Features',
+    'landing.hero.noPasswordNeeded': 'No Password Needed',
+    'landing.hero.joinSeconds': 'Join in 10 Seconds',
+    'landing.search.badge': 'Explore Before You Join',
+    'landing.search.title': 'Discover What Women Are Sharing',
+    'landing.search.subtitle': 'Search our community for safety tips, career opportunities, support circles, and more.',
+    'landing.search.engineTitle': "The World's First Women-First Search Engine",
+    'landing.search.engineSubtitle': 'Search smarter with AI content detection, gender bias analysis & source credibility scores',
+    'landing.search.placeholder': 'Search anything... safety tips, career advice, places, news',
+    'landing.search.aiSummary': 'AI Summary',
+    'landing.search.womenFirst': 'Women-First Perspective',
+    'landing.search.webResults': 'Web Results',
+    'landing.search.community': 'Aurora App Community',
+    'landing.search.verifiedWomen': 'Verified by Women',
+    'landing.search.joinFree': 'Join Aurora App Free',
+    'landing.search.noTracking': '🔒 No ads • No data selling • 100% privacy-first',
+    'landing.features.aiDetection': 'AI Detection',
+    'landing.features.aiDetectionDesc': 'Spot AI-generated content instantly',
+    'landing.features.biasAnalysis': 'Bias Analysis',
+    'landing.features.biasAnalysisDesc': 'Gender & political bias scores',
+    'landing.features.credibility': 'Credibility',
+    'landing.features.credibilityDesc': 'Source trust verification',
+    'landing.features.noTracking': 'No Tracking',
+    'landing.features.noTrackingDesc': '100% private searches',
+    'landing.footer': 'Designed by women, for women. Search with confidence.',
+    'landing.why.title': 'Why Women Choose',
+    'landing.why.subtitle': 'We built the opposite of toxic social media.',
+    'landing.why.otherPlatforms': 'Other Platforms',
+    'landing.cta.joinFree': 'Join Aurora App Free',
   },
-  fr: {
-    'landing.hero.badge': 'Propulsé par IA • Algorithme Non Toxique',
-    'landing.hero.title1': "L'",
-    'landing.hero.title2': 'Avenir',
-    'landing.hero.title3': 'des Réseaux Sociaux',
-    'landing.hero.subtitle': 'Le premier algorithme non toxique qui prend soin de votre bien-être.',
-    'landing.hero.subtitle2': 'Créé par des femmes. Propulsé par une IA éthique. Zéro manipulation.',
-    'landing.hero.joinInstantly': 'Rejoignez instantanément avec votre compte existant',
-    'landing.hero.noPassword': 'Pas de mot de passe — un seul clic',
-    'landing.hero.continueGoogle': 'Continuer avec Google',
-    'landing.hero.continueMicrosoft': 'Continuer avec Microsoft',
-    'landing.hero.moreOptions': "Plus d'options de connexion",
-    'landing.hero.neverPost': '🔒 Nous ne publions jamais sans votre permission',
-    'landing.hero.freeFeatures': 'Fonctions de Sécurité Gratuites',
-    'landing.hero.noPasswordNeeded': 'Sans Mot de Passe',
-    'landing.hero.joinSeconds': 'Rejoignez en 10 Secondes',
-    'landing.search.badge': 'Explorez Avant de Rejoindre',
-    'landing.search.title': 'Découvrez ce que les Femmes Partagent',
-    'landing.search.subtitle': 'Recherchez des conseils de sécurité, des opportunités de carrière, des cercles de soutien et plus.',
-    'landing.search.engineTitle': 'Le Premier Moteur de Recherche pour les Femmes',
-    'landing.search.engineSubtitle': "Recherchez intelligemment avec détection d'IA, analyse de biais et score de crédibilité",
-    'landing.search.placeholder': 'Recherchez... sécurité, carrière, lieux, actualités',
-    'landing.search.aiSummary': 'Résumé IA',
-    'landing.search.womenFirst': 'Perspective pour les Femmes',
-    'landing.search.webResults': 'Résultats Web',
-    'landing.search.community': 'Communauté Aurora App',
-    'landing.search.verifiedWomen': 'Vérifié par des Femmes',
-    'landing.search.joinFree': 'Rejoignez Aurora App Gratuitement',
-    'landing.search.noTracking': '🔒 Sans pub • Sans vente de données • 100% privé',
-    'landing.features.aiDetection': 'Détection IA',
-    'landing.features.aiDetectionDesc': 'Détectez le contenu généré par IA',
-    'landing.features.biasAnalysis': 'Analyse de Biais',
-    'landing.features.biasAnalysisDesc': 'Score de biais de genre',
-    'landing.features.credibility': 'Crédibilité',
-    'landing.features.credibilityDesc': 'Vérification des sources',
-    'landing.features.noTracking': 'Sans Suivi',
-    'landing.features.noTrackingDesc': 'Recherches 100% privées',
-    'landing.footer': 'Conçu par des femmes, pour des femmes. Recherchez en confiance.',
-    'landing.why.title': 'Pourquoi les Femmes Choisissent',
-    'landing.why.subtitle': "Nous avons construit l'opposé des réseaux sociaux toxiques.",
-    'landing.why.otherPlatforms': 'Autres Plateformes',
-    'landing.cta.joinFree': 'Rejoignez Aurora App Gratuitement',
-  },
-  de: {
-    'landing.hero.badge': 'KI-gestützt • Nicht-toxischer Algorithmus',
-    'landing.hero.title1': 'Die',
-    'landing.hero.title2': 'Zukunft',
-    'landing.hero.title3': 'der Sozialen Netzwerke',
-    'landing.hero.subtitle': 'Der erste nicht-toxische Algorithmus, der sich um dein Wohlbefinden kümmert.',
-    'landing.hero.subtitle2': 'Von Frauen entwickelt. Angetrieben von ethischer KI. Keine Manipulation.',
-    'landing.hero.joinInstantly': 'Sofort mit deinem bestehenden Konto beitreten',
-    'landing.hero.noPassword': 'Kein Passwort nötig — nur ein Klick',
-    'landing.hero.continueGoogle': 'Mit Google fortfahren',
-    'landing.hero.continueMicrosoft': 'Mit Microsoft fortfahren',
-    'landing.hero.moreOptions': 'Weitere Anmeldeoptionen',
-    'landing.hero.neverPost': '🔒 Wir posten nie ohne deine Erlaubnis',
-    'landing.hero.freeFeatures': 'Kostenlose Sicherheitsfunktionen',
-    'landing.hero.noPasswordNeeded': 'Kein Passwort Nötig',
-    'landing.hero.joinSeconds': 'In 10 Sekunden beitreten',
-    'landing.search.badge': 'Erkunden vor dem Beitritt',
-    'landing.search.title': 'Entdecke, was Frauen teilen',
-    'landing.search.subtitle': 'Suche nach Sicherheitstipps, Karrieremöglichkeiten, Unterstützungskreisen und mehr.',
-    'landing.search.engineTitle': 'Die erste Suchmaschine für Frauen',
-    'landing.search.engineSubtitle': 'Intelligent suchen mit KI-Erkennung, Bias-Analyse und Glaubwürdigkeitsbewertung',
-    'landing.search.placeholder': 'Suche alles... Sicherheit, Karriere, Orte, Nachrichten',
-    'landing.search.aiSummary': 'KI-Zusammenfassung',
-    'landing.search.womenFirst': 'Frauen-Perspektive',
-    'landing.search.webResults': 'Web-Ergebnisse',
-    'landing.search.community': 'Aurora App Gemeinschaft',
-    'landing.search.verifiedWomen': 'Von Frauen verifiziert',
-    'landing.search.joinFree': 'Aurora App kostenlos beitreten',
-    'landing.search.noTracking': '🔒 Keine Werbung • Kein Datenverkauf • 100% Privatsphäre',
-    'landing.features.aiDetection': 'KI-Erkennung',
-    'landing.features.aiDetectionDesc': 'KI-generierte Inhalte erkennen',
-    'landing.features.biasAnalysis': 'Bias-Analyse',
-    'landing.features.biasAnalysisDesc': 'Geschlechter-Bias-Bewertung',
-    'landing.features.credibility': 'Glaubwürdigkeit',
-    'landing.features.credibilityDesc': 'Quellenverifizierung',
-    'landing.features.noTracking': 'Kein Tracking',
-    'landing.features.noTrackingDesc': '100% private Suchen',
-    'landing.footer': 'Von Frauen für Frauen entwickelt. Suche mit Vertrauen.',
-    'landing.why.title': 'Warum Frauen wählen',
-    'landing.why.subtitle': 'Wir haben das Gegenteil von toxischen sozialen Medien gebaut.',
-    'landing.why.otherPlatforms': 'Andere Plattformen',
-    'landing.cta.joinFree': 'Aurora App kostenlos beitreten',
-  },
-  ar: {
-    'landing.hero.badge': 'مدعوم بالذكاء الاصطناعي • خوارزمية غير سامة',
-    'landing.hero.title1': '',
-    'landing.hero.title2': 'مستقبل',
-    'landing.hero.title3': 'الشبكات الاجتماعية',
-    'landing.hero.subtitle': 'أول خوارزمية غير سامة تهتم برفاهيتك.',
-    'landing.hero.subtitle2': 'صُنعت من قبل النساء. مدعومة بذكاء اصطناعي أخلاقي. بدون تلاعب.',
-    'landing.hero.joinInstantly': 'انضمي فوراً بحسابك الحالي',
-    'landing.hero.noPassword': 'لا حاجة لكلمة مرور — نقرة واحدة فقط',
-    'landing.hero.continueGoogle': 'المتابعة مع Google',
-    'landing.hero.continueMicrosoft': 'المتابعة مع Microsoft',
-    'landing.hero.moreOptions': 'المزيد من خيارات تسجيل الدخول',
-    'landing.hero.neverPost': '🔒 لن ننشر أبداً بدون إذنك',
-    'landing.hero.freeFeatures': 'ميزات أمان مجانية',
-    'landing.hero.noPasswordNeeded': 'لا حاجة لكلمة مرور',
-    'landing.hero.joinSeconds': 'انضمي في 10 ثوانٍ',
-    'landing.search.badge': 'استكشفي قبل الانضمام',
-    'landing.search.title': 'اكتشفي ما تشاركه النساء',
-    'landing.search.subtitle': 'ابحثي عن نصائح الأمان، فرص العمل، دوائر الدعم والمزيد.',
-    'landing.search.engineTitle': 'أول محرك بحث للنساء',
-    'landing.search.engineSubtitle': 'ابحثي بذكاء مع كشف الذكاء الاصطناعي وتحليل التحيز وتقييم المصداقية',
-    'landing.search.placeholder': 'ابحثي عن أي شيء... الأمان، المهنة، الأماكن، الأخبار',
-    'landing.search.aiSummary': 'ملخص الذكاء الاصطناعي',
-    'landing.search.womenFirst': 'منظور للنساء',
-    'landing.search.webResults': 'نتائج الويب',
-    'landing.search.community': 'مجتمع Aurora App',
-    'landing.search.verifiedWomen': 'موثق من النساء',
-    'landing.search.joinFree': 'انضمي إلى Aurora App مجاناً',
-    'landing.search.noTracking': '🔒 بدون إعلانات • بدون بيع بيانات • خصوصية 100%',
-    'landing.features.aiDetection': 'كشف الذكاء الاصطناعي',
-    'landing.features.aiDetectionDesc': 'اكتشفي المحتوى المُنشأ بالذكاء الاصطناعي',
-    'landing.features.biasAnalysis': 'تحليل التحيز',
-    'landing.features.biasAnalysisDesc': 'تقييم التحيز الجنسي',
-    'landing.features.credibility': 'المصداقية',
-    'landing.features.credibilityDesc': 'التحقق من المصادر',
-    'landing.features.noTracking': 'بدون تتبع',
-    'landing.features.noTrackingDesc': 'بحث خاص 100%',
-    'landing.footer': 'صُمم من قبل النساء للنساء. ابحثي بثقة.',
-    'landing.why.title': 'لماذا تختار النساء',
-    'landing.why.subtitle': 'بنينا عكس وسائل التواصل الاجتماعي السامة.',
-    'landing.why.otherPlatforms': 'المنصات الأخرى',
-    'landing.cta.joinFree': 'انضمي إلى Aurora App مجاناً',
-  },
-  // Fallback to English for other languages
-  it: {},
-  zh: {},
-  ja: {},
-  ko: {},
-  hi: {},
-  ru: {},
-  tr: {},
-  pl: {},
-  nl: {},
-  sv: {},
-  th: {},
-  vi: {},
 };
 
-// Get landing translation with fallback to English
-export function tLanding(key: string, locale: SupportedLocale = 'en'): string {
-  return landingTranslations[locale]?.[key] || landingTranslations.en[key] || key;
+// Get landing translation with fallback to Spanish (default)
+export function tLanding(key: string, locale: SupportedLocale = 'es'): string {
+  return landingTranslations[locale]?.[key] || landingTranslations.es[key] || key;
 }
 
 // Core translations for critical safety features
 export const translations: Record<SupportedLocale, Record<string, string>> = {
+  es: {
+    'emergency.panic': 'EMERGENCIA',
+    'emergency.imSafe': 'Estoy a salvo',
+    'emergency.help': 'La ayuda está en camino',
+    'emergency.contacts': 'Contactos de Emergencia',
+    'emergency.addContact': 'Agregar Contacto',
+    'safety.checkin': 'Registrarse',
+    'safety.imOk': 'Estoy bien',
+    'safety.schedule': 'Programar registro',
+    'safety.missed': 'Registro perdido',
+    'nav.feed': 'Inicio',
+    'nav.map': 'Mapa de Seguridad',
+    'nav.routes': 'Rutas',
+    'nav.emergency': 'Emergencia',
+    'nav.resources': 'Recursos',
+    'nav.circles': 'Círculos',
+    'nav.health': 'Salud',
+    'nav.profile': 'Perfil',
+    'common.save': 'Guardar',
+    'common.cancel': 'Cancelar',
+    'common.submit': 'Enviar',
+    'common.delete': 'Eliminar',
+    'common.edit': 'Editar',
+    'common.share': 'Compartir',
+    'common.report': 'Reportar',
+    'common.loading': 'Cargando...',
+    'credits.earned': 'Créditos Ganados',
+    'credits.balance': 'Saldo de Créditos',
+  },
   en: {
     // Emergency
     'emergency.panic': 'EMERGENCY',
@@ -368,214 +184,42 @@ export const translations: Record<SupportedLocale, Record<string, string>> = {
     'credits.earned': 'Credits Earned',
     'credits.balance': 'Credit Balance',
   },
-  es: {
-    'emergency.panic': 'EMERGENCIA',
-    'emergency.imSafe': 'Estoy a salvo',
-    'emergency.help': 'La ayuda está en camino',
-    'emergency.contacts': 'Contactos de Emergencia',
-    'emergency.addContact': 'Agregar Contacto',
-    'safety.checkin': 'Registrarse',
-    'safety.imOk': 'Estoy bien',
-    'safety.schedule': 'Programar registro',
-    'safety.missed': 'Registro perdido',
-    'nav.feed': 'Inicio',
-    'nav.map': 'Mapa de Seguridad',
-    'nav.routes': 'Rutas',
-    'nav.emergency': 'Emergencia',
-    'nav.resources': 'Recursos',
-    'nav.circles': 'Círculos',
-    'nav.health': 'Salud',
-    'nav.profile': 'Perfil',
-    'common.save': 'Guardar',
-    'common.cancel': 'Cancelar',
-    'common.submit': 'Enviar',
-    'common.delete': 'Eliminar',
-    'common.edit': 'Editar',
-    'common.share': 'Compartir',
-    'common.report': 'Reportar',
-    'common.loading': 'Cargando...',
-    'credits.earned': 'Créditos Ganados',
-    'credits.balance': 'Saldo de Créditos',
-  },
-  fr: {
-    'emergency.panic': 'URGENCE',
-    'emergency.imSafe': 'Je suis en sécurité',
-    'emergency.help': "L'aide arrive",
-    'emergency.contacts': "Contacts d'urgence",
-    'emergency.addContact': 'Ajouter un contact',
-    'safety.checkin': 'Signalement',
-    'safety.imOk': 'Je vais bien',
-    'safety.schedule': 'Programmer un signalement',
-    'safety.missed': 'Signalement manqué',
-    'nav.feed': 'Fil',
-    'nav.map': 'Carte de sécurité',
-    'nav.routes': 'Itinéraires',
-    'nav.emergency': 'Urgence',
-    'nav.resources': 'Ressources',
-    'nav.circles': 'Cercles',
-    'nav.health': 'Santé',
-    'nav.profile': 'Profil',
-    'common.save': 'Enregistrer',
-    'common.cancel': 'Annuler',
-    'common.submit': 'Soumettre',
-    'common.delete': 'Supprimer',
-    'common.edit': 'Modifier',
-    'common.share': 'Partager',
-    'common.report': 'Signaler',
-    'common.loading': 'Chargement...',
-    'credits.earned': 'Crédits gagnés',
-    'credits.balance': 'Solde de crédits',
-  },
-  // Add more languages as needed - these are the critical safety terms
-  de: {
-    'emergency.panic': 'NOTFALL',
-    'emergency.imSafe': 'Ich bin sicher',
-    'emergency.help': 'Hilfe ist unterwegs',
-    'safety.imOk': 'Mir geht es gut',
-    'common.save': 'Speichern',
-    'common.cancel': 'Abbrechen',
-  },
-  pt: {
-    'emergency.panic': 'EMERGÊNCIA',
-    'emergency.imSafe': 'Estou segura',
-    'emergency.help': 'Ajuda está a caminho',
-    'safety.imOk': 'Estou bem',
-    'common.save': 'Salvar',
-    'common.cancel': 'Cancelar',
-  },
-  it: {
-    'emergency.panic': 'EMERGENZA',
-    'emergency.imSafe': 'Sono al sicuro',
-    'emergency.help': "L'aiuto sta arrivando",
-    'safety.imOk': 'Sto bene',
-    'common.save': 'Salva',
-    'common.cancel': 'Annulla',
-  },
-  zh: {
-    'emergency.panic': '紧急情况',
-    'emergency.imSafe': '我安全了',
-    'emergency.help': '救援正在路上',
-    'safety.imOk': '我没事',
-    'common.save': '保存',
-    'common.cancel': '取消',
-  },
-  ja: {
-    'emergency.panic': '緊急事態',
-    'emergency.imSafe': '安全です',
-    'emergency.help': '助けが向かっています',
-    'safety.imOk': '大丈夫です',
-    'common.save': '保存',
-    'common.cancel': 'キャンセル',
-  },
-  ko: {
-    'emergency.panic': '긴급상황',
-    'emergency.imSafe': '안전해요',
-    'emergency.help': '도움이 오고 있어요',
-    'safety.imOk': '괜찮아요',
-    'common.save': '저장',
-    'common.cancel': '취소',
-  },
-  ar: {
-    'emergency.panic': 'طوارئ',
-    'emergency.imSafe': 'أنا بأمان',
-    'emergency.help': 'المساعدة في الطريق',
-    'safety.imOk': 'أنا بخير',
-    'common.save': 'حفظ',
-    'common.cancel': 'إلغاء',
-  },
-  hi: {
-    'emergency.panic': 'आपातकाल',
-    'emergency.imSafe': 'मैं सुरक्षित हूं',
-    'emergency.help': 'मदद आ रही है',
-    'safety.imOk': 'मैं ठीक हूं',
-    'common.save': 'सहेजें',
-    'common.cancel': 'रद्द करें',
-  },
-  ru: {
-    'emergency.panic': 'ЭКСТРЕННАЯ СИТУАЦИЯ',
-    'emergency.imSafe': 'Я в безопасности',
-    'emergency.help': 'Помощь уже в пути',
-    'safety.imOk': 'Я в порядке',
-    'common.save': 'Сохранить',
-    'common.cancel': 'Отмена',
-  },
-  tr: {
-    'emergency.panic': 'ACİL DURUM',
-    'emergency.imSafe': 'Güvendeyim',
-    'emergency.help': 'Yardım yolda',
-    'safety.imOk': 'İyiyim',
-    'common.save': 'Kaydet',
-    'common.cancel': 'İptal',
-  },
-  pl: {
-    'emergency.panic': 'NAGŁY WYPADEK',
-    'emergency.imSafe': 'Jestem bezpieczna',
-    'emergency.help': 'Pomoc jest w drodze',
-    'safety.imOk': 'Wszystko w porządku',
-    'common.save': 'Zapisz',
-    'common.cancel': 'Anuluj',
-  },
-  nl: {
-    'emergency.panic': 'NOODGEVAL',
-    'emergency.imSafe': 'Ik ben veilig',
-    'emergency.help': 'Hulp is onderweg',
-    'safety.imOk': 'Het gaat goed',
-    'common.save': 'Opslaan',
-    'common.cancel': 'Annuleren',
-  },
-  sv: {
-    'emergency.panic': 'NÖDSITUATION',
-    'emergency.imSafe': 'Jag är säker',
-    'emergency.help': 'Hjälp är på väg',
-    'safety.imOk': 'Jag mår bra',
-    'common.save': 'Spara',
-    'common.cancel': 'Avbryt',
-  },
-  th: {
-    'emergency.panic': 'ฉุกเฉิน',
-    'emergency.imSafe': 'ฉันปลอดภัย',
-    'emergency.help': 'ความช่วยเหลือกำลังมา',
-    'safety.imOk': 'ฉันสบายดี',
-    'common.save': 'บันทึก',
-    'common.cancel': 'ยกเลิก',
-  },
-  vi: {
-    'emergency.panic': 'KHẨN CẤP',
-    'emergency.imSafe': 'Tôi an toàn',
-    'emergency.help': 'Trợ giúp đang đến',
-    'safety.imOk': 'Tôi ổn',
-    'common.save': 'Lưu',
-    'common.cancel': 'Hủy',
-  },
 };
 
-// Get browser locale
+// Get browser locale - defaults to Spanish
 export function getBrowserLocale(): SupportedLocale {
-  if (typeof window === 'undefined') return 'en';
+  if (typeof window === 'undefined') return 'es';
   
-  const browserLang = navigator.language.split('-')[0] as SupportedLocale;
-  return SUPPORTED_LOCALES[browserLang] ? browserLang : 'en';
+  const browserLang = navigator.language.split('-')[0];
+  if (browserLang === 'en') return 'en';
+  // Default to Spanish for all other languages
+  return 'es';
 }
 
 // Translation function
-export function t(key: string, locale: SupportedLocale = 'en'): string {
-  return translations[locale]?.[key] || translations.en[key] || key;
+export function t(key: string, locale: SupportedLocale = 'es'): string {
+  return translations[locale]?.[key] || translations.es[key] || key;
 }
 
-// Check if locale is RTL
+// Check if locale is RTL (no RTL languages supported anymore)
 export function isRTL(locale: SupportedLocale): boolean {
-  return SUPPORTED_LOCALES[locale]?.rtl || false;
+  return false;
 }
 
 /**
  * Get app translation - uses JSON translation files
- * Falls back to English if key not found in selected locale
+ * Falls back to Spanish (default) if key not found in selected locale
  */
-export function tApp(key: string, locale: SupportedLocale = 'en'): string {
+export function tApp(key: string, locale: SupportedLocale = 'es'): string {
   // First try the JSON translations
   const localeTranslations = appTranslations[locale];
   if (localeTranslations?.[key]) {
     return localeTranslations[key];
+  }
+  
+  // Fall back to Spanish JSON (default language)
+  if (appTranslations.es?.[key]) {
+    return appTranslations.es[key];
   }
   
   // Fall back to English JSON
@@ -584,5 +228,5 @@ export function tApp(key: string, locale: SupportedLocale = 'en'): string {
   }
   
   // Fall back to legacy translations
-  return translations[locale]?.[key] || translations.en?.[key] || key;
+  return translations[locale]?.[key] || translations.es?.[key] || key;
 }
