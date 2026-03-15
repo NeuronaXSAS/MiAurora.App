@@ -19,6 +19,9 @@ import {
   RefreshCw,
   WifiOff,
   Key,
+  ChevronDown,
+  ChevronUp,
+  Info,
 } from "lucide-react";
 
 // Get Mapbox token with validation
@@ -98,6 +101,7 @@ export function SafetyMap({
   const [nearbyPosts, setNearbyPosts] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [usingFallbackStyle, setUsingFallbackStyle] = useState(false);
+  const [legendExpanded, setLegendExpanded] = useState(false);
 
   // Keep refs in sync with state/props for use in map event handlers
   useEffect(() => {
@@ -762,20 +766,20 @@ export function SafetyMap({
   if (mapError) {
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[var(--color-aurora-cream)] to-[var(--color-aurora-lavender)]/30">
-        <div className="text-center p-8 max-w-md mx-4">
-          <div className="w-16 h-16 bg-[var(--color-aurora-yellow)]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <div className="text-center p-5 sm:p-8 max-w-md mx-3 sm:mx-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[var(--color-aurora-yellow)]/20 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
             {mapError.type === "no_token" ? (
-              <Key className="w-8 h-8 text-[var(--color-aurora-yellow)]" />
+              <Key className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--color-aurora-yellow)]" />
             ) : mapError.type === "network_error" ? (
-              <WifiOff className="w-8 h-8 text-[var(--color-aurora-yellow)]" />
+              <WifiOff className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--color-aurora-yellow)]" />
             ) : (
-              <AlertTriangle className="w-8 h-8 text-[var(--color-aurora-yellow)]" />
+              <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--color-aurora-yellow)]" />
             )}
           </div>
-          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
+          <h3 className="text-base sm:text-lg font-semibold text-[var(--foreground)] mb-1.5 sm:mb-2">
             {mapError.message}
           </h3>
-          <p className="text-[var(--muted-foreground)] text-sm mb-4">
+          <p className="text-[var(--muted-foreground)] text-xs sm:text-sm mb-3 sm:mb-4">
             {mapError.details}
           </p>
 
@@ -845,8 +849,8 @@ export function SafetyMap({
         </div>
       )}
 
-      {/* Search Bar */}
-      <div className="absolute top-4 left-4 right-4 z-10 max-w-md mx-auto">
+      {/* Search Bar - Compact on small screens */}
+      <div className="absolute top-2 sm:top-4 left-2 right-2 sm:left-4 sm:right-4 z-10 max-w-md mx-auto">
         <div className="relative">
           <Input
             type="text"
@@ -854,7 +858,7 @@ export function SafetyMap({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="bg-[var(--card)]/95 backdrop-blur-sm border-[var(--border)] shadow-lg pr-10 text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] h-[44px]"
+            className="bg-[var(--card)]/95 backdrop-blur-sm border-[var(--border)] shadow-lg pr-10 text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] h-10 sm:h-[44px] text-sm rounded-lg sm:rounded-xl"
           />
           <Button
             onClick={handleSearch}
@@ -873,19 +877,19 @@ export function SafetyMap({
 
         {/* Search Results */}
         {searchResults.length > 0 && (
-          <div className="mt-2 bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-lg max-h-60 overflow-y-auto">
+          <div className="mt-1 sm:mt-2 bg-[var(--card)] border border-[var(--border)] rounded-lg sm:rounded-xl shadow-lg max-h-48 sm:max-h-60 overflow-y-auto">
             {searchResults.map((result, index) => (
               <button
                 key={index}
                 onClick={() => handleSelectSearchResult(result)}
-                className="w-full text-left px-4 py-3 hover:bg-[var(--accent)] border-b border-[var(--border)] last:border-b-0 flex items-start gap-2 transition-colors"
+                className="w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-[var(--accent)] border-b border-[var(--border)] last:border-b-0 flex items-start gap-2 transition-colors"
               >
                 <MapPinIcon className="w-4 h-4 text-[var(--color-aurora-purple)] mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate text-[var(--foreground)]">
+                  <p className="font-medium text-xs sm:text-sm truncate text-[var(--foreground)]">
                     {result.text}
                   </p>
-                  <p className="text-xs text-[var(--muted-foreground)] truncate">
+                  <p className="text-[10px] sm:text-xs text-[var(--muted-foreground)] truncate">
                     {result.place_name}
                   </p>
                 </div>
@@ -895,21 +899,21 @@ export function SafetyMap({
         )}
       </div>
 
-      {/* Control Buttons */}
-      <div className="absolute top-20 right-4 flex flex-col gap-2 z-10">
+      {/* Control Buttons - Positioned below search bar with safe spacing */}
+      <div className="absolute top-14 sm:top-20 right-2 sm:right-4 flex flex-col gap-1.5 sm:gap-2 z-10">
         <Button
           onClick={handleGetUserLocation}
-          className="bg-[var(--card)]/95 backdrop-blur-sm text-[var(--foreground)] hover:bg-[var(--accent)] shadow-lg border border-[var(--border)] min-w-[48px] min-h-[48px] rounded-xl"
+          className="bg-[var(--card)]/95 backdrop-blur-sm text-[var(--foreground)] hover:bg-[var(--accent)] shadow-lg border border-[var(--border)] min-w-[44px] min-h-[44px] w-11 h-11 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl"
           size="icon"
           title="Go to my location"
         >
-          <Navigation className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+          <Navigation className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-aurora-purple)]" />
         </Button>
 
         {onLocationSelect && (
           <Button
             onClick={() => setIsSelectingLocation(!isSelectingLocation)}
-            className={`shadow-lg min-w-[48px] min-h-[48px] rounded-xl ${isSelectingLocation
+            className={`shadow-lg min-w-[44px] min-h-[44px] w-11 h-11 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl ${isSelectingLocation
                 ? "bg-[var(--color-aurora-purple)] text-white hover:bg-[var(--color-aurora-violet)]"
                 : "bg-[var(--card)]/95 backdrop-blur-sm text-[var(--foreground)] hover:bg-[var(--accent)] border border-[var(--border)]"
               }`}
@@ -917,9 +921,9 @@ export function SafetyMap({
             title="Click map to mark location"
           >
             {isSelectingLocation ? (
-              <Crosshair className="w-5 h-5" />
+              <Crosshair className="w-4 h-4 sm:w-5 sm:h-5" />
             ) : (
-              <Plus className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-aurora-purple)]" />
             )}
           </Button>
         )}
@@ -927,55 +931,76 @@ export function SafetyMap({
 
       {/* Selection Mode Indicator */}
       {isSelectingLocation && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-[var(--color-aurora-purple)] text-white px-4 py-2 rounded-xl shadow-lg z-20">
-          <p className="text-sm font-medium">
-            Click anywhere on the map to select a location
+        <div className="absolute top-14 sm:top-4 left-1/2 transform -translate-x-1/2 bg-[var(--color-aurora-purple)] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl shadow-lg z-20 max-w-[calc(100%-6rem)] sm:max-w-none">
+          <p className="text-xs sm:text-sm font-medium text-center">
+            Tap anywhere on the map to select a location
           </p>
         </div>
       )}
 
-      {/* Legend */}
-      <div className="absolute bottom-28 sm:bottom-24 lg:bottom-6 left-4 bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg p-3 z-30 max-w-[280px]">
-        <p className="text-[10px] sm:text-xs font-semibold text-[var(--foreground)] mb-2">
-          Safety Legend
-        </p>
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#22c55e] border-2 border-white shadow-sm" />
-              <span className="text-[10px] sm:text-xs text-[var(--foreground)]">
-                Safe (4-5★)
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#eab308] border-2 border-white shadow-sm" />
-              <span className="text-[10px] sm:text-xs text-[var(--foreground)]">
-                Neutral (3★)
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#ef4444] border-2 border-white shadow-sm" />
-              <span className="text-[10px] sm:text-xs text-[var(--foreground)]">
-                Unsafe (1-2★)
-              </span>
-            </div>
+      {/* Legend - Collapsible on small screens to save space */}
+      <div className="absolute bottom-16 sm:bottom-24 lg:bottom-6 left-2 sm:left-4 bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-lg sm:rounded-xl shadow-lg z-30 max-w-[200px] sm:max-w-[280px]">
+        {/* Legend toggle header - always visible */}
+        <button
+          onClick={() => setLegendExpanded(!legendExpanded)}
+          className="flex items-center justify-between w-full p-2 sm:p-3 gap-2 sm:hidden"
+          aria-expanded={legendExpanded}
+          aria-label="Toggle safety legend"
+        >
+          <div className="flex items-center gap-1.5">
+            <Info className="w-3.5 h-3.5 text-[var(--color-aurora-purple)]" />
+            <span className="text-[10px] font-semibold text-[var(--foreground)]">Safety Legend</span>
           </div>
-          <div className="flex items-center gap-1.5 pt-1 border-t border-[var(--border)]">
-            <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-[#ec4c28] border-2 border-white shadow-sm rounded-sm rotate-45 flex items-center justify-center">
-              <span className="text-[6px] sm:text-[8px] -rotate-45">⚠️</span>
+          {legendExpanded ? (
+            <ChevronDown className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
+          ) : (
+            <ChevronUp className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
+          )}
+        </button>
+
+        {/* Legend content - always visible on sm+, collapsible on mobile */}
+        <div className={`${legendExpanded ? 'block' : 'hidden'} sm:block p-2 sm:p-3 pt-0 sm:pt-3`}>
+          <p className="text-[10px] sm:text-xs font-semibold text-[var(--foreground)] mb-1.5 sm:mb-2 hidden sm:block">
+            Safety Legend
+          </p>
+          <div className="flex flex-col gap-1.5 sm:gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-3">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[#22c55e] border-2 border-white shadow-sm flex-shrink-0" />
+                <span className="text-[9px] sm:text-xs text-[var(--foreground)]">
+                  Safe (4-5)
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[#eab308] border-2 border-white shadow-sm flex-shrink-0" />
+                <span className="text-[9px] sm:text-xs text-[var(--foreground)]">
+                  Neutral (3)
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[#ef4444] border-2 border-white shadow-sm flex-shrink-0" />
+                <span className="text-[9px] sm:text-xs text-[var(--foreground)]">
+                  Unsafe (1-2)
+                </span>
+              </div>
             </div>
-            <span className="text-[10px] sm:text-xs text-[var(--foreground)]">
-              Workplace Report
-            </span>
+            <div className="flex items-center gap-1 pt-1 border-t border-[var(--border)]">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-[#ec4c28] border-2 border-white shadow-sm rounded-sm rotate-45 flex items-center justify-center flex-shrink-0">
+                <span className="text-[5px] sm:text-[8px] -rotate-45">!</span>
+              </div>
+              <span className="text-[9px] sm:text-xs text-[var(--foreground)]">
+                Workplace Report
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Nearby Posts Panel */}
+      {/* Nearby Posts Panel - Compact on small screens */}
       {nearbyPosts.length > 0 && (
-        <div className="absolute bottom-24 sm:bottom-6 right-4 bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-xl shadow-lg p-3 z-10 max-w-[280px] max-h-[40vh] overflow-y-auto">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="font-semibold text-xs text-[var(--foreground)]">
+        <div className="absolute bottom-16 sm:bottom-6 right-2 sm:right-4 bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-lg sm:rounded-xl shadow-lg p-2 sm:p-3 z-10 max-w-[240px] sm:max-w-[280px] max-h-[35vh] sm:max-h-[40vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <h4 className="font-semibold text-[10px] sm:text-xs text-[var(--foreground)]">
               Nearby ({nearbyPosts.length})
             </h4>
             <Button
@@ -987,16 +1012,16 @@ export function SafetyMap({
               <X className="w-4 h-4" />
             </Button>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1 sm:space-y-1.5">
             {nearbyPosts.slice(0, 5).map((post) => (
               <button
                 key={post._id}
                 onClick={() => onMarkerClick && onMarkerClick(post._id)}
-                className="w-full text-left p-2 hover:bg-[var(--accent)] rounded-lg border border-[var(--border)] transition-colors"
+                className="w-full text-left p-1.5 sm:p-2 hover:bg-[var(--accent)] rounded-lg border border-[var(--border)] transition-colors"
               >
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-1.5 sm:gap-2">
                   <Badge
-                    className={`flex-shrink-0 text-white text-[10px] px-1.5 ${post.rating >= 4
+                    className={`flex-shrink-0 text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 ${post.rating >= 4
                         ? "bg-[#22c55e]"
                         : post.rating >= 3
                           ? "bg-[#eab308]"
@@ -1006,10 +1031,10 @@ export function SafetyMap({
                     {post.rating}
                   </Badge>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-xs truncate text-[var(--foreground)]">
+                    <p className="font-medium text-[10px] sm:text-xs truncate text-[var(--foreground)]">
                       {post.title}
                     </p>
-                    <p className="text-[10px] text-[var(--muted-foreground)] truncate">
+                    <p className="text-[9px] sm:text-[10px] text-[var(--muted-foreground)] truncate">
                       {post.location?.name}
                     </p>
                   </div>

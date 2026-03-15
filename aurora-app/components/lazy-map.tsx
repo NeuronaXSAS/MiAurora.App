@@ -134,21 +134,21 @@ function StaticMapPlaceholder({
         />
       </div>
 
-      <div className="text-center p-6 max-w-sm relative z-10">
-        <div className="w-20 h-20 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-xl">
-          <MapPin className="w-10 h-10 text-white" />
+      <div className="text-center px-4 py-4 sm:p-6 max-w-sm w-full relative z-10">
+        <div className="w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-3 sm:mb-5 shadow-xl">
+          <MapPin className="w-7 h-7 sm:w-10 sm:h-10 text-white" />
         </div>
         
-        <h3 className="text-xl font-bold text-[var(--foreground)] mb-2">
+        <h3 className="text-lg sm:text-xl font-bold text-[var(--foreground)] mb-1 sm:mb-2">
           Safety Map
         </h3>
         
-        <p className="text-sm text-[var(--muted-foreground)] mb-5">
+        <p className="text-xs sm:text-sm text-[var(--muted-foreground)] mb-3 sm:mb-5 leading-snug">
           View community-verified safe locations and workplace ratings near you.
         </p>
 
         {isSlowNetwork && (
-          <div className="flex items-center justify-center gap-2 mb-4 text-[var(--color-aurora-yellow)]">
+          <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4 text-[var(--color-aurora-yellow)]">
             <WifiOff className="w-4 h-4" />
             <span className="text-xs">Slow connection detected</span>
           </div>
@@ -156,7 +156,7 @@ function StaticMapPlaceholder({
         
         <button
           onClick={handleLoadMap}
-          className="w-full px-6 py-4 bg-[var(--color-aurora-purple)] text-white rounded-xl font-semibold hover:bg-[var(--color-aurora-violet)] active:scale-[0.98] transition-all min-h-[56px] shadow-lg shadow-[var(--color-aurora-purple)]/30"
+          className="w-full px-5 sm:px-6 py-3.5 sm:py-4 bg-[var(--color-aurora-purple)] text-white rounded-xl font-semibold hover:bg-[var(--color-aurora-violet)] active:scale-[0.98] transition-all min-h-[56px] shadow-lg shadow-[var(--color-aurora-purple)]/30 text-sm sm:text-base"
         >
           <div className="flex items-center justify-center gap-2">
             <Navigation className="w-5 h-5" />
@@ -164,7 +164,7 @@ function StaticMapPlaceholder({
           </div>
         </button>
         
-        <p className="text-xs text-[var(--muted-foreground)] mt-4 flex items-center justify-center gap-1">
+        <p className="text-[10px] sm:text-xs text-[var(--muted-foreground)] mt-3 sm:mt-4 flex items-center justify-center gap-1">
           <Smartphone className="w-3 h-3" />
           Optimized for your device
         </p>

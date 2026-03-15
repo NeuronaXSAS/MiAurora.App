@@ -55,10 +55,10 @@ export default function MapPage() {
         onLocationSelect={handleLocationSelect}
       />
 
-      {/* Bottom Controls - Clean and organized */}
-      <div className="absolute bottom-6 left-4 right-4 z-20">
-        <div className="bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-2xl shadow-lg p-3">
-          <div className="flex items-center gap-2">
+      {/* Bottom Controls - Compact for small screens, respects safe areas */}
+      <div className="absolute bottom-2 sm:bottom-6 left-2 right-2 sm:left-4 sm:right-4 z-20 safe-area-inset-bottom">
+        <div className="bg-[var(--card)]/95 backdrop-blur-sm border border-[var(--border)] rounded-xl sm:rounded-2xl shadow-lg p-2 sm:p-3">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Filter Dropdown */}
             <Select
               value={lifeDimension || "all"}
@@ -66,7 +66,7 @@ export default function MapPage() {
                 setLifeDimension(value === "all" ? undefined : value)
               }
             >
-              <SelectTrigger className="flex-1 bg-[var(--background)] border-[var(--border)] min-h-[44px] rounded-xl">
+              <SelectTrigger className="flex-1 bg-[var(--background)] border-[var(--border)] min-h-[44px] h-11 sm:h-12 rounded-lg sm:rounded-xl text-xs sm:text-sm">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent className="bg-[var(--card)] border-[var(--border)]">
@@ -82,9 +82,9 @@ export default function MapPage() {
             {/* Mark Location Button */}
             <Button 
               onClick={() => setShowCreateDialog(true)} 
-              className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] min-h-[44px] rounded-xl px-4"
+              className="bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-violet)] min-h-[44px] h-11 sm:h-12 rounded-lg sm:rounded-xl px-3 sm:px-4 flex-shrink-0"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Mark</span>
             </Button>
           </div>

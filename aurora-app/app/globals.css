@@ -1742,3 +1742,29 @@ textarea:focus-visible {
 .mapboxgl-popup-content {
   pointer-events: auto;
 }
+
+/* Small screen map optimizations */
+@media (max-width: 480px) {
+  .aurora-map-popup .mapboxgl-popup-content {
+    border-radius: 10px;
+    max-width: 180px !important;
+  }
+
+  .aurora-map-popup .mapboxgl-popup-close-button {
+    font-size: 20px;
+    padding: 2px 6px;
+    min-width: 28px;
+    min-height: 28px;
+  }
+
+  /* Compact popup spacing on small screens */
+  .aurora-map-popup .mapboxgl-popup-content div[style*="padding"] {
+    padding: 6px !important;
+  }
+
+  /* Ensure map controls don't interfere with iOS safe areas */
+  .mapboxgl-ctrl-top-right,
+  .mapboxgl-ctrl-top-left {
+    margin-top: env(safe-area-inset-top, 0px) !important;
+  }
+}
