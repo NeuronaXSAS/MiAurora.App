@@ -113,18 +113,6 @@ export function AIChatCompanion({ onSendMessage, onClose, className }: AIChatCom
         .filter(m => !m.isTyping)
         .map(m => ({ isUser: m.isUser, content: m.content }));
 
-      // Get user info for rate limiting
-      let userId = null;
-      let isPremium = false;
-      try {
-        const authRes = await fetch('/api/auth/me');
-        const authData = await authRes.json();
-        userId = authData.userId;
-        isPremium = authData.isPremium || false;
-      } catch (e) {
-        // Continue without auth
-      }
-
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: {
@@ -133,8 +121,6 @@ export function AIChatCompanion({ onSendMessage, onClose, className }: AIChatCom
         body: JSON.stringify({
           message: userMessage,
           conversationHistory,
-          userId,
-          isPremium,
         }),
       });
 

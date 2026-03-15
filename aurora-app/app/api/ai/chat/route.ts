@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { checkRateLimit } from '@/lib/rate-limit';
 import { canUseGemini, recordGeminiUsage, DEV_MODE } from '@/lib/resource-guard';
 import { isSameOriginRequest, readSession } from "@/lib/server-session";
 
@@ -49,9 +48,13 @@ export async function POST(request: NextRequest) {
 
     const isPremium = user.isPremium || false;
     const userId = session.convexUserId;
-    const rateLimitResult = checkRateLimit(userId, 'aiChat', isPremium);
+    const rateLimitResult = await convex.mutation(api.rateLimit.checkRateLimit, {
+      identifier: userId,
+      actionType: "aiChat",
+      isPremium,
+    });
 
-    if (!rateLimitResult.success) {
+    if (!rateLimitResult.allowed) {
       const resetMinutes = Math.ceil(rateLimitResult.resetIn / 60000);
       return NextResponse.json(
         { 

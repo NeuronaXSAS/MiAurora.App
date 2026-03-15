@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SUBSCRIPTION_TIERS, CREDIT_PACKAGES } from "@/convex/premiumConfig";
-import type { Id } from "@/convex/_generated/dataModel";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 // Regional pricing type
 interface RegionalPricing {
@@ -44,12 +44,11 @@ interface RegionalPricing {
 }
 
 export default function PremiumPage() {
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
+  const { authToken, isLoading: isAuthLoading, userId } = useAuthSession();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [userCountry, setUserCountry] = useState<string>("US");
   const [regionalPricing, setRegionalPricing] = useState<RegionalPricing | null>(null);
 
   // Detect user country and fetch regional pricing
@@ -67,8 +66,7 @@ export default function PremiumPage() {
           'Africa/Lagos': 'NG', 'Africa/Nairobi': 'KE', 'Africa/Johannesburg': 'ZA',
         };
         const detected = countryMap[timezone] || 'US';
-        setUserCountry(detected);
-        
+
         // Fetch regional pricing
         const response = await fetch(`/api/stripe/checkout?country=${detected}`);
         if (response.ok) {
@@ -77,18 +75,10 @@ export default function PremiumPage() {
         }
       } catch {
         // Fallback to US pricing
-        setUserCountry('US');
       }
     };
     
     detectCountry();
-  }, []);
-
-  useEffect(() => {
-    const storedUserId = localStorage.getItem("aurora_user_id");
-    if (storedUserId) {
-      setUserId(storedUserId as Id<"users">);
-    }
   }, []);
 
   // Handle tier query parameter from landing page
@@ -104,12 +94,9 @@ export default function PremiumPage() {
     }
   }, []);
 
-  const user = useQuery(api.users.getUser, userId ? { userId } : "skip");
-  const userLoading = userId === null;
-
   const subscription = useQuery(
     api.subscriptions.getUserSubscription,
-    userId ? { userId } : "skip"
+    userId && authToken ? { authToken, userId } : "skip"
   );
 
   // Memoized tier data with regional pricing
@@ -138,7 +125,7 @@ export default function PremiumPage() {
   }, [regionalPricing]);
 
   const handleSubscribe = useCallback(async (tierId: string) => {
-    if (!userId || !user) return;
+    if (!userId) return;
     setIsProcessing(true);
     setSelectedTier(tierId);
     
@@ -147,12 +134,9 @@ export default function PremiumPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId,
-          email: user.email,
           type: 'subscription',
           tier: tierId,
           billingCycle,
-          country: userCountry,
         }),
       });
       
@@ -171,10 +155,10 @@ export default function PremiumPage() {
       setIsProcessing(false);
       setSelectedTier(null);
     }
-  }, [userId, user, billingCycle, userCountry]);
+  }, [billingCycle, userId]);
 
   const handlePurchaseCredits = useCallback(async (packageId: string) => {
-    if (!userId || !user) return;
+    if (!userId) return;
     setIsProcessing(true);
     setSelectedPackage(packageId);
     
@@ -183,11 +167,8 @@ export default function PremiumPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId,
-          email: user.email,
           type: 'credits',
           packageId,
-          country: userCountry,
         }),
       });
       
@@ -206,20 +187,20 @@ export default function PremiumPage() {
       setIsProcessing(false);
       setSelectedPackage(null);
     }
-  }, [userId, user, userCountry]);
+  }, [userId]);
 
   // Auto-trigger checkout when user is loaded and tier is specified from landing page
   useEffect(() => {
-    if (autoCheckoutTier && userId && user && !isProcessing) {
+    if (autoCheckoutTier && userId && !isProcessing) {
       const timer = setTimeout(() => {
         handleSubscribe(autoCheckoutTier);
         setAutoCheckoutTier(null);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [autoCheckoutTier, userId, user, isProcessing, handleSubscribe]);
+  }, [autoCheckoutTier, handleSubscribe, isProcessing, userId]);
 
-  if (userLoading) {
+  if (isAuthLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-[var(--color-aurora-purple)]" />

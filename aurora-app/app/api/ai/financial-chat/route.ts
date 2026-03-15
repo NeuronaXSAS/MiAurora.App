@@ -6,6 +6,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { isSameOriginRequest, readSession } from "@/lib/server-session";
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 // Financial data extraction patterns
 const INCOME_PATTERNS = [
@@ -270,12 +277,46 @@ What would you like to work on today?`;
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, userId } = await request.json();
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+    }
 
-    if (!message || !userId) {
+    const cookieStore = await cookies();
+    const session = await readSession(cookieStore);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { message } = await request.json();
+
+    if (!message) {
       return NextResponse.json(
-        { error: "Message and userId are required" },
+        { error: "Message is required" },
         { status: 400 }
+      );
+    }
+
+    const user = await convex.query(api.users.getUser, {
+      userId: session.convexUserId as Id<"users">,
+    });
+    if (!user || user.workosId !== session.workosUserId) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
+    const rateLimitResult = await convex.mutation(api.rateLimit.checkRateLimit, {
+      identifier: session.convexUserId,
+      actionType: "aiFinancialChat",
+      isPremium: Boolean(user.isPremium),
+    });
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: "Rate limit exceeded",
+          message: "You've reached your financial chat limit for now. Please try again later.",
+          remaining: rateLimitResult.remaining,
+          resetIn: rateLimitResult.resetIn,
+        },
+        { status: 429 },
       );
     }
 

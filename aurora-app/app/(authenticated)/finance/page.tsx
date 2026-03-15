@@ -38,8 +38,8 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Id } from "@/convex/_generated/dataModel";
 import Image from "next/image";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 // Quick action suggestions for the chat
 const quickActions = [
@@ -52,39 +52,25 @@ const quickActions = [
 ];
 
 export default function FinancePage() {
-  const [userId, setUserId] = useState<Id<"users"> | null>(null);
+  const { authToken, isLoading: isAuthLoading, userId } = useAuthSession();
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showMetrics, setShowMetrics] = useState(true);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    const getUserId = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        if (data.userId) setUserId(data.userId as Id<"users">);
-      } catch (error) {
-        console.error("Error getting user:", error);
-      }
-    };
-    getUserId();
-  }, []);
-
   // Queries
-  const user = useQuery(api.users.getUser, userId ? { userId } : "skip");
   const chatHistory = useQuery(
     api.financialChat.getChatHistory,
-    userId ? { userId, limit: 100 } : "skip"
+    userId && authToken ? { authToken, userId, limit: 100 } : "skip"
   );
   const financialProfile = useQuery(
     api.financialChat.getFinancialProfile,
-    userId ? { userId } : "skip"
+    userId && authToken ? { authToken, userId } : "skip"
   );
   const financialGoals = useQuery(
     api.financialChat.getFinancialGoals,
-    userId ? { userId } : "skip"
+    userId && authToken ? { authToken, userId } : "skip"
   );
 
   // Mutations
@@ -98,7 +84,7 @@ export default function FinancePage() {
 
   // Handle sending message
   const handleSendMessage = useCallback(async () => {
-    if (!message.trim() || !userId || isLoading) return;
+    if (!message.trim() || !userId || !authToken || isLoading) return;
 
     const userMessage = message.trim();
     setMessage("");
@@ -109,13 +95,14 @@ export default function FinancePage() {
       const response = await fetch("/api/ai/financial-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage, userId }),
+        body: JSON.stringify({ message: userMessage }),
       });
 
       const data = await response.json();
 
       // Save to Convex
       await sendFinancialMessage({
+        authToken,
         userId,
         message: userMessage,
         aiResponse: data.response || "I'm here to help with your financial planning. Could you tell me more?",
@@ -125,6 +112,7 @@ export default function FinancePage() {
       console.error("Error sending message:", error);
       // Save error response
       await sendFinancialMessage({
+        authToken,
         userId,
         message: userMessage,
         aiResponse: "I apologize, I'm having trouble processing that right now. Please try again in a moment.",
@@ -132,7 +120,7 @@ export default function FinancePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [message, userId, isLoading, sendFinancialMessage]);
+  }, [authToken, isLoading, message, sendFinancialMessage, userId]);
 
   // Handle quick action click
   const handleQuickAction = (text: string) => {
@@ -142,9 +130,9 @@ export default function FinancePage() {
 
   // Handle clear chat
   const handleClearChat = async () => {
-    if (!userId) return;
+    if (!userId || !authToken) return;
     if (confirm("Are you sure you want to clear your chat history? Your financial profile will be kept.")) {
-      await clearChatHistory({ userId });
+      await clearChatHistory({ authToken, userId });
     }
   };
 
@@ -156,7 +144,7 @@ export default function FinancePage() {
     }
   };
 
-  if (!userId) {
+  if (isAuthLoading || !userId || !authToken) {
     return (
       <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-[var(--color-aurora-purple)]" />

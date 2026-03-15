@@ -24,6 +24,14 @@ export const RATE_LIMIT_CONFIG = {
     free: { requests: 10, windowMs: 24 * 60 * 60 * 1000 }, // 10/day
     premium: { requests: 1000, windowMs: 24 * 60 * 60 * 1000 }, // 1000/day
   },
+  aiVoice: {
+    free: { requests: 10, windowMs: 24 * 60 * 60 * 1000 }, // 10/day
+    premium: { requests: 1000, windowMs: 24 * 60 * 60 * 1000 }, // 1000/day
+  },
+  aiFinancialChat: {
+    free: { requests: 20, windowMs: 24 * 60 * 60 * 1000 }, // 20/day
+    premium: { requests: 1000, windowMs: 24 * 60 * 60 * 1000 }, // 1000/day
+  },
   // Post creation
   createPost: {
     free: { requests: 5, windowMs: 60 * 60 * 1000 }, // 5/hour

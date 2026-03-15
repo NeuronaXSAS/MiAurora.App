@@ -120,25 +120,12 @@ export function ChatSidebar({ userId, isOpen, onToggle }: ChatSidebarProps) {
         .filter(m => !m.isTyping)
         .map(m => ({ isUser: m.isUser, content: m.content }));
 
-      let authUserId = null;
-      let isPremium = false;
-      try {
-        const authRes = await fetch('/api/auth/me');
-        const authData = await authRes.json();
-        authUserId = authData.userId;
-        isPremium = authData.isPremium || false;
-      } catch {
-        // Continue without auth
-      }
-
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage,
           conversationHistory,
-          userId: authUserId,
-          isPremium,
         }),
       });
 

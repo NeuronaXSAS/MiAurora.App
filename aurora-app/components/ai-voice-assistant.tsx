@@ -197,7 +197,6 @@ export function AIVoiceAssistant({ userId, userCredits = 0, onCreditsUpdate }: A
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text,
-          userId,
           context: voiceContext,
         }),
       });

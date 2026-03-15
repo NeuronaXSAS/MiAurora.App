@@ -7,6 +7,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { SUBSCRIPTION_TIERS, REVENUE_SHARES, SAFETY_FEATURES } from "./premiumConfig";
+import { requireAuthenticatedUser } from "./auth";
 
 // ============================================
 // SUBSCRIPTION QUERIES
@@ -16,11 +17,15 @@ import { SUBSCRIPTION_TIERS, REVENUE_SHARES, SAFETY_FEATURES } from "./premiumCo
  * Get user's current subscription
  */
 export const getUserSubscription = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const subscription = await ctx.db
       .query("userSubscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .first();
     
     if (!subscription) {
@@ -45,11 +50,15 @@ export const getUserSubscription = query({
  * Get user's rate limits based on subscription tier
  */
 export const getUserLimits = query({
-  args: { userId: v.id("users") },
+  args: {
+    authToken: v.string(),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const subscription = await ctx.db
       .query("userSubscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .first();
     
     const tier = subscription?.status === "active" ? subscription.tier : "free";
@@ -82,11 +91,13 @@ export const getUserLimits = query({
  */
 export const checkAccess = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     feature: v.string(),
     requiredTier: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Safety features are ALWAYS accessible
     if (SAFETY_FEATURES.includes(args.feature)) {
       return { allowed: true, reason: "Safety feature - always free" };
@@ -94,7 +105,7 @@ export const checkAccess = query({
     
     const subscription = await ctx.db
       .query("userSubscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .first();
     
     const userTier = subscription?.status === "active" ? subscription.tier : "free";
@@ -243,13 +254,15 @@ export const createSubscription = mutation({
  */
 export const updateSubscription = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     newTier: v.string(),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const subscription = await ctx.db
       .query("userSubscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .first();
     
     if (!subscription) {
@@ -286,13 +299,13 @@ export const updateSubscription = mutation({
     });
     
     // Update user's isPremium flag
-    await ctx.db.patch(args.userId, {
+    await ctx.db.patch(userId, {
       isPremium: args.newTier !== "free",
     });
     
     // Log tier change
     await ctx.db.insert("transactions", {
-      userId: args.userId,
+      userId,
       amount: 0,
       type: "subscription_tier_change",
       relatedId: `${subscription.tier}_to_${args.newTier}`,
@@ -312,13 +325,15 @@ export const updateSubscription = mutation({
  */
 export const cancelSubscription = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     cancelAtPeriodEnd: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const subscription = await ctx.db
       .query("userSubscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .first();
     
     if (!subscription) {
@@ -337,14 +352,14 @@ export const cancelSubscription = mutation({
       });
       
       // Update user's isPremium flag
-      await ctx.db.patch(args.userId, {
+      await ctx.db.patch(userId, {
         isPremium: false,
       });
     }
     
     // Log cancellation
     await ctx.db.insert("transactions", {
-      userId: args.userId,
+      userId,
       amount: 0,
       type: "subscription_cancelled",
       relatedId: subscription._id,

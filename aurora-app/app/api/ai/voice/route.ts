@@ -1,16 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from "next/headers";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { isSameOriginRequest, readSession } from "@/lib/server-session";
 
 // Voice AI endpoint using Gemini 2.0 Flash-Lite (most economical)
 // Free Tier limits: 30 RPM, 1,000,000 TPM, 200 RPD
 
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
 export async function POST(request: NextRequest) {
   try {
-    const { text, userId, context, audioData } = await request.json();
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+    }
+
+    const cookieStore = await cookies();
+    const session = await readSession(cookieStore);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { text, context, audioData } = await request.json();
 
     if (!text && !audioData) {
       return NextResponse.json(
         { error: 'Text or audio data is required' },
         { status: 400 }
+      );
+    }
+
+    const user = await convex.query(api.users.getUser, {
+      userId: session.convexUserId as Id<"users">,
+    });
+    if (!user || user.workosId !== session.workosUserId) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
+    const rateLimitResult = await convex.mutation(api.rateLimit.checkRateLimit, {
+      identifier: session.convexUserId,
+      actionType: "aiVoice",
+      isPremium: Boolean(user.isPremium),
+    });
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: "Rate limit exceeded",
+          message: "You've reached your voice AI limit for now. Please try again later.",
+          remaining: rateLimitResult.remaining,
+          resetIn: rateLimitResult.resetIn,
+        },
+        { status: 429 },
       );
     }
 
@@ -20,7 +61,6 @@ export async function POST(request: NextRequest) {
       console.error('GEMINI_API_KEY not configured');
       return NextResponse.json({
         response: getVoiceFallbackResponse(text || ''),
-        userId,
       });
     }
 
@@ -58,7 +98,6 @@ export async function POST(request: NextRequest) {
       console.error('Gemini API error:', response.statusText);
       return NextResponse.json({
         response: getVoiceFallbackResponse(text || ''),
-        userId,
       });
     }
 
@@ -67,7 +106,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       response: aiResponse.trim(),
-      userId,
     });
   } catch (error) {
     console.error('Error in voice AI endpoint:', error);
@@ -81,9 +119,18 @@ export async function POST(request: NextRequest) {
 // Audio transcription endpoint (for processing audio input)
 export async function PUT(request: NextRequest) {
   try {
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+    }
+
+    const cookieStore = await cookies();
+    const session = await readSession(cookieStore);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const audioFile = formData.get('audio') as File;
-    const userId = formData.get('userId') as string;
 
     if (!audioFile) {
       return NextResponse.json(
@@ -149,7 +196,6 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({
       transcript: transcript.trim(),
-      userId,
     });
   } catch (error) {
     console.error('Error in audio transcription:', error);

@@ -10,10 +10,12 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireAuthenticatedUser } from "./auth";
 
 // Financial chat message schema
 export const sendFinancialMessage = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     message: v.string(),
     aiResponse: v.string(),
@@ -28,9 +30,10 @@ export const sendFinancialMessage = mutation({
     })),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     // Store the message
     const messageId = await ctx.db.insert("financialChats", {
-      userId: args.userId,
+      userId,
       userMessage: args.message,
       aiResponse: args.aiResponse,
       extractedData: args.extractedData,
@@ -41,7 +44,7 @@ export const sendFinancialMessage = mutation({
     if (args.extractedData) {
       const existingProfile = await ctx.db
         .query("financialProfiles")
-        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .withIndex("by_user", (q) => q.eq("userId", userId))
         .first();
 
       if (existingProfile) {
@@ -88,7 +91,7 @@ export const sendFinancialMessage = mutation({
         const wellnessScore = calculateWellnessScore(newProfileData);
         
         await ctx.db.insert("financialProfiles", {
-          userId: args.userId,
+          userId,
           ...newProfileData,
           savingsGoal: args.extractedData.savingsGoal || 0,
           wellnessScore,
@@ -98,9 +101,9 @@ export const sendFinancialMessage = mutation({
     }
 
     // Award credits for financial planning activity
-    const user = await ctx.db.get(args.userId);
+    const user = await ctx.db.get(userId);
     if (user) {
-      await ctx.db.patch(args.userId, {
+      await ctx.db.patch(userId, {
         credits: (user.credits || 0) + 2,
       });
     }
@@ -112,13 +115,15 @@ export const sendFinancialMessage = mutation({
 // Get chat history
 export const getChatHistory = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const messages = await ctx.db
       .query("financialChats")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .take(args.limit || 50);
 
@@ -129,12 +134,14 @@ export const getChatHistory = query({
 // Get financial profile
 export const getFinancialProfile = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const profile = await ctx.db
       .query("financialProfiles")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .first();
 
     if (!profile) {
@@ -176,12 +183,14 @@ export const getFinancialProfile = query({
 // Get financial goals
 export const getFinancialGoals = query({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const goals = await ctx.db
       .query("financialGoals")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     return goals;
@@ -191,6 +200,7 @@ export const getFinancialGoals = query({
 // Create or update financial goal
 export const upsertFinancialGoal = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
     goalId: v.optional(v.id("financialGoals")),
     title: v.string(),
@@ -200,6 +210,7 @@ export const upsertFinancialGoal = mutation({
     category: v.string(),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     if (args.goalId) {
       await ctx.db.patch(args.goalId, {
         title: args.title,
@@ -212,7 +223,7 @@ export const upsertFinancialGoal = mutation({
       return args.goalId;
     } else {
       return await ctx.db.insert("financialGoals", {
-        userId: args.userId,
+        userId,
         title: args.title,
         targetAmount: args.targetAmount,
         currentAmount: args.currentAmount,
@@ -265,12 +276,14 @@ function calculateWellnessScore(profile: {
 // Clear chat history (for privacy)
 export const clearChatHistory = mutation({
   args: {
+    authToken: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    const { userId } = await requireAuthenticatedUser(args.authToken, args.userId);
     const messages = await ctx.db
       .query("financialChats")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     for (const message of messages) {
