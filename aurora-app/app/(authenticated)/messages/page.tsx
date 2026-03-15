@@ -13,6 +13,9 @@ import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { motion } from "framer-motion";
+import { fadeInUp, staggerFast, staggerChild, hoverLift } from "@/lib/motion";
+import { PageTransition } from "@/components/page-transition";
 
 // Generate DiceBear Lorelei avatar URL
 function getAvatarUrl(user: { 
@@ -71,9 +74,9 @@ export default function MessagesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
+    <PageTransition className="min-h-screen bg-[var(--background)]">
       {/* Header */}
-      <div className="bg-[var(--card)] border-b border-[var(--border)]">
+      <div className="bg-[var(--card)]/80 backdrop-blur-md border-b border-[var(--border)]">
         <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -109,7 +112,7 @@ export default function MessagesPage() {
 
               {/* Search Results */}
               {searchResults && searchResults.length > 0 && (
-                <Card className="mt-2 bg-[var(--card)] border-[var(--border)]">
+                <Card className="mt-2 glass-card shadow-premium">
                   <CardContent className="p-2">
                     {searchResults.map((user: any) => (
                       <button
@@ -152,7 +155,8 @@ export default function MessagesPage() {
           
           {/* Pending Likes Section - People who liked you */}
           {pendingLikes && pendingLikes.length > 0 && (
-            <Card className="bg-gradient-to-r from-[var(--color-aurora-pink)]/10 to-[var(--color-aurora-purple)]/10 border-[var(--color-aurora-pink)]/30">
+            <motion.div variants={fadeInUp} initial="hidden" animate="visible">
+              <Card className="bg-gradient-to-r from-[var(--color-aurora-pink)]/10 to-[var(--color-aurora-purple)]/10 border-[var(--color-aurora-pink)]/30 glass-card shadow-premium">
               <CardContent className="py-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Heart className="w-5 h-5 text-[var(--color-aurora-pink)]" />
@@ -188,6 +192,7 @@ export default function MessagesPage() {
                 </div>
               </CardContent>
             </Card>
+            </motion.div>
           )}
 
           {/* Matches Section */}
@@ -233,8 +238,13 @@ export default function MessagesPage() {
 
           {/* Empty State */}
           {conversations && conversations.length === 0 && (!matches || matches.length === 0) && (
-            <div className="space-y-6">
-              <Card className="bg-[var(--card)] border-[var(--border)]">
+            <motion.div
+              className="space-y-6"
+              variants={fadeInUp}
+              initial="hidden"
+              animate="visible"
+            >
+              <Card className="glass-card shadow-premium">
                 <CardContent className="py-8 text-center">
                   <Users className="w-12 h-12 text-[var(--color-aurora-lavender)] mx-auto mb-3" />
                   <h3 className="text-lg font-semibold mb-2 text-[var(--foreground)]">No matches yet</h3>
@@ -251,7 +261,7 @@ export default function MessagesPage() {
               </Card>
               
               {/* Quick Tips */}
-              <Card className="bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border-[var(--color-aurora-purple)]/20">
+              <Card className="bg-gradient-to-r from-[var(--color-aurora-purple)]/10 to-[var(--color-aurora-pink)]/10 border-[var(--color-aurora-purple)]/20 glass-card">
                 <CardContent className="py-4">
                   <h4 className="font-semibold text-[var(--foreground)] mb-2">💜 How matching works</h4>
                   <ul className="text-sm text-[var(--muted-foreground)] space-y-1">
@@ -262,7 +272,7 @@ export default function MessagesPage() {
                   </ul>
                 </CardContent>
               </Card>
-            </div>
+            </motion.div>
           )}
 
           {/* Conversations List */}
@@ -272,17 +282,22 @@ export default function MessagesPage() {
                 <MessageSquare className="w-5 h-5 text-[var(--color-aurora-purple)]" />
                 <h3 className="font-semibold text-[var(--foreground)]">Conversations</h3>
               </div>
-              <div className="space-y-2">
+              <motion.div
+                className="space-y-2"
+                variants={staggerFast}
+                initial="hidden"
+                animate="visible"
+              >
                 {conversations.map((conv: any) => (
-                  <Card
-                    key={conv.partnerId}
-                    className="hover:shadow-lg cursor-pointer bg-[var(--card)] border-[var(--border)] transition-all active:scale-[0.99]"
-                    onClick={() => router.push(`/messages/${conv.partnerId}`)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && router.push(`/messages/${conv.partnerId}`)}
-                    aria-label={`Chat with ${conv.partner?.name || "Unknown User"}${conv.unreadCount > 0 ? `, ${conv.unreadCount} unread messages` : ''}`}
-                  >
+                  <motion.div key={conv.partnerId} variants={staggerChild}>
+                    <Card
+                      className="cursor-pointer glass-card shadow-premium transition-all active:scale-[0.99] hover:shadow-lg"
+                      onClick={() => router.push(`/messages/${conv.partnerId}`)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === 'Enter' && router.push(`/messages/${conv.partnerId}`)}
+                      aria-label={`Chat with ${conv.partner?.name || "Unknown User"}${conv.unreadCount > 0 ? `, ${conv.unreadCount} unread messages` : ''}`}
+                    >
                     <CardContent className="p-4 min-h-[72px]">
                       <div className="flex items-start gap-3">
                         <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden bg-[var(--color-aurora-lavender)]">
@@ -321,12 +336,13 @@ export default function MessagesPage() {
                       </div>
                     </CardContent>
                   </Card>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </div>
           )}
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }

@@ -83,7 +83,7 @@ export function NestedComment({
         {hasChildren && (
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="text-gray-400 hover:text-gray-600 transition-colors w-4 flex-shrink-0"
+            className="text-muted-foreground hover:text-gray-600 transition-colors w-4 flex-shrink-0"
           >
             {isCollapsed ? "+" : "−"}
           </button>

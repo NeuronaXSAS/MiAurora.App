@@ -444,7 +444,7 @@ function ResultView({ result, person1Label, person2Label, showCertificate, setSh
                   <Gavel className="w-6 h-6 text-[var(--color-aurora-purple)]" />
                   <div className="text-left">
                     <p className="text-xs font-semibold">Aurora AI Judge</p>
-                    <p className="text-[10px] text-gray-400">Verified Analysis</p>
+                    <p className="text-[10px] text-muted-foreground">Verified Analysis</p>
                   </div>
                 </div>
               </div>

@@ -10,6 +10,15 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { motion } from "framer-motion";
+import { PageTransition } from "@/components/page-transition";
+import {
+  fadeInUp,
+  staggerFast,
+  staggerChild,
+  staggerChildScale,
+  hoverLift,
+} from "@/lib/motion";
 
 // Lazy load LivePlayer
 const LivePlayer = dynamic(
@@ -52,13 +61,14 @@ export default function LivePage() {
   const hasStreams = livestreams && livestreams.length > 0;
 
   return (
+    <PageTransition>
     <div className="h-[calc(100dvh-60px)] flex flex-col bg-[var(--background)]">
       {/* Compact Header */}
-      <div className="bg-[var(--card)] border-b border-[var(--border)] px-4 py-3 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2">
+      <div className="bg-[var(--card)] border-b border-[var(--border)] px-4 py-3 flex items-center justify-between flex-shrink-0 backdrop-blur-md">
+        <motion.div variants={fadeInUp} initial="hidden" animate="visible" className="flex items-center gap-2">
           <Radio className="w-5 h-5 text-red-500 animate-pulse" />
           <h1 className="text-lg font-bold text-[var(--foreground)]">Live</h1>
-        </div>
+        </motion.div>
         <Link href="/live/broadcast">
           <Button size="sm" className="bg-[var(--color-aurora-purple)] min-h-[40px] px-4">
             <Video className="w-4 h-4 mr-1" /> Go Live
@@ -72,7 +82,7 @@ export default function LivePage() {
         {isLoading && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-[var(--card)] rounded-xl overflow-hidden animate-pulse">
+              <div key={i} className="glass-card rounded-xl overflow-hidden animate-pulse">
                 <div className="aspect-[4/3] bg-[var(--muted)]" />
                 <div className="p-2 space-y-2">
                   <div className="h-3 bg-[var(--muted)] rounded w-3/4" />
@@ -85,12 +95,17 @@ export default function LivePage() {
 
         {/* Live Streams Grid - Compact cards */}
         {hasStreams && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <motion.div
+            variants={staggerFast}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
+          >
             {livestreams.map((stream) => (
+              <motion.div key={stream._id} variants={staggerChild} {...hoverLift}>
               <button
-                key={stream._id}
                 onClick={() => setSelectedLivestream(stream._id)}
-                className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden hover:border-[var(--color-aurora-purple)]/50 transition-all text-left group"
+                className="glass-card shadow-premium border border-[var(--border)] rounded-xl overflow-hidden hover:border-[var(--color-aurora-purple)]/50 transition-all text-left group w-full"
               >
                 {/* Thumbnail */}
                 <div className="aspect-[4/3] bg-gradient-to-br from-[var(--color-aurora-purple)]/30 to-[var(--color-aurora-pink)]/30 relative">
@@ -102,7 +117,7 @@ export default function LivePage() {
                     LIVE
                   </span>
                   {/* Viewers */}
-                  <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
+                  <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1 backdrop-blur-sm">
                     <Users className="w-3 h-3" />{stream.viewerCount}
                   </span>
                   {/* Emergency */}
@@ -118,13 +133,14 @@ export default function LivePage() {
                   <p className="text-xs text-[var(--muted-foreground)] truncate">{stream.host?.name || "Anonymous"}</p>
                 </div>
               </button>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
 
         {/* Empty State - Compact */}
         {!isLoading && !hasStreams && (
-          <div className="h-full flex flex-col items-center justify-center text-center px-4">
+          <motion.div variants={fadeInUp} initial="hidden" animate="visible" className="h-full flex flex-col items-center justify-center text-center px-4">
             <div className="w-16 h-16 bg-[var(--color-aurora-purple)]/20 rounded-2xl flex items-center justify-center mb-4">
               <Video className="w-8 h-8 text-[var(--color-aurora-purple)]" />
             </div>
@@ -137,9 +153,10 @@ export default function LivePage() {
                 <Video className="w-4 h-4 mr-2" /> Start Streaming
               </Button>
             </Link>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>
+    </PageTransition>
   );
 }

@@ -178,7 +178,7 @@ export default function TrackRoutePage() {
           <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-950 via-[#1e1b4b] to-slate-900">
             <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4" />
             <p className="text-white font-medium">Acquiring GPS signal...</p>
-            <p className="text-gray-400 text-sm mt-2">Make sure location is enabled</p>
+            <p className="text-muted-foreground text-sm mt-2">Make sure location is enabled</p>
           </div>
         )}
 

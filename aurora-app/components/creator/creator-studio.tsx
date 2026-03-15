@@ -28,6 +28,16 @@ import { motion } from "framer-motion";
 import { Id } from "@/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import {
+  fadeInUp,
+  staggerFast,
+  staggerMedium,
+  staggerChild,
+  staggerChildScale,
+  hoverLift,
+  scrollFadeIn,
+  scrollTrigger,
+} from "@/lib/motion";
 
 interface CreatorStudioProps {
   authToken: string;
@@ -80,7 +90,15 @@ export function CreatorStudio({ authToken, userId }: CreatorStudioProps) {
   return (
     <div className="space-y-6">
       {/* Creator Header */}
-      <div className="bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-2xl p-6 text-white">
+      <motion.div
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+        className="bg-gradient-to-r from-[var(--color-aurora-purple)] to-[var(--color-aurora-pink)] rounded-2xl p-6 text-white relative overflow-hidden"
+      >
+        {/* Decorative orb */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+        <div className="relative">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold mb-1">Creator Studio</h1>
@@ -94,38 +112,48 @@ export function CreatorStudio({ authToken, userId }: CreatorStudioProps) {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-4 gap-3">
+        <motion.div
+          variants={staggerFast}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-4 gap-3"
+        >
           {[
             { label: "Gifts", value: giftEarnings?.totalGifts || 0, icon: Gift },
             { label: "Views", value: "0", icon: Eye },
             { label: "Followers", value: "0", icon: Users },
             { label: "Likes", value: "0", icon: Heart },
           ].map((stat) => (
-            <div key={stat.label} className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
+            <motion.div key={stat.label} variants={staggerChildScale} className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm border border-white/10">
               <stat.icon className="w-5 h-5 mx-auto mb-1 text-white/80" />
               <p className="text-lg font-bold">{stat.value}</p>
               <p className="text-xs text-white/60">{stat.label}</p>
-            </div>
+            </motion.div>
           ))}
+        </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {quickActions.map((action, index) => (
+      <motion.div
+        variants={staggerMedium}
+        initial="hidden"
+        animate="visible"
+        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+      >
+        {quickActions.map((action) => (
           <motion.div
             key={action.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
+            variants={staggerChild}
+            {...hoverLift}
           >
             <Link href={action.href}>
-              <Card className="bg-[var(--card)] border-[var(--border)] hover:border-[var(--color-aurora-purple)]/50 transition-all cursor-pointer group overflow-hidden">
+              <Card className="glass-card shadow-premium hover:border-[var(--color-aurora-purple)]/50 transition-all cursor-pointer group overflow-hidden">
                 <CardContent className="p-0">
                   <div className={`bg-gradient-to-r ${action.color} p-4`}>
                     <div className="flex items-center justify-between">
                       <action.icon className="w-8 h-8 text-white" />
-                      <Badge className="bg-white/20 text-white border-0 text-xs">
+                      <Badge className="bg-white/20 text-white border-0 text-xs backdrop-blur-sm">
                         {action.badge}
                       </Badge>
                     </div>
@@ -141,10 +169,11 @@ export function CreatorStudio({ authToken, userId }: CreatorStudioProps) {
             </Link>
           </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Creator Tips */}
-      <Card className="bg-[var(--color-aurora-yellow)]/10 border-[var(--color-aurora-yellow)]/30">
+      <motion.div variants={scrollFadeIn} initial="hidden" whileInView="visible" viewport={scrollTrigger}>
+      <Card className="glass-card shadow-premium bg-[var(--color-aurora-yellow)]/10 border-[var(--color-aurora-yellow)]/30">
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
@@ -152,26 +181,29 @@ export function CreatorStudio({ authToken, userId }: CreatorStudioProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <motion.div variants={staggerFast} initial="hidden" whileInView="visible" viewport={scrollTrigger} className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {creatorTips.map((item, idx) => (
-              <div key={idx} className="flex items-start gap-3 p-3 bg-[var(--card)] rounded-xl">
+              <motion.div key={idx} variants={staggerChild} {...hoverLift} className="flex items-start gap-3 p-3 bg-[var(--card)] rounded-xl border border-[var(--border)]/50">
                 <span className="text-xl">{item.icon}</span>
                 <p className="text-sm text-[var(--foreground)]">{item.tip}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Earning Opportunities */}
-      <Card className="bg-[var(--card)] border-[var(--border)]">
+      <motion.div variants={scrollFadeIn} initial="hidden" whileInView="visible" viewport={scrollTrigger}>
+      <Card className="glass-card shadow-premium">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Coins className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
             Ways to Earn
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent>
+          <motion.div variants={staggerFast} initial="hidden" whileInView="visible" viewport={scrollTrigger} className="space-y-3">
           {[
             { action: "Complete a livestream", credits: 25, icon: Radio, color: "text-red-500" },
             { action: "Create a reel", credits: 15, icon: Film, color: "text-[var(--color-aurora-purple)]" },
@@ -179,7 +211,7 @@ export function CreatorStudio({ authToken, userId }: CreatorStudioProps) {
             { action: "Get verified on a post", credits: 25, icon: Star, color: "text-[var(--color-aurora-mint)]" },
             { action: "Receive a gift", credits: "85%", icon: Gift, color: "text-[var(--color-aurora-pink)]" },
           ].map((item, idx) => (
-            <div key={idx} className="flex items-center justify-between p-3 bg-[var(--accent)] rounded-xl">
+            <motion.div key={idx} variants={staggerChild} {...hoverLift} className="flex items-center justify-between p-3 bg-[var(--accent)]/60 backdrop-blur-sm rounded-xl border border-[var(--border)]/50 transition-colors hover:bg-[var(--accent)]">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-xl bg-[var(--card)] flex items-center justify-center ${item.color}`}>
                   <item.icon className="w-5 h-5" />
@@ -189,10 +221,12 @@ export function CreatorStudio({ authToken, userId }: CreatorStudioProps) {
               <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">
                 +{item.credits} {typeof item.credits === 'number' ? 'credits' : ''}
               </Badge>
-            </div>
+            </motion.div>
           ))}
+          </motion.div>
         </CardContent>
       </Card>
+      </motion.div>
     </div>
   );
 }

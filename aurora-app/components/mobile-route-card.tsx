@@ -200,7 +200,7 @@ export function MobileRouteCard({ route, safetyInsight, onVote }: MobileRouteCar
                 className={`flex items-center gap-1 px-2 py-2 rounded-lg transition-all min-h-[44px] ${
                   disliked 
                     ? 'bg-[var(--color-aurora-salmon)]/20 text-[var(--color-aurora-salmon)]' 
-                    : 'hover:bg-gray-100 text-gray-400'
+                    : 'hover:bg-gray-100 text-muted-foreground'
                 }`}
                 onClick={handleDownvote}
               >

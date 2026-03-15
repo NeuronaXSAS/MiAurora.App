@@ -83,7 +83,7 @@ export default function BroadcastPage() {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white mb-2">Daily Limit Reached</h2>
-            <p className="text-gray-400">
+            <p className="text-muted-foreground">
               {isPremium 
                 ? "You've reached your daily limit of 10 livestreams. Come back tomorrow!"
                 : "You've used your 2 free livestreams today. Upgrade to Premium for 10 streams per day!"}

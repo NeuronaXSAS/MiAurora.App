@@ -293,7 +293,7 @@ export function RoutesCalendar({ routes }: RoutesCalendarProps) {
       {selectedDay && getRoutesForDay(selectedDay).length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
-            <Route className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <Route className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
             <p className="text-gray-600">No routes on this day</p>
           </CardContent>
         </Card>

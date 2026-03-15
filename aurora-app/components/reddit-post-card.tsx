@@ -198,7 +198,7 @@ export function RedditPostCard({
   };
 
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden hover:border-[var(--color-aurora-purple)]/40 transition-all duration-200 shadow-sm hover:shadow-lg group">
+    <div className="glass-card shadow-premium glow-hover rounded-2xl overflow-hidden transition-all duration-300 group">
       {/* Main content area */}
       <div className="flex">
         {/* Vote column - Desktop */}

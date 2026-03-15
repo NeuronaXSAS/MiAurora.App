@@ -314,16 +314,16 @@ export default function IntelligenceDashboard() {
                   <span>Urban Safety Heatmap</span>
                   <div className="flex items-center gap-4 text-sm font-normal">
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-green-500 rounded"></div>
-                      <span className="text-gray-600">Safe (80-100)</span>
+                      <div className="w-4 h-4 bg-[var(--color-aurora-mint)] rounded"></div>
+                      <span className="text-[var(--muted-foreground)]">Safe (80-100)</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-                      <span className="text-gray-600">Moderate (50-79)</span>
+                      <div className="w-4 h-4 bg-[var(--color-aurora-yellow)] rounded"></div>
+                      <span className="text-[var(--muted-foreground)]">Moderate (50-79)</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-red-500 rounded"></div>
-                      <span className="text-gray-600">Risk (0-49)</span>
+                      <div className="w-4 h-4 bg-[var(--color-aurora-salmon)] rounded"></div>
+                      <span className="text-[var(--muted-foreground)]">Risk (0-49)</span>
                     </div>
                   </div>
                 </CardTitle>
@@ -430,8 +430,8 @@ export default function IntelligenceDashboard() {
                     </div>
                   )}
                 </div>
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-900">
+                <div className="mt-4 p-4 bg-[var(--color-aurora-blue)]/10 rounded-lg">
+                  <p className="text-sm text-[var(--foreground)]">
                     <strong>Data Coverage:</strong> {urbanData?.length || 0}{" "}
                     geographic cells analyzed • Updated{" "}
                     {stats?.urban.lastAggregated
@@ -451,7 +451,7 @@ export default function IntelligenceDashboard() {
               {/* Top Companies */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-700">
+                  <CardTitle className="flex items-center gap-2 text-[var(--color-aurora-mint)]">
                     <CheckCircle className="w-5 h-5" />
                     Top Rated Companies
                   </CardTitle>
@@ -461,32 +461,32 @@ export default function IntelligenceDashboard() {
                     {topCompanies?.map((company, idx) => (
                       <div
                         key={company._id}
-                        className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                        className="flex items-center justify-between p-3 bg-[var(--color-aurora-mint)]/10 rounded-lg border border-[var(--color-aurora-mint)]/20"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">
+                          <div className="w-8 h-8 bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] rounded-full flex items-center justify-center font-bold">
                             {idx + 1}
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900">
+                            <p className="font-semibold text-[var(--foreground)]">
                               {company.companyName}
                             </p>
-                            <p className="text-xs text-gray-600">
+                            <p className="text-xs text-[var(--muted-foreground)]">
                               {company.totalReviews} reviews •{" "}
                               {company.industry || "Various"}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-green-600">
+                          <p className="text-2xl font-bold text-[var(--color-aurora-mint)]">
                             {company.overallScore}
                           </p>
-                          <p className="text-xs text-gray-500">Safety Score</p>
+                          <p className="text-xs text-[var(--muted-foreground)]">Safety Score</p>
                         </div>
                       </div>
                     ))}
                     {(!topCompanies || topCompanies.length === 0) && (
-                      <p className="text-center text-gray-500 py-8">
+                      <p className="text-center text-[var(--muted-foreground)] py-8">
                         No data available yet
                       </p>
                     )}
@@ -497,7 +497,7 @@ export default function IntelligenceDashboard() {
               {/* Worst Companies */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-red-700">
+                  <CardTitle className="flex items-center gap-2 text-[var(--color-aurora-salmon)]">
                     <AlertTriangle className="w-5 h-5" />
                     Companies Needing Improvement
                   </CardTitle>
@@ -507,32 +507,32 @@ export default function IntelligenceDashboard() {
                     {worstCompanies?.map((company, idx) => (
                       <div
                         key={company._id}
-                        className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200"
+                        className="flex items-center justify-between p-3 bg-[var(--color-aurora-salmon)]/10 rounded-lg border border-[var(--color-aurora-salmon)]/20"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center font-bold">
+                          <div className="w-8 h-8 bg-[var(--color-aurora-salmon)] text-white rounded-full flex items-center justify-center font-bold">
                             {idx + 1}
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900">
+                            <p className="font-semibold text-[var(--foreground)]">
                               {company.companyName}
                             </p>
-                            <p className="text-xs text-gray-600">
+                            <p className="text-xs text-[var(--muted-foreground)]">
                               {company.totalReviews} reviews •{" "}
                               {company.industry || "Various"}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-red-600">
+                          <p className="text-2xl font-bold text-[var(--color-aurora-salmon)]">
                             {company.overallScore}
                           </p>
-                          <p className="text-xs text-gray-500">Safety Score</p>
+                          <p className="text-xs text-[var(--muted-foreground)]">Safety Score</p>
                         </div>
                       </div>
                     ))}
                     {(!worstCompanies || worstCompanies.length === 0) && (
-                      <p className="text-center text-gray-500 py-8">
+                      <p className="text-center text-[var(--muted-foreground)] py-8">
                         No data available yet
                       </p>
                     )}
@@ -551,22 +551,22 @@ export default function IntelligenceDashboard() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-gray-900">
+                    <h3 className="font-semibold text-[var(--foreground)]">
                       Corporate Safety Index
                     </h3>
                     <div className="space-y-3">
                       <div>
                         <div className="flex justify-between text-sm mb-1">
-                          <span className="text-gray-600">
+                          <span className="text-[var(--muted-foreground)]">
                             Data Completeness
                           </span>
                           <span className="font-semibold">
                             {Math.round(stats?.corporate.avgDataQuality || 0)}%
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-[var(--accent)] rounded-full h-2">
                           <div
-                            className="bg-blue-600 h-2 rounded-full"
+                            className="bg-[var(--color-aurora-blue)] h-2 rounded-full"
                             style={{
                               width: `${stats?.corporate.avgDataQuality || 0}%`,
                             }}
@@ -575,21 +575,21 @@ export default function IntelligenceDashboard() {
                       </div>
                       <div>
                         <div className="flex justify-between text-sm mb-1">
-                          <span className="text-gray-600">
+                          <span className="text-[var(--muted-foreground)]">
                             Companies Indexed
                           </span>
                           <span className="font-semibold">
                             {stats?.corporate.totalCompanies || 0}
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-[var(--accent)] rounded-full h-2">
                           <div
-                            className="bg-green-600 h-2 rounded-full"
+                            className="bg-[var(--color-aurora-mint)] h-2 rounded-full"
                             style={{ width: "75%" }}
                           ></div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600 mt-4">
+                      <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)] mt-4">
                         <Clock className="w-4 h-4" />
                         <span>
                           Last updated:{" "}
@@ -604,22 +604,22 @@ export default function IntelligenceDashboard() {
                   </div>
 
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-gray-900">
+                    <h3 className="font-semibold text-[var(--foreground)]">
                       Urban Safety Index
                     </h3>
                     <div className="space-y-3">
                       <div>
                         <div className="flex justify-between text-sm mb-1">
-                          <span className="text-gray-600">
+                          <span className="text-[var(--muted-foreground)]">
                             Data Completeness
                           </span>
                           <span className="font-semibold">
                             {Math.round(stats?.urban.avgDataQuality || 0)}%
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-[var(--accent)] rounded-full h-2">
                           <div
-                            className="bg-blue-600 h-2 rounded-full"
+                            className="bg-[var(--color-aurora-blue)] h-2 rounded-full"
                             style={{
                               width: `${stats?.urban.avgDataQuality || 0}%`,
                             }}
@@ -628,21 +628,21 @@ export default function IntelligenceDashboard() {
                       </div>
                       <div>
                         <div className="flex justify-between text-sm mb-1">
-                          <span className="text-gray-600">
+                          <span className="text-[var(--muted-foreground)]">
                             Grid Cells Analyzed
                           </span>
                           <span className="font-semibold">
                             {stats?.urban.totalGridCells || 0}
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-[var(--accent)] rounded-full h-2">
                           <div
-                            className="bg-green-600 h-2 rounded-full"
+                            className="bg-[var(--color-aurora-mint)] h-2 rounded-full"
                             style={{ width: "82%" }}
                           ></div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600 mt-4">
+                      <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)] mt-4">
                         <Clock className="w-4 h-4" />
                         <span>
                           Last updated:{" "}
@@ -659,20 +659,20 @@ export default function IntelligenceDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+            <Card className="bg-gradient-to-br from-[var(--color-aurora-blue)]/10 to-[var(--color-aurora-purple)]/10 border-[var(--color-aurora-blue)]/20">
               <CardContent className="p-8">
                 <div className="text-center">
-                  <Database className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  <Database className="w-16 h-16 text-[var(--color-aurora-blue)] mx-auto mb-4" />
+                  <h3 className="text-2xl font-bold text-[var(--foreground)] mb-2">
                     Enterprise Data Access
                   </h3>
-                  <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                  <p className="text-[var(--muted-foreground)] mb-6 max-w-2xl mx-auto">
                     Get full API access to Aurora's safety intelligence data.
                     Perfect for governments, insurance companies, and urban
                     planning organizations.
                   </p>
                   <div className="flex gap-4 justify-center">
-                    <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+                    <Button size="lg" className="bg-[var(--color-aurora-blue)] hover:bg-[var(--color-aurora-violet)]">
                       Request API Access
                     </Button>
                     <Button size="lg" variant="outline">

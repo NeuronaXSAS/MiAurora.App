@@ -1,9 +1,0 @@
-{
-    "typescript.autoClosingTags": false,
-    "css.lint.unknownAtRules": "ignore",
-    "scss.lint.unknownAtRules": "ignore",
-    "css.validate": false,
-    "tailwindCSS.experimental.classRegex": [
-        ["className\\s*=\\s*[\"'`]([^\"'`]*)[\"'`]"]
-    ]
-}

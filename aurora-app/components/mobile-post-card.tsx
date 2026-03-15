@@ -167,7 +167,7 @@ export const MobilePostCard = memo(function MobilePostCard({
   const isTrending = upvotes > 100 || (post.commentCount || 0) > 50;
 
   return (
-    <article className="relative bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden">
+    <article className="relative glass-card shadow-premium glow-hover rounded-2xl overflow-hidden transition-all duration-300">
       <CreditToast show={showCreditToast} credits={creditAmount} />
       
       {/* Header - Community & Author */}

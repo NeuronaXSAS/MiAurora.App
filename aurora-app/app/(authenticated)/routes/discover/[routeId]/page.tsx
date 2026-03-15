@@ -429,7 +429,7 @@ export default function CommunityRouteDetailPage() {
                           className={`w-10 h-10 transition-colors ${
                             value <= userRating
                               ? "fill-yellow-400 text-yellow-400"
-                              : "text-gray-300 hover:text-yellow-200"
+                              : "text-muted-foreground/50 hover:text-yellow-200"
                           }`}
                         />
                       </button>

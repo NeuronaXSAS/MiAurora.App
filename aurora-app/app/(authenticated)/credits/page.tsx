@@ -18,6 +18,18 @@ import {
 import { Id } from "@/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { motion } from "framer-motion";
+import { PageTransition } from "@/components/page-transition";
+import {
+  fadeInUp,
+  staggerFast,
+  staggerMedium,
+  staggerChild,
+  staggerChildScale,
+  hoverLift,
+  scrollFadeIn,
+  scrollTrigger,
+} from "@/lib/motion";
 
 export default function CreditsPage() {
   const [filterType, setFilterType] = useState<string | undefined>(undefined);
@@ -65,12 +77,21 @@ export default function CreditsPage() {
   };
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-[var(--background)]">
       {/* Header - Aurora Gradient */}
-      <div className="bg-gradient-to-r from-[var(--color-aurora-violet)] to-[var(--color-aurora-purple)] text-white">
-        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-[var(--color-aurora-yellow)] rounded-full flex items-center justify-center">
+      <div className="bg-gradient-to-r from-[var(--color-aurora-violet)] via-[var(--color-aurora-purple)] to-[var(--color-aurora-blue)] text-white relative overflow-hidden">
+        {/* Decorative orbs */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-[var(--color-aurora-pink)]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 relative">
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            animate="visible"
+            className="flex items-center gap-3 mb-4"
+          >
+            <div className="w-12 h-12 bg-[var(--color-aurora-yellow)] rounded-full flex items-center justify-center shadow-lg">
               <Coins className="w-6 h-6 text-[var(--color-aurora-violet)]" />
             </div>
             <div>
@@ -79,44 +100,49 @@ export default function CreditsPage() {
                 Track your earnings and spending
               </p>
             </div>
-          </div>
+          </motion.div>
 
           {/* Stats Cards */}
           {stats && (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <div className="bg-white/10 backdrop-blur rounded-xl p-3 sm:p-4 border border-white/20">
+            <motion.div
+              variants={staggerFast}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+            >
+              <motion.div variants={staggerChildScale} className="bg-white/10 backdrop-blur-md rounded-xl p-3 sm:p-4 border border-white/20">
                 <p className="text-xs sm:text-sm text-white/80">
                   Current Balance
                 </p>
                 <p className="text-xl sm:text-2xl font-bold text-[var(--color-aurora-yellow)]">
                   {stats.currentBalance}
                 </p>
-              </div>
-              <div className="bg-white/10 backdrop-blur rounded-xl p-3 sm:p-4 border border-white/20">
+              </motion.div>
+              <motion.div variants={staggerChildScale} className="bg-white/10 backdrop-blur-md rounded-xl p-3 sm:p-4 border border-white/20">
                 <p className="text-xs sm:text-sm text-white/80">
                   Total Earned
                 </p>
                 <p className="text-xl sm:text-2xl font-bold text-[var(--color-aurora-mint)]">
                   +{stats.totalEarned}
                 </p>
-              </div>
-              <div className="bg-white/10 backdrop-blur rounded-xl p-3 sm:p-4 border border-white/20">
+              </motion.div>
+              <motion.div variants={staggerChildScale} className="bg-white/10 backdrop-blur-md rounded-xl p-3 sm:p-4 border border-white/20">
                 <p className="text-xs sm:text-sm text-white/80">
                   Total Spent
                 </p>
                 <p className="text-xl sm:text-2xl font-bold text-[var(--color-aurora-pink)]">
                   -{stats.totalSpent}
                 </p>
-              </div>
-              <div className="bg-white/10 backdrop-blur rounded-xl p-3 sm:p-4 border border-white/20">
+              </motion.div>
+              <motion.div variants={staggerChildScale} className="bg-white/10 backdrop-blur-md rounded-xl p-3 sm:p-4 border border-white/20">
                 <p className="text-xs sm:text-sm text-white/80">
                   This Month
                 </p>
                 <p className="text-xl sm:text-2xl font-bold">
                   {stats.monthlyEarned}/{stats.monthlyLimit}
                 </p>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           )}
         </div>
       </div>
@@ -126,7 +152,8 @@ export default function CreditsPage() {
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Monthly Limit Info */}
           {stats && (
-            <Card className="bg-[var(--card)] border-[var(--border)]">
+            <motion.div variants={fadeInUp} initial="hidden" animate="visible">
+            <Card className="glass-card shadow-premium">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-[var(--color-aurora-yellow)]/20 rounded-full flex items-center justify-center flex-shrink-0">
@@ -165,10 +192,12 @@ export default function CreditsPage() {
                 </div>
               </CardContent>
             </Card>
+            </motion.div>
           )}
 
           {/* How to Earn Credits */}
-          <Card className="bg-[var(--card)] border-[var(--border)]">
+          <motion.div variants={scrollFadeIn} initial="hidden" whileInView="visible" viewport={scrollTrigger}>
+          <Card className="glass-card shadow-premium">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
                 <TrendingUp className="w-5 h-5 text-[var(--color-aurora-mint)]" />
@@ -179,7 +208,7 @@ export default function CreditsPage() {
               <p className="text-sm text-[var(--muted-foreground)] mb-4">
                 Earn credits by contributing to the community. Your actions help other women stay safe!
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <motion.div variants={staggerFast} initial="hidden" whileInView="visible" viewport={scrollTrigger} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
                   { action: "Create a public post", credits: 10, icon: "📝" },
                   { action: "Share a safe route", credits: 50, icon: "🗺️" },
@@ -192,9 +221,11 @@ export default function CreditsPage() {
                   { action: "Complete meditation", credits: 5, icon: "🧘" },
                   { action: "Viral reel (1000+ views)", credits: 50, icon: "🔥" },
                 ].map((item) => (
-                  <div
+                  <motion.div
                     key={item.action}
-                    className="flex items-center justify-between p-3 bg-[var(--accent)] rounded-xl"
+                    variants={staggerChild}
+                    {...hoverLift}
+                    className="flex items-center justify-between p-3 bg-[var(--accent)]/60 backdrop-blur-sm rounded-xl border border-[var(--border)]/50 transition-colors hover:bg-[var(--accent)]"
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{item.icon}</span>
@@ -205,14 +236,16 @@ export default function CreditsPage() {
                     <Badge className="bg-[var(--color-aurora-yellow)]/20 text-[var(--color-aurora-yellow)] border-0">
                       +{item.credits}
                     </Badge>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* How to Spend Credits */}
-          <Card className="bg-[var(--card)] border-[var(--border)]">
+          <motion.div variants={scrollFadeIn} initial="hidden" whileInView="visible" viewport={scrollTrigger}>
+          <Card className="glass-card shadow-premium">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
                 <TrendingDown className="w-5 h-5 text-[var(--color-aurora-pink)]" />
@@ -223,16 +256,18 @@ export default function CreditsPage() {
               <p className="text-sm text-[var(--muted-foreground)] mb-4">
                 Use your credits to unlock exclusive opportunities and features.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <motion.div variants={staggerFast} initial="hidden" whileInView="visible" viewport={scrollTrigger} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
                   { action: "Unlock job opportunity", credits: "5-50", icon: "💼" },
                   { action: "Access mentorship", credits: "20-100", icon: "🎓" },
                   { action: "Premium AI features", credits: "10", icon: "🤖" },
                   { action: "Boost your post", credits: "25", icon: "🚀" },
                 ].map((item) => (
-                  <div
+                  <motion.div
                     key={item.action}
-                    className="flex items-center justify-between p-3 bg-[var(--accent)] rounded-xl"
+                    variants={staggerChild}
+                    {...hoverLift}
+                    className="flex items-center justify-between p-3 bg-[var(--accent)]/60 backdrop-blur-sm rounded-xl border border-[var(--border)]/50 transition-colors hover:bg-[var(--accent)]"
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{item.icon}</span>
@@ -243,15 +278,17 @@ export default function CreditsPage() {
                     <Badge className="bg-[var(--color-aurora-pink)]/20 text-[var(--color-aurora-pink)] border-0">
                       -{item.credits}
                     </Badge>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* Your Earning Breakdown */}
           {stats && Object.keys(stats.earnedByType).length > 0 && (
-            <Card className="bg-[var(--card)] border-[var(--border)]">
+            <motion.div variants={scrollFadeIn} initial="hidden" whileInView="visible" viewport={scrollTrigger}>
+            <Card className="glass-card shadow-premium">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-[var(--foreground)]">
                   <Award className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
@@ -259,11 +296,13 @@ export default function CreditsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <motion.div variants={staggerFast} initial="hidden" whileInView="visible" viewport={scrollTrigger} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {Object.entries(stats.earnedByType).map(([type, amount]) => (
-                    <div
+                    <motion.div
                       key={type}
-                      className="flex items-center justify-between p-3 bg-[var(--accent)] rounded-xl"
+                      variants={staggerChild}
+                      {...hoverLift}
+                      className="flex items-center justify-between p-3 bg-[var(--accent)]/60 backdrop-blur-sm rounded-xl border border-[var(--border)]/50"
                     >
                       <span className="text-sm font-medium capitalize text-[var(--foreground)]">
                         {type.replace(/_/g, " ")}
@@ -271,15 +310,17 @@ export default function CreditsPage() {
                       <Badge className="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)] border-[var(--color-aurora-mint)]/30">
                         +{amount as number}
                       </Badge>
-                    </div>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               </CardContent>
             </Card>
+            </motion.div>
           )}
 
           {/* Transaction History */}
-          <Card className="bg-[var(--card)] border-[var(--border)]">
+          <motion.div variants={scrollFadeIn} initial="hidden" whileInView="visible" viewport={scrollTrigger}>
+          <Card className="glass-card shadow-premium">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-[var(--foreground)]">Transaction History</CardTitle>
@@ -333,17 +374,18 @@ export default function CreditsPage() {
               )}
 
               {transactions && transactions.length === 0 && (
-                <div className="text-center py-8">
+                <motion.div variants={fadeInUp} initial="hidden" animate="visible" className="text-center py-8">
                   <Coins className="w-16 h-16 text-[var(--color-aurora-yellow)]/30 mx-auto mb-4" />
                   <p className="text-[var(--muted-foreground)]">No transactions yet</p>
-                </div>
+                </motion.div>
               )}
 
               {transactions && transactions.length > 0 && (
-                <div className="space-y-2">
+                <motion.div variants={staggerFast} initial="hidden" animate="visible" className="space-y-2">
                   {transactions.map((transaction: any) => (
-                    <div
+                    <motion.div
                       key={transaction._id}
+                      variants={staggerChild}
                       className="flex items-center justify-between p-3 border border-[var(--border)] rounded-xl hover:bg-[var(--accent)] transition-colors"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -383,14 +425,16 @@ export default function CreditsPage() {
                           {transaction.amount}
                         </p>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               )}
             </CardContent>
           </Card>
+          </motion.div>
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 }

@@ -189,7 +189,7 @@ export default function ModerationDashboard() {
                   />
                 ) : (
                   <div className="w-32 h-48 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <p className="text-gray-400 text-sm text-center px-2">
+                    <p className="text-muted-foreground text-sm text-center px-2">
                       {item.contentPreview.substring(0, 100)}...
                     </p>
                   </div>

@@ -247,7 +247,7 @@ export default function TrackMobilePage() {
               onMouseMove={(e) => isDragging && handleSlideToStop(e)}
               onMouseUp={handleSlideEnd}
             >
-              <Square className="w-6 h-6 text-gray-400" />
+              <Square className="w-6 h-6 text-muted-foreground" />
             </div>
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <span className="text-gray-600 text-sm font-medium">

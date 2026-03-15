@@ -1,83 +1,100 @@
-# Aurora App
+# Aurora App: The Future of Social Networks
 
-**The Front Page of the Internet for Women**
+## **The Front Page of the Internet for Women**
 
-A global safety intelligence platform featuring an AI Counselor that helps women navigate relationships, conflicts, and life decisions with wisdom and empathy.
+Aurora App is a global safety intelligence platform and the world's first non-toxic social network. We help women navigate relationships, conflicts, and life decisions with wisdom, empathy, and community support.
 
-## Live Demo
+---
 
-**Website:** [miaurora.app](https://miaurora.app)
+## 🌟 The Vision
 
-## Quick Start
+Traditional therapy can be expensive and carries stigmas. General AI companions lack safety context. Aurora provides unbiased relationship guidance seamlessly integrated into a safety-first philosophy.
 
+**Core Value Proposition:**
+- **Aurora Counselor** - AI-powered guidance for "Who's Right?" scenarios.
+- **Safety Map & Routes** - Community-verified safe locations and GPS-tracked walking paths.
+- **Bias-Aware Search** - A proprietary search engine detecting gender bias, AI content, and ecosystem credibility.
+- **Emergency System** - An offline-capable Panic Button ensuring safety is never compromised.
+- **Community Hub** - Circles, debates, and opportunities to foster growth.
+
+---
+
+## 🚀 Quick Start & Setup Guide
+
+### 1. Prerequisites
+- Node.js 18+
+- npm or yarn
+- Convex account (free)
+- WorkOS account (free)
+- Google AI Studio API key (free tier used)
+- Mapbox account (free)
+
+### 2. Environment Variables (`aurora-app/.env.local`)
+```env
+# Convex
+CONVEX_DEPLOYMENT=your-deployment
+NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
+
+# WorkOS Authentication
+WORKOS_API_KEY=sk_live_...
+WORKOS_CLIENT_ID=client_...
+WORKOS_REDIRECT_URI=http://localhost:3000/api/auth/callback
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Google AI Studio (FREE)
+GOOGLE_AI_API_KEY=AIza...
+
+# Mapbox
+NEXT_PUBLIC_MAPBOX_TOKEN=pk.eyJ1...
+```
+
+### 3. Running Locally
 ```bash
 cd aurora-app
 npm install
-npx convex dev      # Terminal 1: Start backend
-npm run dev         # Terminal 2: Start frontend
+
+# Terminal 1: Start backend
+npx convex dev
+
+# Terminal 2: Start frontend
+npm run dev
 ```
 
 Visit `http://localhost:3000`
 
-## Core Features
+---
 
-| Feature | Description |
-|---------|-------------|
-| **Aurora Counselor** | AI-powered guidance for "Who's Right?" scenarios |
-| **Safety Map** | Community-verified safe locations and routes |
-| **Search Engine** | Bias-aware search with AI content detection |
-| **Community Hub** | Circles, debates, and opportunities |
-| **Emergency System** | Offline-capable panic button |
+## 📚 Technical Architecture & AI Steering
 
-## Tech Stack
-
-- **Frontend:** Next.js 14, TypeScript, Tailwind CSS
-- **Backend:** Convex (real-time database)
-- **Auth:** WorkOS (Google/Microsoft SSO)
-- **AI:** Google Gemini
-- **Maps:** Mapbox GL JS
-- **Hosting:** Vercel
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [Setup Guide](./aurora-app/docs/SETUP.md) | Environment setup |
-| [Architecture](./docs/ARCHITECTURE.md) | Technical deep-dive |
-| [Product Spec](./docs/PRODUCT.md) | Features and roadmap |
-
-## Project Structure
-
-```
-MiAurora.App/
-├── aurora-app/          # Main application
-│   ├── app/             # Next.js pages
-│   ├── components/      # React components
-│   ├── convex/          # Backend functions
-│   └── docs/            # App-specific docs
-├── docs/                # Project documentation
-├── .llm/                # AI/LLM context files
-│   ├── specs/           # Feature specifications
-│   └── steering/        # AI behavior guidelines
-└── archive/             # Historical files
-```
-
-## Environment Variables
-
-**Required:**
-- `NEXT_PUBLIC_CONVEX_URL`
-- `WORKOS_API_KEY` / `WORKOS_CLIENT_ID`
-- `GOOGLE_AI_API_KEY`
-- `NEXT_PUBLIC_MAPBOX_TOKEN`
-
-See [Setup Guide](./aurora-app/docs/SETUP.md) for complete list.
-
-## License
-
-MIT License - See [LICENSE](./LICENSE)
+For software engineers, complete documentation has been simplified into two files:
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)**: Deep dive into our Convex schemas, Next.js App Router patterns, and search engine metrics.
+- **[AGENTS.md](./AGENTS.md)**: The ultimate, LLM-agnostic steering document detailing our color palettes, safety-first rules, and mobile-first guidelines. **Any AI assistant contributing to this codebase MUST read this file.**
 
 ---
 
-**Built with love for women's safety worldwide**
+## 💼 Business & Sustainability
 
+Aurora is built to be a self-sustaining ecosystem where **ALL safety features remain FREE forever**.
+
+### Sustainable Scale
+Aurora operates on a proprietary infrastructure built for scale and uncompromising safety.
+
+
+
+
+
+
+
+
+
+
+---
+
+## 🔒 License & Copyright
+
+**Copyright (c) 2026 Aurora App. All rights reserved.**
+
+This is a proprietary codebase. No part of this software may be copied, distributed, modified, or reproduced without explicit written consent from the owners of Aurora App. This project is closed-source.
+
+**Built with love for women's safety worldwide**
 [Website](https://miaurora.app) | [Connect](https://linktr.ee/auroraapp)

@@ -288,7 +288,7 @@ export function PostCreateDialog({
                     className={`w-8 h-8 transition-colors ${
                       value <= rating
                         ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-300 hover:text-yellow-200"
+                        : "text-muted-foreground/50 hover:text-yellow-200"
                     }`}
                   />
                 </button>
@@ -470,10 +470,10 @@ export function PostCreateDialog({
               className="rounded"
               disabled={contentAccess !== "public"}
             />
-            <label htmlFor="anonymous" className={`text-sm ${contentAccess !== "public" ? "text-gray-400" : ""}`}>
+            <label htmlFor="anonymous" className={`text-sm ${contentAccess !== "public" ? "text-muted-foreground" : ""}`}>
               Post anonymously
               {contentAccess !== "public" && (
-                <span className="text-xs text-gray-400 ml-1">(Not available for subscriber content)</span>
+                <span className="text-xs text-muted-foreground ml-1">(Not available for subscriber content)</span>
               )}
             </label>
           </div>

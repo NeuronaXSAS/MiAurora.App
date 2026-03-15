@@ -75,7 +75,7 @@
   --secondary: #EDE9FC;
   --secondary-foreground: #3D2B6B;
   --muted: #F5F0EB;
-  --muted-foreground: #7B6B99;
+  --muted-foreground: #6B5B8A;
   /* Delicate lavender accent */
   --accent: #EDE9FC;
   --accent-foreground: #3D2B6B;
@@ -100,6 +100,15 @@
   --sidebar-accent-foreground: #3D2B6B;
   --sidebar-border: rgba(45, 27, 78, 0.08);
   --sidebar-ring: #6C5CE7;
+  /* Aurora custom variables (moved from ThemeProvider JS) */
+  --aurora-bg-primary: #FFFBF5;
+  --aurora-bg-secondary: #F8F4EF;
+  --aurora-bg-tertiary: #F0EBE4;
+  --aurora-text-primary: #2D1B4E;
+  --aurora-text-secondary: #5A4478;
+  --aurora-text-muted: #6B5B8A;
+  --aurora-border: rgba(45, 27, 78, 0.08);
+  --aurora-card-bg: rgba(255, 255, 255, 0.6);
 }
 
 .dark {
@@ -119,7 +128,7 @@
   --secondary: #241D36;
   --secondary-foreground: #E0DAF0;
   --muted: #1E1730;
-  --muted-foreground: #A99CC8;
+  --muted-foreground: #B5A8D4;
   /* Accent with soft lavender glow */
   --accent: #2A2142;
   --accent-foreground: #E0DAF0;
@@ -143,6 +152,15 @@
   --sidebar-accent-foreground: #E0DAF0;
   --sidebar-border: rgba(160, 140, 200, 0.12);
   --sidebar-ring: #7C6BFF;
+  /* Aurora custom variables - dark mode */
+  --aurora-bg-primary: #0F0B1A;
+  --aurora-bg-secondary: #1A1428;
+  --aurora-bg-tertiary: #241D36;
+  --aurora-text-primary: #F0ECF6;
+  --aurora-text-secondary: #D0C8E4;
+  --aurora-text-muted: #B5A8D4;
+  --aurora-border: rgba(160, 140, 200, 0.12);
+  --aurora-card-bg: rgba(26, 20, 40, 0.6);
 }
 
 /* Force light theme - Used on landing page to override user's dark mode preference */
@@ -160,13 +178,65 @@
   --secondary: #EDE9FC !important;
   --secondary-foreground: #3D2B6B !important;
   --muted: #F5F0EB !important;
-  --muted-foreground: #7B6B99 !important;
+  --muted-foreground: #6B5B8A !important;
   --accent: #EDE9FC !important;
   --accent-foreground: #3D2B6B !important;
   --destructive: #FF6B7A !important;
   --border: rgba(45, 27, 78, 0.08) !important;
   --input: rgba(45, 27, 78, 0.04) !important;
   --ring: #6C5CE7 !important;
+  /* Chart colors - light mode */
+  --chart-1: #F29DE5 !important;
+  --chart-2: #6C5CE7 !important;
+  --chart-3: #6EE7B7 !important;
+  --chart-4: #FCD34D !important;
+  --chart-5: #A5B4FC !important;
+  /* Sidebar - light mode */
+  --sidebar: #FFFBF5 !important;
+  --sidebar-foreground: #2D1B4E !important;
+  --sidebar-primary: #6C5CE7 !important;
+  --sidebar-primary-foreground: #ffffff !important;
+  --sidebar-accent: #EDE9FC !important;
+  --sidebar-accent-foreground: #3D2B6B !important;
+  --sidebar-border: rgba(45, 27, 78, 0.08) !important;
+  --sidebar-ring: #6C5CE7 !important;
+  /* Aurora custom variables - force light */
+  --aurora-bg-primary: #FFFBF5 !important;
+  --aurora-bg-secondary: #F8F4EF !important;
+  --aurora-bg-tertiary: #F0EBE4 !important;
+  --aurora-text-primary: #2D1B4E !important;
+  --aurora-text-secondary: #5A4478 !important;
+  --aurora-text-muted: #6B5B8A !important;
+  --aurora-border: rgba(45, 27, 78, 0.08) !important;
+  --aurora-card-bg: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Neutralize dark-mode-specific selectors inside .force-light-theme */
+.force-light-theme .glass-card,
+.force-light-theme .glass-card:hover {
+  background: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(16px) saturate(1.8) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 1px 2px rgba(45, 27, 78, 0.04), 0 4px 16px rgba(45, 27, 78, 0.03) !important;
+}
+
+.force-light-theme .glass-card:hover {
+  background: rgba(255, 255, 255, 0.72) !important;
+  box-shadow: 0 2px 4px rgba(45, 27, 78, 0.05), 0 8px 24px rgba(45, 27, 78, 0.06) !important;
+}
+
+.force-light-theme .glass-input {
+  background: rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(45, 27, 78, 0.08) !important;
+}
+
+.force-light-theme .shadow-premium {
+  box-shadow: 0 1px 2px rgba(45, 27, 78, 0.04), 0 4px 12px rgba(45, 27, 78, 0.04), 0 8px 32px rgba(45, 27, 78, 0.03) !important;
+}
+
+.force-light-theme .glow-hover:hover {
+  box-shadow: 0 4px 16px rgba(108, 92, 231, 0.1), 0 0 0 1px rgba(108, 92, 231, 0.06) !important;
 }
 
 @layer base {

@@ -8,11 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationSettings } from "@/components/notification-settings";
+import { PageTransition } from "@/components/page-transition";
 import { useServiceWorker } from "@/hooks/use-service-worker";
 import { useTheme } from "@/lib/theme-context";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { fadeInUp, staggerMedium, staggerChild } from "@/lib/motion";
 import {
   Settings, Bell, Palette, Shield, Download, Trash2,
   Globe, Lock, Eye, EyeOff, Smartphone, Wifi, WifiOff,
@@ -63,7 +65,7 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 bg-[var(--background)]">
+    <PageTransition className="min-h-screen p-4 sm:p-6 bg-[var(--background)]">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -79,7 +81,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Connection Status */}
-        <Card className="p-4 mb-6 bg-[var(--card)] border-[var(--border)]">
+        <Card className="p-4 mb-6 glass-card shadow-premium">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {isOnline ? (
@@ -128,11 +130,13 @@ export default function SettingsPage() {
         {/* Appearance Section */}
         {activeSection === "appearance" && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            variants={staggerMedium}
+            initial="hidden"
+            animate="visible"
             className="space-y-6"
           >
-            <Card className="p-6 bg-[var(--card)] border-[var(--border)]">
+            <motion.div variants={staggerChild}>
+              <Card className="p-6 glass-card shadow-premium">
               <h3 className="text-[var(--foreground)] font-semibold mb-4 flex items-center gap-2">
                 <Palette className="w-5 h-5 text-[var(--color-aurora-pink)]" />
                 Theme
@@ -146,15 +150,17 @@ export default function SettingsPage() {
                 </div>
                 <ThemeToggle variant="pill" />
               </div>
-            </Card>
+             </Card>
+            </motion.div>
           </motion.div>
         )}
 
         {/* Notifications Section */}
         {activeSection === "notifications" && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            variants={fadeInUp}
+            initial="hidden"
+            animate="visible"
           >
             <NotificationSettings />
           </motion.div>
@@ -163,96 +169,104 @@ export default function SettingsPage() {
         {/* Privacy Section */}
         {activeSection === "privacy" && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            variants={staggerMedium}
+            initial="hidden"
+            animate="visible"
             className="space-y-6"
           >
-            <Card className="p-6 bg-[var(--card)] border-[var(--border)]">
-              <h3 className="text-[var(--foreground)] font-semibold mb-4 flex items-center gap-2">
-                <Lock className="w-5 h-5 text-[var(--color-aurora-purple)]" />
-                Privacy Settings
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)]">
-                  <div>
-                    <p className="text-[var(--foreground)]">Anonymous Posting</p>
-                    <p className="text-[var(--muted-foreground)] text-sm">Hide your identity in community posts</p>
+            <motion.div variants={staggerChild}>
+              <Card className="p-6 glass-card shadow-premium">
+                <h3 className="text-[var(--foreground)] font-semibold mb-4 flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-[var(--color-aurora-purple)]" />
+                  Privacy Settings
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)] transition-colors hover:bg-[var(--accent)]/80">
+                    <div>
+                      <p className="text-[var(--foreground)]">Anonymous Posting</p>
+                      <p className="text-[var(--muted-foreground)] text-sm">Hide your identity in community posts</p>
+                    </div>
+                    <Switch defaultChecked />
                   </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)]">
-                  <div>
-                    <p className="text-[var(--foreground)]">Location Sharing</p>
-                    <p className="text-[var(--muted-foreground)] text-sm">Share location with emergency contacts</p>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)] transition-colors hover:bg-[var(--accent)]/80">
+                    <div>
+                      <p className="text-[var(--foreground)]">Location Sharing</p>
+                      <p className="text-[var(--muted-foreground)] text-sm">Share location with emergency contacts</p>
+                    </div>
+                    <Switch defaultChecked />
                   </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)]">
-                  <div>
-                    <p className="text-[var(--foreground)]">Profile Visibility</p>
-                    <p className="text-[var(--muted-foreground)] text-sm">Who can see your profile</p>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)] transition-colors hover:bg-[var(--accent)]/80">
+                    <div>
+                      <p className="text-[var(--foreground)]">Profile Visibility</p>
+                      <p className="text-[var(--muted-foreground)] text-sm">Who can see your profile</p>
+                    </div>
+                    <Badge variant="outline" className="border-[var(--border)] text-[var(--foreground)]">
+                      Circles Only
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className="border-[var(--border)] text-[var(--foreground)]">
-                    Circles Only
-                  </Badge>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            </motion.div>
 
-            <Card className="p-6 bg-[var(--color-aurora-salmon)]/10 border-[var(--color-aurora-salmon)]/20">
-              <h3 className="text-[var(--color-aurora-salmon)] font-semibold mb-4 flex items-center gap-2">
-                <Trash2 className="w-5 h-5" />
-                Danger Zone
-              </h3>
-              <div className="space-y-3">
-                <Button variant="outline" className="w-full min-h-[44px] border-[var(--color-aurora-salmon)]/30 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export My Data
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full min-h-[44px] border-[var(--color-aurora-salmon)]/30 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10"
-                  onClick={() => setShowDeleteDialog(true)}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Account
-                </Button>
-              </div>
-            </Card>
+            <motion.div variants={staggerChild}>
+              <Card className="p-6 bg-[var(--color-aurora-salmon)]/10 border-[var(--color-aurora-salmon)]/20">
+                <h3 className="text-[var(--color-aurora-salmon)] font-semibold mb-4 flex items-center gap-2">
+                  <Trash2 className="w-5 h-5" />
+                  Danger Zone
+                </h3>
+                <div className="space-y-3">
+                  <Button variant="outline" className="w-full min-h-[44px] border-[var(--color-aurora-salmon)]/30 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10">
+                    <Download className="w-4 h-4 mr-2" />
+                    Export My Data
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full min-h-[44px] border-[var(--color-aurora-salmon)]/30 text-[var(--color-aurora-salmon)] hover:bg-[var(--color-aurora-salmon)]/10"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Account
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
           </motion.div>
         )}
 
         {/* Offline Section */}
         {activeSection === "offline" && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            variants={staggerMedium}
+            initial="hidden"
+            animate="visible"
             className="space-y-6"
           >
-            <Card className="p-6 bg-[var(--card)] border-[var(--border)]">
-              <h3 className="text-[var(--foreground)] font-semibold mb-4 flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
-                Offline Capabilities
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)]">
-                  <div>
-                    <p className="text-[var(--foreground)]">Service Worker</p>
-                    <p className="text-[var(--muted-foreground)] text-sm">Enables offline functionality</p>
+            <motion.div variants={staggerChild}>
+              <Card className="p-6 glass-card shadow-premium">
+                <h3 className="text-[var(--foreground)] font-semibold mb-4 flex items-center gap-2">
+                  <Smartphone className="w-5 h-5 text-[var(--color-aurora-yellow)]" />
+                  Offline Capabilities
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)] transition-colors hover:bg-[var(--accent)]/80">
+                    <div>
+                      <p className="text-[var(--foreground)]">Service Worker</p>
+                      <p className="text-[var(--muted-foreground)] text-sm">Enables offline functionality</p>
+                    </div>
+                    <Badge className={isRegistered ? "bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)]" : "bg-[var(--color-aurora-orange)]/20 text-[var(--color-aurora-orange)]"}>
+                      {isRegistered ? "Active" : "Inactive"}
+                    </Badge>
                   </div>
-                  <Badge className={isRegistered ? "bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)]" : "bg-[var(--color-aurora-orange)]/20 text-[var(--color-aurora-orange)]"}>
-                    {isRegistered ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)]">
-                  <div>
-                    <p className="text-[var(--foreground)]">Emergency Features Offline</p>
-                    <p className="text-[var(--muted-foreground)] text-sm">Panic button works without internet</p>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--accent)] transition-colors hover:bg-[var(--accent)]/80">
+                    <div>
+                      <p className="text-[var(--foreground)]">Emergency Features Offline</p>
+                      <p className="text-[var(--muted-foreground)] text-sm">Panic button works without internet</p>
+                    </div>
+                    <Badge className="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)]">Enabled</Badge>
                   </div>
-                  <Badge className="bg-[var(--color-aurora-mint)]/20 text-[var(--color-aurora-mint)]">Enabled</Badge>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            </motion.div>
           </motion.div>
         )}
 
@@ -330,6 +344,6 @@ export default function SettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageTransition>
   );
 }

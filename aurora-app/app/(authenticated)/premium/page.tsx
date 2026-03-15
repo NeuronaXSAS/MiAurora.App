@@ -23,7 +23,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SUBSCRIPTION_TIERS, CREDIT_PACKAGES } from "@/convex/premiumConfig";
+import { motion } from "framer-motion";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { fadeInUp, staggerMedium, staggerSlow, staggerChild, staggerChildScale, hoverLift, scrollFadeIn, scrollTrigger, scaleIn } from "@/lib/motion";
 
 // Regional pricing type
 interface RegionalPricing {
@@ -66,7 +68,6 @@ export default function PremiumPage() {
           'Africa/Lagos': 'NG', 'Africa/Nairobi': 'KE', 'Africa/Johannesburg': 'ZA',
         };
         const detected = countryMap[timezone] || 'US';
-
         // Fetch regional pricing
         const response = await fetch(`/api/stripe/checkout?country=${detected}`);
         if (response.ok) {
@@ -213,47 +214,63 @@ export default function PremiumPage() {
   return (
     <div className="min-h-screen bg-[var(--background)] pb-20">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-[var(--color-aurora-violet)] to-[var(--color-aurora-purple)] text-white py-12 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <Badge className="bg-white/20 text-white mb-4">
+      <div className="relative overflow-hidden bg-gradient-to-br from-[var(--color-aurora-violet)] via-[var(--color-aurora-purple)] to-[var(--color-aurora-blue)] text-white py-14 px-4">
+        {/* Decorative orbs */}
+        <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-[var(--color-aurora-pink)]/20 blur-3xl" />
+        <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-[var(--color-aurora-mint)]/15 blur-3xl" />
+        
+        <motion.div
+          className="max-w-4xl mx-auto text-center relative z-10"
+          variants={fadeInUp}
+          initial="hidden"
+          animate="visible"
+        >
+          <Badge className="bg-white/20 text-white mb-4 backdrop-blur-sm border border-white/10">
             <Sparkles className="w-3 h-3 mr-1" />
             Aurora Premium
           </Badge>
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">
+          <h1 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
             Unlock Your Full Potential
           </h1>
-          <p className="text-lg text-white/80 max-w-2xl mx-auto">
+          <p className="text-lg text-white/80 max-w-2xl mx-auto leading-relaxed">
             Get more from Aurora App with premium features designed to help you thrive.
             Safety features are always free.
           </p>
-        </div>
+        </motion.div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Current Plan Banner */}
         {currentTier !== "free" && (
-          <Card className="mb-8 border-[var(--color-aurora-purple)] bg-[var(--color-aurora-purple)]/5">
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-3">
-                <Crown className="w-6 h-6 text-[var(--color-aurora-purple)]" />
-                <div>
-                  <p className="font-semibold text-[var(--foreground)]">
-                    You&apos;re on {SUBSCRIPTION_TIERS.find(t => t.tierId === currentTier)?.name}
-                  </p>
-                  <p className="text-sm text-[var(--muted-foreground)]">
-                    {subscription?.billingCycle === "annual" ? "Annual" : "Monthly"} billing
-                  </p>
+          <motion.div variants={fadeInUp} initial="hidden" animate="visible">
+            <Card className="mb-8 border-[var(--color-aurora-purple)] bg-[var(--color-aurora-purple)]/5 glass-card">
+              <CardContent className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <Crown className="w-6 h-6 text-[var(--color-aurora-purple)]" />
+                  <div>
+                    <p className="font-semibold text-[var(--foreground)]">
+                      You&apos;re on {SUBSCRIPTION_TIERS.find(t => t.tierId === currentTier)?.name}
+                    </p>
+                    <p className="text-sm text-[var(--muted-foreground)]">
+                      {subscription?.billingCycle === "annual" ? "Annual" : "Monthly"} billing
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <Button variant="outline" size="sm">
-                Manage Subscription
-              </Button>
-            </CardContent>
-          </Card>
+                <Button variant="outline" size="sm">
+                  Manage Subscription
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
 
         {/* Billing Toggle */}
-        <div className="flex justify-center mb-8">
+        <motion.div
+          className="flex justify-center mb-8"
+          variants={fadeInUp}
+          initial="hidden"
+          animate="visible"
+        >
           <div className="bg-[var(--muted)] p-1 rounded-xl inline-flex">
             <button
               onClick={() => setBillingCycle("monthly")}
@@ -281,11 +298,16 @@ export default function PremiumPage() {
               </Badge>
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Regional Pricing Indicator */}
         {regionalPricing && regionalPricing.multiplier < 1 && (
-          <div className="flex items-center justify-center gap-2 mb-6 p-3 rounded-xl bg-[var(--color-aurora-mint)]/20">
+          <motion.div
+            className="flex items-center justify-center gap-2 mb-6 p-3 rounded-xl bg-[var(--color-aurora-mint)]/20 backdrop-blur-sm"
+            variants={fadeInUp}
+            initial="hidden"
+            animate="visible"
+          >
             <Globe className="w-4 h-4 text-[var(--color-aurora-violet)]" />
             <span className="text-sm text-[var(--foreground)]">
               Regional pricing applied for your location
@@ -293,11 +315,16 @@ export default function PremiumPage() {
             <Badge className="bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] text-xs">
               Save {Math.round((1 - regionalPricing.multiplier) * 100)}%
             </Badge>
-          </div>
+          </motion.div>
         )}
 
         {/* Subscription Tiers */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
+          variants={staggerMedium}
+          initial="hidden"
+          animate="visible"
+        >
           {tiersWithPricing.map((tier) => {
             const isCurrentTier = currentTier === tier.tierId;
             const price = billingCycle === "annual" ? tier.displayPrice.annual : tier.displayPrice.monthly;
@@ -305,113 +332,129 @@ export default function PremiumPage() {
             const isPopular = tier.tierId === "pro";
 
             return (
-              <Card 
+              <motion.div
                 key={tier.tierId}
-                className={cn(
-                  "relative overflow-hidden transition-all",
-                  isPopular && "border-[var(--color-aurora-purple)] shadow-lg scale-105",
-                  isCurrentTier && "ring-2 ring-[var(--color-aurora-mint)]"
-                )}
+                variants={staggerChildScale}
+                {...hoverLift}
               >
-                {isPopular && (
-                  <div className="absolute top-0 right-0 bg-[var(--color-aurora-purple)] text-white text-xs px-3 py-1 rounded-bl-lg">
-                    Most Popular
-                  </div>
-                )}
-                
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {tier.tierId === "plus" && <Zap className="w-5 h-5 text-[var(--color-aurora-blue)]" />}
-                    {tier.tierId === "pro" && <Star className="w-5 h-5 text-[var(--color-aurora-purple)]" />}
-                    {tier.tierId === "elite" && <Crown className="w-5 h-5 text-[var(--color-aurora-yellow)]" />}
-                    {tier.name}
-                  </CardTitle>
-                  <CardDescription>
-                    <span className="text-3xl font-bold text-[var(--foreground)]">
-                      ${monthlyEquivalent.toFixed(0)}
-                    </span>
-                    <span className="text-[var(--muted-foreground)]">/month</span>
-                    {billingCycle === "annual" && (
-                      <p className="text-xs text-[var(--muted-foreground)] mt-1">
-                        Billed ${price.toFixed(0)} annually
-                      </p>
-                    )}
-                  </CardDescription>
-                </CardHeader>
+                <Card 
+                  className={cn(
+                    "relative overflow-hidden transition-all glass-card shadow-premium h-full",
+                    isPopular && "border-[var(--color-aurora-purple)] ring-1 ring-[var(--color-aurora-purple)]/30 md:scale-105",
+                    isCurrentTier && "ring-2 ring-[var(--color-aurora-mint)]"
+                  )}
+                >
+                  {/* Glow effect for popular tier */}
+                  {isPopular && (
+                    <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-[var(--color-aurora-purple)]/15 blur-2xl pointer-events-none" />
+                  )}
 
-                <CardContent className="space-y-4">
-                  <ul className="space-y-2">
-                    {tier.benefits.adFree && (
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="w-4 h-4 text-[var(--color-aurora-mint)]" />
-                        Ad-free experience
-                      </li>
-                    )}
-                    <li className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-[var(--color-aurora-mint)]" />
-                      {tier.benefits.aiMessagesPerDay === -1 
-                        ? "Unlimited AI messages" 
-                        : `${tier.benefits.aiMessagesPerDay} AI messages/day`}
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-[var(--color-aurora-mint)]" />
-                      {tier.benefits.monthlyCredits} credits/month
-                    </li>
-                    {tier.benefits.prioritySupport && (
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="w-4 h-4 text-[var(--color-aurora-mint)]" />
-                        Priority support
-                      </li>
-                    )}
-                    {tier.benefits.advancedAnalytics && (
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="w-4 h-4 text-[var(--color-aurora-mint)]" />
-                        Advanced analytics
-                      </li>
-                    )}
-                    {tier.benefits.exclusiveEvents && (
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="w-4 h-4 text-[var(--color-aurora-mint)]" />
-                        Exclusive events access
-                      </li>
-                    )}
-                    {tier.benefits.safetyConsultations && (
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="w-4 h-4 text-[var(--color-aurora-mint)]" />
-                        Safety consultations
-                      </li>
-                    )}
-                  </ul>
+                  {isPopular && (
+                    <div className="absolute top-0 right-0 bg-gradient-to-l from-[var(--color-aurora-purple)] to-[var(--color-aurora-violet)] text-white text-xs font-medium px-4 py-1.5 rounded-bl-xl">
+                      Most Popular
+                    </div>
+                  )}
+                  
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      {tier.tierId === "plus" && <Zap className="w-5 h-5 text-[var(--color-aurora-blue)]" />}
+                      {tier.tierId === "pro" && <Star className="w-5 h-5 text-[var(--color-aurora-purple)]" />}
+                      {tier.tierId === "elite" && <Crown className="w-5 h-5 text-[var(--color-aurora-yellow)]" />}
+                      {tier.name}
+                    </CardTitle>
+                    <CardDescription>
+                      <span className="text-3xl font-bold text-[var(--foreground)]">
+                        ${monthlyEquivalent.toFixed(0)}
+                      </span>
+                      <span className="text-[var(--muted-foreground)]">/month</span>
+                      {billingCycle === "annual" && (
+                        <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                          Billed ${price.toFixed(0)} annually
+                        </p>
+                      )}
+                    </CardDescription>
+                  </CardHeader>
 
-                  <Button
-                    onClick={() => handleSubscribe(tier.tierId)}
-                    disabled={isCurrentTier || isProcessing}
-                    className={cn(
-                      "w-full",
-                      isPopular 
-                        ? "bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-purple)]/90"
-                        : ""
-                    )}
-                  >
-                    {isProcessing && selectedTier === tier.tierId ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : isCurrentTier ? (
-                      "Current Plan"
-                    ) : (
-                      <>
-                        Get {tier.name}
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
+                  <CardContent className="space-y-4">
+                    <ul className="space-y-2">
+                      {tier.benefits.adFree && (
+                        <li className="flex items-center gap-2 text-sm">
+                          <Check className="w-4 h-4 text-[var(--color-aurora-mint)] shrink-0" />
+                          Ad-free experience
+                        </li>
+                      )}
+                      <li className="flex items-center gap-2 text-sm">
+                        <Check className="w-4 h-4 text-[var(--color-aurora-mint)] shrink-0" />
+                        {tier.benefits.aiMessagesPerDay === -1 
+                          ? "Unlimited AI messages" 
+                          : `${tier.benefits.aiMessagesPerDay} AI messages/day`}
+                      </li>
+                      <li className="flex items-center gap-2 text-sm">
+                        <Check className="w-4 h-4 text-[var(--color-aurora-mint)] shrink-0" />
+                        {tier.benefits.monthlyCredits} credits/month
+                      </li>
+                      {tier.benefits.prioritySupport && (
+                        <li className="flex items-center gap-2 text-sm">
+                          <Check className="w-4 h-4 text-[var(--color-aurora-mint)] shrink-0" />
+                          Priority support
+                        </li>
+                      )}
+                      {tier.benefits.advancedAnalytics && (
+                        <li className="flex items-center gap-2 text-sm">
+                          <Check className="w-4 h-4 text-[var(--color-aurora-mint)] shrink-0" />
+                          Advanced analytics
+                        </li>
+                      )}
+                      {tier.benefits.exclusiveEvents && (
+                        <li className="flex items-center gap-2 text-sm">
+                          <Check className="w-4 h-4 text-[var(--color-aurora-mint)] shrink-0" />
+                          Exclusive events access
+                        </li>
+                      )}
+                      {tier.benefits.safetyConsultations && (
+                        <li className="flex items-center gap-2 text-sm">
+                          <Check className="w-4 h-4 text-[var(--color-aurora-mint)] shrink-0" />
+                          Safety consultations
+                        </li>
+                      )}
+                    </ul>
+
+                    <Button
+                      onClick={() => handleSubscribe(tier.tierId)}
+                      disabled={isCurrentTier || isProcessing}
+                      className={cn(
+                        "w-full",
+                        isPopular 
+                          ? "bg-[var(--color-aurora-purple)] hover:bg-[var(--color-aurora-purple)]/90"
+                          : ""
+                      )}
+                    >
+                      {isProcessing && selectedTier === tier.tierId ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : isCurrentTier ? (
+                        "Current Plan"
+                      ) : (
+                        <>
+                          Get {tier.name}
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
 
         {/* Credit Packages Section */}
-        <div className="mb-12">
+        <motion.div
+          className="mb-12"
+          variants={scrollFadeIn}
+          initial="hidden"
+          whileInView="visible"
+          viewport={scrollTrigger}
+        >
           <h2 className="text-2xl font-bold text-[var(--foreground)] mb-2 text-center">
             Buy Credits
           </h2>
@@ -419,101 +462,138 @@ export default function PremiumPage() {
             Use credits for gifts, events, and premium content
           </p>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <motion.div
+            className="grid grid-cols-2 md:grid-cols-4 gap-4"
+            variants={staggerMedium}
+            initial="hidden"
+            whileInView="visible"
+            viewport={scrollTrigger}
+          >
             {creditsWithPricing.map((pkg) => (
-              <Card key={pkg.packageId} className="text-center hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--color-aurora-yellow)]/20 flex items-center justify-center">
-                    <Coins className="w-6 h-6 text-[var(--color-aurora-yellow)]" />
-                  </div>
-                  <p className="text-2xl font-bold text-[var(--foreground)]">
-                    {pkg.credits}
-                  </p>
-                  {pkg.bonus && (
-                    <Badge className="bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] text-xs mb-2">
-                      +{pkg.bonus} bonus
-                    </Badge>
-                  )}
-                  <p className="text-lg font-semibold text-[var(--color-aurora-purple)]">
-                    ${pkg.displayPrice.toFixed(2)}
-                  </p>
-                  <Button
-                    onClick={() => handlePurchaseCredits(pkg.packageId)}
-                    disabled={isProcessing || selectedPackage === pkg.packageId}
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-3 min-h-[44px]"
-                  >
-                    {isProcessing && selectedPackage === pkg.packageId ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      "Buy"
+              <motion.div
+                key={pkg.packageId}
+                variants={staggerChild}
+                {...hoverLift}
+              >
+                <Card className="text-center glass-card shadow-premium h-full">
+                  <CardContent className="p-4">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-[var(--color-aurora-yellow)]/20 flex items-center justify-center">
+                      <Coins className="w-6 h-6 text-[var(--color-aurora-yellow)]" />
+                    </div>
+                    <p className="text-2xl font-bold text-[var(--foreground)]">
+                      {pkg.credits}
+                    </p>
+                    {pkg.bonus && (
+                      <Badge className="bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)] text-xs mb-2">
+                        +{pkg.bonus} bonus
+                      </Badge>
                     )}
-                  </Button>
-                </CardContent>
-              </Card>
+                    <p className="text-lg font-semibold text-[var(--color-aurora-purple)]">
+                      ${pkg.displayPrice.toFixed(2)}
+                    </p>
+                    <Button
+                      onClick={() => handlePurchaseCredits(pkg.packageId)}
+                      disabled={isProcessing || selectedPackage === pkg.packageId}
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-3 min-h-[44px]"
+                    >
+                      {isProcessing && selectedPackage === pkg.packageId ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        "Buy"
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Features Comparison */}
-        <div className="mb-12">
+        <motion.div
+          className="mb-12"
+          variants={scrollFadeIn}
+          initial="hidden"
+          whileInView="visible"
+          viewport={scrollTrigger}
+        >
           <h2 className="text-2xl font-bold text-[var(--foreground)] mb-6 text-center">
             What You Get
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="p-6">
-              <div className="w-12 h-12 rounded-xl bg-[var(--color-aurora-blue)]/10 flex items-center justify-center mb-4">
-                <MessageSquare className="w-6 h-6 text-[var(--color-aurora-blue)]" />
-              </div>
-              <h3 className="font-semibold text-[var(--foreground)] mb-2">
-                Unlimited AI Assistant
-              </h3>
-              <p className="text-sm text-[var(--muted-foreground)]">
-                Get unlimited access to Aurora AI for safety advice, career guidance, and emotional support.
-              </p>
-            </Card>
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            variants={staggerSlow}
+            initial="hidden"
+            whileInView="visible"
+            viewport={scrollTrigger}
+          >
+            <motion.div variants={staggerChild} {...hoverLift}>
+              <Card className="p-6 glass-card shadow-premium h-full">
+                <div className="w-12 h-12 rounded-xl bg-[var(--color-aurora-blue)]/10 flex items-center justify-center mb-4">
+                  <MessageSquare className="w-6 h-6 text-[var(--color-aurora-blue)]" />
+                </div>
+                <h3 className="font-semibold text-[var(--foreground)] mb-2">
+                  Unlimited AI Assistant
+                </h3>
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  Get unlimited access to Aurora AI for safety advice, career guidance, and emotional support.
+                </p>
+              </Card>
+            </motion.div>
 
-            <Card className="p-6">
-              <div className="w-12 h-12 rounded-xl bg-[var(--color-aurora-purple)]/10 flex items-center justify-center mb-4">
-                <Video className="w-6 h-6 text-[var(--color-aurora-purple)]" />
-              </div>
-              <h3 className="font-semibold text-[var(--foreground)] mb-2">
-                Premium Content
-              </h3>
-              <p className="text-sm text-[var(--muted-foreground)]">
-                Access exclusive livestreams, events, and content from top creators in the community.
-              </p>
-            </Card>
+            <motion.div variants={staggerChild} {...hoverLift}>
+              <Card className="p-6 glass-card shadow-premium h-full">
+                <div className="w-12 h-12 rounded-xl bg-[var(--color-aurora-purple)]/10 flex items-center justify-center mb-4">
+                  <Video className="w-6 h-6 text-[var(--color-aurora-purple)]" />
+                </div>
+                <h3 className="font-semibold text-[var(--foreground)] mb-2">
+                  Premium Content
+                </h3>
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  Access exclusive livestreams, events, and content from top creators in the community.
+                </p>
+              </Card>
+            </motion.div>
 
-            <Card className="p-6">
-              <div className="w-12 h-12 rounded-xl bg-[var(--color-aurora-pink)]/10 flex items-center justify-center mb-4">
-                <Calendar className="w-6 h-6 text-[var(--color-aurora-pink)]" />
-              </div>
-              <h3 className="font-semibold text-[var(--foreground)] mb-2">
-                Exclusive Events
-              </h3>
-              <p className="text-sm text-[var(--muted-foreground)]">
-                Join members-only events, workshops, and networking sessions with industry leaders.
-              </p>
-            </Card>
-          </div>
-        </div>
+            <motion.div variants={staggerChild} {...hoverLift}>
+              <Card className="p-6 glass-card shadow-premium h-full">
+                <div className="w-12 h-12 rounded-xl bg-[var(--color-aurora-pink)]/10 flex items-center justify-center mb-4">
+                  <Calendar className="w-6 h-6 text-[var(--color-aurora-pink)]" />
+                </div>
+                <h3 className="font-semibold text-[var(--foreground)] mb-2">
+                  Exclusive Events
+                </h3>
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  Join members-only events, workshops, and networking sessions with industry leaders.
+                </p>
+              </Card>
+            </motion.div>
+          </motion.div>
+        </motion.div>
 
         {/* Safety Promise */}
-        <Card className="bg-[var(--color-aurora-mint)]/10 border-[var(--color-aurora-mint)]">
-          <CardContent className="p-6 text-center">
-            <Shield className="w-10 h-10 mx-auto mb-4 text-[var(--color-aurora-violet)]" />
-            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
-              Safety Features Are Always Free
-            </h3>
-            <p className="text-sm text-[var(--muted-foreground)] max-w-xl mx-auto">
-              Panic button, emergency contacts, safety check-ins, and basic routes will always be free. 
-              Your safety is our priority, not a premium feature.
-            </p>
-          </CardContent>
-        </Card>
+        <motion.div
+          variants={scaleIn}
+          initial="hidden"
+          whileInView="visible"
+          viewport={scrollTrigger}
+        >
+          <Card className="bg-[var(--color-aurora-mint)]/10 border-[var(--color-aurora-mint)] glass-card">
+            <CardContent className="p-6 text-center">
+              <Shield className="w-10 h-10 mx-auto mb-4 text-[var(--color-aurora-violet)]" />
+              <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
+                Safety Features Are Always Free
+              </h3>
+              <p className="text-sm text-[var(--muted-foreground)] max-w-xl mx-auto">
+                Panic button, emergency contacts, safety check-ins, and basic routes will always be free. 
+                Your safety is our priority, not a premium feature.
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );
