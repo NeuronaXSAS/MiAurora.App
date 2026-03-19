@@ -8,7 +8,9 @@
  */
 
 import { v } from "convex/values";
+import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import { mutation, query } from "./_generated/server";
+import type { DataModel, TableNames } from "./_generated/dataModel";
 
 // ============================================
 // HELPER FUNCTIONS
@@ -216,20 +218,12 @@ function countDuplicateRows(values: string[]) {
 }
 
 async function safeCollectTable(
-  ctx: {
-    db: {
-      query: (
-        tableName: string,
-      ) => {
-        collect: () => Promise<Array<{ _id: string }>>;
-      };
-    };
-  },
+  ctx: GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>,
   tableName: string,
 ) {
   try {
-    const records = await ctx.db.query(tableName).collect();
-    return { ok: true as const, records };
+    const records = await ctx.db.query(tableName as TableNames).collect();
+    return { ok: true as const, records: records as Array<{ _id: string }> };
   } catch (error) {
     return {
       ok: false as const,
