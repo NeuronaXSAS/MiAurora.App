@@ -10,7 +10,7 @@
 import { v } from "convex/values";
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import { mutation, query } from "./_generated/server";
-import type { DataModel, TableNames } from "./_generated/dataModel";
+import type { DataModel, Doc, TableNames } from "./_generated/dataModel";
 
 // ============================================
 // HELPER FUNCTIONS
@@ -223,11 +223,11 @@ async function safeCollectTable(
 ) {
   try {
     const records = await ctx.db.query(tableName as TableNames).collect();
-    return { ok: true as const, records: records as Array<{ _id: string }> };
+    return { ok: true as const, records: records as Array<Doc<TableNames>> };
   } catch (error) {
     return {
       ok: false as const,
-      records: [] as Array<{ _id: string }>,
+      records: [] as Array<Doc<TableNames>>,
       error: String(error),
     };
   }
