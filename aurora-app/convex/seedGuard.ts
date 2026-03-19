@@ -54,7 +54,7 @@ export function assertNonProductionSeeding(operation: string): void {
   }
 }
 
-export function blockDeprecatedSeedPath(operation: string): never {
+export function blockDeprecatedSeedPath(operation: string): void {
   throw new Error(
     `${operation} is deprecated. Use demoSeed:seedInvestorDemo for non-production fixtures or cleanup:* for the canonical audit/reset flow.`,
   );
