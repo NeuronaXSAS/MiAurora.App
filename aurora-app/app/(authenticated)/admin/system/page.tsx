@@ -89,6 +89,11 @@ export default function AdminSystemPage() {
     api.cleanup.getProductionResetAudit,
     userId && isAdmin ? {} : "skip",
   );
+  const readinessEntries: Array<[string, FeatureReadinessEntry]> = readiness
+    ? Object.entries(readiness).flatMap(([feature, value]) =>
+        isFeatureReadinessEntry(value) ? [[feature, value]] : [],
+      )
+    : [];
 
   if (loadingUser || isAdmin === undefined) {
     return (
@@ -197,33 +202,30 @@ export default function AdminSystemPage() {
             <CardTitle>Feature Readiness</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {readiness &&
-              Object.entries(readiness)
-                .filter(([, value]) => isFeatureReadinessEntry(value))
-                .map(([feature, info]) => (
-                  <div
-                    key={feature}
-                    className="rounded-xl border border-[var(--border)] p-4 space-y-2"
-                  >
-                    <div className="flex items-center justify-between gap-3 flex-wrap">
-                      <div className="font-semibold capitalize">
-                        {feature.replace(/([A-Z])/g, " $1")}
-                      </div>
-                      <Badge
-                        className={
-                          info.status === "working"
-                            ? "bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)]"
-                            : info.status === "working_with_risk"
-                              ? "bg-[var(--color-aurora-yellow)] text-[var(--color-aurora-violet)]"
-                              : "bg-[var(--color-aurora-salmon)] text-white"
-                        }
-                      >
-                        {info.status}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-[var(--muted-foreground)]">{info.note}</div>
+            {readinessEntries.map(([feature, info]) => (
+              <div
+                key={feature}
+                className="rounded-xl border border-[var(--border)] p-4 space-y-2"
+              >
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="font-semibold capitalize">
+                    {feature.replace(/([A-Z])/g, " $1")}
                   </div>
-                ))}
+                  <Badge
+                    className={
+                      info.status === "working"
+                        ? "bg-[var(--color-aurora-mint)] text-[var(--color-aurora-violet)]"
+                        : info.status === "working_with_risk"
+                          ? "bg-[var(--color-aurora-yellow)] text-[var(--color-aurora-violet)]"
+                          : "bg-[var(--color-aurora-salmon)] text-white"
+                    }
+                  >
+                    {info.status}
+                  </Badge>
+                </div>
+                <div className="text-sm text-[var(--muted-foreground)]">{info.note}</div>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
