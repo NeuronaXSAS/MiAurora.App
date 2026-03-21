@@ -1768,3 +1768,421 @@ textarea:focus-visible {
     margin-top: env(safe-area-inset-top, 0px) !important;
   }
 }
+
+/* ============================================
+   BRUTALIST LANDING PAGE STYLES
+   Modern brutalist aesthetic with Aurora palette
+   ============================================ */
+
+/* Brutalist Typography */
+.brutalist-heading {
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.brutalist-serif {
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-style: italic;
+}
+
+/* Brutalist Sharp Borders */
+.brutalist-border {
+  border-width: 4px;
+  border-style: solid;
+}
+
+.brutalist-border-thin {
+  border-width: 2px;
+  border-style: solid;
+}
+
+/* Brutalist Cards - No Rounded Corners */
+.brutalist-card {
+  border-radius: 0;
+  border: 2px solid;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.brutalist-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 currentColor;
+}
+
+/* Brutalist Buttons - Sharp, Bold */
+.brutalist-btn {
+  border-radius: 0;
+  border: 3px solid;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.15s ease;
+}
+
+.brutalist-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 currentColor;
+}
+
+.brutalist-btn:active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+
+/* Brutalist Grid Pattern */
+.brutalist-grid-bg {
+  background-image: 
+    linear-gradient(to right, rgba(93, 55, 167, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(93, 55, 167, 0.1) 1px, transparent 1px);
+  background-size: 80px 80px;
+}
+
+.brutalist-grid-bg-light {
+  background-image: 
+    linear-gradient(to right, rgba(61, 13, 115, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(61, 13, 115, 0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Brutalist Dividers */
+.brutalist-divider {
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-aurora-violet) 0%, var(--color-aurora-pink) 100%);
+}
+
+/* Brutalist Quote Marks */
+.brutalist-quote::before {
+  content: '"';
+  font-size: 8rem;
+  font-family: Georgia, serif;
+  line-height: 1;
+  color: var(--color-aurora-pink);
+  position: absolute;
+  top: -2rem;
+  left: -1rem;
+}
+
+/* Brutalist Accent Lines */
+.brutalist-accent-top {
+  border-top: 4px solid var(--color-aurora-purple);
+}
+
+.brutalist-accent-bottom {
+  border-bottom: 4px solid var(--color-aurora-purple);
+}
+
+.brutalist-accent-left {
+  border-left: 4px solid var(--color-aurora-purple);
+}
+
+/* Brutalist Hover Effects */
+.brutalist-hover {
+  transition: all 0.15s ease;
+}
+
+.brutalist-hover:hover {
+  background-color: var(--color-aurora-pink);
+  color: var(--color-aurora-violet);
+}
+
+/* Brutalist Focus States */
+.brutalist-focus:focus-visible {
+  outline: 4px solid var(--color-aurora-pink);
+  outline-offset: 4px;
+}
+
+/* Mobile Optimizations for Brutalist Design */
+@media (max-width: 640px) {
+  .brutalist-heading {
+    letter-spacing: -0.01em;
+  }
+  
+  .brutalist-border {
+    border-width: 3px;
+  }
+  
+  .brutalist-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .brutalist-btn:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Brutalist Pricing Cards */
+.brutalist-pricing-card {
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: border-color 0.2s ease;
+}
+
+.brutalist-pricing-card:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.brutalist-pricing-card.highlighted {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--color-aurora-pink);
+}
+
+/* Brutalist FAQ */
+.brutalist-faq-item {
+  border-bottom: 1px solid rgba(61, 13, 115, 0.1);
+}
+
+.brutalist-faq-item:last-child {
+  border-bottom: none;
+}
+
+/* Brutalist Footer */
+.brutalist-footer {
+  border-top: 4px solid var(--color-aurora-purple);
+}
+
+/* Brutalist Stats */
+.brutalist-stat {
+  position: relative;
+  padding-left: 1rem;
+}
+
+.brutalist-stat::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--color-aurora-pink);
+}
+
+/* Brutalist Navigation */
+.brutalist-nav {
+  border-bottom: 4px solid var(--color-aurora-purple);
+}
+
+.brutalist-nav-link {
+  position: relative;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.brutalist-nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-aurora-pink);
+  transform: scaleX(0);
+  transition: transform 0.15s ease;
+}
+
+.brutalist-nav-link:hover::after {
+  transform: scaleX(1);
+}
+
+/* Brutalist Badge */
+.brutalist-badge {
+  border-radius: 0;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+}
+
+/* Brutalist Input */
+.brutalist-input {
+  border-radius: 0;
+  border: 2px solid rgba(61, 13, 115, 0.2);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.brutalist-input:focus {
+  border-color: var(--color-aurora-purple);
+  box-shadow: 4px 4px 0 rgba(93, 55, 167, 0.2);
+  outline: none;
+}
+
+/* Brutalist Hero Image Frame */
+.brutalist-frame {
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, rgba(242, 157, 229, 0.1) 0%, rgba(201, 206, 244, 0.1) 50%, rgba(214, 244, 236, 0.1) 100%);
+}
+
+/* Brutalist Section Transitions */
+.brutalist-section {
+  position: relative;
+}
+
+.brutalist-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-aurora-purple);
+}
+
+/* Responsive Typography Scale */
+@media (max-width: 480px) {
+  .brutalist-hero-title {
+    font-size: 2.25rem;
+    line-height: 1.1;
+  }
+  
+  .brutalist-section-title {
+    font-size: 1.75rem;
+    line-height: 1.15;
+  }
+  
+  .brutalist-quote-text {
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .brutalist-hero-title {
+    font-size: 3rem;
+  }
+  
+  .brutalist-section-title {
+    font-size: 2.25rem;
+  }
+  
+  .brutalist-quote-text {
+    font-size: 1.75rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .brutalist-hero-title {
+    font-size: 4rem;
+  }
+  
+  .brutalist-section-title {
+    font-size: 2.75rem;
+  }
+  
+  .brutalist-quote-text {
+    font-size: 2.25rem;
+  }
+}
+
+@media (min-width: 1025px) {
+  .brutalist-hero-title {
+    font-size: 5rem;
+  }
+  
+  .brutalist-section-title {
+    font-size: 3rem;
+  }
+  
+  .brutalist-quote-text {
+    font-size: 3rem;
+  }
+}
+
+/* Brutalist Color Accents */
+.brutalist-accent-pink {
+  color: var(--color-aurora-pink);
+}
+
+.brutalist-accent-violet {
+  color: var(--color-aurora-violet);
+}
+
+.brutalist-accent-mint {
+  color: var(--color-aurora-mint);
+}
+
+.brutalist-accent-yellow {
+  color: var(--color-aurora-yellow);
+}
+
+/* Brutalist Background Patterns */
+.brutalist-diagonal-lines {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(93, 55, 167, 0.05) 10px,
+    rgba(93, 55, 167, 0.05) 20px
+  );
+}
+
+.brutalist-dots {
+  background-image: radial-gradient(
+    rgba(93, 55, 167, 0.1) 1px,
+    transparent 1px
+  );
+  background-size: 20px 20px;
+}
+
+/* Brutalist Animations - Respects reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  .brutalist-animate-slide-in {
+    animation: brutalist-slide-in 0.5s ease-out forwards;
+  }
+  
+  @keyframes brutalist-slide-in {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .brutalist-animate-fade-in {
+    animation: brutalist-fade-in 0.4s ease-out forwards;
+  }
+  
+  @keyframes brutalist-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* Brutalist Touch Targets - Minimum 44px for accessibility */
+.brutalist-touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Brutalist Link Underlines */
+.brutalist-link {
+  text-decoration: none;
+  position: relative;
+  font-weight: 600;
+}
+
+.brutalist-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.2s ease;
+}
+
+.brutalist-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}

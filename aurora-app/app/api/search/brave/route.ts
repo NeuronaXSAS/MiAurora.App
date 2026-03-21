@@ -40,6 +40,11 @@ import type {
   PoliticalBiasIndicator,
   GenderBiasLabel,
 } from "@/lib/search/types";
+import {
+  checkRequestRateLimit,
+  isTrustedAppRequest,
+  readRequestSession,
+} from "@/lib/api-security";
 
 const BRAVE_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
 const BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search";
@@ -147,9 +152,15 @@ function generateId(): string {
 // ============================================
 
 export async function GET(request: NextRequest) {
+  if (!isTrustedAppRequest(request)) {
+    return NextResponse.json(
+      { error: "Forbidden" },
+      { status: 403 },
+    );
+  }
+
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get("q");
-  const count = parseInt(searchParams.get("count") || "10");
   const safesearch = searchParams.get("safesearch") || "moderate";
 
   // Property 1: Query Validation - minimum 2 characters
@@ -157,6 +168,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { error: "Query must be at least 2 characters" },
       { status: 400 },
+    );
+  }
+
+  const session = await readRequestSession(request);
+  const rateLimitResult = await checkRequestRateLimit(request, "search", {
+    session,
+  });
+  const rawCount = Number.parseInt(searchParams.get("count") || "10", 10);
+  const count = Math.max(
+    1,
+    Math.min(Number.isFinite(rawCount) ? rawCount : 10, session ? 10 : 8),
+  );
+
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      {
+        error: "Rate limit exceeded. Please try again later.",
+        remaining: rateLimitResult.remaining,
+        resetIn: rateLimitResult.resetIn,
+        limit: rateLimitResult.limit,
+      },
+      { status: 429 },
     );
   }
 
@@ -239,7 +272,8 @@ export async function GET(request: NextRequest) {
 
     // COST OPTIMIZATION: Only fetch additional results if explicitly requested
     // This reduces API calls from 4 to 1 for most searches
-    const includeMedia = searchParams.get("includeMedia") === "true";
+    const includeMedia =
+      searchParams.get("includeMedia") === "true" && Boolean(session);
 
     let videoResults: BraveVideoResult[] = [];
     let newsResults: BraveNewsResult[] = [];
@@ -396,9 +430,9 @@ export async function GET(request: NextRequest) {
       cached: false,
       auroraInsights,
       apiUsage: {
-        used: 1,
-        limit: 300,
-        remaining: searchQuotaCheck.remaining - 1,
+        used: rateLimitResult.limit - rateLimitResult.remaining,
+        limit: rateLimitResult.limit,
+        remaining: rateLimitResult.remaining,
       },
       locations: data.locations?.results || [],
     });

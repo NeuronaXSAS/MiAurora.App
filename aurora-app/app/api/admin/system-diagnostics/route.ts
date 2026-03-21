@@ -1,12 +1,24 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
+import { authorizeAdminRequest } from "@/lib/api-security";
 import { CONFIG, getConfigStatus } from "@/lib/config";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store",
+};
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const authorization = await authorizeAdminRequest(request);
+    if (!authorization.authorized) {
+      return NextResponse.json(
+        { error: "Forbidden - admin access required" },
+        { status: 403, headers: NO_STORE_HEADERS },
+      );
+    }
+
     const [environmentDiagnostics, featureReadiness] = await Promise.all([
       convex.query(api.cleanup.getEnvironmentDiagnostics, {}),
       convex.query(api.cleanup.getFeatureReadinessAudit, {}),
@@ -35,14 +47,14 @@ export async function GET() {
       environmentDiagnostics,
       featureReadiness,
       warnings,
-    });
+    }, { headers: NO_STORE_HEADERS });
   } catch (error) {
     console.error("System diagnostics error:", error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500, headers: NO_STORE_HEADERS },
     );
   }
 }

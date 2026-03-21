@@ -24,6 +24,7 @@ Aurora now follows one canonical environment model:
 
 ### Auth
 
+- `AUTH_SESSION_SECRET` or `CONVEX_AUTH_PROOF_SECRET` (required dedicated signing secret)
 - `WORKOS_API_KEY`
 - `WORKOS_CLIENT_ID`
 - `WORKOS_WEBHOOK_SECRET`

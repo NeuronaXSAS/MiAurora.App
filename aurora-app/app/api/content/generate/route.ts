@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
+import { authorizeAdminRequest } from "@/lib/api-security";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -226,11 +227,8 @@ async function generateWithBedrock(type: string): Promise<any[]> {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify admin authorization
-    const authHeader = request.headers.get("authorization");
-    const adminKey = process.env.ADMIN_API_KEY;
-    
-    if (!adminKey || authHeader !== `Bearer ${adminKey}`) {
+    const authorization = await authorizeAdminRequest(request);
+    if (!authorization.authorized) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -327,8 +325,13 @@ export async function POST(request: NextRequest) {
 }
 
 // GET endpoint to check content status
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const authorization = await authorizeAdminRequest(request);
+    if (!authorization.authorized) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const stats = await convex.query(api.contentGeneration.getContentStats, {});
     
     return NextResponse.json({

@@ -32,6 +32,14 @@ export const RATE_LIMIT_CONFIG = {
     free: { requests: 20, windowMs: 24 * 60 * 60 * 1000 }, // 20/day
     premium: { requests: 1000, windowMs: 24 * 60 * 60 * 1000 }, // 1000/day
   },
+  aiSearchSummary: {
+    free: { requests: 12, windowMs: 60 * 60 * 1000 }, // 12/hour
+    premium: { requests: 120, windowMs: 60 * 60 * 1000 }, // 120/hour
+  },
+  judgeAnalysis: {
+    free: { requests: 8, windowMs: 24 * 60 * 60 * 1000 }, // 8/day
+    premium: { requests: 80, windowMs: 24 * 60 * 60 * 1000 }, // 80/day
+  },
   // Post creation
   createPost: {
     free: { requests: 5, windowMs: 60 * 60 * 1000 }, // 5/hour
@@ -71,6 +79,10 @@ export const RATE_LIMIT_CONFIG = {
   general: {
     free: { requests: 100, windowMs: 60 * 1000 }, // 100/minute
     premium: { requests: 500, windowMs: 60 * 1000 }, // 500/minute
+  },
+  analyticsIngest: {
+    free: { requests: 120, windowMs: 60 * 60 * 1000 }, // 120/hour
+    premium: { requests: 600, windowMs: 60 * 60 * 1000 }, // 600/hour
   },
 } as const;
 

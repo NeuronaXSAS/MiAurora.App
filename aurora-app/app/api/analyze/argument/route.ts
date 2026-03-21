@@ -18,6 +18,10 @@ import {
   generateStructuredResponse,
   Type,
 } from "@/lib/ai/google-genai";
+import {
+  checkRequestRateLimit,
+  isTrustedAppRequest,
+} from "@/lib/api-security";
 
 const HAS_GOOGLE_AI = Boolean(
   process.env.GOOGLE_AI_API_KEY ||
@@ -29,6 +33,8 @@ const HAS_GOOGLE_AI = Boolean(
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT = 10; // 10 requests per minute per IP
 const RATE_WINDOW = 60 * 1000; // 1 minute
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_AUDIO_BYTES = 3 * 1024 * 1024;
 
 interface RedFlag {
   type: string;
@@ -341,6 +347,25 @@ async function hashImages(images: { base64: string }[]): Promise<string> {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isTrustedAppRequest(request)) {
+      return NextResponse.json(
+        { error: "Forbidden" },
+        { status: 403 },
+      );
+    }
+
+    const routeRateLimit = await checkRequestRateLimit(request, "judgeAnalysis");
+    if (!routeRateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: "Daily judge limit reached. Please try again later.",
+          remaining: routeRateLimit.remaining,
+          resetIn: routeRateLimit.resetIn,
+        },
+        { status: 429 },
+      );
+    }
+
     // Rate limiting
     const ip = request.headers.get("x-forwarded-for") || "unknown";
     if (!checkRateLimit(ip)) {
@@ -371,6 +396,12 @@ export async function POST(request: NextRequest) {
     for (let i = 0; i < 5; i++) {
       const file = formData.get(`image${i}`) as File | null;
       if (file) {
+        if (file.size > MAX_IMAGE_BYTES) {
+          return NextResponse.json(
+            { error: "Each screenshot must be 5MB or smaller" },
+            { status: 400 },
+          );
+        }
         const bytes = await file.arrayBuffer();
         const base64 = Buffer.from(bytes).toString("base64");
         images.push({ base64, mimeType: file.type });
@@ -379,6 +410,13 @@ export async function POST(request: NextRequest) {
 
     // Audio transcription support
     const audioFile = formData.get("audio") as File | null;
+    if (audioFile && audioFile.size > MAX_AUDIO_BYTES) {
+      return NextResponse.json(
+        { error: "Audio file must be 3MB or smaller" },
+        { status: 400 },
+      );
+    }
+
     if (audioFile && isAudioTranscription) {
       // Placeholder path for future multimodal audio analysis.
       // The current product flow still prioritizes screenshots.

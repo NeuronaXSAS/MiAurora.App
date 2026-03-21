@@ -191,9 +191,8 @@ export async function POST(request: NextRequest) {
 
 // Health check endpoint
 export async function GET() {
-  return NextResponse.json({ 
-    status: 'ok',
-    service: 'workos-webhook',
-    configured: !!webhookSecret,
-  });
+  return NextResponse.json(
+    { error: "Not found" },
+    { status: 404 },
+  );
 }

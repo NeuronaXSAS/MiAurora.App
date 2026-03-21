@@ -22,11 +22,12 @@ function getSessionSecret(): string {
     process.env.CONVEX_AUTH_PROOF_SECRET ||
     process.env.AUTH_PROOF_SECRET ||
     process.env.AUTH_SESSION_SECRET ||
-    process.env.SESSION_SECRET ||
-    process.env.WORKOS_API_KEY;
+    process.env.SESSION_SECRET;
 
   if (!secret) {
-    throw new Error("Missing session secret configuration");
+    throw new Error(
+      "Missing session secret configuration. Set CONVEX_AUTH_PROOF_SECRET, AUTH_PROOF_SECRET, AUTH_SESSION_SECRET, or SESSION_SECRET.",
+    );
   }
 
   return secret;

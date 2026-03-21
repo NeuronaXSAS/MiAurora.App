@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateTextResponse } from "@/lib/ai/google-genai";
+import {
+  checkRequestRateLimit,
+  isTrustedAppRequest,
+} from "@/lib/api-security";
 
 const LANGUAGE_PROMPTS: Record<string, string> = {
   en: "Respond in English with a warm, sharp, women-centered tone.",
@@ -67,6 +71,23 @@ function computeBiasAnalysis(results: Array<{ previewTitle?: string; previewSnip
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isTrustedAppRequest(request)) {
+      return NextResponse.json({ summary: null, error: "Forbidden" }, { status: 403 });
+    }
+
+    const rateLimitResult = await checkRequestRateLimit(request, "aiSearchSummary");
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          summary: null,
+          error: "Rate limit exceeded",
+          remaining: rateLimitResult.remaining,
+          resetIn: rateLimitResult.resetIn,
+        },
+        { status: 429 },
+      );
+    }
+
     const { query, results, language = "en" } = (await request.json()) as {
       query?: string;
       results?: Array<{
@@ -78,6 +99,13 @@ export async function POST(request: NextRequest) {
 
     if (!query || !results || results.length === 0) {
       return NextResponse.json({ summary: null });
+    }
+
+    if (query.length > 200 || results.length > 10) {
+      return NextResponse.json(
+        { summary: null, error: "Request too large" },
+        { status: 400 },
+      );
     }
 
     const sources = results.slice(0, 6).map((result, index) => {
